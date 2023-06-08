@@ -1,0 +1,14 @@
+# RT-Thread building script for bridge
+
+import rtconfig
+from building import *
+
+cwd     = GetCurrentDir()
+CPPPATH = [cwd, str(Dir('#'))]
+src     = Split("""
+                mpy_init.c
+                """)
+
+group = DefineGroup('MicroPython_port', src, depend = ['PKG_USING_MPY_PORT'], CPPPATH = CPPPATH)
+
+Return('group')

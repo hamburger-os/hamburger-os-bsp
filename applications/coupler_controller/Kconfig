@@ -1,0 +1,3 @@
+config APP_COUPLER_CONTROLLER
+    bool "Enable coupler controller application"
+    default n

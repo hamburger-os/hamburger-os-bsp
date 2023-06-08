@@ -1,0 +1,83 @@
+import rtconfig
+from building import *
+
+cwd     = GetCurrentDir()
+list    = os.listdir(cwd)
+CPPPATH = [cwd, str(Dir('#'))]
+src     = Split("""
+main.c
+""")
+
+if GetDepend('BSP_USING_FS_TEST'):
+    src += Glob('fs_test.c')
+    
+if GetDepend('BSP_USING_MTD_NOR_TEST'):
+    src += Glob('mtd_nor_test.c')
+    
+if GetDepend('BSP_USING_TERMIOS_EXAMPLE'):
+    src += Glob('termios_example.c')
+    
+if GetDepend('BSP_USING_UART_EXAMPLE'):
+    src += Glob('uart_example.c')
+    
+if GetDepend('BSP_USING_TERMIOS_TEST'):
+    src += Glob('termios_test.c')
+    
+if GetDepend('BSP_USING_UART_TEST'):
+    src += Glob('uart_test.c')
+    
+if GetDepend('BSP_USING_CAN_TEST'):
+    src += Glob('can_test.c')
+    
+if GetDepend('BSP_USING_TINYFRAME_EXAMPLE'):
+    src += Glob('tinyframe_example.c')
+    
+if GetDepend('APP_CABLE_TEST_BENCH'):
+    src += Glob('app_cable_test_bench.c')
+    
+if GetDepend('BSP_USING_LTC2945_EXAMPLE'):
+    src += Glob('ltc2945_example.c')
+    
+if GetDepend('BSP_USING_LTC2991_EXAMPLE'):
+    src += Glob('ltc2991_example.c')
+    
+if GetDepend('BSP_USING_DS1682_EXAMPLE'):
+    src += Glob('ds1682_example.c')
+    
+if GetDepend('BSP_USING_MAX31826_EXAMPLE'):
+    src += Glob('max31826_example.c')
+    
+if GetDepend('BSP_USING_DS28E01_EXAMPLE'):
+    src += Glob('ds28e01_example.c')
+    
+if GetDepend('BSP_USING_ADC_EXAMPLE'):
+    src += Glob('adc_example.c')
+    
+if GetDepend('BSP_USING_CMSISOS2_EXAMPLE'):
+    src += Glob('cmsis_os2_test.c')
+    
+if GetDepend('BSP_USING_NET_TEST'):
+    src += Glob('net_test.c')
+    
+if GetDepend('BSP_USING_TCP_CLIENT'):
+    src += Glob('tcpclient.c')
+    
+if GetDepend('BSP_USING_TCP_SERVER'):
+    src += Glob('tcpserver.c')
+    
+if GetDepend('BSP_USING_UDP_CLIENT'):
+    src += Glob('udpclient.c')
+    
+if GetDepend('BSP_USING_UDP_SERVER'):
+    src += Glob('udpserver.c')
+    
+if GetDepend('BSP_USING_DSP_EXAMPLE'):
+    src += Glob('dsp_test.c')
+        
+group = DefineGroup('Applications', src, depend = [''], CPPPATH = CPPPATH)
+
+for item in list:
+    if os.path.isfile(os.path.join(cwd, item, 'SConscript')):
+        group = group + SConscript(os.path.join(item, 'SConscript'))
+
+Return('group')

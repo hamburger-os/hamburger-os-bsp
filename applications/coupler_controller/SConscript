@@ -1,0 +1,19 @@
+# RT-Thread building script for bridge
+
+import rtconfig
+from building import *
+
+cwd     = GetCurrentDir()
+CPPPATH = [cwd, str(Dir('#'))]
+src     = Split("""
+                coupler_controller.c
+                dbhelp.c
+                pressure_adc.c
+                led_ctrl.c
+                coupler_ctrl.c
+                module_ctrl.c
+                """)
+
+group = DefineGroup('coupler_controller', src, depend = ['APP_COUPLER_CONTROLLER'], CPPPATH = CPPPATH)
+
+Return('group')

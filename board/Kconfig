@@ -1,0 +1,3068 @@
+menu "Hardware Drivers Config"
+
+menu "On-chip Peripheral Drivers"
+    config SOC_SERIES_STM32F1
+        bool
+        default n
+        
+    config SOC_SERIES_STM32F4
+        bool
+        default n
+        
+    config SOC_SERIES_STM32H7
+        bool
+        default n
+        
+    menuconfig SOC_STM32
+        bool "Select the Board"
+        select RT_USING_COMPONENTS_INIT
+        select RT_USING_USER_MAIN
+        default y
+        
+        if SOC_STM32
+    	    choice
+                prompt "Select the core board type"
+                default SOC_M4COREBOARD_NOSRAM
+                
+                config SOC_MINILINK_V2
+                    bool "Select mini link v2"
+                    select SOC_SERIES_STM32F1
+    
+                config SOC_ATK_EXPLORER_V24
+                    bool "Select stm32f407 atk explorer v2.4"
+                    select SOC_SERIES_STM32F4
+                    
+                config SOC_STM32F427ZGT6
+                    bool "Select MCU stm32f427zgt6"
+                    select SOC_SERIES_STM32F4
+                    
+                config SOC_M4COREBOARD_NOSRAM
+                    bool "Select M4 core board with no sram"
+                    select SOC_SERIES_STM32F4
+                    
+                config SOC_M4COREBOARD_SRAM
+                    bool "Select M4 core board with sram"
+                    select SOC_SERIES_STM32F4
+                    
+                config SOC_STM32F437IIT6
+                    bool "Select MCU stm32f437iit6"
+                    select SOC_SERIES_STM32F4
+    
+                config SOC_H7COREBOARD_NOSRAM
+                    bool "Select H7 core board with no sram"
+                    select SOC_SERIES_STM32H7
+
+            endchoice
+            
+            config BSP_USING_GD32
+                bool "Enable gd32 compatibility mode"
+                default n
+                
+            config BSP_FLASH_START_ADDR
+                hex "Set the flash memory start address, default: ((void *)0x08000000)"
+                default (0x08000000)
+
+            config BSP_FLASH_SIZE
+                int "Set the flash memory size, default: (2048 * 1024)"
+                default (2097152)
+                
+            config BSP_SRAM_START_ADDR
+                hex "Set the sram start address, default: ((void *)0x20000000)"
+                default (0x20000000)
+
+            config BSP_SRAM_SIZE
+                int "Set the sram size, default: (192 * 1024)"
+                default (196608)
+
+            config BSP_ENABLE_MPU
+                bool "Enable MPU"
+                depends on SOC_SERIES_STM32H7
+                default n
+            
+            config BSP_SCB_ENABLE_I_CACHE
+                bool "Enable scb i cache"
+                depends on SOC_SERIES_STM32H7
+                default n
+                
+            config BSP_SCB_ENABLE_D_CACHE
+                bool "Enable scb d cache"
+                depends on SOC_SERIES_STM32H7
+                default n
+        endif
+
+    choice
+        prompt "Select the boot model"
+        default BSP_USING_NOBOOT
+        
+        config BSP_USING_BOOTAPP
+            bool "Enable boot app mode"
+            select BSP_USING_ON_CHIP_FLASH
+
+        config BSP_USING_BOOTLOADER
+            bool "Enable bootloader mode"
+            select BSP_USING_ON_CHIP_FLASH
+            select PKG_USING_QBOOT
+            
+        config BSP_USING_NOBOOT
+            bool "Disable boot mode"
+    endchoice
+        
+    config BSP_USING_SYS_LED
+        bool "Enable system operation led"
+        select BSP_USING_GPIO
+        default y
+        
+    config BSP_SYS_LED_GPIO
+        string "Set the GPIO of the SYS_LED pin, default: PI.11"
+        depends on BSP_USING_SYS_LED
+        default "PI.11"
+        
+    menuconfig BSP_USING_GPIO_TABLE
+        bool "Enable core board gpio table"
+        select BSP_USING_GPIO
+        default y
+        
+        if BSP_USING_GPIO_TABLE
+            config BSP_GPIO_TABLE_GPIO1
+                string "Set the GPIO1 pin, default: PF.8"
+                default "PF.8"
+                
+            config BSP_GPIO_TABLE_GPIO2
+                string "Set the GPIO2 pin, default: PF.9"
+                default "PF.9"
+                
+            config BSP_GPIO_TABLE_GPIO3
+                string "Set the GPIO3 pin, default: PF.11"
+                default "PF.11"
+                
+            config BSP_GPIO_TABLE_GPIO4
+                string "Set the GPIO4 pin, default: PG.8"
+                default "PG.8"
+                
+            config BSP_GPIO_TABLE_GPIO5
+                string "Set the GPIO5 pin, default: PH.7"
+                default "PH.7"
+                
+            config BSP_GPIO_TABLE_GPIO6
+                string "Set the GPIO6 pin, default: PI.3"
+                default "PI.3"
+                
+            config BSP_GPIO_TABLE_GPIO7
+                string "Set the GPIO7 pin, default: PC.13"
+                default "PC.13"
+                
+            config BSP_GPIO_TABLE_GPIO8
+                string "Set the GPIO8 pin, default: PD.3"
+                default "PD.3"
+                
+            config BSP_GPIO_TABLE_SPI1_CS0
+                string "Set the SPI1_CS0 pin, default: PA.4"
+                default "PA.4"
+                
+            config BSP_GPIO_TABLE_SPI1_CS1
+                string "Set the SPI1_CS1 pin, default: PA.10"
+                default "PA.10"
+                
+            config BSP_GPIO_TABLE_SPI1_CS2
+                string "Set the SPI1_CS2 pin, default: PC.0"
+                default "PC.0"
+                
+            config BSP_GPIO_TABLE_SPI2_CS0
+                string "Set the SPI2_CS0 pin, default: PA.15"
+                default "PA.15"
+                
+            config BSP_GPIO_TABLE_SPI2_CS1
+                string "Set the SPI2_CS1 pin, default: PC.4"
+                default "PC.4"
+                
+            config BSP_GPIO_TABLE_SPI2_CS2
+                string "Set the SPI2_CS2 pin, default: PC.5"
+                default "PC.5"
+                
+            config BSP_GPIO_TABLE_PWM1
+                string "Set the PWM1 pin, default: PA.2"
+                default "PA.2"
+                
+            config BSP_GPIO_TABLE_PWM2
+                string "Set the PWM2 pin, default: PA.8"
+                default "PA.8"
+                
+            config BSP_GPIO_TABLE_PWM3
+                string "Set the PWM3 pin, default: PB.1"
+                default "PB.1"
+                
+            config BSP_GPIO_TABLE_PWM4
+                string "Set the PWM4 pin, default: PH.6"
+                default "PH.6"
+        endif
+        
+    menuconfig BSP_USING_DEV_TABLE
+        bool "Enable core board dev table"
+        default y
+        
+        if BSP_USING_DEV_TABLE
+            config BSP_DEV_TABLE_UART1
+                string "Set the UART1 dev name, default: uart3"
+                default "uart3"
+                
+            config BSP_DEV_TABLE_UART2
+                string "Set the UART2 dev name, default: uart7"
+                default "uart7"
+                
+            config BSP_DEV_TABLE_UART3
+                string "Set the UART3 dev name, default: uart4"
+                default "uart4"
+                
+            config BSP_DEV_TABLE_UART4
+                string "Set the UART4 dev name, default: uart8"
+                default "uart8"
+                
+            config BSP_DEV_TABLE_SPI1
+                string "Set the SPI1 dev name, default: spi1"
+                default "spi1"
+                
+            config BSP_DEV_TABLE_SPI2
+                string "Set the SPI2 dev name, default: sspi2"
+                default "sspi2"
+                
+            config BSP_DEV_TABLE_I2C1
+                string "Set the I2C1 dev name, default: i2c1"
+                default "i2c1"
+                
+            config BSP_DEV_TABLE_I2C2
+                string "Set the I2C2 dev name, default: i2c2"
+                default "i2c2"
+                
+            config BSP_DEV_TABLE_CAN1
+                string "Set the CAN1 dev name, default: can1"
+                default "can1"
+                
+            config BSP_DEV_TABLE_CAN2
+                string "Set the CAN2 dev name, default: can2"
+                default "can2"
+        endif
+
+    menuconfig BSP_USING_UART
+        bool "Enable UART"
+        select RT_USING_SERIAL
+        default y
+        
+        if BSP_USING_UART
+        	config BSP_USING_UART1
+                bool "Enable UART1"
+                default n
+   
+            config BSP_UART1_RX_USING_DMA
+                bool "Enable UART1 RX DMA"
+                depends on BSP_USING_UART1 && RT_SERIAL_USING_DMA
+                default n
+                
+            config BSP_UART1_TX_USING_DMA
+                bool "Enable UART1 TX DMA"
+                depends on BSP_USING_UART1 && RT_SERIAL_USING_DMA
+                default n
+                
+            config BSP_UART1_TX_BUFSIZE
+                int "Set UART1 TX buffer size"
+                depends on BSP_USING_UART1 && RT_USING_SERIAL_V2
+                default 128
+	                
+            config BSP_UART1_RX_BUFSIZE
+                int "Set UART1 RX buffer size"
+                depends on BSP_USING_UART1 && RT_USING_SERIAL_V2
+                default 128
+                
+            config BSP_UART1_RS485MODE
+            	bool "Enable UART1 rs485 mode"
+            	depends on BSP_USING_UART1
+                default n
+                select RT_USING_PIN
+                
+            config BSP_UART1_DERE
+		        string "Set the GPIO of the UART1 rs485 DE/RE, default: PF.8"
+		        depends on BSP_USING_UART1 && BSP_UART1_RS485MODE
+		        default "PF.8"
+                
+            config BSP_USING_UART2
+                bool "Enable UART2"
+                default n
+   
+            config BSP_UART2_RX_USING_DMA
+                bool "Enable UART2 RX DMA"
+                depends on BSP_USING_UART2 && RT_SERIAL_USING_DMA
+                default n
+                
+            config BSP_UART2_TX_USING_DMA
+                bool "Enable UART2 TX DMA"
+                depends on BSP_USING_UART2 && RT_SERIAL_USING_DMA
+                default n
+                
+            config BSP_UART2_TX_BUFSIZE
+                int "Set UART2 TX buffer size"
+                depends on BSP_USING_UART2 && RT_USING_SERIAL_V2
+                default 128
+	                
+            config BSP_UART2_RX_BUFSIZE
+                int "Set UART2 RX buffer size"
+                depends on BSP_USING_UART2 && RT_USING_SERIAL_V2
+                default 128
+                
+            config BSP_UART2_RS485MODE
+            	bool "Enable UART2 rs485 mode"
+            	depends on BSP_USING_UART2
+                default n
+                select RT_USING_PIN
+                
+            config BSP_UART2_DERE
+		        string "Set the GPIO of the UART2 rs485 DE/RE, default: PF.8"
+		        depends on BSP_USING_UART2 && BSP_UART2_RS485MODE
+		        default "PF.8"
+                
+            config BSP_USING_UART3
+                bool "Enable UART3"
+                default n
+   
+            config BSP_UART3_RX_USING_DMA
+                bool "Enable UART3 RX DMA"
+                depends on BSP_USING_UART3 && RT_SERIAL_USING_DMA
+                default n
+                
+            config BSP_UART3_TX_USING_DMA
+                bool "Enable UART3 TX DMA"
+                depends on BSP_USING_UART3 && RT_SERIAL_USING_DMA
+                default n
+                
+            config BSP_UART3_TX_BUFSIZE
+                int "Set UART3 TX buffer size"
+                depends on BSP_USING_UART3 && RT_USING_SERIAL_V2
+                default 128
+	                
+            config BSP_UART3_RX_BUFSIZE
+                int "Set UART3 RX buffer size"
+                depends on BSP_USING_UART3 && RT_USING_SERIAL_V2
+                default 128
+                
+            config BSP_UART3_RS485MODE
+            	bool "Enable UART3 rs485 mode"
+            	depends on BSP_USING_UART3
+                default n
+                select RT_USING_PIN
+                
+            config BSP_UART3_DERE
+		        string "Set the GPIO of the UART3 rs485 DE/RE, default: PF.8"
+		        depends on BSP_USING_UART3 && BSP_UART3_RS485MODE
+		        default "PF.8"
+                
+            config BSP_USING_UART4
+                bool "Enable UART4"
+                default n
+   
+            config BSP_UART4_RX_USING_DMA
+                bool "Enable UART4 RX DMA"
+                depends on BSP_USING_UART4 && RT_SERIAL_USING_DMA
+                default n
+                
+            config BSP_UART4_TX_USING_DMA
+                bool "Enable UART4 TX DMA"
+                depends on BSP_USING_UART4 && RT_SERIAL_USING_DMA
+                default n
+                
+            config BSP_UART4_TX_BUFSIZE
+                int "Set UART4 TX buffer size"
+                depends on BSP_USING_UART4 && RT_USING_SERIAL_V2
+                default 128
+	                
+            config BSP_UART4_RX_BUFSIZE
+                int "Set UART4 RX buffer size"
+                depends on BSP_USING_UART4 && RT_USING_SERIAL_V2
+                default 128
+                
+            config BSP_UART4_RS485MODE
+            	bool "Enable UART4 rs485 mode"
+            	depends on BSP_USING_UART4
+                default n
+                select RT_USING_PIN
+                
+            config BSP_UART4_DERE
+		        string "Set the GPIO of the UART4 rs485 DE/RE, default: PF.8"
+		        depends on BSP_USING_UART4 && BSP_UART4_RS485MODE
+		        default "PF.8"
+                
+            config BSP_USING_UART5
+                bool "Enable UART5"
+                default n
+   
+            config BSP_UART5_RX_USING_DMA
+                bool "Enable UART5 RX DMA"
+                depends on BSP_USING_UART5 && RT_SERIAL_USING_DMA
+                default n
+                
+            config BSP_UART5_TX_USING_DMA
+                bool "Enable UART5 TX DMA"
+                depends on BSP_USING_UART5 && RT_SERIAL_USING_DMA
+                default n
+                
+            config BSP_UART5_TX_BUFSIZE
+                int "Set UART5 TX buffer size"
+                depends on BSP_USING_UART5 && RT_USING_SERIAL_V2
+                default 128
+	                
+            config BSP_UART5_RX_BUFSIZE
+                int "Set UART5 RX buffer size"
+                depends on BSP_USING_UART5 && RT_USING_SERIAL_V2
+                default 128
+                
+            config BSP_UART5_RS485MODE
+            	bool "Enable UART5 rs485 mode"
+            	depends on BSP_USING_UART5
+                default n
+                select RT_USING_PIN
+                
+            config BSP_UART5_DERE
+		        string "Set the GPIO of the UART5 rs485 DE/RE, default: PF.8"
+		        depends on BSP_USING_UART5 && BSP_UART5_RS485MODE
+		        default "PF.8"
+                
+            config BSP_USING_UART6
+                bool "Enable UART6"
+                default n
+   
+            config BSP_UART6_RX_USING_DMA
+                bool "Enable UART6 RX DMA"
+                depends on BSP_USING_UART6 && RT_SERIAL_USING_DMA
+                default n
+                
+            config BSP_UART6_TX_USING_DMA
+                bool "Enable UART6 TX DMA"
+                depends on BSP_USING_UART6 && RT_SERIAL_USING_DMA
+                default n
+                
+            config BSP_UART6_TX_BUFSIZE
+                int "Set UART6 TX buffer size"
+                depends on BSP_USING_UART6 && RT_USING_SERIAL_V2
+                default 128
+	                
+            config BSP_UART6_RX_BUFSIZE
+                int "Set UART6 RX buffer size"
+                depends on BSP_USING_UART6 && RT_USING_SERIAL_V2
+                default 128
+                
+            config BSP_UART6_RS485MODE
+            	bool "Enable UART6 rs485 mode"
+            	depends on BSP_USING_UART6
+                default n
+                select RT_USING_PIN
+                
+            config BSP_UART6_DERE
+		        string "Set the GPIO of the UART6 rs485 DE/RE, default: PF.8"
+		        depends on BSP_USING_UART6 && BSP_UART6_RS485MODE
+		        default "PF.8"
+                
+            config BSP_USING_UART7
+                bool "Enable UART7"
+                default n
+   
+            config BSP_UART7_RX_USING_DMA
+                bool "Enable UART7 RX DMA"
+                depends on BSP_USING_UART7 && RT_SERIAL_USING_DMA
+                default n
+                
+            config BSP_UART7_TX_USING_DMA
+                bool "Enable UART7 TX DMA"
+                depends on BSP_USING_UART7 && RT_SERIAL_USING_DMA
+                default n
+                
+            config BSP_UART7_TX_BUFSIZE
+                int "Set UART7 TX buffer size"
+                depends on BSP_USING_UART7 && RT_USING_SERIAL_V2
+                default 128
+	                
+            config BSP_UART7_RX_BUFSIZE
+                int "Set UART7 RX buffer size"
+                depends on BSP_USING_UART7 && RT_USING_SERIAL_V2
+                default 128
+                
+            config BSP_UART7_RS485MODE
+            	bool "Enable UART7 rs485 mode"
+            	depends on BSP_USING_UART7
+                default n
+                select RT_USING_PIN
+                
+            config BSP_UART7_DERE
+		        string "Set the GPIO of the UART7 rs485 DE/RE, default: PF.8"
+		        depends on BSP_USING_UART7 && BSP_UART7_RS485MODE
+		        default "PF.8"
+		        
+		    config BSP_USING_UART8
+                bool "Enable UART8"
+                default n
+   
+            config BSP_UART8_RX_USING_DMA
+                bool "Enable UART8 RX DMA"
+                depends on BSP_USING_UART8 && RT_SERIAL_USING_DMA
+                default n
+                
+            config BSP_UART8_TX_USING_DMA
+                bool "Enable UART8 TX DMA"
+                depends on BSP_USING_UART8 && RT_SERIAL_USING_DMA
+                default n
+                
+            config BSP_UART8_TX_BUFSIZE
+                int "Set UART8 TX buffer size"
+                depends on BSP_USING_UART8 && RT_USING_SERIAL_V2
+                default 128
+	                
+            config BSP_UART8_RX_BUFSIZE
+                int "Set UART8 RX buffer size"
+                depends on BSP_USING_UART8 && RT_USING_SERIAL_V2
+                default 128
+                
+            config BSP_UART8_RS485MODE
+            	bool "Enable UART8 rs485 mode"
+            	depends on BSP_USING_UART8
+                default n
+                select RT_USING_PIN
+                
+            config BSP_UART8_DERE
+		        string "Set the GPIO of the UART8 rs485 DE/RE, default: PF.8"
+		        depends on BSP_USING_UART8 && BSP_UART8_RS485MODE
+		        default "PF.8"
+        endif
+        
+    menuconfig BSP_USING_CCMSRAM
+        bool "Enable CCM SRAM"
+        depends on SOC_SERIES_STM32F4
+        default n
+        
+        if BSP_USING_CCMSRAM
+            config BSP_CCMSRAM_ADDR
+	            hex "Set the memory start address, default: ((void *)0x10000000)"
+	            default (0x10000000)
+
+            config BSP_CCMSRAM_SIZE
+	            int "Set memory size, default: (64 * 1024)"
+	            default (65536)
+        endif
+        
+    menuconfig BSP_USING_ADDSRAM
+        bool "Enable ADD SRAM"
+        depends on SOC_SERIES_STM32F4 && BSP_USING_GD32
+        default n
+        
+        if BSP_USING_ADDSRAM
+            config BSP_ADDSRAM_ADDR
+                hex "Set the memory start address, default: ((void *)0x20030000)"
+                default (0x20030000)
+
+            config BSP_ADDSRAM_SIZE
+                int "Set memory size, default: (256 * 1024)"
+                default (262144)
+        endif
+        
+    menuconfig BSP_USING_TCMSRAM
+        bool "Enable TCM SRAM"
+        depends on SOC_SERIES_STM32H7
+        default y
+        
+        if BSP_USING_TCMSRAM
+            config BSP_USING_ITCMSRAM
+                bool "Enable ITCM SRAM"
+                default y
+                
+            config BSP_ITCMSRAM_ADDR
+                hex "Set the ITCM SRAM memory start address, default: ((void *)0x00000000)"
+                depends on BSP_USING_ITCMSRAM
+                default (0x00000000)
+
+            config BSP_ITCMSRAM_SIZE
+                int "Set ITCM SRAM memory size, default: (64 * 1024)"
+                depends on BSP_USING_ITCMSRAM
+                default (65536)
+                
+            config BSP_USING_DTCMSRAM
+                bool "Enable DTCM SRAM"
+                default y
+                
+            config BSP_DTCMSRAM_ADDR
+                hex "Set the DTCM SRAM memory start address, default: ((void *)0x20000000)"
+                depends on BSP_USING_DTCMSRAM
+                default (0x20000000)
+
+            config BSP_DTCMSRAM_SIZE
+                int "Set DTCM SRAM memory size, default: (128 * 1024)"
+                depends on BSP_USING_DTCMSRAM
+                default (131072)
+        endif
+        
+    menuconfig BSP_USING_AXISRAM
+        bool "Enable AXI SRAM"
+        depends on SOC_SERIES_STM32H7
+        default y
+        
+        if BSP_USING_AXISRAM
+            config BSP_AXISRAM_ADDR
+                hex "Set the AXI SRAM memory start address, default: ((void *)0x24000000)"
+                default (0x24000000)
+
+            config BSP_AXISRAM_SIZE
+                int "Set AXI SRAM memory size, default: (512 * 1024)"
+                default (524288)
+        endif
+        
+    menuconfig BSP_USING_AHBSRAM
+        bool "Enable AHB SRAM"
+        depends on SOC_SERIES_STM32H7
+        default n
+        
+        if BSP_USING_AHBSRAM
+            config BSP_USING_AHBSRAM_D2
+                bool "Enable AHBSRAM D2"
+                default n
+        
+            config BSP_AHBSRAM_D2_ADDR
+                hex "Set the d2 memory start address, default: ((void *)0x30000000)"
+                depends on BSP_USING_AHBSRAM_D2
+                default (0x30000000)
+
+            config BSP_AHBSRAM_D2_SIZE
+                int "Set d2 memory size, default: (256 * 1024)"
+                depends on BSP_USING_AHBSRAM_D2
+                default (262144)
+                
+            config BSP_USING_AHBSRAM_D3
+                bool "Enable AHBSRAM D3"
+                default n
+                
+            config BSP_AHBSRAM_D3_ADDR
+                hex "Set the d3 memory start address, default: ((void *)0x38000000)"
+                depends on BSP_USING_AHBSRAM_D3
+                default (0x38000000)
+
+            config BSP_AHBSRAM_D3_SIZE
+                int "Set d3 memory size, default: (64 * 1024)"
+                depends on BSP_USING_AHBSRAM_D3
+                default (65536)
+        endif
+
+    menuconfig BSP_USING_ON_CHIP_FLASH
+        bool "Enable on-chip FLASH"
+        default n
+        select RT_USING_FAL
+        select FAL_PART_HAS_TABLE_CFG
+        
+        if BSP_USING_ON_CHIP_FLASH
+            config FLASH_SIZE_BOOTLOADER
+	            int "Set the flash size of the bootloader area, default: (128 * 1024)"
+	            default (131072)
+
+            config FLASH_SIZE_APP
+	            int "Set the flash size of the app area, default: (1920 * 1024)"
+	            default (1966080)
+	            
+	        config FLASH_SIZE_DOWNLOAD
+                int "Set the flash size of the download area, default: (0 * 1024)"
+                default (0)
+                
+            config FLASH_SIZE_FACTORY
+                int "Set the flash size of the factory area, default: (0 * 1024)"
+                default (0)
+	            
+	        config FLASH_USING_BLK256
+                bool "Enable additional storage area with 256k block size"
+                depends on BSP_USING_GD32
+                default n
+                
+            config FLASH_SIZE_BLK256
+	            int "Set the flash size of the data area, default: (1024 * 1024)"
+	            depends on FLASH_USING_BLK256
+	            default (1048576)
+        endif
+        
+    menuconfig BSP_USING_CAN
+        bool "Enable CAN"
+        default n
+        select RT_USING_CAN
+        
+        if BSP_USING_CAN
+            config BSP_USING_CAN168M
+                bool "Enable this mode when using usb"
+                depends on SOC_SERIES_STM32F4
+                default n
+        
+            config BSP_USING_CAN1
+                bool "Enable CAN1"
+                default n
+                
+            config BSP_USING_CAN2
+                bool "Enable CAN2"
+                default n
+        endif
+        
+    menuconfig BSP_USING_FDCAN
+        bool "Enable FDCAN"
+        depends on SOC_SERIES_STM32H7
+        default n
+        select RT_USING_CAN
+        select RT_CAN_USING_CANFD
+        
+        if BSP_USING_FDCAN
+            config BSP_USING_FDCAN1
+                bool "USING FDCAN1"
+                default n
+                
+            config BSP_USING_FDCAN2
+                bool "USING FDCAN2"
+                default n
+        endif
+
+    menuconfig BSP_USING_SPI
+        bool "Enable SPI BUS"
+        default n
+        select RT_USING_SPI
+        
+        if BSP_USING_SPI
+            config BSP_USING_SPI1
+                bool "Enable SPI1 BUS"
+                default n
+
+            config BSP_SPI1_TX_USING_DMA
+                bool "Enable SPI1 TX DMA"
+                depends on BSP_USING_SPI1
+                default n
+                
+            config BSP_SPI1_RX_USING_DMA
+                bool "Enable SPI1 RX DMA"
+                depends on BSP_USING_SPI1
+                default n
+                
+            config BSP_USING_SPI2
+                bool "Enable SPI2 BUS"
+                default n
+
+            config BSP_SPI2_TX_USING_DMA
+                bool "Enable SPI2 TX DMA"
+                depends on BSP_USING_SPI2
+                default n
+                
+            config BSP_SPI2_RX_USING_DMA
+                bool "Enable SPI2 RX DMA"
+                depends on BSP_USING_SPI2
+                default n
+                
+            config BSP_USING_SPI3
+                bool "Enable SPI3 BUS"
+                default n
+
+            config BSP_SPI3_TX_USING_DMA
+                bool "Enable SPI3 TX DMA"
+                depends on BSP_USING_SPI3
+                default n
+                
+            config BSP_SPI3_RX_USING_DMA
+                bool "Enable SPI3 RX DMA"
+                depends on BSP_USING_SPI3
+                default n
+                
+            config BSP_USING_SPI4
+                bool "Enable SPI4 BUS"
+                default n
+
+            config BSP_SPI4_TX_USING_DMA
+                bool "Enable SPI4 TX DMA"
+                depends on BSP_USING_SPI4
+                default n
+                
+            config BSP_SPI4_RX_USING_DMA
+                bool "Enable SPI4 RX DMA"
+                depends on BSP_USING_SPI4
+                default n
+                
+            config BSP_USING_SPI5
+                bool "Enable SPI5 BUS"
+                default n
+
+            config BSP_SPI5_TX_USING_DMA
+                bool "Enable SPI5 TX DMA"
+                depends on BSP_USING_SPI5
+                default n
+                
+            config BSP_SPI5_RX_USING_DMA
+                bool "Enable SPI5 RX DMA"
+                depends on BSP_USING_SPI5
+                default n
+                
+            config BSP_USING_SPI6
+                bool "Enable SPI6 BUS"
+                default n
+
+            config BSP_SPI6_TX_USING_DMA
+                bool "Enable SPI6 TX DMA"
+                depends on BSP_USING_SPI6
+                default n
+                
+            config BSP_SPI6_RX_USING_DMA
+                bool "Enable SPI6 RX DMA"
+                depends on BSP_USING_SPI6
+                default n
+        endif
+        
+    menuconfig BSP_USING_SOFT_SPI
+        bool "Enable software SPI BUS"
+        default n
+        select RT_USING_SPI
+        select RT_USING_SPI_BITOPS
+        select RT_USING_PIN
+        
+        if BSP_USING_SOFT_SPI
+            config BSP_USING_SOFT_SPI1
+                bool "Enable software SPI1 BUS"
+                default n
+                
+            config BSP_S_SPI1_SCK
+	            string "Set the GPIO of the SPI1 sck, default: PA.5"
+	            depends on BSP_USING_SOFT_SPI1
+	            default "PA.5"
+	            
+	        config BSP_S_SPI1_MOSI
+	            string "Set the GPIO of the SPI1 mosi, default: PA.7"
+	            depends on BSP_USING_SOFT_SPI1
+	            default "PA.7"
+	            
+	        config BSP_S_SPI1_MISO
+	            string "Set the GPIO of the SPI1 miso, default: PA.6"
+	            depends on BSP_USING_SOFT_SPI1
+	            default "PA.6"
+	            
+            config BSP_USING_SOFT_SPI2
+                bool "Enable software SPI2 BUS"
+                default n
+                
+            config BSP_S_SPI2_SCK
+	            string "Set the GPIO of the SPI2 sck, default: PB.3"
+	            depends on BSP_USING_SOFT_SPI2
+	            default "PB.3"
+	            
+	        config BSP_S_SPI2_MOSI
+	            string "Set the GPIO of the SPI2 mosi, default: PB.0"
+	            depends on BSP_USING_SOFT_SPI2
+	            default "PB.0"
+	            
+	        config BSP_S_SPI2_MISO
+	            string "Set the GPIO of the SPI2 miso, default: PB.4"
+	            depends on BSP_USING_SOFT_SPI2
+	            default "PB.4"
+	            
+            config BSP_USING_SOFT_SPI3
+                bool "Enable software SPI3 BUS"
+                default n
+                
+            config BSP_S_SPI3_SCK
+	            string "Set the GPIO of the SPI3 sck, default: PA.5"
+	            depends on BSP_USING_SOFT_SPI3
+	            default "PA.5"
+	            
+	        config BSP_S_SPI3_MOSI
+	            string "Set the GPIO of the SPI3 mosi, default: PA.7"
+	            depends on BSP_USING_SOFT_SPI3
+	            default "PA.7"
+	            
+	        config BSP_S_SPI3_MISO
+	            string "Set the GPIO of the SPI3 miso, default: PA.6"
+	            depends on BSP_USING_SOFT_SPI3
+	            default "PA.6"
+        endif
+        
+    menuconfig BSP_USING_I2S
+        bool "Enable I2S"
+        default n
+        
+        if BSP_USING_I2S
+            config BSP_I2S1_RX_USING_DMA
+                bool
+                default n
+            
+            config BSP_I2S1_TX_USING_DMA
+                bool
+                default n
+                
+            config BSP_I2S2_RX_USING_DMA
+                bool
+                default n
+            
+            config BSP_I2S2_TX_USING_DMA
+                bool
+                default n
+                
+            config BSP_I2S3_RX_USING_DMA
+                bool
+                default n
+            
+            config BSP_I2S3_TX_USING_DMA
+                bool
+                default n
+                
+            choice
+                prompt "Select i2s bus"
+                default BSP_USING_I2S2
+    
+                config BSP_USING_I2S1
+                    bool "Enable I2S1"
+                    select BSP_I2S1_RX_USING_DMA
+                    select BSP_I2S1_TX_USING_DMA
+                    
+                config BSP_USING_I2S2
+                    bool "Enable I2S2"
+                    select BSP_I2S2_RX_USING_DMA
+                    select BSP_I2S2_TX_USING_DMA
+                    
+                config BSP_USING_I2S3
+                    bool "Enable I2S3"
+                    select BSP_I2S3_RX_USING_DMA
+                    select BSP_I2S3_TX_USING_DMA
+            endchoice
+        endif
+        
+    menuconfig BSP_USING_USB
+    	bool "Enable USB"
+        default n
+        
+        if BSP_USING_USB
+            config BSP_USING_USB_CAN
+                bool
+                depends on SOC_SERIES_STM32F4
+                select BSP_USING_CAN168M
+                default y
+       	
+	        choice
+	            prompt "Select USB protocol stack"
+	            default BSP_USING_USBH_STM32
+	
+	            config BSP_USING_USBH_CHERRY
+	                bool "Enable USB Host CherryUSB"
+	                select PKG_USING_CHERRYUSB
+	                select PKG_CHERRYUSB_HOST
+	                select RT_USING_DFS
+                    select RT_USING_DFS_ROMFS
+                    select RT_USING_DFS_TMPFS
+                    select RT_USING_DFS_ELMFAT
+	                
+	            config BSP_USING_USBD_CHERRY
+                    bool "Enable USB Device CherryUSB"
+                    select PKG_USING_CHERRYUSB
+                    select PKG_CHERRYUSB_DEVICE
+	                
+	            config BSP_USING_USBH_STM32
+                    bool "Enable USB Host STM32"
+                    select RT_USING_DFS
+                    select RT_USING_DFS_ROMFS
+                    select RT_USING_DFS_TMPFS
+                    select RT_USING_DFS_ELMFAT
+                    select PKG_USING_CMSIS_RTOS2
+                    select PKG_CMSIS_RTOS2_COMPATIBLE_CMSIS_RTOS1
+	
+	            config BSP_USING_USBH
+	                bool "Enable USB Host"
+	                select RT_USING_USB_HOST
+	                
+	            config BSP_USING_USBD
+			    	bool "Enable USB Device"
+			        select RT_USING_USB_DEVICE
+	        endchoice
+	        
+	        if BSP_USING_USBH_CHERRY
+	            config USBH_MSC_FS
+		            string "Set the Udisk file system used, default: elm"
+		            default "elm"
+	        endif
+	        
+	        if BSP_USING_USBD_CHERRY
+                choice
+                    prompt "Select USB Device"
+                    default USBD_USING_CDC
+        
+                    config USBD_USING_CDC
+                        bool "Enable USB CDC"
+                        
+                    config USBD_USING_CMSIS_DAP
+                        bool "Enable USB CMSIS DAP"
+                endchoice
+                    
+                config CMSIS_DAP_SWCLK_TCK_PIN
+                    string "Set the swclk/tck pin, default: PB.0"
+                    depends on USBD_USING_CMSIS_DAP
+                    default "PB.0"
+                    
+                config CMSIS_DAP_SWDIO_OUT_PIN
+                    string "Set the swdio out pin, default: PB.1"
+                    depends on USBD_USING_CMSIS_DAP
+                    default "PB.1"
+                    
+                config CMSIS_DAP_SWDIO_IN_PIN
+                    string "Set the swdio in pin, default: PB.2"
+                    depends on USBD_USING_CMSIS_DAP
+                    default "PB.2"
+                    
+                config CMSIS_DAP_COM_LED_PIN
+                    string "Set the com led pin, default: PB.5"
+                    depends on USBD_USING_CMSIS_DAP
+                    default "PB.5"
+                    
+                config CMSIS_DAP_DAP_LED_PIN
+                    string "Set the dap led pin, default: PB.6"
+                    depends on USBD_USING_CMSIS_DAP
+                    default "PB.6"
+
+                config CDC_UART_DEV
+                    string "Set cdc uart, default: uart3"
+                    depends on USBD_USING_CDC || USBD_USING_CMSIS_DAP
+                    default "uart3"
+            endif
+	        
+	        if BSP_USING_USBH_STM32
+                choice
+                    prompt "Select USB port"
+                    default BSP_USING_USBH_STM32_HS
+        
+                    config BSP_USING_USBH_STM32_FS
+                        bool "Select USB FS"
+                        
+                    config BSP_USING_USBH_STM32_HS
+                        bool "Select USB HS"
+                endchoice
+                
+                config USBH_STM32_USING_POWER
+                    bool "Enable USB POWER"
+                    default n
+                    
+                config USBH_STM32_POWER_PIN
+                    string "Set the usb power pin, default: PA.15"
+                    depends on USBH_STM32_USING_POWER
+                    default "PA.15"
+            
+                config USBH_THREAD_STACK_SIZE
+                    int "Set the size of the USB host task stack, default: 4096"
+                    default (4096)
+                    
+                config USBH_MSC_FS
+                    string "Set the Udisk file system used, default: elm"
+                    default "elm"
+            endif
+	        
+	        if BSP_USING_USBH
+                choice
+                    prompt "Select USB port"
+                    default BSP_USING_USBH_HS
+        
+                    config BSP_USING_USBH_FS
+                        bool "Select USB FS"
+                        
+                    config BSP_USING_USBH_HS
+                        bool "Select USB HS"
+                endchoice
+                
+                config USBH_USING_CONTROLLABLE_POWER
+                    bool "Enable USB POWER"
+                    default n
+                    
+                config USBH_POWER_PIN
+                    string "Set the usb power pin, default: PA.15"
+                    depends on USBH_USING_CONTROLLABLE_POWER
+                    default "PA.15"
+                
+	            menuconfig RT_USBH_MSTORAGE
+	                bool "Enable Udisk Drivers"
+	                default n
+	                
+	                if RT_USBH_MSTORAGE
+	                    config UDISK_MOUNTPOINT
+	                    string "Set the Udisk mount dir, default: /mnt/udisk"
+	                    default "/mnt/udisk"
+	                endif
+	        endif
+        endif
+        
+    config BSP_USING_SDIO
+        bool "Enable SDIO"
+        select RT_USING_SDIO
+        select RT_USING_DFS
+        default n
+        
+    config SDIO_MAX_FREQ
+        int "Set SDIO max freq, default: 120000000"
+        depends on BSP_USING_SDIO
+        default 120000000
+
+    menuconfig BSP_USING_I2C
+    	bool "Enable I2C BUS"
+        default n
+        select RT_USING_I2C
+        
+        if BSP_USING_I2C
+		    config BSP_USING_I2C1
+		        bool "Enable I2C1 BUS"
+		        default n
+	            
+	        config BSP_USING_I2C2
+		        bool "Enable I2C2 BUS"
+		        default n
+
+	        config BSP_USING_I2C3
+		        bool "Enable I2C3 BUS"
+		        default n
+        endif
+        
+    menuconfig BSP_USING_SOFT_I2C
+    	bool "Enable software I2C BUS"
+        default n
+        select RT_USING_I2C
+        select RT_USING_I2C_BITOPS
+        select RT_USING_PIN
+        
+        if BSP_USING_SOFT_I2C
+		    menuconfig BSP_USING_SOFT_I2C1
+		        bool "Enable software I2C1 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C1_SCL
+	            string "Set the GPIO of the I2C1 scl pin, default: PH.6"
+	            depends on BSP_USING_SOFT_I2C1
+	            default "PH.6"
+	            
+	        config BSP_SOFT_I2C1_SDA
+	            string "Set the GPIO of the I2C1 sda pin, default: PH.7"
+	            depends on BSP_USING_SOFT_I2C1
+	            default "PH.7"
+	            
+	        menuconfig BSP_USING_SOFT_I2C2
+		        bool "Enable software I2C2 BUS"
+		        default n
+
+	        config BSP_SOFT_I2C2_SCL
+	            string "Set the GPIO of the I2C2 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C2
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C2_SDA
+	            string "Set the GPIO of the I2C2 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C2
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C3
+		        bool "Enable software I2C3 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C3_SCL
+	            string "Set the GPIO of the I2C3 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C3
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C3_SDA
+	            string "Set the GPIO of the I2C3 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C3
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C4
+		        bool "Enable software I2C4 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C4_SCL
+	            string "Set the GPIO of the I2C4 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C4
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C4_SDA
+	            string "Set the GPIO of the I2C4 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C4
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C5
+		        bool "Enable software I2C5 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C5_SCL
+	            string "Set the GPIO of the I2C5 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C5
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C5_SDA
+	            string "Set the GPIO of the I2C5 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C5
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C6
+		        bool "Enable software I2C6 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C6_SCL
+	            string "Set the GPIO of the I2C6 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C6
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C6_SDA
+	            string "Set the GPIO of the I2C6 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C6
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C7
+		        bool "Enable software I2C7 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C7_SCL
+	            string "Set the GPIO of the I2C7 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C7
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C7_SDA
+	            string "Set the GPIO of the I2C7 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C7
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C8
+		        bool "Enable software I2C8 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C8_SCL
+	            string "Set the GPIO of the I2C8 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C8
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C8_SDA
+	            string "Set the GPIO of the I2C8 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C8
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C9
+		        bool "Enable software I2C9 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C9_SCL
+	            string "Set the GPIO of the I2C9 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C9
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C9_SDA
+	            string "Set the GPIO of the I2C9 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C9
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C10
+		        bool "Enable software I2C10 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C10_SCL
+	            string "Set the GPIO of the I2C10 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C10
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C10_SDA
+	            string "Set the GPIO of the I2C10 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C10
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C11
+		        bool "Enable software I2C11 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C11_SCL
+	            string "Set the GPIO of the I2C11 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C11
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C11_SDA
+	            string "Set the GPIO of the I2C11 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C11
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C12
+		        bool "Enable software I2C12 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C12_SCL
+	            string "Set the GPIO of the I2C12 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C12
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C12_SDA
+	            string "Set the GPIO of the I2C12 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C12
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C13
+		        bool "Enable software I2C13 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C13_SCL
+	            string "Set the GPIO of the I2C13 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C13
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C13_SDA
+	            string "Set the GPIO of the I2C13 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C13
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C14
+		        bool "Enable software I2C14 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C14_SCL
+	            string "Set the GPIO of the I2C14 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C14
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C14_SDA
+	            string "Set the GPIO of the I2C14 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C14
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C15
+		        bool "Enable software I2C15 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C15_SCL
+	            string "Set the GPIO of the I2C15 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C15
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C15_SDA
+	            string "Set the GPIO of the I2C15 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C15
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C16
+		        bool "Enable software I2C16 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C16_SCL
+	            string "Set the GPIO of the I2C16 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C16
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C16_SDA
+	            string "Set the GPIO of the I2C16 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C16
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C17
+		        bool "Enable software I2C17 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C17_SCL
+	            string "Set the GPIO of the I2C17 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C17
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C17_SDA
+	            string "Set the GPIO of the I2C17 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C17
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C18
+		        bool "Enable software I2C18 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C18_SCL
+	            string "Set the GPIO of the I2C18 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C18
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C18_SDA
+	            string "Set the GPIO of the I2C18 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C18
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C19
+		        bool "Enable software I2C19 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C19_SCL
+	            string "Set the GPIO of the I2C19 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C19
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C19_SDA
+	            string "Set the GPIO of the I2C19 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C19
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C20
+		        bool "Enable software I2C20 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C20_SCL
+	            string "Set the GPIO of the I2C20 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C20
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C20_SDA
+	            string "Set the GPIO of the I2C20 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C20
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C21
+		        bool "Enable software I2C21 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C21_SCL
+	            string "Set the GPIO of the I2C21 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C21
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C21_SDA
+	            string "Set the GPIO of the I2C21 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C21
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C22
+		        bool "Enable software I2C22 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C22_SCL
+	            string "Set the GPIO of the I2C22 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C22
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C22_SDA
+	            string "Set the GPIO of the I2C22 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C22
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C23
+		        bool "Enable software I2C23 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C23_SCL
+	            string "Set the GPIO of the I2C23 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C23
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C23_SDA
+	            string "Set the GPIO of the I2C23 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C23
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C24
+		        bool "Enable software I2C24 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C24_SCL
+	            string "Set the GPIO of the I2C24 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C24
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C24_SDA
+	            string "Set the GPIO of the I2C24 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C24
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C25
+		        bool "Enable software I2C25 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C25_SCL
+	            string "Set the GPIO of the I2C25 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C25
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C25_SDA
+	            string "Set the GPIO of the I2C25 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C25
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C26
+		        bool "Enable software I2C26 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C26_SCL
+	            string "Set the GPIO of the I2C26 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C26
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C26_SDA
+	            string "Set the GPIO of the I2C26 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C26
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C27
+		        bool "Enable software I2C27 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C27_SCL
+	            string "Set the GPIO of the I2C27 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C27
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C27_SDA
+	            string "Set the GPIO of the I2C27 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C27
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C28
+		        bool "Enable software I2C28 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C28_SCL
+	            string "Set the GPIO of the I2C28 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C28
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C28_SDA
+	            string "Set the GPIO of the I2C28 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C28
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C29
+		        bool "Enable software I2C29 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C29_SCL
+	            string "Set the GPIO of the I2C29 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C29
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C29_SDA
+	            string "Set the GPIO of the I2C29 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C29
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C30
+		        bool "Enable software I2C30 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C30_SCL
+	            string "Set the GPIO of the I2C30 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C30
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C30_SDA
+	            string "Set the GPIO of the I2C30 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C30
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C31
+		        bool "Enable software I2C31 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C31_SCL
+	            string "Set the GPIO of the I2C31 scl pin, default: PH.6"
+	            depends on BSP_USING_SOFT_I2C31
+	            default "PH.6"
+	            
+	        config BSP_SOFT_I2C31_SDA
+	            string "Set the GPIO of the I2C31 sda pin, default: PH.7"
+	            depends on BSP_USING_SOFT_I2C31
+	            default "PH.7"
+	            
+	        menuconfig BSP_USING_SOFT_I2C32
+		        bool "Enable software I2C32 BUS"
+		        default n
+
+	        config BSP_SOFT_I2C32_SCL
+	            string "Set the GPIO of the I2C32 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C32
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C32_SDA
+	            string "Set the GPIO of the I2C32 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C32
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C33
+		        bool "Enable software I2C33 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C33_SCL
+	            string "Set the GPIO of the I2C33 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C33
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C33_SDA
+	            string "Set the GPIO of the I2C33 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C33
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C34
+		        bool "Enable software I2C34 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C34_SCL
+	            string "Set the GPIO of the I2C34 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C34
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C34_SDA
+	            string "Set the GPIO of the I2C34 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C34
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C35
+		        bool "Enable software I2C35 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C35_SCL
+	            string "Set the GPIO of the I2C35 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C35
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C35_SDA
+	            string "Set the GPIO of the I2C35 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C35
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C36
+		        bool "Enable software I2C36 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C36_SCL
+	            string "Set the GPIO of the I2C36 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C36
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C36_SDA
+	            string "Set the GPIO of the I2C36 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C36
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C37
+		        bool "Enable software I2C37 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C37_SCL
+	            string "Set the GPIO of the I2C37 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C37
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C37_SDA
+	            string "Set the GPIO of the I2C37 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C37
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C38
+		        bool "Enable software I2C38 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C38_SCL
+	            string "Set the GPIO of the I2C38 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C38
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C38_SDA
+	            string "Set the GPIO of the I2C38 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C38
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C39
+		        bool "Enable software I2C39 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C39_SCL
+	            string "Set the GPIO of the I2C39 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C39
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C39_SDA
+	            string "Set the GPIO of the I2C39 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C39
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C40
+		        bool "Enable software I2C40 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C40_SCL
+	            string "Set the GPIO of the I2C40 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C40
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C40_SDA
+	            string "Set the GPIO of the I2C40 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C40
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C41
+		        bool "Enable software I2C41 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C41_SCL
+	            string "Set the GPIO of the I2C41 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C41
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C41_SDA
+	            string "Set the GPIO of the I2C41 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C41
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C42
+		        bool "Enable software I2C42 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C42_SCL
+	            string "Set the GPIO of the I2C42 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C42
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C42_SDA
+	            string "Set the GPIO of the I2C42 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C42
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C43
+		        bool "Enable software I2C43 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C43_SCL
+	            string "Set the GPIO of the I2C43 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C43
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C43_SDA
+	            string "Set the GPIO of the I2C43 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C43
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C44
+		        bool "Enable software I2C44 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C44_SCL
+	            string "Set the GPIO of the I2C44 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C44
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C44_SDA
+	            string "Set the GPIO of the I2C44 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C44
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C45
+		        bool "Enable software I2C45 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C45_SCL
+	            string "Set the GPIO of the I2C45 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C45
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C45_SDA
+	            string "Set the GPIO of the I2C45 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C45
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C46
+		        bool "Enable software I2C46 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C46_SCL
+	            string "Set the GPIO of the I2C46 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C46
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C46_SDA
+	            string "Set the GPIO of the I2C46 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C46
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C47
+		        bool "Enable software I2C47 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C47_SCL
+	            string "Set the GPIO of the I2C47 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C47
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C47_SDA
+	            string "Set the GPIO of the I2C47 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C47
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C48
+		        bool "Enable software I2C48 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C48_SCL
+	            string "Set the GPIO of the I2C48 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C48
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C48_SDA
+	            string "Set the GPIO of the I2C48 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C48
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C49
+		        bool "Enable software I2C49 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C49_SCL
+	            string "Set the GPIO of the I2C49 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C49
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C49_SDA
+	            string "Set the GPIO of the I2C49 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C49
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C50
+		        bool "Enable software I2C50 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C50_SCL
+	            string "Set the GPIO of the I2C50 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C50
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C50_SDA
+	            string "Set the GPIO of the I2C50 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C50
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C51
+		        bool "Enable software I2C51 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C51_SCL
+	            string "Set the GPIO of the I2C51 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C51
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C51_SDA
+	            string "Set the GPIO of the I2C51 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C51
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C52
+		        bool "Enable software I2C52 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C52_SCL
+	            string "Set the GPIO of the I2C52 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C52
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C52_SDA
+	            string "Set the GPIO of the I2C52 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C52
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C53
+		        bool "Enable software I2C53 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C53_SCL
+	            string "Set the GPIO of the I2C53 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C53
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C53_SDA
+	            string "Set the GPIO of the I2C53 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C53
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C54
+		        bool "Enable software I2C54 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C54_SCL
+	            string "Set the GPIO of the I2C54 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C54
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C54_SDA
+	            string "Set the GPIO of the I2C54 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C54
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C55
+		        bool "Enable software I2C55 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C55_SCL
+	            string "Set the GPIO of the I2C55 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C55
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C55_SDA
+	            string "Set the GPIO of the I2C55 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C55
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C56
+		        bool "Enable software I2C56 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C56_SCL
+	            string "Set the GPIO of the I2C56 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C56
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C56_SDA
+	            string "Set the GPIO of the I2C56 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C56
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C57
+		        bool "Enable software I2C57 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C57_SCL
+	            string "Set the GPIO of the I2C57 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C57
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C57_SDA
+	            string "Set the GPIO of the I2C57 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C57
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C58
+		        bool "Enable software I2C58 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C58_SCL
+	            string "Set the GPIO of the I2C58 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C58
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C58_SDA
+	            string "Set the GPIO of the I2C58 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C58
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C59
+		        bool "Enable software I2C59 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C59_SCL
+	            string "Set the GPIO of the I2C59 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C59
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C59_SDA
+	            string "Set the GPIO of the I2C59 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C59
+	            default "PH.5"
+	            
+	        menuconfig BSP_USING_SOFT_I2C60
+		        bool "Enable software I2C60 BUS"
+		        default n
+		        
+	        config BSP_SOFT_I2C60_SCL
+	            string "Set the GPIO of the I2C60 scl pin, default: PH.4"
+	            depends on BSP_USING_SOFT_I2C60
+	            default "PH.4"
+	            
+	        config BSP_SOFT_I2C60_SDA
+	            string "Set the GPIO of the I2C60 sda pin, default: PH.5"
+	            depends on BSP_USING_SOFT_I2C60
+	            default "PH.5"
+        endif
+
+    menuconfig BSP_USING_TIM
+        bool "Enable timer"
+        default n
+        select RT_USING_HWTIMER
+        if BSP_USING_TIM
+            config BSP_USING_TIM1
+                bool "Enable TIM1"
+                default n
+        endif
+
+    menuconfig BSP_USING_PWM
+        bool "Enable pwm"
+        default n
+        select RT_USING_PWM
+        
+        if BSP_USING_PWM
+            menuconfig BSP_USING_PWM1
+                bool "Enable TIM1 output pwm"
+                default n
+                
+                if BSP_USING_PWM1
+                    config BSP_USING_PWM1_CH1
+                        bool "Enable PWM1 channel1"
+                        default n
+                        
+                    config BSP_USING_PWM1_CH2
+                        bool "Enable PWM1 channel2"
+                        default n
+                        
+                    config BSP_USING_PWM1_CH3
+                        bool "Enable PWM1 channel3"
+                        default n
+                        
+                    config BSP_USING_PWM1_CH4
+                        bool "Enable PWM1 channel4"
+                        default n
+                endif
+        endif
+
+    menuconfig BSP_USING_ADC
+        bool "Enable ADC"
+        default n
+        select RT_USING_ADC
+        
+        if BSP_USING_ADC
+            config BSP_USING_ADC1
+                bool "Enable ADC1"
+                default n
+            
+            config BSP_USING_ADC2
+                bool "Enable ADC2"
+                default n
+            
+            config BSP_USING_ADC3
+                bool "Enable ADC3"
+                default n
+        endif
+
+    menuconfig BSP_USING_ONCHIP_RTC
+        bool "Enable RTC"
+        select RT_USING_RTC
+        select RT_USING_LIBC
+        default n
+        if BSP_USING_ONCHIP_RTC
+            choice
+                prompt "Select clock source"
+                default BSP_RTC_USING_LSE
+
+                config BSP_RTC_USING_LSE
+                    bool "RTC USING LSE"
+
+                config BSP_RTC_USING_LSI
+                    bool "RTC USING LSI"
+            endchoice
+        endif
+
+    config BSP_USING_WDT
+        bool "Enable Watchdog Timer"
+        select RT_USING_WDT
+        default y
+
+    config BSP_USING_GPIO
+        bool
+        select RT_USING_PIN
+        default y
+
+    config BSP_USING_FMC
+        bool
+        default n
+        
+    config BSP_USING_SRAM
+        bool
+        default n
+        
+    config BSP_USING_LCD
+        bool
+        select BSP_USING_LTDC
+        default n
+        
+    config BSP_USING_LTDC
+        bool
+        default n
+        
+    source "libraries/HAL_Drivers/Kconfig"
+    
+endmenu
+
+menu "Onboard Peripheral Drivers"
+
+    menuconfig BSP_USING_LED
+        bool "Enable panel indicator led"
+        default n
+        if BSP_USING_LED
+            comment "Three states of the LED:"
+            comment "Blinking: the system is running or receiving and transmitting data"
+            comment "Off: the system has no message or data receiving and sending"
+            comment "On: system fault"
+            
+            config BSP_LED_CYCLE
+                int "Set the flashing cycle of the indicator led, in ms, default: 100"
+                default 100
+                
+            config BSP_LED_MAX
+                int "Set the maximum number of supported LED lights, default: 8"
+                default 8
+            
+            config BSP_USING_LED_RUN
+                bool "Enable system operation indicator led"
+                default n
+                
+            config LED_RUN_LEVEL
+                int "Set LED_RUN lighting level, 0 low level, 1 high level"
+                depends on BSP_USING_LED_RUN
+                default 0
+                
+            config LED_RUN_GPIO
+                string "Set the GPIO of the LED_RUN pin, default: PI.11"
+                depends on BSP_USING_LED_RUN
+                default "PI.11"
+        endif
+        
+    menuconfig BSP_USING_ROOTFS
+        bool "Enable rootfs"
+        select RT_USING_DFS
+        select RT_USING_DFS_ROMFS
+        select RT_USING_DFS_TMPFS
+        select RT_USING_MODULE
+        select PKG_USING_LITTLEFS
+        default n
+        if BSP_USING_ROOTFS
+            comment "Please ensure that there is an mtd mor device with the names bin, etc, lib, usr present."
+            
+            config ROOTFS_USING_SELF_START
+                bool "Enable self start scripts"
+                default y
+                
+            config ROOTFS_SELF_START_PATH
+                string "Set self start scripts path, default: /etc/rc.d"
+                depends on ROOTFS_USING_SELF_START
+                default "/etc/rc.d"
+            
+            config ROOTFS_USING_UPDATE
+                bool "Enable update from udisk"
+                default n
+            
+            config ROOTFS_UPDATE_DEVNAME
+                string "Set storage device name, default: ud0p0"
+                depends on ROOTFS_USING_UPDATE
+                default "ud0p0"
+                
+            config ROOTFS_UPDATE_PATH
+                string "Set firmware path, default: /mnt/udisk/ud0p0/rootfs/"
+                depends on ROOTFS_USING_UPDATE
+                default "/mnt/udisk/ud0p0/rootfs"
+
+        endif
+
+    menuconfig BSP_USING_FMCSRAM
+        bool "Enable SRAM"
+        select BSP_USING_FMC
+        select BSP_USING_SRAM
+        default n
+        
+        if BSP_USING_FMCSRAM
+            config BSP_FMCSRAM_NE
+	            hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
+	            default (0x2)
+
+            config BSP_FMCSRAM_ADDR
+	            hex "Set the memory start address, default: ((void *)(0x60000000 + 0x4000000*1))"
+	            default (0x64000000)
+            
+            config BSP_FMCSRAM_SIZE
+	            int "Set memory size, default: (1 * 1024 * 1024)"
+	            default (1048576)
+	            
+	        config BSP_FMCSRAM_BUS_WIDTH
+                int "Set bus width, default: 16"
+                default (16)
+                
+            config BSP_FMCSRAM_AddressSetupTime
+                int "Set AddressSetupTime, default: 2"
+                default (2)
+                
+            config BSP_FMCSRAM_DataSetupTime
+                int "Set DataSetupTime, default: 2"
+                default (2)
+                
+            config BSP_FMCSRAM_BusTurnAroundDuration
+                int "Set BusTurnAroundDuration, default: 0"
+                default (0)
+                
+            config BSP_FMCSRAM_ENABLE_BLK
+                bool "Enable the block device"
+                default n
+                
+            config BSP_FMCSRAM_ENABLE_FS
+                bool "Enable the file system"
+                depends on BSP_FMCSRAM_ENABLE_BLK
+                select RT_USING_DFS
+                select RT_USING_DFS_ROMFS
+                select RT_USING_DFS_ELMFAT
+                default n
+            
+            config BSP_FMCSRAM_FS
+                string "Set the file system used, default: elm"
+                depends on BSP_FMCSRAM_ENABLE_FS
+                default "elm"
+        endif
+        
+	menuconfig BSP_USING_SDRAM
+        bool "Enable SDRAM"
+        select BSP_USING_FMC
+        default n
+        
+        if BSP_USING_SDRAM
+        	config SDRAM_TARGET_BANK
+	            int "Set the bank to use, example: FMC_SDRAM_BANK1: 1, FMC_SDRAM_BANK2: 2"
+	            default (1)
+
+            config SDRAM_BANK_ADDR
+	            hex "Set the memory start address, example: FMC_SDRAM_BANK1: 0xC0000000, FMC_SDRAM_BANK2: 0xD0000000"
+	            default (0xC0000000)
+	            
+	       	config SDRAM_DATA_WIDTH
+	            int "Set data width, default: 16"
+	            default (16)
+	            
+	        config SDRAM_COLUMN_BITS
+	            int "Set column bits, default: 9"
+	            default (9)
+	            
+	        config SDRAM_ROW_BITS
+	            int "Set row bits, default: 13"
+	            default (13)
+	            
+	       	config SDRAM_CAS_LATENCY
+	            int "Set cas latency, default: 3"
+	            default (3)
+	            
+	        config SDRAM_RPIPE_DELAY
+	            int "Set rpipe delay, default: 1"
+	            default (1)
+	            
+	        config SDCLOCK_PERIOD
+	            int "Set clock period, default: 2"
+	            default (2)
+	            
+	        config SDRAM_REFRESH_COUNT
+	            hex "Set refresh count, default: 0x02AB"
+	            default (0x02AB)
+            
+            config SDRAM_SIZE
+	            int "Set memory size, default: (32 * 1024 * 1024)"
+	            default (33554432)
+	            
+	        comment "Timing configuration for W9825G6KH-6"
+	        comment "90 MHz of SD clock frequency (180MHz/2)"
+	            
+	        config LOADTOACTIVEDELAY
+	            int "Set LOADTOACTIVEDELAY, TMRD: 2 Clock cycles, default: 2"
+	            default (2)
+	            
+	        config EXITSELFREFRESHDELAY
+	            int "Set EXITSELFREFRESHDELAY, TXSR: 7x11.90ns, default: 8"
+	            default (8)
+	            
+	        config SELFREFRESHTIME
+	            int "Set SELFREFRESHTIME, TRAS: 4x11.90ns, default: 6"
+	            default (6)
+	            
+	        config ROWCYCLEDELAY
+	            int "Set ROWCYCLEDELAY, TRC:  7x11.90ns, default: 6"
+	            default (6)
+	            
+	        config WRITERECOVERYTIME
+	            int "Set WRITERECOVERYTIME, TWR:  2 Clock cycles, default: 2"
+	            default (2)
+	            
+	        config RPDELAY
+	            int "Set RPDELAY, TRP:  2x11.90ns, default: 2"
+	            default (2)
+	            
+	        config RCDDELAY
+	            int "Set RCDDELAY, TRCD: 2x11.90ns, default: 2"
+	            default (2)
+	            
+	        config SDRAM_MODEREG_BURST_LENGTH_1
+	            hex "Set modereg burst length 1, default: 0x0000"
+	            default (0x0000)
+	            
+	        config SDRAM_MODEREG_BURST_LENGTH_2
+	            hex "Set modereg burst length 2, default: 0x0001"
+	            default (0x0001)
+	            
+	        config SDRAM_MODEREG_BURST_LENGTH_4
+	            hex "Set modereg burst length 4, default: 0x0002"
+	            default (0x0002)
+	            
+	        config SDRAM_MODEREG_BURST_LENGTH_8
+	            hex "Set modereg burst length 8, default: 0x0004"
+	            default (0x0004)
+	            
+	        config SDRAM_MODEREG_BURST_TYPE_SEQUENTIAL
+	            hex "Set modereg burst type sequential, default: 0x0000"
+	            default (0x0000)
+	            
+	        config SDRAM_MODEREG_BURST_TYPE_INTERLEAVED
+	            hex "Set modereg burst type interleaved, default: 0x0008"
+	            default (0x0008)
+	            
+	        config SDRAM_MODEREG_CAS_LATENCY_2
+	            hex "Set modereg cas latency 2, default: 0x0020"
+	            default (0x0020)
+	            
+	        config SDRAM_MODEREG_CAS_LATENCY_3
+	            hex "Set modereg cas latency 3, default: 0x0030"
+	            default (0x0030)
+	            
+	        config SDRAM_MODEREG_OPERATING_MODE_STANDARD
+	            hex "Set modereg operating mode standard, default: 0x0000"
+	            default (0x0000)
+	            
+	        config SDRAM_MODEREG_WRITEBURST_MODE_PROGRAMMED
+	            hex "Set modereg writeburst mode programmed, default: 0x0000"
+	            default (0x0000)
+	            
+	        config SDRAM_MODEREG_WRITEBURST_MODE_SINGLE
+	            hex "Set modereg writeburst mode single, default: 0x0200"
+	            default (0x0200)
+        endif
+        
+    menuconfig BSP_USING_LVGL
+        bool "Enable LVGL for LCD"
+        select PKG_USING_LVGL
+        default n
+
+        if BSP_USING_LVGL
+            config LCD_WIDTH
+                int "Set lcd width, default: 800"
+                default (800)
+                
+            config LCD_HEIGHT
+                int "Set lcd height, default: 600"
+                default (600)
+                
+            config LCD_BITS_PER_PIXEL
+                int "Set lcd bits per pixel, default: 16"
+                default (16)
+            
+            choice
+                prompt "Select lcd driver"
+                default BSP_USING_LCD_RGB
+
+                config BSP_USING_LCD_RGB
+                    bool "Enable LCD RGB565"
+                    select BSP_USING_LCD
+                    select RT_TOUCH_PIN_IRQ
+                    
+                config BSP_USING_FMCLCD
+                    bool "Enable ATK LCD"
+                    select BSP_USING_FMC
+                    select BSP_USING_SRAM
+            endchoice
+            
+            if BSP_USING_LCD_RGB
+                config LCD_HSYNC_WIDTH
+                    int "Set lcd hsync width, default: 1"
+                    default (1)
+                    
+                config LCD_VSYNC_HEIGHT
+                    int "Set lcd vsync height, default: 1"
+                    default (1)
+                    
+                config LCD_HBP
+                    int "Set lcd hbp, default: 40"
+                    default (40)
+                    
+                config LCD_VBP
+                    int "Set lcd vbp, default: 32"
+                    default (32)
+                    
+                config LCD_HFP
+                    int "Set lcd hfp, default: 48"
+                    default (48)
+                    
+                config LCD_VFP
+                    int "Set lcd vfp, default: 13"
+                    default (13)
+                    
+                choice
+                    prompt "Select lcd backlight"
+                    default LCD_BACKLIGHT_USING_PWM
+    
+                    config LCD_BACKLIGHT_USING_PWM
+                        bool "Enable BACKLIGHT PWM"
+                        
+                    config LCD_BACKLIGHT_USING_GPIO
+                        bool "Enable BACKLIGHT GPIO"
+                endchoice
+                
+                if LCD_BACKLIGHT_USING_GPIO
+                    config LCD_BKLT_EN_GPIO
+                        string "Set the GPIO of the BKLT EN, default: PD.3"
+                        default "PD.3"
+                        
+                    config LCD_BKLT_CTL_GPIO
+                        string "Set the GPIO of the BKLT CTL, default: PA.2"
+                        default "PA.2"
+                endif
+
+                config BSP_USING_LCD_TEST
+                    bool "Enable lcd test"
+                    default n
+            endif
+            
+            if BSP_USING_FMCLCD
+                config BSP_FMCLCD_NE
+                    hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
+                    default (0x6)
+    
+                config BSP_FMCLCD_BASE
+                    hex "Set the base address, default: NE4 A6 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE4 - 1)) | (1 << (A6 + 1))))"
+                    default (0x6C000080)
+                    
+                config BSP_FMCLCD_BL_PIN
+                    string "Set the lcd bl pin, default: PB.15"
+                    default "PB.15"
+                
+                config BSP_USING_FMCLCD_TEST
+                    bool "Enable fmclcd test"
+                    default n
+            endif
+            
+            choice
+                prompt "Select touch driver"
+                default BSP_USING_NONETOUCH
+                
+                config BSP_USING_NONETOUCH
+                    bool "Disable TOUCH"
+
+                config BSP_USING_ATKTOUCH
+                    bool "Enable ATK LCD TOUCH"
+            endchoice
+            
+            if BSP_USING_ATKTOUCH
+                config BSP_USING_TOUCH_CAP
+                    bool "Use LCD TOUCH Capacitance"
+                    default n
+                    if BSP_USING_TOUCH_CAP
+                        config BSP_TOUCH_I2C_DEVNAME
+                            string "Touch i2c devname, default: i2c2"
+                            default "i2c2"
+                            
+                        config BSP_TOUCH_INT_PIN
+                            string "Touch interrupt pin, default: PB.1"
+                            default "PB.1"
+                    endif
+    
+                config BSP_USING_TOUCH_RES
+                    bool "Use LCD TOUCH Resistance"
+                    select RT_USING_TOUCH
+                    select RT_TOUCH_PIN_IRQ
+                    default y
+                    if BSP_USING_TOUCH_RES
+                        config BSP_TOUCH_SPI_BUS
+                            string "Set the spi bus used, default: sspi1"
+                            default "sspi1"
+                            
+                        config BSP_XPT2046_CS_PIN
+                            string "pin name for the chip select pin, default: PC.13"
+                            default "PC.13"
+    
+                        config BSP_XPT2046_IRQ_PIN
+                            string "pin name for the irq pin, default: PB.1"
+                            default "PB.1"
+                    endif
+            endif
+            
+            config BSP_USING_LVGL_DEMO
+                bool "Enable LVGL demo"
+                default n
+        endif
+        
+    menuconfig BSP_USING_WM8978
+        bool "Enable AUDIO (WM8978)"
+        select RT_USING_AUDIO
+        select RT_USING_MEMPOOL
+        select BSP_USING_I2S
+        default n
+
+        if BSP_USING_WM8978
+            config WM8978_I2C_DEV
+                string "Set the i2c device name used, default: i2c1"
+                default "i2c1"
+        endif
+        
+    menuconfig BSP_USING_ADAU1761
+        bool "Enable adau1761, SigmaDSP Stereo, Low Power, 96 kHz, 24-Bit Audio Codec with Integrated PLL"
+        select RT_USING_AUDIO
+        select RT_USING_MEMPOOL
+        select BSP_USING_I2S
+        default n
+
+        if BSP_USING_ADAU1761
+            config ADAU1761_I2C_DEV
+                string "Set the i2c device name used, default: i2c1"
+                default "i2c1"
+                
+            config ADAU1761_I2C_ADD
+                hex "Set the i2c device address, default: 0x38"
+                default (0x38)
+                
+            config ADAU1761_USING_PWR_PIN
+                bool "Enable audio power pin"
+                default n
+                
+            config ADAU1761_PWR_PIN
+                string "Set the GPIO of the audio power pin, default: PA.8"
+                depends on ADAU1761_USING_PWR_PIN
+                default "PA.8"
+                
+            config ADAU1761_USING_AMP_PIN
+                bool "Enable amplifier switch pin"
+                default n
+                
+            config ADAU1761_AMP_PIN
+                string "Set the GPIO of the Power amplifier switch pin, default: PH.6"
+                depends on ADAU1761_USING_AMP_PIN
+                default "PH.6"
+        endif
+        
+    menuconfig BSP_USING_NORFLASH
+        bool "Enable NORFLASH"
+        select BSP_USING_FMC
+        select RT_USING_MTD_NOR
+        default n
+        
+        if BSP_USING_NORFLASH
+            config BSP_NORFLASH_NE
+	            hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
+	            default (0x0)
+
+            config BSP_NORFLASH_ADDR
+	            hex "Set the memory start address, example: NOR_MEMORY_ADRESS1: 0x60000000, NOR_MEMORY_ADRESS3: 0x68000000"
+	            default (0x60000000)
+            
+            config NORFLASH_RST
+	            string "Set the GPIO of the reset pin, default: PG.15"
+	            default "PG.15"
+            
+            config NORFLASH_SIZE_GRANULARITY_TOTAL
+	            int "Set storage space size, default: (32 * 1024 * 1024)"
+	            default (33554432)
+            
+            config NORFLASH_BLK_SIZE
+	            int "Set the memory block size, default: (128 * 1024)"
+	            default (131072)
+	            
+	        config BSP_NORFLASH_BUS_WIDTH
+                int "Set bus width, default: 16"
+                default (16)
+                
+            config BSP_NORFLASH_AddressSetupTime
+                int "Set AddressSetupTime, default: 11"
+                default (11)
+                
+            config BSP_NORFLASH_DataSetupTime
+                int "Set DataSetupTime, default: 16"
+                default (16)
+                
+            config BSP_NORFLASH_BusTurnAroundDuration
+                int "Set BusTurnAroundDuration, default: 0"
+                default (0)
+                
+            config NORFLASH_SIZE_APP
+                int "Set application part size, default: (0 * 1024)"
+                default (0)
+	            
+	        config NORFLASH_SIZE_DOWNLOAD
+                int "Set download part size, default: (2048 * 1024)"
+                default (2097152)
+                
+            config NORFLASH_SIZE_FACTORY
+                int "Set factory part size, default: (2048 * 1024)"
+                default (2097152)
+                
+            config NORFLASH_SIZE_BIN
+                int "Set bin part size, default: (2048 * 1024)"
+                default (2097152)
+                
+            config NORFLASH_SIZE_ETC
+                int "Set etc part size, default: (2048 * 1024)"
+                default (2097152)
+                
+            config NORFLASH_SIZE_LIB
+                int "Set lib part size, default: (2048 * 1024)"
+                default (2097152)
+                
+            config NORFLASH_SIZE_USR
+                int "Set usr part size, default: (2048 * 1024)"
+                default (2097152)
+                
+            config NORFLASH_SIZE_KVDB
+                int "Set kvdb part size, default: (2048 * 1024)"
+                default (2097152)
+                
+            config NORFLASH_SIZE_TSDB
+                int "Set tsdb part size, default: (0 * 1024)"
+                default (0)
+                
+            config NORFLASH_ENABLE_FS
+                bool "Enable the file system"
+                select RT_USING_DFS
+                select RT_USING_DFS_ROMFS
+                select PKG_USING_LITTLEFS
+                default y
+            
+            config NORFLASH_FS
+	            string "Set the file system used, default: lfs"
+	            depends on NORFLASH_ENABLE_FS
+	            default "lfs"
+	            
+	        config NORFLASH_ENABLE_BUFFER_PROGRAM
+	        	bool "Enable buffered writes"
+	        	default y
+	        	
+	       	config NORFLASH_BUFFER_PROGRAM_MAX
+	        	int "Maximum buffer write length, default: 64"
+	        	depends on NORFLASH_ENABLE_BUFFER_PROGRAM
+	        	default (64)
+	        	
+	        config NORFLASH_ENABLE_TEST
+                bool "Enable test cmd"
+                default n
+        endif
+
+    menuconfig BSP_USING_FM25xx
+        bool "Enable fram FM25xx"
+        select RT_USING_DFS
+        select RT_USING_DFS_ROMFS
+        select PKG_USING_LITTLEFS
+        default n
+        
+        if BSP_USING_FM25xx
+            config BSP_FM25xx_SPI_BUS
+	            string "Set the spi bus used, default: spi1"
+	            default "spi1"
+	            
+            config BSP_FM25xx_SPI_CS_PIN
+	            string "Set the pin of the chip select, default: PC.3"
+	            default "PC.3"
+            
+            config BSP_FM25xx_SPI_SPEED
+	            int "Set the rate of spi, default: (25 * 1000 *1000)"
+	            default (25000000)
+            
+            config FM25xx_SIZE_GRANULARITY_TOTAL
+	            int "Set storage space size, default: (128 * 1024)"
+	            default (131072)
+            
+            config FM25xx_BLK_SIZE
+	            int "Set the memory block size, default: (512)"
+	            default (512)
+            
+            config FM25xx_FS
+	            string "Set the file system used, default: lfs"
+	            default "lfs"
+	            
+	        config FM25xx_ENABLE_TEST
+                bool "Enable test cmd"
+                default n
+        endif
+        
+    menuconfig BSP_USING_SPI_FLASH
+        bool "Enable SPI FLASH (W25Qxx)"
+        select RT_USING_DFS
+        select RT_USING_DFS_ROMFS
+        select PKG_USING_LITTLEFS
+        select RT_USING_SFUD
+        select RT_SFUD_USING_SFDP
+        default n
+        
+        if BSP_USING_SPI_FLASH
+            config BSP_SPI_FLASH_SPI_BUS
+                string "Set the spi bus used, default: spi1"
+                default "spi1"
+                
+            config BSP_SPI_FLASH_SPI_CS_PIN
+                string "Set the pin of the chip select, default: PB.14"
+                default "PB.14"
+            
+            config SPI_FLASH_SIZE_GRANULARITY_TOTAL
+                int "Set storage space size, default: (16 * 1024 * 1024)"
+                default (16777216)
+            
+            config SPI_FLASH_BLK_SIZE
+                int "Set the memory block size, default: (4096)"
+                default (4096)
+            
+            config SPI_FLASH_FS
+                string "Set the file system used, default: lfs"
+                default "lfs"
+        endif
+        
+    menuconfig BSP_USING_EMMC
+        bool "Enable EMMC"
+        select RT_USING_DFS
+        select RT_USING_DFS_ROMFS
+        select PKG_USING_LITTLEFS
+        default n
+        
+        if BSP_USING_EMMC            
+            choice
+                prompt "Select the bus wide"
+                default BSP_SDIO_BUS_WIDE_4B
+                
+                config BSP_SDIO_BUS_WIDE_4B
+                    bool "Select bus wide 4b"
+    
+                config BSP_SDIO_BUS_WIDE_8B
+                    bool "Select bus wide 8b"
+            endchoice
+                
+	        config BSP_SDIO_RX_USING_DMA
+                bool "Enable SDIO RX DMA"
+                depends on SOC_SERIES_STM32F4
+                default y
+                
+            config BSP_SDIO_TX_USING_DMA
+                bool "Enable SDIO TX DMA"
+                depends on SOC_SERIES_STM32F4
+                default y
+            
+            config EMMC_FS
+	            string "Set the file system used, default: lfs"
+	            default "lfs"
+        endif
+        
+    menuconfig BSP_USING_SDCARD
+        bool "Enable SDIO or SDMMC"
+        select BSP_USING_SDIO
+        select RT_USING_DFS
+        select RT_USING_DFS_ROMFS
+        select RT_USING_DFS_TMPFS
+        select RT_USING_DFS_ELMFAT
+        default n
+        
+        if BSP_USING_SDCARD
+            config BSP_SDIO_RX_USING_DMA
+                bool
+                depends on SOC_SERIES_STM32F4
+                default y
+                
+            config BSP_SDIO_TX_USING_DMA
+                bool
+                depends on SOC_SERIES_STM32F4
+                default y
+            
+            config SDCARD_FS
+                string "Set the file system used, default: elm"
+                default "elm"
+        endif
+        
+    menuconfig BSP_USING_KSZ8851
+        bool "Enable NETDEV KSZ8851 (KSZ8851-16MLLU)"
+        select BSP_USING_FMC
+        select BSP_USING_SRAM
+        select RT_USING_SAL
+        select RT_USING_LWIP
+        select RT_USING_POSIX_FS
+        select RT_USING_POSIX_SOCKET
+        default n
+        
+        if BSP_USING_KSZ8851
+        	config BSP_USING_KSZ8851_RX_DUMP
+		        bool "Enable KSZ8851 RX DUMP"
+		        default n
+		        
+		    config BSP_USING_KSZ8851_TX_DUMP
+		        bool "Enable KSZ8851 TX DUMP"
+		        default n
+	        
+            menuconfig BSP_USE_ETH1
+		        bool "Enable ETH port 1"
+		        default n
+	        
+	        	if BSP_USE_ETH1
+		        	config ETH1_NE
+			            hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
+			            default (0x4)
+		
+		            config ETH1_CMD
+			            hex "Set the cmd address, default: NE3 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE3 - 1)) | (1 << (A0 + 1))))"
+			            default (0x68000002)
+		            
+		            config ETH1_RST
+			            string "Set the GPIO of the reset pin, default: PG.14"
+			            default "PG.14"
+		            
+		            config ETH1_ISR
+			            string "Set the GPIO of the isr pin, default: PH.2"
+			            default "PH.2"
+	        	endif
+	        
+	        menuconfig BSP_USE_ETH2
+		        bool "Enable ETH port 2"
+		        default n
+		        
+		        if BSP_USE_ETH2
+		        	config ETH2_NE
+			            hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
+			            default (0x6)
+		
+		            config ETH2_CMD
+			            hex "Set the cmd address, default: NE4 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE4 - 1)) | (1 << (A0 + 1))))"
+			            default (0x6C000002)
+			            
+			        config ETH2_RST
+			            string "Set the GPIO of the reset pin, default: PG.14"
+			            default "PG.14"
+		            
+		            config ETH2_ISR
+			            string "Set the GPIO of the isr pin, default: PH.3"
+			            default "PH.3"
+	        	endif
+        endif
+        
+    menuconfig BSP_USING_ETH
+        bool "Enable Ethernet"
+        select RT_LWIP_USING_HW_CHECKSUM
+        select RT_USING_SAL
+        select RT_USING_LWIP
+        select RT_USING_POSIX_FS
+        select RT_USING_POSIX_SOCKET
+        default n
+        
+        if BSP_USING_ETH
+            config PHY_RST_PIN
+                string "Set phy rst pin, default: PD.3"
+                default "PD.3"
+        
+            config PHY_USING_INTERRUPT_MODE
+                bool "Enable interrupt mode"
+                default n
+                
+            config PHY_INT_PIN
+                string "Set phy int pin, default: PA.1"
+                depends on PHY_USING_INTERRUPT_MODE
+                default "PA.1"
+            
+            config ETH_RX_DUMP
+                bool "Enable rx dump"
+                default n
+                
+            config ETH_TX_DUMP
+                bool "Enable tx dump"
+                default n
+                
+            choice
+                prompt "Select eth used phy"
+                default PHY_USING_LAN8720A
+                
+                config PHY_USING_LAN8720A
+                    bool "Select phy LAN8720A"
+                    
+                config PHY_USING_LAN8742A
+                    bool "Select phy LAN8742A"
+    
+                config PHY_USING_DM9161CEP
+                    bool "Select phy DM9161CEP"
+                    
+                config PHY_USING_DP83848C
+                    bool "Select phy DP83848C"
+            endchoice
+        endif
+        
+    menuconfig BSP_USING_MAX31826
+        bool "Enable Temperature Sensor (MAX31826MUA+)"
+        select RT_USING_PIN
+        select RT_USING_SENSOR
+        default n
+        
+        if BSP_USING_MAX31826
+            config MAX31826_GPIO
+		        string "Set the GPIO of the sensor pin, default: PI.8"
+		        default "PI.8"
+        endif
+        
+    menuconfig BSP_USING_DS1682
+        bool "Enable integrated elapsed-time recorder (DS1682S+)"
+        select RT_USING_SENSOR
+        default n
+        
+        if BSP_USING_DS1682
+            config DS1682_I2C_DEV
+		        string "Set the i2c device name used, default: i2c2"
+		        default "i2c2"
+		        
+		    config DS1682_I2C_ADD
+		        hex "Set the i2c device address, default: 0x6B"
+		        default (0x6B)
+        endif
+        
+    menuconfig BSP_USING_EEPROM_24Cxx
+        bool "Enable electrically erasable and programmable read-only memory (EEPROM) (HG24C02)"
+        default n
+        
+        if BSP_USING_EEPROM_24Cxx
+            config EEPROM_24Cxx_I2C_DEV
+		        string "Set the i2c device name used, default: i2c2"
+		        default "i2c2"
+		        
+		    config EEPROM_24Cxx_I2C_ADD
+		        hex "Set the i2c device address, default: 0x50"
+		        default (0x50)
+		        
+		    config EEPROM_24Cxx_SIZE_GRANULARITY_TOTAL
+	            int "Set storage space size, default: (256)"
+	            default (256)
+            
+            config EEPROM_24Cxx_BLK_SIZE
+	            int "Set the memory block size, default: (8)"
+	            default (8)
+	            
+	        config EEPROM_24Cxx_ENABLE_TEST
+                bool "Enable test cmd"
+                default n
+        endif
+        
+    menuconfig BSP_USING_TCA9555
+        bool "Enable I/O expander (TCA9555)"
+        default n
+        
+        if BSP_USING_TCA9555
+        	config TCA9555_I2C_DEVNAME
+		        string "Set the i2c device name used, default: si2c"
+		        default "si2c"
+        endif
+        
+    menuconfig BSP_USING_LTC2945
+        bool "Enable Wide Range I2C Power Monitor (LTC2945)"
+        default n
+        
+        if BSP_USING_LTC2945
+            config LTC2945_I2C_DEV
+		        string "Set the i2c device name used, default: i2c1"
+		        default "i2c1"
+		        
+		    config LTC2945_I2C_ADD
+		        hex "Set the i2c device address, default: 0x6C"
+		        default (0x6C)
+        endif
+        
+    menuconfig BSP_USING_LTC2991
+        bool "Enable Octal I2C Voltage, Current, and Temperature Monitor (LTC2991)"
+        default n
+        
+        if BSP_USING_LTC2991
+            config LTC2991_I2C_DEV
+		        string "Set the i2c device name used, default: i2c1"
+		        default "i2c1"
+		        
+		    config LTC2991_I2C_ADD
+		        hex "Set the i2c device address, default: 0x48"
+		        default (0x48)
+        endif
+        
+    menuconfig BSP_USING_DS28E01
+        bool "Enable Protected 1-wire EEPROM (DS28E01)"
+        default n
+        
+        if BSP_USING_DS28E01
+            config DS28E01_GPIO
+                string "Set the GPIO of the sensor pin, default: PG.7"
+                default "PG.7"
+        endif
+        
+    menuconfig BSP_USING_ICCARD_FLASH
+        bool "Enable ic card flash (hnthinker)"
+        default n
+        
+        if BSP_USING_ICCARD_FLASH
+            config BSP_ICCARD_FLASH_SPI_BUS
+                string "Set the spi bus used, default: spi1"
+                default "spi1"
+                
+            config BSP_ICCARD_FLASH_SPI_CS_PIN
+                string "Set the pin of the chip select, default: PA.4"
+                default "PA.4"
+                
+            config BSP_ICCARD_FLASH_SPI_SPEED
+                int "Set the rate of spi, default: (2 * 1000 *1000)"
+                default (2000000)
+                
+            config BSP_ICCARD_FLASH_POWER_PIN
+                string "Set the pin of the power, default: PB.10"
+                default "PB.10"
+                
+            config BSP_ICCARD_FLASH_BUSY_PIN
+                string "Set the pin of the busy, default: PB.11"
+                default "PB.11"
+                
+            config BSP_ICCARD_FLASH_RST_PIN
+                string "Set the pin of the reset, default: PB.0"
+                default "PB.0"
+                
+            config BSP_ICCARD_FLASH_ISR_PIN
+                string "Set the pin of the isr, default: PA.12"
+                default "PA.12"
+        endif
+        
+    menuconfig BSP_USING_LTC186X
+        bool "Enable The LTC1864/LTC1865 are 16-bit A/D converters"
+        select RT_USING_ADC
+        default n
+        
+        if BSP_USING_LTC186X
+            config BSP_LTC186X_SPI_BUS
+                string "Set the spi bus used, default: sspi2"
+                default "sspi2"
+                
+            config BSP_LTC186X_SPI_CS_PIN
+                string "Set the pin of the chip select, default: PA.15"
+                default "PA.15"
+                
+            config BSP_LTC186X_SPI_SPEED
+                int "Set the rate of spi, default: (20 * 1000 *1000)"
+                default (20000000)
+                
+            config BSP_LTC186X_RESOLUTION
+                int "Set the resolution, default: (16)"
+                default (16)
+                
+            config BSP_LTC186X_VREF
+                int "Set the vref, default: (50000)"
+                default (50000)
+        endif
+        
+    menuconfig BSP_USING_GNSS
+        bool "Enable GNSS with uart"
+        select PKG_USING_LWGPS
+        default n
+        
+        if BSP_USING_GNSS
+            config BSP_GNSS_DEVNAME
+                string "Set the uart used, default: uart4"
+                default "uart4"
+                
+            config BSP_GNSS_DEFAULT_RATE
+                int "Set the uart default baudrate, default: (9600)"
+                default (9600)
+                
+            config BSP_GNSS_RATE
+                int "Set the uart baudrate, default: (115200)"
+                default (115200)
+                
+            config BSP_GNSS_BUFFER_SIZE
+                int "Set the uart buffer size, default: (1024)"
+                default (1024)
+                
+            config BSP_GNSS_USING_POWER_PIN
+                bool "Enable GNSS power pin"
+                default n
+                
+            config BSP_GNSS_POWER_PIN
+                string "Set the pin of the power, default: PC.13"
+                depends on BSP_GNSS_USING_POWER_PIN
+                default "PC.13"
+        endif
+        
+endmenu
+
+endmenu
+
+menu "Supported Package and Modules"
+        
+    source "packages/Kconfig"
+
+endmenu
+
+menu "Supported applications and examples"
+        
+    source "applications/Kconfig"
+
+endmenu

@@ -1,0 +1,3 @@
+config APP_LY_05C
+    bool "Enable LY-05C application"
+    default n

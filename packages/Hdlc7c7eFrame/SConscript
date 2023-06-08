@@ -1,0 +1,15 @@
+# RT-Thread building script for bridge
+
+import rtconfig
+from building import *
+
+cwd     = GetCurrentDir()
+CPPPATH = [cwd, str(Dir('#'))]
+src     = Split("""
+                Hdlc7c7eFrame.c
+                Hdlc7c7eFrame_example.c
+                """)
+
+group = DefineGroup('Hdlc7c7eFrame', src, depend = ['PKG_USING_HDLC7c7eFRAME'], CPPPATH = CPPPATH)
+
+Return('group')

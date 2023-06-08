@@ -1,0 +1,32 @@
+# RT-Thread building script for bridge
+
+import rtconfig
+from building import *
+
+cwd     = GetCurrentDir()
+CPPPATH = [cwd, cwd + '/inc']
+
+src =  Split('''
+    src/data.c
+    src/event.c
+    src/file_manager.c
+    src/tax.c
+    src/usb/udisk_id.c
+    src/usb/usb.c
+    src/utils/utils.c
+    src/voice/pcm.c
+    src/voice/play.c
+    src/voice/record.c
+    src/voice/voice.c
+    src/key.c
+    src/led.c
+    src/log.c
+    src/upgrade.c
+    ly_05c.c
+    ly_05c_test.c
+    '''
+    )
+
+group = DefineGroup('LY-05C', src, depend = ['APP_LY_05C'], CPPPATH = CPPPATH)
+
+Return('group')

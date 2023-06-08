@@ -1,0 +1,117 @@
+menu "Test functions and examples"
+    config BSP_USING_FS_TEST
+        bool "Enable file system read and write speed test command"
+        default n
+        
+    config BSP_USING_MTD_NOR_TEST
+        bool "Enable mtd nor device read and write speed test command"
+        default n
+        
+    config BSP_USING_TERMIOS_EXAMPLE
+        bool "Enable termios echo test example"
+        default n
+        
+    config BSP_TERMIOS_EXAMPLE_DEVNAME
+        string "Set the device address used, default : /dev/uart7"
+        depends on BSP_USING_TERMIOS_EXAMPLE
+        default "/dev/uart7"
+        
+    config BSP_USING_UART_EXAMPLE
+        bool "Enable uart echo test example"
+        default n
+        
+    config BSP_UART_EXAMPLE_DEVNAME
+        string "Set the device name used, default : uart7"
+        depends on BSP_USING_UART_EXAMPLE
+        default "uart7"
+        
+    config BSP_USING_TERMIOS_TEST
+        bool "Enable termios test command"
+        default n
+        
+    config BSP_USING_UART_TEST
+        bool "Enable uart test command"
+        default n
+        
+    config BSP_USING_CAN_TEST
+        bool "Enable can test command"
+        default n
+        
+    config BSP_USING_TINYFRAME_EXAMPLE
+        bool "Enable tinyframe test example"
+        default n
+        
+    config BSP_TINYFRAME_EXAMPLE_DEVNAME
+        string "Set the device address used, default : uart7"
+        depends on BSP_USING_TINYFRAME_EXAMPLE
+        default "uart7"
+
+    config BSP_USING_ADC_EXAMPLE
+        bool "Enable adc example"
+        default n
+        
+    config BSP_USING_LTC2945_EXAMPLE
+        bool "Enable ltc2945 example"
+        default n
+        
+    config BSP_USING_LTC2991_EXAMPLE
+        bool "Enable ltc2991 example"
+        default n
+        
+    config BSP_USING_DS1682_EXAMPLE
+        bool "Enable ds1682 example"
+        default n
+        
+    config BSP_USING_MAX31826_EXAMPLE
+        bool "Enable max31826 example"
+        default n
+        
+    config BSP_USING_DS28E01_EXAMPLE
+        bool "Enable ds28e01 example"
+        default n
+        
+    config BSP_USING_CMSISOS2_EXAMPLE
+        bool "Enable cmsis os2 example"
+        default n
+        
+    menuconfig BSP_USING_NET_EXAMPLE
+        bool "Enable net example"
+        default n
+        
+        if BSP_USING_NET_EXAMPLE
+            config BSP_USING_NET_TEST
+                bool "Enable net test"
+                default n
+    
+            config BSP_USING_TCP_CLIENT
+                bool "Enable tcp client"
+                default n
+                
+            config BSP_USING_TCP_SERVER
+                bool "Enable tcp server"
+                default n
+                
+            config BSP_USING_UDP_CLIENT
+                bool "Enable udp client"
+                default n
+                
+            config BSP_USING_UDP_SERVER
+                bool "Enable udp server"
+                default n
+        endif
+        
+    config BSP_USING_DSP_EXAMPLE
+        bool "Enable cmsis dsp example"
+        select PKG_USING_CMSIS_5
+        select PKG_CMSIS_DSP
+        default n
+endmenu
+
+menu "Product Application and Function"
+    config APP_CABLE_TEST_BENCH
+        bool "Enable cable test bench application"
+        default n
+        
+    source "applications/coupler_controller/Kconfig"
+    source "applications/ly_05c/Kconfig"
+endmenu

@@ -1,0 +1,1 @@
+scons --target=ua -s

@@ -1,0 +1,14 @@
+# RT-Thread building script for bridge
+
+import rtconfig
+from building import *
+
+cwd     = GetCurrentDir()
+CPPPATH = [cwd, str(Dir('#'))]
+src     = Split("""
+                flashdb_init.c
+                """)
+
+group = DefineGroup('FlashDB_port', src, depend = ['PKG_USING_FLASHDB_PORT'], CPPPATH = CPPPATH)
+
+Return('group')
