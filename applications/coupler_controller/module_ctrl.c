@@ -19,7 +19,7 @@
 
 #define DEBUG_LED   LED_CAN2
 
-#define FFFE_RX_MAX_LEN 512
+#define FFFE_RX_MAX_LEN 2048
 
 /* 用户自定义协议 */
 enum
@@ -39,7 +39,14 @@ typedef struct __attribute__ ((packed))
 
 typedef struct __attribute__ ((packed))
 {
-    uint8_t function;//1：开启模块；0：关闭模块
+    uint8_t logo;               //标识牌
+    uint8_t islogo;             //标识牌有效位
+    uint32_t distance_h;        //测距-远
+    uint8_t isdistance_h;       //测距-远有效位
+    uint32_t distance_l;        //测距-近
+    uint8_t isdistance_l;       //测距-近有效位
+    uint8_t out_hook;           //摘钩状态
+    uint8_t isout_hook;         //摘钩状态有效位
 } ACK_OPENDef;
 
 typedef struct __attribute__ ((packed))
@@ -82,14 +89,27 @@ static void process_thread_entry(void *parameter)
     fffeFrame_cmd(frame, ID_CMD_OPEN, (uint8_t *)&cmd1, sizeof(cmd1));
     rt_thread_delay(200);
 
-    CMD_READDef cmd2 = {
+    CMD_OPENDef cmd2 = {
+        .function = 0,
+    };
+    fffeFrame_cmd(frame, ID_CMD_OPEN, (uint8_t *)&cmd2, sizeof(cmd2));
+    rt_thread_delay(200);
+
+    CMD_READDef cmd3 = {
         .function = 1,
     };
-    fffeFrame_cmd(frame, ID_CMD_READ, (uint8_t *)&cmd2, sizeof(cmd2));
+    fffeFrame_cmd(frame, ID_CMD_READ, (uint8_t *)&cmd3, sizeof(cmd3));
     rt_thread_delay(200);
 
     ACK_OPENDef ack1 = {
-        .function = 1,
+        .logo = 1,
+        .islogo = 1,
+        .distance_h = 0xfdfeff,
+        .isdistance_h = 1,
+        .distance_l = 0xfdfeff,
+        .isdistance_l = 1,
+        .out_hook = 0,
+        .isout_hook = 1,
     };
     fffeFrame_ack(frame, FF_ACK_OK, 1, ID_CMD_OPEN, (uint8_t *)&ack1, sizeof(ack1));
     rt_thread_delay(200);
@@ -132,16 +152,21 @@ static void process_thread_entry(void *parameter)
             {
                 LOG_D("   cmd: ID_ACK_OPEN");
                 ACK_OPENDef *data = (ACK_OPENDef *)msg.buffer;
-                LOG_D("  data: %d", data->function);
-                if (data->function == 1)
-                {
-                    puserdata->isopen = 1;
-                    LOG_I("   cmd: ID_ACK_OPEN Image module on");
-                }
-                else
+                LOG_I("  cmd: ID_ACK_OPEN %d %d %d %d", data->islogo, data->isdistance_h, data->isdistance_l, data->isout_hook);
+                if (data->islogo == 0 && data->isdistance_h == 0 && data->isdistance_l == 0 && data->isout_hook == 0)
                 {
                     puserdata->isopen = 0;
                     LOG_I("   cmd: ID_ACK_OPEN Image module off");
+                }
+                else
+                {
+                    puserdata->isopen = 1;
+                    LOG_I("   cmd: ID_ACK_OPEN Image module on");
+                    //启动读
+                    CMD_READDef cmd = {
+                        .function = 1,
+                    };
+                    fffeFrame_cmd(frame, ID_CMD_READ, (uint8_t *)&cmd, sizeof(cmd));
                 }
             }
                 break;
@@ -153,7 +178,6 @@ static void process_thread_entry(void *parameter)
             case ID_ACK_READ:
             {
                 LOG_D("   cmd: ID_ACK_READ");
-                puserdata->timeout = rt_tick_get_millisecond();
                 ACK_READDef *data = (ACK_READDef *)msg.buffer;
                 LOG_I("   cmd: ID_ACK_READ %d(%d), %d(%d), %d(%d), %d(%d)"
                         , data->logo, data->islogo
@@ -176,6 +200,21 @@ static void process_thread_entry(void *parameter)
                 {
                     puserdata->out_hook = data->out_hook;
                 }
+                if (puserdata->isopen)
+                {
+                    //重复读
+                    CMD_READDef cmd = {
+                        .function = 1,
+                    };
+                    fffeFrame_cmd(frame, ID_CMD_READ, (uint8_t *)&cmd, sizeof(cmd));
+
+                    puserdata->timeout = rt_tick_get_millisecond() - puserdata->timeout;
+                    if (puserdata->timeout > 0)
+                    {
+                        LOG_W("ID_CMD_READ timeout %d", puserdata->timeout);
+                    }
+                    puserdata->timeout = rt_tick_get_millisecond();
+                }
             }
                 break;
             default:
@@ -185,33 +224,6 @@ static void process_thread_entry(void *parameter)
     }
 
     fffeFrame_close(frame);
-}
-
-/* 固定周期线程 */
-static void heart_thread_entry(void *parameter)
-{
-    fffeFrame *frame = (fffeFrame *)parameter;
-    CouplerCtrlUserData *puserdata = (CouplerCtrlUserData *)frame->user_data;
-
-    CMD_READDef cmd = {
-        .function = 1,
-    };
-
-    while(puserdata->isThreadRun)
-    {
-        rt_thread_delay(500);
-        if (puserdata->isopen)
-        {
-            fffeFrame_cmd(frame, ID_CMD_READ, (uint8_t *)&cmd, sizeof(cmd));
-
-            puserdata->timeout = rt_tick_get_millisecond() - puserdata->timeout;
-            if (puserdata->timeout > 500)
-            {
-                LOG_W("ID_CMD_READ timeout %d", puserdata->timeout);
-            }
-            puserdata->timeout = rt_tick_get_millisecond();
-        }
-    }
 }
 
 static int16_t ff_init(fffeFrame *frame);
@@ -333,18 +345,6 @@ static int16_t ff_init(fffeFrame *frame)
 
     /* 创建 协议数据处理 线程 */
     thread = rt_thread_create("process", process_thread_entry, frame, 4096, 23, 10);
-    /* 创建成功则启动线程 */
-    if (thread != RT_NULL)
-    {
-        rt_thread_startup(thread);
-    }
-    else
-    {
-        return -RT_ERROR;
-    }
-
-    /* 创建 固定周期 线程 */
-    thread = rt_thread_create("heart", heart_thread_entry, frame, 2048, 24, 10);
     /* 创建成功则启动线程 */
     if (thread != RT_NULL)
     {

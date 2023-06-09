@@ -53,3 +53,6 @@ project.uvoptx
 project.uvprojx
 template.uvoptx
 template.uvprojx
+!/project/*/.cproject
+!/project/*/template.uvoptx
+!/project/*/template.uvprojx

@@ -137,8 +137,8 @@ make it easy to compose the values of multiple blocks.
 */
 static uint32_t fffeFrame_xcrc32 (const uint8_t *buf, uint16_t len)
 {
-    LOG_D("  xcrc: %d", len);
-    LOG_HEX("      xcrc", 16, (uint8_t *)buf, len);
+//    LOG_D("  xcrc: %d", len);
+//    LOG_HEX("      xcrc", 16, (uint8_t *)buf, len);
     uint32_t crc = 0xffffffff;
     while (len--)
     {
@@ -207,6 +207,10 @@ static uint16_t fffeFrame_uncode(uint8_t *buf, uint16_t len)
             else
             {
                 isfind = buf[i + 1];
+                if (isfind > 0xFC || isfind > len - i - 2)
+                {
+                    isfind = 1;
+                }
                 rt_memmove(&buf[i + 1], &buf[i + 2], len - i - 1);
                 rt_memmove(&buf[i + isfind + 1], &buf[i + isfind], len - i - isfind - 1);
                 buf[i + isfind] = 0xff;
@@ -433,16 +437,17 @@ int16_t fffeFrame_accept(fffeFrame *ff, uint16_t size)
                         }
                     }
                 }
-                uint16_t lessindex = ff->rx_len;
-                if (indexS != 0 || indexE != 0)
-                {
-                    lessindex = (indexE > indexS)?(indexE + 2):(indexS);
-                }
+                uint16_t lessindex = indexS;
+                lessindex = (indexE > indexS)?(indexE + 2):(indexS);
                 uint16_t lessLength = ff->rx_len - lessindex;
                 rt_memcpy(ff->rx_buffer, &ff->rx_buffer[lessindex], lessLength);
                 ff->rx_len = lessLength;
                 LOG_D("  less: %d", ff->rx_len);
                 LOG_HEX("    less", 16, ff->rx_buffer, ff->rx_len);
+            }
+            else
+            {
+                LOG_D(" rxlen: error %d %d", ff->rx_len, sizeof(fffeFrameHead) + sizeof(fffeFrameEnd));
             }
         }
 

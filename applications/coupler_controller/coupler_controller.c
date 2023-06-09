@@ -19,7 +19,7 @@
 
 #define DEBUG_LED   LED_CAN1
 
-#define FFFE_RX_MAX_LEN 512
+#define FFFE_RX_MAX_LEN 2048
 
 CouplerCtrlUserData coupler_controller_userdata = {
     .station_devname = BSP_DEV_TABLE_UART1,
@@ -73,7 +73,7 @@ static void process_thread_entry(void *parameter)
 #if 0
     //测试一下cmd能否发出
     TYPE_STATION_POLLING cmd1 = {
-        .hook = 0,
+        .hook = 0x1,
         .reserve = 0x7c7e,
     };
     Hdlc7c7eFrame_type(frame, 0x2, ID_STATION_POLLING, (uint8_t *)&cmd1, sizeof(cmd1));
