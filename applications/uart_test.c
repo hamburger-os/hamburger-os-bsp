@@ -15,15 +15,15 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-#define UART_MAX_LEN 1024
+#define UART_MAX_LEN 256
 
 struct _uart_test
 {
-    rt_device_t              uart_dev;
-    rt_thread_t              uart_thread;
-    rt_mq_t                  uart_mq;
-    uint8_t                  buffer[UART_MAX_LEN];
-    int                      thread_is_run;
+    rt_device_t                 uart_dev;
+    rt_thread_t                 uart_thread;
+    rt_mq_t                     uart_mq;
+    struct rt_ringbuffer *      rb;
+    int                         thread_is_run;
 };
 static struct _uart_test uart_test = {
     .thread_is_run = 0,
@@ -61,32 +61,46 @@ static void uart_thread_entry(void *parameter)
     struct rx_msg msg;
     rt_size_t length_r, length_w;
     rt_err_t result = RT_EOK;
+    uint8_t buffer[UART_MAX_LEN];
 
     LOG_D("thread startup...");
     while (ptest->thread_is_run)
     {
         rt_memset(&msg, 0, sizeof(msg));
+        rt_memset(buffer, 0, sizeof(buffer));
         /* 从消息队列中读取消息 */
-        result = rt_mq_recv(ptest->uart_mq, &msg, sizeof(msg), 1000);
+        result = rt_mq_recv(ptest->uart_mq, &msg, sizeof(msg), 100);
+        //当正确接受消息队列代表驱动送回接收信号
         if (result == RT_EOK)
         {
             /* 从串口读取数据 */
-            rt_memset(ptest->buffer, 0, UART_MAX_LEN);
-            length_r = rt_device_read(ptest->uart_dev, 0, ptest->buffer, msg.size);
+            length_r = rt_device_read(ptest->uart_dev, 0, buffer, msg.size);
             if (length_r > 0)
             {
-                LOG_D("read : (%d)%s", length_r, (char *)ptest->buffer);
-                LOG_HEX("rd", 16, ptest->buffer, length_r);
+                rt_ringbuffer_put(ptest->rb, buffer, length_r);
+            }
+        }
+        //当消息队列超时说明已经持续一段时间未收到消息
+        //这个超时时间取决于波特率和协议的最大长度
+        //例如波特率9600，协议最大长度96，这时设置为100
+        else if (result == -RT_ETIMEOUT)
+        {
+            length_r = rt_ringbuffer_data_len(ptest->rb);
+            if (length_r > 0)
+            {
+                rt_ringbuffer_get(ptest->rb, buffer, length_r);
                 /* echo 回显测试 */
-                length_w = rt_device_write(ptest->uart_dev, 0, ptest->buffer, length_r);
+                length_w = rt_device_write(ptest->uart_dev, 0, buffer, length_r);
+                LOG_D("read : (%d)%s", length_r, (char *)buffer);
+                LOG_HEX("rd", 16, buffer, length_r);
                 if (length_w != length_r)
                 {
                     LOG_E("write error %d/%d.", length_w, length_r);
                 }
                 else
                 {
-                    LOG_D("write : (%d)%s", length_w, (char *)ptest->buffer);
-                    LOG_HEX("wr", 16, ptest->buffer, length_w);
+                    LOG_D("write : (%d)%s", length_w, (char *)buffer);
+                    LOG_HEX("wr", 16, buffer, length_w);
                 }
             }
         }
@@ -191,8 +205,10 @@ static void uart_echo_test(int argc, char **argv)
             }
             if (uart_test.uart_thread == RT_NULL)
             {
+                /* 创建环形缓冲区 */
+                uart_test.rb = rt_ringbuffer_create(UART_MAX_LEN);
                 /* 创建 app 线程 */
-                uart_test.uart_thread = rt_thread_create("uart", uart_thread_entry, &uart_test, 2048, 26, 10);
+                uart_test.uart_thread = rt_thread_create("uart", uart_thread_entry, &uart_test, 3072, 26, 10);
                 /* 创建成功则启动线程 */
                 if (uart_test.uart_thread != RT_NULL)
                 {
@@ -232,6 +248,7 @@ static void uart_echo_test(int argc, char **argv)
         }
         else if (rt_strcmp(argv[1], "--stop") == 0)
         {
+            rt_ringbuffer_destroy(uart_test.rb);
             uart_test.uart_thread = RT_NULL;
             uart_test.thread_is_run = 0;
         }

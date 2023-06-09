@@ -285,7 +285,14 @@ int8_t Hdlc7c7eFrame_accept(Hdlc7c7eFrame *hdlc, uint16_t size)
                     }
                 }
                 uint16_t lessindex = indexS;
-                lessindex = (indexE > indexS)?(indexE + 1):(indexS);
+                if (indexS == 0 && indexE == 0)
+                {
+                    lessindex = hdlc->rx_len;
+                }
+                else
+                {
+                    lessindex = (indexE > indexS)?(indexE + 1):(indexS);
+                }
                 uint16_t lessLength = hdlc->rx_len - lessindex;
                 rt_memcpy(hdlc->rx_buffer, &hdlc->rx_buffer[lessindex], lessLength);
                 hdlc->rx_len = lessLength;

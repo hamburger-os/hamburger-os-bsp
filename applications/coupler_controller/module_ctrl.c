@@ -391,8 +391,7 @@ static int16_t ff_rx_indicate(fffeFrame *frame, fffeFrameHead *head, uint8_t *bu
     rt_memcpy(msg.buffer, buffer, fffeFrame_get_buffer_len(head));
     rt_memcpy(&msg.end, end, sizeof(fffeFrameEnd));
 
-//    result = rt_mq_send(puserdata->process_module_mq, &msg, sizeof(msg));
-    result = rt_mq_send_wait(puserdata->process_module_mq, &msg, sizeof(msg), 100);
+    result = rt_mq_send(puserdata->process_module_mq, &msg, sizeof(msg));
     if (result != RT_EOK)
     {
         LOG_E("process mq send error %d", result);

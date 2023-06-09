@@ -438,7 +438,14 @@ int16_t fffeFrame_accept(fffeFrame *ff, uint16_t size)
                     }
                 }
                 uint16_t lessindex = indexS;
-                lessindex = (indexE > indexS)?(indexE + 2):(indexS);
+                if (indexS == 0 && indexE == 0)
+                {
+                    lessindex = ff->rx_len;
+                }
+                else
+                {
+                    lessindex = (indexE > indexS)?(indexE + 2):(indexS);
+                }
                 uint16_t lessLength = ff->rx_len - lessindex;
                 rt_memcpy(ff->rx_buffer, &ff->rx_buffer[lessindex], lessLength);
                 ff->rx_len = lessLength;
