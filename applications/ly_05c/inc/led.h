@@ -4,13 +4,15 @@
  * @Date: 2023-05-24 16:06:26
  * @Author: ccy
  * @Description: LED模块的初始化
- * 
- * Copyright (c) 2023 by thinker, All Rights Reserved. 
+ *
+ * Copyright (c) 2023 by thinker, All Rights Reserved.
  *
  *******************************************************/
 
-#ifndef _LED_H_
-#define _LED_H_
+#ifndef LED_H_
+#define LED_H_
+
+#include "type.h"
 
 /*******************************************************
  * 数据结构
@@ -53,9 +55,9 @@ void led_set(E_LED_State led_state);
  * @brief  初始化LED模块
  *
  * @param  args: led显示线程参数
- * @retval int 0:成功 <0:失败
+ * @retval sint32_t 0:成功 <0:失败
  *
  *******************************************************/
-int led_init(void);
+sint32_t led_init(void);
 
 #endif

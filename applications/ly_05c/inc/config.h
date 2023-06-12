@@ -4,19 +4,18 @@
  * @Date: 2023-05-24 16:06:26
  * @Author: ccy
  * @Description: 工程配置模块,定义了一些模块的开关.
- * 
- * Copyright (c) 2023 by thinker, All Rights Reserved. 
+ *
+ * Copyright (c) 2023 by thinker, All Rights Reserved.
  *
  *******************************************************/
 
-#ifndef _CONFIG_H_
-#define _CONFIG_H_
+#ifndef CONFIG_H_
+#define CONFIG_H_
 
 /*******************************************************
  * 宏定义
  *******************************************************/
 
 #define USING_POSIX_API 1
-
 
 #endif

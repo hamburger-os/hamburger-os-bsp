@@ -9,8 +9,8 @@
  *
  *******************************************************/
 
-#ifndef _LOG_H_
-#define _LOG_H_
+#ifndef LOG_H_
+#define LOG_H_
 
 /*******************************************************
  * 头文件
@@ -22,13 +22,13 @@
  * 宏定义
  *******************************************************/
 
-#define LOG_DEBUG 0       /*调试信息 */
-#define LOG_INFO 1        /*信息 */
-#define LOG_WARNING 2     /*警告信息 */
-#define LOG_ERROR 3       /*错误 */
-#define LOG_FATAL_ERROR 3 /*重大错误 */
+#define LOG_DEBUG 0       /* 调试信息 */
+#define LOG_INFO 1        /* 信息 */
+#define LOG_WARNING 2     /* 警告信息 */
+#define LOG_ERROR 3       /* 错误 */
+#define LOG_FATAL_ERROR 3 /* 重大错误 */
 
-/*当前的打印等级 */
+/* 当前的打印等级 */
 #define LOG_LEVEL LOG_DEBUG
 
 /*******************************************************
@@ -44,7 +44,7 @@
  * @retval none
  *
  *******************************************************/
-void log_print(int level, char *format, ...);
+void log_print(sint32_t level, const char *format, ...);
 
 /*******************************************************
  *
@@ -54,6 +54,6 @@ void log_print(int level, char *format, ...);
  * @retval none
  *
  *******************************************************/
-int log_init(void);
+sint32_t log_init(void);
 
 #endif

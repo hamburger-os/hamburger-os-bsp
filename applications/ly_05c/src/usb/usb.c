@@ -15,8 +15,7 @@
 
 #include <stdio.h>
 #include <sys/types.h>
-#include <utime.h>
-#include <rtthread.h>
+/* #include <utime.h> */
 #include <rtdef.h>
 #include <ulog.h>
 #include <rtthread.h>
@@ -31,6 +30,7 @@
 #include "file_manager.h"
 #include "event.h"
 #include "delay.h"
+#include "log.h"
 
 /*******************************************************
  * 宏定义
@@ -48,8 +48,8 @@
 /* 转储模式 */
 typedef enum _CopyMode
 {
-    CopyMode_New = 0, /*转储最新文件模式 */
-    CopyMode_All = 1  /*转储全部文件模式 */
+    CopyMode_New = 0, /* 转储最新文件模式 */
+    CopyMode_All = 1  /* 转储全部文件模式 */
 } E_CopyMode;
 
 /*******************************************************
@@ -59,24 +59,71 @@ typedef enum _CopyMode
 /* 最新语音文件 */
 static char latest_filename[USB_KEY_MAX_LEN];
 /* 机车型号 */
-static unsigned short g_locomotive_type = 0;
+static uint16_t g_locomotive_type = 0;
 /* 机车号 */
-static unsigned short g_locomotive_id = 0;
+static uint16_t g_locomotive_id = 0;
 
 /*******************************************************
  * 函数声明
  *******************************************************/
+/* 获取年份 */
+static sint32_t get_year(uint8_t *time);
+/* 获取月份 */
+static sint32_t get_month(uint8_t *time);
+/* 获取日期 */
+static sint32_t get_day(uint8_t *time);
+/* 获取时 */
+static sint32_t get_hour(uint8_t *time);
+/* 获取分 */
+static sint32_t get_minute(uint8_t *time);
+/* 改变日期的时间 */
+static sint32_t change_file_date(const char *filename);
+/* 将文件(from)拷贝到文件(to)中去 */
+static sint32_t copy_file(char *from, char *to);
+/* 转储语音文件到U盘.如果mode为0,只是复制文件到U盘;mode为1,先复制文件到U盘,再备份文件 */
+static sint32_t store_file(char *Source, char *target, sint32_t mode);
+/* 将语音文件自动转储到U盘中 */
+static sint32_t usb_auto_copy(E_CopyMode mode);
+/* USB转储线程入口函数 */
+static void usb_thread(void *args);
+
+/*******************************************************
+ * 函数实现
+ *******************************************************/
+
+/*******************************************************
+ *
+ * @brief  获取机车型号
+ *
+ * @retval uint16_t 机车型号
+ *
+ *******************************************************/
+uint16_t get_locomotive_type(void)
+{
+    return g_locomotive_type;
+}
+/*******************************************************
+ *
+ * @brief  机车号
+ *
+ * @retval uint16_t 机车号
+ *
+ *******************************************************/
+uint16_t get_locomotive_id(void)
+{
+    return g_locomotive_id;
+}
 
 /*******************************************************
  *
  * @brief  获取年份
  *
  * @param  *time: 时间数据
- * @retval int 年份
+ * @retval sint32_t 年份
  *
  *******************************************************/
 
-int get_year(unsigned char *time)
+static sint32_t get_year(uint8_t *time)
 {
     return (((time[3]) >> 2));
 }
@@ -86,11 +133,11 @@ int get_year(unsigned char *time)
  * @brief  获取月份
  *
  * @param  *time: 时间数据
- * @retval int 月份
+ * @retval sint32_t 月份
  *
  *******************************************************/
 
-int get_month(unsigned char *time)
+static sint32_t get_month(uint8_t *time)
 {
     return (((time[2] & 0xC0) >> 6) | ((time[3] & 0x03) << 2));
 }
@@ -100,11 +147,11 @@ int get_month(unsigned char *time)
  * @brief  获取日期
  *
  * @param  *time: 时间数据
- * @retval int 日期
+ * @retval sint32_t 日期
  *
  *******************************************************/
 
-int get_day(unsigned char *time)
+static sint32_t get_day(uint8_t *time)
 {
     return ((time[2] & 0x3E) >> 1);
 }
@@ -114,11 +161,11 @@ int get_day(unsigned char *time)
  * @brief  获取时
  *
  * @param  *time: 时间数据
- * @retval int 时
+ * @retval sint32_t 时
  *
  *******************************************************/
 
-int get_hour(unsigned char *time)
+static sint32_t get_hour(uint8_t *time)
 {
     return (((time[1] & 0xF0) >> 4) | ((time[2] & 0x01) << 4));
 }
@@ -128,11 +175,11 @@ int get_hour(unsigned char *time)
  * @brief  获取分
  *
  * @param  *time: 时间数据
- * @retval int 分
+ * @retval sint32_t 分
  *
  *******************************************************/
 
-int get_minute(unsigned char *time)
+static sint32_t get_minute(uint8_t *time)
 {
     return (((time[0] & 0xC0) >> 6) | ((time[1] & 0x0F) << 2));
 }
@@ -142,15 +189,15 @@ int get_minute(unsigned char *time)
  * @brief  改变日期的时间
  *
  * @param  *time: 时间数据
- * @retval int 分
+ * @retval sint32_t 分
  *
  *******************************************************/
 
-int change_file_date(const char *filename)
+static sint32_t change_file_date(const char *filename)
 {
     file_head_t file_head;
-    int fd;
-    int year, month, day, hour, minute;
+    sint32_t fd;
+    sint32_t year, month, day, hour, minute;
     struct tm tm_v;
     time_t time_v;
     struct utimbuf utimebuf;
@@ -160,7 +207,7 @@ int change_file_date(const char *filename)
 
         log_print(LOG_ERROR, "can not open file %s, error code: %s\n",
                   filename, strerror(errno));
-        return -1;
+        return (sint32_t)-1;
     }
     if (read(fd, (char *)&file_head, sizeof(file_head)) == sizeof(file_head))
     {
@@ -168,13 +215,13 @@ int change_file_date(const char *filename)
         {
             close(fd);
             /**
-             * int tm_sec 代表目前秒数,正常范围为0-59,但允许至61秒
-             * int tm_sec 代表目前秒数,正常范围为0-59,但允许至61秒
-             * int tm_min 代表目前分数,范围0-59
-             * int tm_hour 从午夜算起的时数,范围为0-23
-             * int tm_mday 目前月份的日数,范围01-31
-             * int tm_mon 代表目前月份,从一月算起,范围从0-11
-             * int tm_year 从1900 年算起至今的年数
+             * sint32_t tm_sec 代表目前秒数,正常范围为0-59,但允许至61秒
+             * sint32_t tm_sec 代表目前秒数,正常范围为0-59,但允许至61秒
+             * sint32_t tm_min 代表目前分数,范围0-59
+             * sint32_t tm_hour 从午夜算起的时数,范围为0-23
+             * sint32_t tm_mday 目前月份的日数,范围01-31
+             * sint32_t tm_mon 代表目前月份,从一月算起,范围从0-11
+             * sint32_t tm_year 从1900 年算起至今的年数
              */
             year = get_year(file_head.date_time) + 2000 - 1900;
             month = get_month(file_head.date_time) - 1;
@@ -197,37 +244,38 @@ int change_file_date(const char *filename)
             tm_v.tm_hour = hour;
             tm_v.tm_min = minute;
             tm_v.tm_sec = 00;
-            time_v = mktime(&tm_v); /*更改文件的修改日期 */
+            time_v = mktime(&tm_v); /* 更改文件的修改日期 */
 
             utimebuf.actime = utimebuf.modtime = time_v;
-            /*utime(filename, &utimebuf); */
+            /* utime(filename, &utimebuf); */
 
             g_locomotive_id = file_head.locomotive_num[0] + file_head.locomotive_num[1] * 0x100;
             g_locomotive_type = file_head.locomotive_type[0] + file_head.locomotive_type[1] * 0x100;
+            
             return 0;
         }
     }
     close(fd);
-    return -1;
+    return (sint32_t)-1;
 }
 
 /*******************************************************
  *
- * @brief  将文件(From)拷贝到文件(to)中去
+ * @brief  将文件(from)拷贝到文件(to)中去
  *
  * @param  *From: 需要拷贝的文件名
  * @param  *to: 目的地址文件名
  * @retval 0:成功 负数:失败
  *
  *******************************************************/
-int copy_file(char *from, char *to)
+static sint32_t copy_file(char *from, char *to)
 {
-    int from_fd, to_fd;
+    sint32_t from_fd, to_fd;
     ssize_t bytes_read, bytes_write;
-    int i = 0;
+    sint32_t i = 0;
     char buffer[BUFFER_SIZE];
     char *ptr;
-    int ret = 0;
+    sint32_t ret = 0;
 
     /* 打开源文件 */
     if ((from_fd = open(from, O_RDONLY)) == -1)
@@ -305,12 +353,12 @@ int copy_file(char *from, char *to)
  *
  *******************************************************/
 
-int store_file(char *Source, char *target, int mode)
+static sint32_t store_file(char *Source, char *target, sint32_t mode)
 {
     char *name;
     char targetname[PATH_NAME_MAX_LEN]; /* 用于存放目标文件名 */
     char bakname[PATH_NAME_MAX_LEN];    /* 用于存放备份文件名 */
-    int error = 0;
+    sint32_t error = 0;
     file_info_t *file_list_head = NULL, *p = NULL;
 
     file_list_head = get_org_file_info(Source);
@@ -361,7 +409,7 @@ int store_file(char *Source, char *target, int mode)
             }
             p = p->next;
         }
-        /*释放缓存空间 */
+        /* 释放缓存空间 */
         free_link(file_list_head);
     }
     return error;
@@ -372,25 +420,25 @@ int store_file(char *Source, char *target, int mode)
  * @brief  将语音文件自动转储到U盘中
  *
  * @param  mode: 拷贝模式, 拷贝全部文件或者拷贝最新文件.
- * @retval int 0:成功 -1:失败
+ * @retval sint32_t 0:成功 -1:失败
  *
  *******************************************************/
-int usb_auto_copy(E_CopyMode mode)
+static sint32_t usb_auto_copy(E_CopyMode mode)
 {
-    int udisk_free_space;
-    int voice_size;
+    sint32_t udisk_free_space;
+    sint32_t voice_size;
     struct stat stat_l;
     char logname[PATH_NAME_MAX_LEN];
 
     fm_get_file_name(latest_filename, 0);
-    log_print(LOG_INFO, "最新的语音文件名是:%s\n", latest_filename);
+    log_print(LOG_INFO, "最新的语音文件名是:%s.\n", latest_filename);
 
     create_dir(TARGET_DIR_NAME);     /* 在U盘目录中建立语音文件目录 */
     create_dir(YUYIN_BAK_PATH_NAME); /* 建立语音文件的备份的目录 */
 
     /* U盘的剩余空间大小 */
     udisk_free_space = get_disk_free_space(YUYIN_PATH_NAME);
-    log_print(LOG_INFO, "U盘的剩余空间大小:%dKB\n", udisk_free_space);
+    log_print(LOG_INFO, "U盘的剩余空间大小:%dKB.\n", udisk_free_space);
 
     /* 所有文件的大小 */
     if (mode == CopyMode_All)
@@ -401,7 +449,7 @@ int usb_auto_copy(E_CopyMode mode)
     {
         voice_size = dir_size(YUYIN_PATH_NAME) - dir_size(YUYIN_BAK_PATH_NAME);
     }
-    log_print(LOG_INFO, "所有文件的大小:%dKB %dKB %dKB\n",
+    log_print(LOG_INFO, "所有文件的大小:%dKB %dKB %dKB.\n",
               voice_size,
               dir_size(YUYIN_PATH_NAME),
               dir_size(YUYIN_BAK_PATH_NAME));
@@ -411,7 +459,7 @@ int usb_auto_copy(E_CopyMode mode)
         /* 播放提示音, U盘转储失败 */
         event_push_queue(EVENT_DUMP_USB_FULL);
         log_print(LOG_ERROR, "U盘转储失败. \n");
-        return -1;
+        return (sint32_t)-1;
     }
 
     if (voice_size > udisk_free_space)
@@ -419,7 +467,7 @@ int usb_auto_copy(E_CopyMode mode)
         log_print(LOG_ERROR, "U盘空间不够! U盘剩余空间:%dK, 语音文件大小:%d kbytes.\n", udisk_free_space, voice_size);
         /* 播放语音提示, U盘已满 */
         event_push_queue(EVENT_DUMP_USB_FULL);
-        return -1;
+        return (sint32_t)-1;
     }
 
     if (mode == CopyMode_All) /* 开始转储全部文件 */
@@ -431,9 +479,9 @@ int usb_auto_copy(E_CopyMode mode)
         if (store_file(YUYIN_BAK_PATH_NAME, TARGET_DIR_NAME, 0))
         {
             /* 播放提示音,转储失败 */
-            log_print(LOG_ERROR, "转储失败\n");
+            log_print(LOG_ERROR, "转储失败.\n");
             event_push_queue(EVENT_DUMP_FAIL);
-            return -1;
+            return (sint32_t)-1;
         }
     }
     else /* 开始转储全部文件 */
@@ -449,14 +497,14 @@ int usb_auto_copy(E_CopyMode mode)
     {
         log_print(LOG_ERROR, "转储失败.\n");
         event_push_queue(EVENT_DUMP_FAIL);
-        return -1;
+        return (sint32_t)-1;
     }
     /* 增加转储日志文件的功能,如果发现有日志文件,则复制到U盘 */
     if (stat(LOG_FILE_NAME, &stat_l) == 0)
     {
-        log_print(LOG_ERROR, "转储日志\n");
-        sprintf(logname, "/mnt/usb/LY05C_%d-%d.log", g_locomotive_type, g_locomotive_id);
-        copy_file(LOG_FILE_NAME, logname);
+        log_print(LOG_ERROR, "转储日志.\n");
+        sprintf(logname, "%s/LY05C_%d-%d.log", LOG_FILE_PATH, g_locomotive_type, g_locomotive_id);
+        copy_file(logname, logname);
     }
 
     if (mode == CopyMode_All)
@@ -483,99 +531,114 @@ int usb_auto_copy(E_CopyMode mode)
  *******************************************************/
 static void usb_thread(void *args)
 {
-    int ret = 0;
+    sint32_t ret = 0;
     E_DUMP_STATE state = DUMP_STATE_INIT;
     rt_base_t new_all_pin;
-    char udisk_id[USB_KEY_MAX_LEN] = {0};
+    char udisk_id[USB_KEY_MAX_LEN];
     struct stat stat_l;
-    int fd;
+    sint32_t fd;
     E_CopyMode mode;
 
-    /*获取引脚 */
+    /* 获取引脚 */
     new_all_pin = rt_pin_get(NEW_ALL_PIN);
-    /*设置为输入模式 */
+    /* 设置为输入模式 */
     rt_pin_mode(new_all_pin, PIN_MODE_INPUT);
     while (1)
     {
         switch (state)
         {
-        case DUMP_STATE_INIT: /*初始化状态 */
-            /*打开存储U盘ID的文件 */
+        case DUMP_STATE_INIT: /* 初始化状态 */
+            /* 打开存储U盘ID的文件 */
             ret = stat(UDISK_ID_PATH, &stat_l);
             while (ret < 0)
             {
-                /*没有插入U盘,休眠500ms. */
-                msleep(500);
+                /* 没有插入U盘,休眠500ms. */
+                msleep((uint32_t)500);
                 ret = stat(UDISK_ID_PATH, &stat_l);
                 event_push_queue(EVENT_UNPLUG_USB);
             }
 
-            /*表明插上U盘 */
+            /* 表明插上U盘 */
             event_push_queue(EVENT_PLUG_IN_USB);
 
-            /*如果存在升级文件, 则不进行转储. */
+            /* 如果存在升级文件, 则不进行转储. */
             ret = stat(UPGRADE_FILE_NAME, &stat_l);
             if (ret == 0)
             {
-                msleep(500);
+                msleep((uint32_t)500);
                 break;
             }
 
-            /*打开文件 */
+            /* 打开文件 */
             fd = open(UDISK_ID_PATH, O_RDONLY);
             if (fd < 0)
             {
-                log_print(LOG_ERROR, "can not open file %s. \n", UDISK_ID_PATH);
+                log_print(LOG_ERROR, "can not open udisk id file %s. \n", UDISK_ID_PATH);
                 break;
             }
 
-            /*读取U盘ID */
+            /* 读取U盘ID */
+            memset(udisk_id, 0, sizeof(udisk_id));
             ret = read(fd, udisk_id, USB_KEY_MAX_LEN);
             if (ret < 0)
             {
-                /*没有读取到U盘的ID,则可以直接转储,不需要鉴权 */
+                /* 没有读取到U盘的ID,则可以直接转储,不需要鉴权 */
                 state = DUMP_STATE_DUMPING;
             }
             else
             {
-                /*已经读取到了U盘的ID,进行鉴权认证 */
+                /* 已经读取到了U盘的ID,进行鉴权认证 */
                 ret = check_udisk_id(udisk_id);
                 if (ret < 0)
+                {
                     state = DUMP_STATE_FAIL;
+                }
                 else
+                {
                     state = DUMP_STATE_DUMPING;
+                }
             }
 
-            /*关闭文件 */
+            /* 关闭文件 */
             ret = close(fd);
             if (ret < 0)
+            {
                 log_print(LOG_ERROR, "close error.\n");
+            }
+            else
+            {
+            }
 
             break;
-        case DUMP_STATE_DUMPING: /*转储文件中 */
+        case DUMP_STATE_DUMPING: /* 转储文件中 */
             mode = (E_CopyMode)rt_pin_read(new_all_pin);
-            if (mode == CopyMode_All) /*转储全部文件 */
+            if (mode == CopyMode_All) /* 转储全部文件 */
             {
                 ret = usb_auto_copy(CopyMode_All);
             }
-            else /*转储最新文件 */
+            else /* 转储最新文件 */
             {
                 ret = usb_auto_copy(CopyMode_New);
             }
             if (ret < 0)
+            {
                 state = DUMP_STATE_FAIL;
+            }
             else
+            {
                 state = DUMP_STATE_SUCCESS;
+            }
             break;
-        case DUMP_STATE_SUCCESS: /*转储成功 */
-        case DUMP_STATE_FAIL:    /*转储失败 */
+        case DUMP_STATE_SUCCESS: /* 转储成功 */
+        case DUMP_STATE_FAIL:    /* 转储失败 */
             ret = stat(UDISK_ID_PATH, &stat_l);
+            /* 等待U盘拔出 */
             while (ret == 0)
             {
                 sleep(1);
                 ret = stat(UDISK_ID_PATH, &stat_l);
             }
-            /*表明拔下U盘 */
+            /* 表明拔下U盘 */
             event_push_queue(EVENT_UNPLUG_USB);
             state = DUMP_STATE_INIT;
             break;
@@ -588,10 +651,10 @@ static void usb_thread(void *args)
  *
  * @brief  U盘转储操作
  *
- * @retval int 0:成功 -1:失败
+ * @retval sint32_t 0:成功 -1:失败
  *
  *******************************************************/
-int usb_init(void)
+sint32_t usb_init(void)
 {
     rt_thread_t usb_tid;
 
@@ -603,7 +666,12 @@ int usb_init(void)
                                25,
                                10);
     if (usb_tid)
+    {
         rt_thread_startup(usb_tid);
-
-    return 0;
+        return (sint32_t)0;
+    }
+    else
+    {
+        return (sint32_t)-1;
+    }
 }

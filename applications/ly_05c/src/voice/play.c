@@ -1,4 +1,3 @@
-
 /*******************************************************
  *
  * @FileName: play.c
@@ -17,15 +16,15 @@
 #include "voice.h"
 #include "file_manager.h"
 #include "data.h"
-#include "pcm.h"
 #include "typedef.h"
 #include "interf_enc.h"
 #include "interf_dec.h"
 #include "sp_dec.h"
-#include "typedef.h"
 #include "pcm.h"
 #include "amr.h"
 #include "delay.h"
+#include "log.h"
+#include "utils.h"
 
 /*******************************************************
  * 宏定义
@@ -35,6 +34,22 @@
 #define PLAY_FILE_NUMS 16
 /* 文件名的最大长度 */
 #define PLAY_FILE_NAME_LEN 64
+/* 标准amr文件头部的大小 */
+#define AMR_FILE_HEADER_LEN 6
+
+#define EVENT_VOICE_DIR "/mnt/emmc/yysj/voice"                   /* 提示音存放路径 */
+#define EVENT_VOICE_DUMP_START_ALL "BeginAll.amr"                /* 开始转储全部文件 */
+#define EVENT_VOICE_DUMP_START_LAST "BeginNew.amr"               /* 开始转储最新文件 */
+#define EVENT_VOICE_DUMP_END_LAST "EndNew.amr"                   /* 最新文件转储成功 */
+#define EVENT_VOICE_DUMP_END_ALL "EndAll.amr"                    /* 全部文件转储成功 */
+#define EVENT_VOICE_DUMP_FAIL "StoreFail.amr"                    /* 转储失败 */
+#define EVENT_VOICE_DUMP_USB_FULL "UdiskFull.amr"                /* U盘已满 */
+#define EVENT_VOICE_DUMP_USB_ILLEGAL "UdiskIllegalStoreFail.amr" /* 未鉴权U盘,转储失败 */
+#define EVENT_VOICE_UPDATE_BEGIN "BeginUpdateApp.amr"            /* 开始更新程序 */
+#define EVENT_VOICE_UPDATE_SUCCESS "UpdateAppOK.amr"             /* 更新程序成功 */
+#define EVENT_VOICE_UPDATE_FAIL "UpdateAppERR.amr"               /* 更新程序失败 */
+#define EVENT_VOICE_BEGIN_FORMAT_STORAGE "BeginFormatSD2.amr"    /* 开始擦除全部语音数据,请稍后 */
+#define EVENT_VOICE_FINISH_FORMAT_STORAGE "EndFormatSD2.amr"     /* 全部语音数据擦除完成 */
 
 /*******************************************************
  * 数据结构
@@ -44,15 +59,15 @@
 typedef struct _play_file_info_t
 {
     char name[PLAY_FILE_NAME_LEN];
-    int offset;
+    sint32_t offset;
 } play_file_info_t;
 
 /* 提示音播放列表数据结构 */
 typedef struct play_list_t
 {
     play_file_info_t play_info[PLAY_FILE_NUMS];
-    int head;
-    int tail;
+    sint32_t head;
+    sint32_t tail;
     pthread_mutex_t mutex;
 } play_list_t;
 
@@ -91,6 +106,25 @@ short g_block_size[16] =
  * 函数声明
  *******************************************************/
 
+/* 初始化提示音播放列表 */
+static void init_play_list(play_list_t *list);
+/* 在提示音播放列表中增加一个元素 */
+static sint32_t push_play_list(play_list_t *list, char *name, sint32_t offset);
+/* 从文件列表中读取要播放的文件 */
+static sint32_t read_play_list(play_list_t *list, char *name, sint32_t *offset);
+/* 获取提示音播放列表的大小 */
+static sint32_t get_play_list_size(play_list_t *list);
+/* 读取一帧的语音数据 */
+static sint32_t read_frame_from_amr_file(sint32_t fd, uint8_t *out_buf, sint32_t *out_len, sint32_t *size);
+/* 停止播放 */
+static sint32_t play_stop_play(sint32_t fd, pcm_config_t *config);
+/* 放音线程 */
+static void *play_thread(void *args);
+
+/*******************************************************
+ * 函数变量
+ *******************************************************/
+
 /*******************************************************
  *
  * @brief  初始化提示音播放列表
@@ -99,7 +133,6 @@ short g_block_size[16] =
  * @retval None
  *
  *******************************************************/
-
 static void init_play_list(play_list_t *list)
 {
     memset(list, 0, sizeof(play_list_t));
@@ -117,7 +150,7 @@ static void init_play_list(play_list_t *list)
  * @retval 0:成功 -1:失败
  *
  *******************************************************/
-static int push_play_list(play_list_t *list, char *name, int offset)
+static sint32_t push_play_list(play_list_t *list, char *name, sint32_t offset)
 {
     pthread_mutex_lock(&list->mutex);
     strcpy(list->play_info[list->head].name, name);
@@ -138,13 +171,13 @@ static int push_play_list(play_list_t *list, char *name, int offset)
  * @retval -1:失败 0:成功
  *
  *******************************************************/
-static int read_play_list(play_list_t *list, char *name, int *offset)
+static sint32_t read_play_list(play_list_t *list, char *name, sint32_t *offset)
 {
     pthread_mutex_lock(&list->mutex);
     if (list->head == list->tail)
     {
         pthread_mutex_unlock(&list->mutex);
-        return -1;
+        return (sint32_t)-1;
     }
     strcpy(name, list->play_info[list->tail].name);
     *offset = list->play_info[list->tail].offset;
@@ -162,9 +195,9 @@ static int read_play_list(play_list_t *list, char *name, int *offset)
  * @retval 提示音播放列表的大小
  *
  *******************************************************/
-static int get_play_list_size(play_list_t *list)
+static sint32_t get_play_list_size(play_list_t *list)
 {
-    int ret = 0;
+    sint32_t ret = 0;
 
     pthread_mutex_lock(&list->mutex);
     if (list->head < list->tail)
@@ -187,7 +220,7 @@ static int get_play_list_size(play_list_t *list)
  * @retval 0:成功 负数:失败
  *
  *******************************************************/
-static int read_frame_from_amr_file(int fd, unsigned char *out_buf, int *out_len, int *size)
+static sint32_t read_frame_from_amr_file(sint32_t fd, uint8_t *out_buf, sint32_t *out_len, sint32_t *size)
 {
     /**
      * AMR帧头格式,FT为编码模式,Q为帧质量指示器,如果为0表明帧被损坏. P为填充为设置为0.
@@ -198,9 +231,9 @@ static int read_frame_from_amr_file(int fd, unsigned char *out_buf, int *out_len
      * +-+-+-+-+-+-+-+-+
      */
 
-    int len;
-    unsigned char FT, Q, frame_size;
-    int data_len = *size;
+    sint32_t len;
+    uint8_t FT, Q, frame_size;
+    sint32_t data_len = *size;
 
     while (data_len > 0)
     {
@@ -208,36 +241,36 @@ static int read_frame_from_amr_file(int fd, unsigned char *out_buf, int *out_len
         len = read(fd, out_buf, 1);
         if (len <= 0)
         {
-            return -1;
+            return (sint32_t)-1;
         }
-        /*判断是否为填充字节 */
+        /* 判断是否为填充字节 */
         if (out_buf[0] == 0xff)
         {
             continue;
         }
 #if 0
-        printf( "buff[0]:%x\n", out_buf[0]);
+        rt_kprintf( "buff[0]:%x\n", out_buf[0]);
 #endif
         Q = (out_buf[0] >> 2) & 0x01;
         FT = (out_buf[0] >> 3) & 0x0F;
         if ((Q != 0x01))
         {
-            printf("head error:%x\n", out_buf[0]);
+            rt_kprintf("head error:%x\n", out_buf[0]);
             data_len--;
             continue;
         }
 
         frame_size = g_block_size[FT];
 #if 0
-        printf( "fs:%x\ndata:", frame_size);
+        rt_kprintf( "fs:%x\ndata:", frame_size);
 #endif
         /* Find the packet size */
         len = read(fd, out_buf + 1, frame_size);
 #if 0
-        int i;
+        sint32_t i;
         for (i = 0; i < frame_size; i++) {
 
-            printf( "%02x ", out_buf[i]);
+            rt_kprintf( "%02x ", out_buf[i]);
         }
 #endif
 
@@ -264,9 +297,9 @@ static int read_frame_from_amr_file(int fd, unsigned char *out_buf, int *out_len
  * @retval 0:成功 负数:失败
  *
  *******************************************************/
-static int play_stop_play(int fd, pcm_config_t *config)
+static sint32_t play_stop_play(sint32_t fd, pcm_config_t *config)
 {
-    int ret = 0;
+    sint32_t ret = 0;
 
     /* 关闭录音文件 */
     if (fd > 0)
@@ -274,7 +307,7 @@ static int play_stop_play(int fd, pcm_config_t *config)
         ret = close(fd);
         if (ret < 0)
         {
-            log_print(LOG_ERROR, "close error, ret=%d. fd=%d. \n", ret, fd);
+            log_print(LOG_ERROR, "close error, ret=%d.\n", ret);
             ret |= (1 << 31);
         }
         fd = -1;
@@ -286,8 +319,7 @@ static int play_stop_play(int fd, pcm_config_t *config)
         ret = pcm_exit(config);
         if (ret < 0)
         {
-            log_print(LOG_ERROR, "pcm_exit error,ret=%d. \n", ret);
-            /* return -1; */
+            log_print(LOG_ERROR, "destory pcm device error, ret=%d. \n", ret);
             ret |= (1 << 31);
         }
     }
@@ -306,30 +338,30 @@ static int play_stop_play(int fd, pcm_config_t *config)
 
 static void *play_thread(void *args)
 {
-    int ret = 0;
-    int *destate = NULL;
-    unsigned char analysis[AMR_FRAME_MAX_LEN]; /* 需要分析的数据 */
-    int read_size = 0;
-    int play_size = 0;
+    sint32_t ret = 0;
+    sint32_t *destate = NULL;
+    uint8_t analysis[AMR_FRAME_MAX_LEN]; /* 需要分析的数据 */
+    sint32_t read_size = 0;
+    sint32_t play_size = 0;
     char play_file_name[PLAY_FILE_NAME_LEN];
     E_PCM_STATE pcm_state = PCM_STATE_IDLE;                     /* PCM接口状态 */
     E_PlayDetailState play_detail_state = PlayDetailState_Idle; /* 播放线程的播放状态 */
     E_PlayMode play_mode = PlayMode_Voice;                      /* 播放模式 */
-    int play_fd = 0;                                            /* 播放文件句柄 */
+    sint32_t play_fd = 0;                                       /* 播放文件句柄 */
     pcm_config_t *config = NULL;                                /* 放音模块配置 */
-    int play_offset;                                            /* 播放语音的偏移量 */
+    sint32_t play_offset;                                       /* 播放语音的偏移量 */
     struct stat sb;
-    int i = 0;
+    sint32_t i = 0;
 
     /* 分配内存空间 */
     config = (pcm_config_t *)malloc(sizeof(pcm_config_t));
     if (config == NULL)
     {
-        log_print(LOG_ERROR, "error, config is null. \n");
+        log_print(LOG_ERROR, "error, config pointer is null. \n");
         return NULL;
     }
     memset(config, 0, sizeof(pcm_config_t));
-    /*初始化解码器 */
+    /* 初始化解码器 */
     destate = Decoder_Interface_init();
 
     log_print(LOG_INFO, "play thread start ...\n");
@@ -353,13 +385,12 @@ static void *play_thread(void *args)
         /* 不处于播放状态,则休眠. */
         if (pcm_state == PCM_STATE_RECORDING)
         {
-            msleep(30);
+            msleep((uint32_t)30);
             continue;
         }
         switch (play_detail_state)
         {
-        case PlayDetailState_Idle: /* 空闲状态 */
-            /*log_print(LOG_DEBUG, "==PlayDetailState_Idle\n"); */
+        case PlayDetailState_Idle:    /* 空闲状态 */
             if (g_play_voice == true) /* 需要播放最后一条语音 */
             {
                 g_play_voice = false;
@@ -373,16 +404,15 @@ static void *play_thread(void *args)
             }
             else /* 提示音播放列表为空, 休眠30ms. */
             {
-                msleep(30);
+                msleep((uint32_t)30);
             }
             break;
         case PlayDetailState_PlayInit: /* 初始化状态 */
-            /*log_print(LOG_DEBUG, "==PlayDetailState_PlayInit\n"); */
             data_set_pcm_state(PCM_STATE_PLAYING);
             if (play_mode == PlayMode_Voice) /* 播放录音文件 */
             {
                 /* 设置PCM设备参数 */
-                config->mode = SOUND_MODE_PLAY;     /* 设置放音模式 */
+                config->mode = SOUND_MODE_PLAY;    /* 设置放音模式 */
                 config->channels = CHANNEL_NUM;    /* 设置通道数为2 */
                 config->sample_rate = SMAPLE_RATE; /* 设置采样率为8000Hz */
                 config->format = SMAPLE_BITS;      /* 设置样本数据的大小 */
@@ -427,7 +457,7 @@ static void *play_thread(void *args)
                 if (read_play_list(g_play_list, play_file_name, &play_offset) == 0)
                 {
                     /* 设置PCM设备参数 */
-                    config->mode = SOUND_MODE_PLAY;     /* 设置放音模式 */
+                    config->mode = SOUND_MODE_PLAY;    /* 设置放音模式 */
                     config->channels = CHANNEL_NUM;    /* 设置通道数为1 */
                     config->sample_rate = SMAPLE_RATE; /* 设置采样率为8000Hz */
                     config->format = SMAPLE_BITS;      /* 设置样本数据的大小 */
@@ -435,7 +465,7 @@ static void *play_thread(void *args)
                     ret = pcm_init(config);
                     if (ret < 0)
                     {
-                        log_print(LOG_ERROR, "pcm_init error\n");
+                        log_print(LOG_ERROR, "init pcm device error. \n");
                         break;
                     }
 
@@ -453,33 +483,34 @@ static void *play_thread(void *args)
                     else
                     {
                         log_print(LOG_ERROR, "error, can not open %s. \n", play_file_name);
+                        play_detail_state = PlayDetailState_PlayRecordFinishPlay;
+                        break;
                     }
                 }
             }
             play_detail_state = PlayDetailState_PlayReading;
             break;
         case PlayDetailState_PlayReading: /* 播放状态,读取语音数据中,并同时播放 */
-            /*printf("==PlayDetailState_PlayReading\n"); */
             ret = read_frame_from_amr_file(play_fd, analysis, &read_size, &play_size);
             if (ret == 0) /* 读取一帧数据成功 */
             {
                 /* 清空PCM缓冲区 */
-                memset(config->buffer, 0, config->size);
+                memset(config->p_buffer, 0, config->size);
                 /* 调用解码器 */
-                Decoder_Interface_Decode(destate, analysis, (Word16 *)config->buffer, 0);
+                Decoder_Interface_Decode(destate, analysis, (Word16 *)config->p_buffer, 0);
 
-                /*将单通道的数据变为双通道 */
+                /* 将单通道的数据变为双通道 */
                 for (i = config->size / 2 - 2; i >= 0; i = i - 2)
                 {
-                    config->buffer[i * 2 + 0] = config->buffer[i + 0];
-                    config->buffer[i * 2 + 2] = config->buffer[i + 0];
-                    config->buffer[i * 2 + 1] = config->buffer[i + 1];
-                    config->buffer[i * 2 + 3] = config->buffer[i + 1];
+                    config->p_buffer[i * 2 + 0] = config->p_buffer[i + 0];
+                    config->p_buffer[i * 2 + 2] = config->p_buffer[i + 0];
+                    config->p_buffer[i * 2 + 1] = config->p_buffer[i + 1];
+                    config->p_buffer[i * 2 + 3] = config->p_buffer[i + 1];
                 }
                 /* 写音频数据到PCM设备 */
-                while ((ret = pcm_write(config->dev, config->buffer, config->size)) < 0)
+                while ((ret = pcm_write(config->dev, config->p_buffer, config->size)) < 0)
                 {
-                    msleep(2);
+                    msleep((uint32_t)2);
                     if (ret < 0)
                     {
                         log_print(LOG_ERROR, "write pcm error.\n");
@@ -493,20 +524,17 @@ static void *play_thread(void *args)
             }
             break;
         case PlayDetailState_PlayRecordFinishRead: /* 播放状态,从文件中读取完毕,但未能播放完毕. */
-            /*log_print(LOG_DEBUG, "==PlayDetailState_PlayRecordFinishRead\n"); */
             if (config->dev > 0)
             {
                 play_detail_state = PlayDetailState_PlayRecordFinishPlay;
-                msleep(20);
             }
-            msleep(20);
+            msleep((uint32_t)20);
             break;
         case PlayDetailState_PlayRecordFinishPlay: /* 播放完毕. */
-            /*printf("==PlayDetailState_PlayRecordFinishPlay\n"); */
             ret = play_stop_play(play_fd, config);
             if (ret < 0)
             {
-                log_print(LOG_ERROR, "play_stop_play error, ret=%d.\n", ret);
+                log_print(LOG_ERROR, "stop play error, ret=%d.\n", ret);
             }
             event_push_queue(EVENT_PLAY_END);
             play_detail_state = PlayDetailState_Idle;
@@ -516,9 +544,9 @@ static void *play_thread(void *args)
             break;
         }
     } /* while */
-    log_print(LOG_DEBUG, "fatal error, play_thread end.\n");
 
-    Decoder_Interface_Decode(destate, analysis, (Word16 *)config->buffer, 0);
+    log_print(LOG_DEBUG, "fatal error, play thread end.\n");
+    Decoder_Interface_Decode(destate, analysis, (Word16 *)config->p_buffer, 0);
     return NULL;
 }
 /*******************************************************
@@ -555,28 +583,32 @@ void play_stop(void)
  *******************************************************/
 void play_event(E_EVENT event)
 {
+    char event_path[PATH_NAME_MAX_LEN];
+    char *filename = NULL;
+
+    memset(event_path, 0, sizeof(event_path));
     switch (event)
     {
     case EVENT_DUMP_START_ALL: /* 开始转储全部文件 */
-        push_play_list(g_play_list, "/mnt/emmc/yysj/voice/BeginAll.amr", 6);
+        filename = EVENT_VOICE_DUMP_START_ALL;
         break;
     case EVENT_DUMP_START_LAST: /* 开始转储最新文件 */
-        push_play_list(g_play_list, "/mnt/emmc/yysj/voice/BeginNew.amr", 6);
+        filename = EVENT_VOICE_DUMP_START_LAST;
         break;
     case EVENT_DUMP_END_LAST: /* 最新文件转储成功 */
-        push_play_list(g_play_list, "/mnt/emmc/yysj/voice/EndNew.amr", 6);
+        filename = EVENT_VOICE_DUMP_END_LAST;
         break;
     case EVENT_DUMP_END_ALL: /* 全部文件转储成功 */
-        push_play_list(g_play_list, "/mnt/emmc/yysj/voice/EndAll.amr", 6);
+        filename = EVENT_VOICE_DUMP_END_ALL;
         break;
     case EVENT_DUMP_FAIL: /* 转储失败 */
-        push_play_list(g_play_list, "/mnt/emmc/yysj/voice/StoreFail.amr", 6);
+        filename = EVENT_VOICE_DUMP_FAIL;
         break;
     case EVENT_DUMP_USB_FULL: /* U盘已满 */
-        push_play_list(g_play_list, "/mnt/emmc/yysj/voice/UdiskFull.amr", 6);
+        filename = EVENT_VOICE_DUMP_USB_FULL;
         break;
     case EVENT_DUMP_USB_ILLEGAL: /* 未鉴权U盘,转储失败 */
-        push_play_list(g_play_list, "/mnt/emmc/yysj/voice/UdiskIllegalStoreFail.amr", 6);
+        filename = EVENT_VOICE_DUMP_USB_ILLEGAL;
         break;
     case EVENT_PLAY_LAST: /* 开始回放最后一条语音 */
         break;
@@ -589,23 +621,28 @@ void play_event(E_EVENT event)
     case EVENT_RECORD_END: /* 录音结束 */
         break;
     case EVENT_UPDATE_BEGIN: /* 开始更新程序 */
-        push_play_list(g_play_list, "/mnt/emmc/yysj/voice/BeginUpdateApp.amr", 6);
+        filename = EVENT_VOICE_UPDATE_BEGIN;
         break;
     case EVENT_UPDATE_SUCCESS: /* 更新程序成功 */
-        push_play_list(g_play_list, "/mnt/emmc/yysj/voice/UpdateAppOK.amr", 6);
+        filename = EVENT_VOICE_UPDATE_SUCCESS;
         break;
     case EVENT_UPDATE_FAIL: /* 更新程序失败 */
-        push_play_list(g_play_list, "/mnt/emmc/yysj/voice/UpdateAppERR.amr", 6);
+        filename = EVENT_VOICE_UPDATE_FAIL;
         break;
     case EVENT_BEGIN_FORMAT_STORAGE: /* 开始擦除全部语音数据,请稍后 */
-        push_play_list(g_play_list, "/mnt/emmc/yysj/voice/BeginFormatSD2.amr", 6);
+        filename = EVENT_VOICE_BEGIN_FORMAT_STORAGE;
         break;
     case EVENT_FINISH_FORMAT_STORAGE: /* 全部语音数据擦除完成 */
-        push_play_list(g_play_list, "/mnt/emmc/yysj/voice/EndFormatSD2.amr", 6);
+        filename = EVENT_VOICE_FINISH_FORMAT_STORAGE;
         break;
     default:
         break;
     }
+    if (filename == NULL)
+        return;
+
+    sprintf(event_path, "%s/%s", EVENT_VOICE_DIR, filename);
+    push_play_list(g_play_list, event_path, AMR_FILE_HEADER_LEN);
 }
 /*******************************************************
  *
@@ -614,28 +651,29 @@ void play_event(E_EVENT event)
  * @retval 0:成功 -1:失败
  *
  *******************************************************/
-int play_init(void)
+sint32_t play_init(void)
 {
-    int ret = 0;
+    sint32_t ret = 0;
     pthread_t play_tid;
-    pthread_attr_t pthread_attr_t;
+    pthread_attr_t pthread_attr_data;
 
     /* 分配内存空间 */
     g_play_list = (play_list_t *)malloc(sizeof(play_list_t));
     if (g_play_list == NULL)
-        return -1;
+        return (sint32_t)-1;
     /* 初始化播放音列表 */
     init_play_list(g_play_list);
 
     /* 创建放音线程 */
-    pthread_attr_init(&pthread_attr_t);
-    pthread_attr_t.stacksize = 1024 * 10;
-    pthread_attr_t.schedparam.sched_priority = 22;
-    ret = pthread_create(&play_tid, &pthread_attr_t, (void *)play_thread, NULL);
+    pthread_attr_init(&pthread_attr_data);
+    pthread_attr_data.stacksize = 1024 * 5;
+    pthread_attr_data.schedparam.sched_priority = 22;
+    ret = pthread_create(&play_tid, &pthread_attr_data, (void *)play_thread, NULL);
+    pthread_attr_destroy(&pthread_attr_data);
     if (ret < 0)
     {
-        log_print(LOG_DEBUG, "pthread_create error.\n ");
-        return -1;
+        log_print(LOG_DEBUG, "create play thread error.\n ");
+        return (sint32_t)-1;
     }
 
     return 0;

@@ -10,8 +10,8 @@
  *
  *******************************************************/
 
-#ifndef _SERIAL_H_
-#define _SERIAL_H_
+#ifndef SERIAL_H_
+#define SERIAL_H_
 
 /*******************************************************
  * 头文件
@@ -23,10 +23,10 @@
  * 宏定义
  *******************************************************/
 
-#define IN_BEGIN 0x8B  /*收话开始 */
-#define IN_END 0x8C    /*收话结束 */
-#define OUT_BEGIN 0x89 /*发话开始 */
-#define OUT_END 0x8A   /*发话结束 */
+#define IN_BEGIN 0x8B  /* 收话开始 */
+#define IN_END 0x8C    /* 收话结束 */
+#define OUT_BEGIN 0x89 /* 发话开始 */
+#define OUT_END 0x8A   /* 发话结束 */
 
 /*******************************************************
  * 函数声明
@@ -41,16 +41,16 @@
  * @retval 0:成功 -1:失败
  *
  *******************************************************/
-int tax_send_echo_event(uint8_t Event, tax40_t *tax40);
+sint32_t tax_send_echo_event(uint8_t Event, tax40_t *tax40);
 
 /*******************************************************
  *
  * @brief  tax模块初始化函数
  *
  * @param  *list: 提示音播放列表的数据指针
- * @retval int  0:成功 <0:失败
+ * @retval sint32_t  0:成功 <0:失败
  *
  *******************************************************/
-int tax_init(void);
+sint32_t tax_init(void);
 
 #endif

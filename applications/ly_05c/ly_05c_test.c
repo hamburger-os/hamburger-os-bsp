@@ -7,19 +7,16 @@
  *
  * Copyright (c) 2023 by thinker, All Rights Reserved.
  *
-*******************************************************/
+ *******************************************************/
 
 /*******************************************************
  * 头文件
-*******************************************************/
+ *******************************************************/
 #include <rtthread.h>
 #include <rtdevice.h>
 #include <rtdbg.h>
 #include <stdio.h>
 #include <event.h>
-
-#include <rtthread.h>
-#include <rtdevice.h>
 #include <optparse.h>
 #include <stdlib.h>
 
@@ -27,10 +24,11 @@
 #include "tax.h"
 #include "usb.h"
 #include "voice.h"
+#include "log.h"
 
 /*******************************************************
  * 数据结构
-*******************************************************/
+ *******************************************************/
 
 enum LY_05C_ACTTION
 {
@@ -44,10 +42,10 @@ enum LY_05C_ACTTION
 
 struct ly_05c_args
 {
-    int action;
+    sint32_t action;
 };
 
-/*播放参数结构体 */
+/* 播放参数结构体 */
 static struct optparse_long opts[] = {
     {"help", 'h', OPTPARSE_NONE},
     {"record", 'r', OPTPARSE_NONE},
@@ -59,7 +57,7 @@ static struct optparse_long opts[] = {
     {NULL, 0, OPTPARSE_NONE}};
 /*******************************************************
  * 数据结构
-*******************************************************/
+ *******************************************************/
 
 /*******************************************************
  *
@@ -70,14 +68,14 @@ static struct optparse_long opts[] = {
  * @param  play_args: 播放参数
  * @retval 0:成功 <0:失败
  *
-*******************************************************/
-int ly_05c_args_prase(int argc, char *argv[], struct ly_05c_args *play_args)
+ *******************************************************/
+sint32_t ly_05c_args_prase(sint32_t argc, char *argv[], struct ly_05c_args *play_args)
 {
-    int ch;
-    int option_index;
+    sint32_t ch;
+    sint32_t option_index;
     struct optparse options;
     rt_uint8_t action_cnt = 0;
-    int result = RT_EOK;
+    sint32_t result = RT_EOK;
 
     if (argc == 1)
     {
@@ -128,7 +126,6 @@ int ly_05c_args_prase(int argc, char *argv[], struct ly_05c_args *play_args)
 
     if (action_cnt > 1)
     {
-        log_print(LOG_DEBUG, "START STOP PAUSE RESUME parameter can't be used at the same time.\n");
         result = -RT_EINVAL;
     }
 
@@ -137,16 +134,16 @@ int ly_05c_args_prase(int argc, char *argv[], struct ly_05c_args *play_args)
 
 /*******************************************************
  *
- * @brief  ly-05c测试程序入喉
+ * @brief  ly-05c测试程序入口
  *
  * @param  argc: 输入参数的个数
  * @param  argv: 输入参数
  * @retval 0:成功 <0:失败
  *
-*******************************************************/
-int ly_05c_test(int argc, char *argv[])
+ *******************************************************/
+sint32_t ly_05c_test(sint32_t argc, char *argv[])
 {
-    int ret = RT_EOK;
+    sint32_t ret = RT_EOK;
     struct ly_05c_args play_args = {0};
 
     ret = ly_05c_args_prase(argc, argv, &play_args);
@@ -161,28 +158,23 @@ int ly_05c_test(int argc, char *argv[])
         break;
 
     case LY_05C_ACTION_START_RECORD:
-        /* log_print(LOG_DEBUG, "LY_05C_ACTION_START_RECORD \n"); */
         record_start_record();
         sleep(2);
         record_stop_record();
         break;
 
     case LY_05C_ACTION_END_RECORD:
-        /* log_print(LOG_DEBUG, "LY_05C_ACTION_END_RECORD \n"); */
         record_stop_record();
         break;
 
     case LY_05C_ACTION_PLAY_VOICE:
-        /* log_print(LOG_DEBUG, "LY_05C_ACTION_PLAY_VOICE \n"); */
         play_voice();
         break;
 
     case LY_05C_ACTION_PLAY_EVENT:
-        /* log_print(LOG_DEBUG, "LY_05C_ACTION_PLAY_EVENT \n"); */
         play_event(EVENT_DUMP_START_ALL);
         break;
     case LY_05C_ACTION_USB_COPY:
-        /* log_print(LOG_DEBUG, "LY_05C_ACTION_USB_COPY \n"); */
         break;
 
     default:
@@ -193,4 +185,4 @@ int ly_05c_test(int argc, char *argv[])
     return RT_EOK;
 }
 
- MSH_CMD_EXPORT_ALIAS(ly_05c_test, ly_05c_test, ly_05c test interface);
+MSH_CMD_EXPORT_ALIAS(ly_05c_test, ly_05c_test, ly_05c test interface);

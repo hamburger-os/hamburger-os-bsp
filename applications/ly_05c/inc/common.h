@@ -10,8 +10,8 @@
  *
  *******************************************************/
 
-#ifndef _COMMON_H_
-#define _COMMON_H_
+#ifndef COMMON_H_
+#define COMMON_H_
 
 /*******************************************************
  * 头文件
@@ -24,7 +24,6 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
-#include <sys/wait.h>
 #include <sys/select.h>
 #include <sys/stat.h>
 #include <termios.h>
@@ -38,4 +37,4 @@
 #include <stdbool.h>
 #include <sys/vfs.h>
 
-#endif /*_COMMON_H_ */
+#endif /* _COMMON_H_ */

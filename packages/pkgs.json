@@ -1,8 +1,13 @@
 [
  {
-  "path": "/packages/tools/mem_sandbox", 
+  "path": "/packages/multimedia/wavplayer", 
   "ver": "latest", 
-  "name": "MEM_SANDBOX"
+  "name": "WAVPLAYER"
+ }, 
+ {
+  "path": "/packages/multimedia/3gpp_amrnb", 
+  "ver": "latest", 
+  "name": "AMRNB"
  }, 
  {
   "path": "/packages/system/enhanced-kservice/rt_memcpy_cm", 
@@ -50,18 +55,8 @@
   "name": "OPTPARSE"
  }, 
  {
-  "path": "/packages/misc/vi", 
-  "ver": "latest", 
-  "name": "VI"
- }, 
- {
   "path": "/packages/misc/crclib", 
   "ver": "v1.02", 
   "name": "CRCLIB"
- }, 
- {
-  "path": "/packages/misc/lwgps", 
-  "ver": "latest", 
-  "name": "LWGPS"
  }
 ]

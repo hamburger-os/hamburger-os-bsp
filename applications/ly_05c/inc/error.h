@@ -9,14 +9,14 @@
  *
  *******************************************************/
 
-#ifndef _ERROR_H_
-#define _ERROR_H_
+#ifndef ERROR_H_
+#define ERROR_H_
 
 /*******************************************************
  * 宏定义
  *******************************************************/
 
-/*模块 */
+/* 模块 */
 #define MODULE_KEY 0x01
 #define MODULE_LED 0x02
 #define MODULE_PCM 0x03
@@ -30,7 +30,5 @@
 #define MODULE_UPGRADE 0x0b
 #define MODULE_PLAY 0x0c
 
-/*错误码 */
-#define ERROR_NO 0x000000
 
 #endif

@@ -19,7 +19,7 @@
  * 全局变量
  *******************************************************/
 
-/*工作状态数据 */
+/* 工作状态数据 */
 static work_state_t g_work_state;
 
 /*******************************************************
@@ -34,10 +34,10 @@ static work_state_t g_work_state;
  * @retval none
  *
  *******************************************************/
-void data_set_usb_state(E_USB_STATE usb_state)
+void data_set_usb_state(E_USB_STATE state)
 {
     pthread_mutex_lock(&g_work_state.mutex);
-    g_work_state.usb_state = usb_state;
+    g_work_state.usb_state = state;
     pthread_mutex_unlock(&g_work_state.mutex);
 }
 
@@ -67,10 +67,10 @@ E_USB_STATE data_get_usb_state(void)
  *
  *******************************************************/
 
-void data_set_dump_state(E_DUMP_STATE dump_state)
+void data_set_dump_state(E_DUMP_STATE state)
 {
     pthread_mutex_lock(&g_work_state.mutex);
-    g_work_state.dump_state = dump_state;
+    g_work_state.dump_state = state;
     pthread_mutex_unlock(&g_work_state.mutex);
 }
 
@@ -86,7 +86,7 @@ E_DUMP_STATE data_get_dump_state(void)
     E_DUMP_STATE ret;
 
     pthread_mutex_lock(&g_work_state.mutex);
-    ret = g_work_state.usb_state;
+    ret = g_work_state.dump_state;
     pthread_mutex_unlock(&g_work_state.mutex);
     return ret;
 }
@@ -100,10 +100,10 @@ E_DUMP_STATE data_get_dump_state(void)
  *
  *******************************************************/
 
-void data_set_pcm_state(E_PCM_STATE pcm_state)
+void data_set_pcm_state(E_PCM_STATE state)
 {
     pthread_mutex_lock(&g_work_state.mutex);
-    g_work_state.pcm_state = pcm_state;
+    g_work_state.pcm_state = state;
     pthread_mutex_unlock(&g_work_state.mutex);
 }
 
@@ -130,15 +130,15 @@ E_PCM_STATE data_get_pcm_state(void)
  *
  * @brief  设置tax通信状态
  *
- * @param  tax_comm_state: tax通信状态
+ * @param  state: tax通信状态
  * @retval none
  *
  *******************************************************/
 
-void data_set_tax_comm_state(E_TAX_STATE tax_comm_state)
+void data_set_tax_comm_state(E_TAX_STATE state)
 {
     pthread_mutex_lock(&g_work_state.mutex);
-    g_work_state.tax_comm_state = tax_comm_state;
+    g_work_state.tax_comm_state = state;
     pthread_mutex_unlock(&g_work_state.mutex);
 }
 
@@ -169,7 +169,7 @@ E_TAX_STATE data_get_tax_comm_state(void)
  * @retval none
  *
  *******************************************************/
-
+#if 0
 void data_set_update_state(E_UPDATE_STATE update_state)
 {
 
@@ -177,7 +177,7 @@ void data_set_update_state(E_UPDATE_STATE update_state)
     g_work_state.update_state = update_state;
     pthread_mutex_unlock(&g_work_state.mutex);
 }
-
+#endif
 /*******************************************************
  *
  * @brief  获取升级状态
@@ -186,7 +186,7 @@ void data_set_update_state(E_UPDATE_STATE update_state)
  * @retval E_UPDATE_STATE 升级状态
  *
  *******************************************************/
-
+#if 0
 E_UPDATE_STATE data_get_update_state(void)
 {
     E_UPDATE_STATE ret;
@@ -197,15 +197,16 @@ E_UPDATE_STATE data_get_update_state(void)
 
     return ret;
 }
+#endif
 /*******************************************************
  *
  * @brief  数据模块初始化
  *
  * @param  list: 提示音播放列表的数据指针
- * @retval int 0:成功 -1:失败
+ * @retval sint32_t 0:成功 -1:失败
  *
  *******************************************************/
-int data_init(void)
+sint32_t data_init(void)
 {
     g_work_state.pcm_state = PCM_STATE_IDLE;
     pthread_mutex_init(&g_work_state.mutex, NULL);

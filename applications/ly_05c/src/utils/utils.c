@@ -21,7 +21,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
-#include <sys/wait.h>
+/* #include <sys/wait.h> */
 #include <sys/select.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -35,6 +35,7 @@
 
 #include "utils.h"
 #include "file_manager.h"
+#include "log.h"
 
 /*******************************************************
  * 宏定义
@@ -47,17 +48,17 @@
 
 /*******************************************************
  * 函数声明
-*******************************************************/
+ *******************************************************/
 
 /*******************************************************
  *
  * @brief  获取U盘剩余空间,单位:KB
  *
  * @param  *path: U盘的文件目录
- * @retval int 剩余空间大小
+ * @retval sint32_t 剩余空间大小
  *
  *******************************************************/
-int get_disk_free_space(const char *path)
+sint32_t get_disk_free_space(const char *path)
 {
     ssize_t ret = -1;
     struct statfs disk_info;
@@ -92,13 +93,13 @@ int get_disk_free_space(const char *path)
  *******************************************************/
 long file_size(char *name)
 {
-    int ret = 0;
+    sint32_t ret = 0;
     struct stat stat_buf;
 
     ret = stat(name, &stat_buf);
     if (ret < 0)
     {
-        return -1;
+        return (sint32_t)-1;
     }
     return stat_buf.st_size;
 }
@@ -111,11 +112,11 @@ long file_size(char *name)
  * @retval 正数:文件的大小 负数:失败
  *
  *******************************************************/
-int dir_size(char *dir_path)
+sint32_t dir_size(char *dir_path)
 {
     char path[PATH_NAME_MAX_LEN] = {0};
     long total_size = 0;
-    int ret = 0;
+    sint32_t ret = 0;
 
     /* 把目录路径存放在字符数组内 */
     strcpy(path, dir_path);
@@ -124,8 +125,8 @@ int dir_size(char *dir_path)
     DIR *dir = opendir(path);
     if (NULL == dir)
     {
-        log_print(LOG_ERROR, "can open dir %s \n", path);
-        return -1;
+        log_print(LOG_ERROR, "can not open dir %s \n", path);
+        return (sint32_t)-1;
     }
 
     /* 如果打开成功,则循环读取目录 */
@@ -137,23 +138,23 @@ int dir_size(char *dir_path)
         strcat(path, "/");
         strcat(path, ent->d_name);
 
-        if (DT_DIR == ent->d_type) /*目录文件 */
+        if (DT_DIR == ent->d_type) /* 目录文件 */
         {
             ret = dir_size(path);
         }
-        else /*非目录文件 */
+        else /* 非目录文件 */
         {
             ret = file_size(path);
         }
         if (ret < 0)
-            return -1;
+            return (sint32_t)-1;
         total_size += ret;
         ent = readdir(dir);
     }
 
     ret = closedir(dir);
     if (ret < 0)
-        return -1;
+        return (sint32_t)-1;
     return total_size;
 }
 
@@ -162,12 +163,12 @@ int dir_size(char *dir_path)
  * @brief  排序文件列表
  *
  * @param  *h: 需要排序的文件列表
- * @param  flag: 0x01:从小到大(最新) 0x10:从大(最新)到小
+ * @param  flag: SORT_UP:从小到大(最新) SORT_DOWN:从大(最新)到小
  * @retval 排序好的文件列表
  *
  *******************************************************/
 
-file_info_t *sort_link(file_info_t *h, int flag)
+file_info_t *sort_link(file_info_t *h, sint32_t flag)
 {
     file_info_t *endpt, *u, *v, *p;
     u = (file_info_t *)malloc(sizeof(file_info_t));
@@ -177,9 +178,7 @@ file_info_t *sort_link(file_info_t *h, int flag)
     {
         for (p = u = h; u->next->next != endpt; u = u->next)
         {
-            /* 原来是>,修改为<,原来是按照序号由小到大排列,现在为由大到小排列,即先转储需要最大(最新)的文件. */
-            /* 当flag==0x01时,按照由小到大排列;当flag == 0x10时,按照由大到小排列 */
-            if (flag == 0x01)
+            if (flag == SORT_UP)
             {
                 if (u->next->file_id > u->next->next->file_id)
                 {
@@ -190,7 +189,7 @@ file_info_t *sort_link(file_info_t *h, int flag)
                     p = u->next->next;
                 }
             }
-            else if (flag == 0x10)
+            else if (flag == SORT_DOWN)
             {
                 if (u->next->file_id < u->next->next->file_id)
                 {
@@ -218,7 +217,7 @@ file_info_t *sort_link(file_info_t *h, int flag)
  *
  *******************************************************/
 
-void free_link(file_info_t * list_head)
+void free_link(file_info_t *list_head)
 {
     file_info_t *bakp;
     while (list_head)
@@ -241,12 +240,12 @@ void free_link(file_info_t * list_head)
 void show_link(file_info_t *list_head)
 {
     while (list_head != NULL)
-    { 
+    {
         /* d_type＝8表示正常的文件 */
         log_print(LOG_ERROR, "NUM:%d name:%s size:%d \n",
-               list_head->file_id,
-               list_head->filename,
-               list_head->file_size);
+                  list_head->file_id,
+                  list_head->filename,
+                  list_head->file_size);
         list_head = list_head->next;
     }
 }
@@ -281,7 +280,7 @@ char *get_sigle_file_name(char *full_path)
  *
  * @param  *path: 目录路径
  * @retval file_info_t * 文件列表
- * 
+ *
  *******************************************************/
 
 file_info_t *get_org_file_info(char *path)
@@ -290,9 +289,9 @@ file_info_t *get_org_file_info(char *path)
     struct dirent *next;
     char full_path[PATH_NAME_MAX_LEN] = {0};
     char buffer[PAGE_SIZE];
-    int bytes_read;
+    sint32_t bytes_read;
     struct stat stat_l;
-    int fd;
+    sint32_t fd;
     file_info_t *list_head = NULL;
     file_info_t *cur_file_list = NULL;
     file_info_t *tmp_file_list = NULL;
@@ -301,7 +300,7 @@ file_info_t *get_org_file_info(char *path)
     dir = opendir(path);
     if (!dir)
     {
-        fprintf(stderr, "get_org_file_info error,can not open %s.\n", path);
+        rt_kprintf("get_org_file_info error,can not open %s.\n", path);
         return NULL;
     }
 
@@ -343,7 +342,6 @@ file_info_t *get_org_file_info(char *path)
                             }
                         }
                     }
-                    /* close(fd); */
                 }
             }
         }
@@ -358,15 +356,16 @@ file_info_t *get_org_file_info(char *path)
  * @brief  递归创建目录
  *
  * @param  *path: 被创建的目录路径
- * @retval int 0:成功 负数:失败
+ * @retval sint32_t 0:成功 负数:失败
  *
  *******************************************************/
 
-int create_dir(const char *path)
+sint32_t create_dir(const char *path)
 {
-    char dir_name[PATH_NAME_MAX_LEN] = {0};
-    int i, len;
+    char dir_name[PATH_NAME_MAX_LEN];
+    sint32_t i, len;
 
+    memset(dir_name, 0, sizeof(dir_name));
     strcpy(dir_name, path);
     len = strlen(dir_name);
 
@@ -381,7 +380,7 @@ int create_dir(const char *path)
                 if (mkdir(dir_name, 0777) < 0)
                 {
                     log_print(LOG_ERROR, "can not create dir %s. \n", dir_name);
-                    return -1;
+                    return (sint32_t)-1;
                 }
             }
             if (i != len)
@@ -401,10 +400,10 @@ int create_dir(const char *path)
  * @retval 0:成功 负数:失败
  *
  *******************************************************/
-int create_file(const char *path)
+sint32_t create_file(const char *path)
 {
     char file_path[PATH_NAME_MAX_LEN] = {0};
-    int i, len;
+    sint32_t i, len;
 
     strcpy(file_path, path);
     len = strlen(file_path);
@@ -419,8 +418,7 @@ int create_file(const char *path)
                 /* 创建目录 */
                 if (mkdir(file_path, 0766) < -1)
                 {
-                    log_print(LOG_ERROR, "can not create dir %s. \n",file_path);
-                    return -1;
+                    return (sint32_t)-1;
                 }
             }
             file_path[i] = '/';
@@ -432,7 +430,7 @@ int create_file(const char *path)
             if (creat(file_path, 0766) < 0)
             {
                 log_print(LOG_ERROR, "can not create file %s. \n", file_path);
-                return -1;
+                return (sint32_t)-2;
             }
         }
     }

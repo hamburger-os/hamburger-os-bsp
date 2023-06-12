@@ -9,8 +9,8 @@
  *
  *******************************************************/
 
-#ifndef _VOICE_H_
-#define _VOICE_H_
+#ifndef VOICE_H_
+#define VOICE_H_
 
 /*******************************************************
  * 头文件
@@ -61,7 +61,7 @@ void play_stop(void);
  * @retval 0:成功 -1:失败
  *
  *******************************************************/
-int play_init(void);
+sint32_t play_init(void);
 
 /*******************************************************
  *
@@ -70,7 +70,7 @@ int play_init(void);
  * @retval none
  *
  *******************************************************/
-void record_start_record(void);
+sint32_t record_start_record(void);
 
 /*******************************************************
  *
@@ -79,7 +79,7 @@ void record_start_record(void);
  * @retval none
  *
  *******************************************************/
-void record_stop_record(void);
+sint32_t record_stop_record(void);
 
 /*******************************************************
  *
@@ -88,7 +88,7 @@ void record_stop_record(void);
  * @retval 0:成功 -1:失败
  *
  *******************************************************/
-int record_init(void);
+sint32_t record_init(void);
 
 /*******************************************************
  *
@@ -97,6 +97,6 @@ int record_init(void);
  * @retval 0:成功 -1:失败
  *
  *******************************************************/
-int voice_init(void);
+sint32_t voice_init(void);
 
 #endif
