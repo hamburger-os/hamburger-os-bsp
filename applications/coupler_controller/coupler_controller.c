@@ -19,7 +19,7 @@
 
 #define DEBUG_LED   LED_CAN1
 
-#define FFFE_RX_MAX_LEN 2048
+#define HDLC_RX_MAX_LEN 512
 
 CouplerCtrlUserData coupler_controller_userdata = {
     .station_devname = BSP_DEV_TABLE_UART1,
@@ -159,7 +159,7 @@ static int8_t hdlc_rx_indicate(Hdlc7c7eFrame *frame, Hdlc7c7eFrameHead *head, ui
 static Hdlc7c7eFrame frame = {
     .peer = HDLC_SLAVE,
     .addr = 0x02,
-    .maxlen = FFFE_RX_MAX_LEN,
+    .maxlen = HDLC_RX_MAX_LEN,
     .user_data = &coupler_controller_userdata,
 
     .init = hdlc_init,
@@ -227,11 +227,11 @@ static int8_t hdlc_init(Hdlc7c7eFrame *frame)
     config.stop_bits = STOP_BITS_1;             // 停止位 1
     config.parity    = PARITY_NONE;             // 无奇偶校验位
 #ifdef RT_USING_SERIAL_V2
-    config.rx_bufsz  = FFFE_RX_MAX_LEN;
-    config.tx_bufsz  = FFFE_RX_MAX_LEN;
+    config.rx_bufsz  = HDLC_RX_MAX_LEN;
+    config.tx_bufsz  = HDLC_RX_MAX_LEN;
 #endif
 #ifdef RT_USING_SERIAL_V1
-    config.bufsz     = FFFE_RX_MAX_LEN;
+    config.bufsz     = HDLC_RX_MAX_LEN;
 #endif
 
     /* step3：控制串口设备。通过控制接口传入命令控制字，与控制参数 */
