@@ -21,6 +21,7 @@ static void max31826_echo_test(int argc, char *argv[])
     {
         LOG_E("max31826dev find NULL.");
     }
+    LOG_D("start...");
     /* 以只读及轮询模式打开传感器设备 */
     rt_device_open(max31826dev, RT_DEVICE_FLAG_RDONLY);
     rt_memset((void *)max_ID, 0x00, sizeof(max_ID));
