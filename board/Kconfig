@@ -1998,6 +1998,21 @@ menu "On-chip Peripheral Drivers"
                         default n
                 endif
         endif
+        
+    menuconfig BSP_USING_CPUTEMP
+        bool "Enable CPU temperature"
+        default n
+        select BSP_USING_ADC
+        
+        if BSP_USING_CPUTEMP
+            config CPUTEMP_ADC_DEV
+                string "Set the adc temp device name used, default: adc1"
+                default "adc1"
+                
+            config CPUTEMP_ADC_DEV_CHANNEL
+                int "Set the adc temp device channel, default: 18"
+                default 18
+        endif
 
     menuconfig BSP_USING_ADC
         bool "Enable ADC"

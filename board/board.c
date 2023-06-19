@@ -14,7 +14,7 @@ static int rt_hw_clock_information(void)
 {
     rt_kprintf("|------------------------------\n");
     rt_kprintf("| * System Clock information * \n");
-    rt_kprintf("|    name    |\tfrequency\n", HAL_RCC_GetSysClockFreq());
+    rt_kprintf("|    name    |\tfrequency\n");
     rt_kprintf("|------------------------------\n");
     rt_kprintf("|    SYSCLK  |\t%d\n", HAL_RCC_GetSysClockFreq());
     rt_kprintf("|    HCLK    |\t%d\n", HAL_RCC_GetHCLKFreq());

@@ -76,6 +76,8 @@ int rt_hw_mpu_init(void);
                     (( (uint32_t)(A) & 0x0000ff00) << 8)   | \
                     (( (uint32_t)(A) & 0x000000ff) << 24))
 
+uint32_t memory_info_size(void);
+
 //rt_kprintf("%s %s %d\n", __FILE__, __FUNCTION__, __LINE__);
 
 #ifdef __cplusplus

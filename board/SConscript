@@ -205,6 +205,9 @@ if GetDepend(['BSP_USING_ICCARD_FLASH']):
 if GetDepend(['BSP_USING_I2C']):
     src += Glob('ports/drv_i2c.c')
     
+if GetDepend(['BSP_USING_CPUTEMP']):
+    src += Glob('ports/drv_cpu_temp.c')
+    
 if GetDepend(['BSP_USING_I2S']):
     src += Glob('ports/drv_i2s.c')
     

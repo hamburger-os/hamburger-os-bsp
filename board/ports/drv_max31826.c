@@ -308,7 +308,7 @@ static rt_int32_t DEV_MAX31826_ReadTemp(void)
 /* RT-Thread Device Driver Interface */
 static rt_size_t _max31826_polling_get_data(struct rt_sensor_device *sensor, struct rt_sensor_data *data)
 {
-    rt_int32_t temperature_x10;
+    rt_int32_t temperature_x100;
     if (sensor->info.type == RT_SENSOR_CLASS_TEMP)
     {
         rt_int32_t s32Tmp = TEMP_INVALID;
@@ -317,9 +317,9 @@ static rt_size_t _max31826_polling_get_data(struct rt_sensor_device *sensor, str
         s32Tmp = DEV_MAX31826_ReadTemp();
         f32Max31826Tmp = (0.0625f * s32Tmp);//单位：℃
 
-        temperature_x10 = f32Max31826Tmp * 10;
-        LOG_D("temp : %d", temperature_x10);
-        data->data.temp = temperature_x10;
+        temperature_x100 = f32Max31826Tmp * 100;
+        LOG_D("temp : %d", temperature_x100);
+        data->data.temp = temperature_x100;
         data->timestamp = rt_tick_get_millisecond();
     }
     return 1;

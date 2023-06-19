@@ -32,7 +32,7 @@ static void max31826_echo_test(int argc, char *argv[])
     struct rt_sensor_data max31826data = {0};
     if (rt_device_read(max31826dev, 0, &max31826data, sizeof(max31826data)) == 1)
     {
-        LOG_D("temp : %d.%02d ℃", max31826data.data.temp / 10, max31826data.data.temp % 10);
+        LOG_D("temp : %d.%02d ℃", max31826data.data.temp / 100, abs(max31826data.data.temp % 100));
     }
 #endif
 }
