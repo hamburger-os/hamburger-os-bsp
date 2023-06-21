@@ -131,7 +131,10 @@ static E_UPGRADE_STATE upgrade_get_flag(void)
     /* 关闭文件 */
     ret = close(fd);
     if (ret < 0)
+    {
+
         return UPGRADE_STATE_INVALID;
+    }
     else
     {
     }
@@ -174,6 +177,9 @@ void ota_from_file_handle(OtaHandleTypeDef type)
             upgrade_set_flag(UPGRADE_STATE_NOT);
             event_push_queue(EVENT_UPDATE_SUCCESS);
         }
+        else
+        {
+        }
         break;
     case OTA_HANDLE_FAILED: /* download 分区内的镜像文件没有被装载. */
         state = upgrade_get_flag();
@@ -181,6 +187,9 @@ void ota_from_file_handle(OtaHandleTypeDef type)
         {
             upgrade_set_flag(UPGRADE_STATE_NOT);
             event_push_queue(EVENT_UPDATE_FAIL);
+        }
+        else
+        {
         }
         break;
     default:

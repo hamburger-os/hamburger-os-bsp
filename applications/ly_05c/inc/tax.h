@@ -41,7 +41,7 @@
  * @retval 0:成功 -1:失败
  *
  *******************************************************/
-sint32_t tax_send_echo_event(uint8_t Event, tax40_t *tax40);
+sint32_t tax_send_echo_event(uint8_t Event, const tax40_t *tax40);
 
 /*******************************************************
  *

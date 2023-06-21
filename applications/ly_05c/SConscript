@@ -23,7 +23,6 @@ src =  Split('''
     src/log.c
     src/upgrade.c
     ly_05c.c
-    ly_05c_test.c
     '''
     )
 

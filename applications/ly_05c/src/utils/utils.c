@@ -28,11 +28,10 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <dirent.h>
-#include <utime.h>
+/* #include <utime.h>*/
 #include <pthread.h>
-#include <sys/file.h>
+/* #include <sys/file.h> */
 #include <sys/vfs.h>
-
 #include "utils.h"
 #include "file_manager.h"
 #include "log.h"
@@ -68,19 +67,25 @@ sint32_t get_disk_free_space(const char *path)
     unsigned long long free_disk;
     ssize_t kb_free_disk;
 
+    /* 获取文件系统的信息  */
     ret = statfs(path, &disk_info);
     if (ret != 0)
     {
-        log_print(LOG_ERROR, "can not get mount dir %s\n", path);
+        log_print(LOG_ERROR, "can not get mount dir %s. \n", path);
         return ret;
     }
+    else
+    {
+    }
+    /* 获取块数 */
     total_blocks = disk_info.f_bsize;
+    /* 获取总大小 */
     total_size = total_blocks * disk_info.f_blocks;
     kb_total_size = total_size >> 10;
     free_disk = disk_info.f_bfree * total_blocks;
     kb_free_disk = free_disk >> 10;
 
-    log_print(LOG_ERROR, "%s total=%dKB, free=%dKB\n", path, kb_total_size, kb_free_disk);
+    log_print(LOG_ERROR, "%s total=%dKB, free=%dKB. \n", path, kb_total_size, kb_free_disk);
     return kb_free_disk;
 }
 /*******************************************************
@@ -91,7 +96,7 @@ sint32_t get_disk_free_space(const char *path)
  * @retval 正数:文件的大小 负数:失败
  *
  *******************************************************/
-long file_size(char *name)
+uint32_t file_size(char *name)
 {
     sint32_t ret = 0;
     struct stat stat_buf;
@@ -100,6 +105,9 @@ long file_size(char *name)
     if (ret < 0)
     {
         return (sint32_t)-1;
+    }
+    else
+    {
     }
     return stat_buf.st_size;
 }
@@ -112,11 +120,11 @@ long file_size(char *name)
  * @retval 正数:文件的大小 负数:失败
  *
  *******************************************************/
-sint32_t dir_size(char *dir_path)
+sint32_t dir_size(const char *dir_path)
 {
     char path[PATH_NAME_MAX_LEN] = {0};
     long total_size = 0;
-    sint32_t ret = 0;
+    long ret = 0;
 
     /* 把目录路径存放在字符数组内 */
     strcpy(path, dir_path);
@@ -127,6 +135,9 @@ sint32_t dir_size(char *dir_path)
     {
         log_print(LOG_ERROR, "can not open dir %s \n", path);
         return (sint32_t)-1;
+    }
+    else
+    {
     }
 
     /* 如果打开成功,则循环读取目录 */
@@ -147,14 +158,24 @@ sint32_t dir_size(char *dir_path)
             ret = file_size(path);
         }
         if (ret < 0)
+        {
             return (sint32_t)-1;
-        total_size += ret;
+        }
+        else
+        {
+        }
+        total_size += (long)ret;
         ent = readdir(dir);
     }
 
     ret = closedir(dir);
     if (ret < 0)
+    {
         return (sint32_t)-1;
+    }
+    else
+    {
+    }
     return total_size;
 }
 
@@ -172,6 +193,13 @@ file_info_t *sort_link(file_info_t *h, sint32_t flag)
 {
     file_info_t *endpt, *u, *v, *p;
     u = (file_info_t *)malloc(sizeof(file_info_t));
+    if (u == NULL)
+    {
+        return NULL;
+    }
+    else
+    {
+    }
     u->next = h;
     h = u;
     for (endpt = NULL; endpt != h; endpt = p)
@@ -188,6 +216,9 @@ file_info_t *sort_link(file_info_t *h, sint32_t flag)
                     u->next = v;
                     p = u->next->next;
                 }
+                else
+                {
+                }
             }
             else if (flag == SORT_DOWN)
             {
@@ -199,6 +230,12 @@ file_info_t *sort_link(file_info_t *h, sint32_t flag)
                     u->next = v;
                     p = u->next->next;
                 }
+                else
+                {
+                }
+            }
+            else
+            {
             }
         }
     }
@@ -219,12 +256,12 @@ file_info_t *sort_link(file_info_t *h, sint32_t flag)
 
 void free_link(file_info_t *list_head)
 {
-    file_info_t *bakp;
-    while (list_head)
+    file_info_t *p_bakp;
+    while (list_head != NULL)
     {
-        bakp = list_head;
+        p_bakp = list_head;
         list_head = list_head->next;
-        free(bakp);
+        free(p_bakp);
     }
 }
 
@@ -270,6 +307,9 @@ char *get_sigle_file_name(char *full_path)
         {
             break;
         }
+        else
+        {
+        }
         p--;
     }
     return (p + 1);
@@ -283,29 +323,32 @@ char *get_sigle_file_name(char *full_path)
  *
  *******************************************************/
 
-file_info_t *get_org_file_info(char *path)
+file_info_t *get_org_file_info(const char *path)
 {
-    DIR *dir;
+    DIR *p_dir;
     struct dirent *next;
     char full_path[PATH_NAME_MAX_LEN] = {0};
     char buffer[PAGE_SIZE];
     sint32_t bytes_read;
     struct stat stat_l;
     sint32_t fd;
-    file_info_t *list_head = NULL;
-    file_info_t *cur_file_list = NULL;
-    file_info_t *tmp_file_list = NULL;
+    file_info_t *p_list_head = NULL;
+    file_info_t *p_cur_file_list = NULL;
+    file_info_t *p_tmp_file_list = NULL;
 
-    list_head = NULL;
-    dir = opendir(path);
-    if (!dir)
+    p_list_head = NULL;
+    p_dir = opendir(path);
+    if (p_dir == NULL)
     {
         rt_kprintf("get_org_file_info error,can not open %s.\n", path);
         return NULL;
     }
+    else
+    {
+    }
 
     /* 读取目录内文件名 */
-    while ((next = readdir(dir)) != NULL)
+    while ((next = readdir(p_dir)) != NULL)
     {
         sprintf(full_path, "%s/%s", path, next->d_name);
         if (stat(full_path, &stat_l) == 0)
@@ -317,43 +360,61 @@ file_info_t *get_org_file_info(char *path)
                 fd = open(full_path, O_RDONLY);
                 if (fd > 0)
                 {
-                    bytes_read = read(fd, buffer, PAGE_SIZE);
+                    bytes_read = read(fd, (void *)buffer, (size_t)PAGE_SIZE);
                     close(fd);
                     if (bytes_read == PAGE_SIZE)
                     {
                         if ((strcmp((const char *)(((file_head_t *)buffer)->file_head_flag), (const char *)FILE_HEAD_FLAG)) == 0)
                         {
-                            tmp_file_list = malloc(sizeof(file_info_t));
-                            if (tmp_file_list)
+                            p_tmp_file_list = (file_info_t *)malloc(sizeof(file_info_t));
+                            if (p_tmp_file_list != NULL)
                             {
-                                if (list_head == NULL)
+                                if (p_list_head == NULL)
                                 {
-                                    list_head = tmp_file_list;
+                                    p_list_head = p_tmp_file_list;
                                 }
                                 else
                                 {
-                                    cur_file_list->next = tmp_file_list;
+                                    p_cur_file_list->next = p_tmp_file_list;
                                 }
-                                cur_file_list = tmp_file_list;
-                                cur_file_list->next = NULL;
-                                strcpy(cur_file_list->filename, full_path);
-                                cur_file_list->file_id = ((file_head_t *)buffer)->file_index;
-                                cur_file_list->file_size = stat_l.st_size;
+                                p_cur_file_list = p_tmp_file_list;
+                                p_cur_file_list->next = NULL;
+                                strcpy(p_cur_file_list->filename, full_path);
+                                p_cur_file_list->file_id = ((file_head_t *)buffer)->file_index;
+                                p_cur_file_list->file_size = stat_l.st_size;
+                            }
+                            else
+                            {
                             }
                         }
+                        else
+                        {
+                        }
+                    }
+                    else
+                    {
                     }
                 }
+                else
+                {
+                }
             }
+            else
+            {
+            }
+        }
+        else
+        {
         }
     }
 
-    closedir(dir);
-    return list_head;
+    closedir(p_dir);
+    return p_list_head;
 }
 
 /*******************************************************
  *
- * @brief  递归创建目录
+ * @brief  递归创建目录,如果目录存在,也是创建成功.
  *
  * @param  *path: 被创建的目录路径
  * @retval sint32_t 0:成功 负数:失败
@@ -374,7 +435,7 @@ sint32_t create_dir(const char *path)
 
         if ((dir_name[i] == '/') || (dir_name[i] == '\0'))
         {
-            dir_name[i] = 0;
+            dir_name[i] = (char)0;
             if (access(dir_name, 0) != 0) /* 如果文件不存在 */
             {
                 if (mkdir(dir_name, 0777) < 0)
@@ -382,11 +443,23 @@ sint32_t create_dir(const char *path)
                     log_print(LOG_ERROR, "can not create dir %s. \n", dir_name);
                     return (sint32_t)-1;
                 }
+                else
+                {
+                }
+            }
+            else
+            {
             }
             if (i != len)
             {
                 dir_name[i] = '/';
             }
+            else
+            {
+            }
+        }
+        else
+        {
         }
     }
     return 0;
@@ -412,7 +485,7 @@ sint32_t create_file(const char *path)
     {
         if (file_path[i] == '/')
         {
-            file_path[i] = 0;
+            file_path[i] = (char)0;
             if (access(file_path, 0) != 0) /* 如果文件不存在 */
             {
                 /* 创建目录 */
@@ -420,8 +493,17 @@ sint32_t create_file(const char *path)
                 {
                     return (sint32_t)-1;
                 }
+                else
+                {
+                }
+            }
+            else
+            {
             }
             file_path[i] = '/';
+        }
+        else
+        {
         }
 
         if (file_path[i] == 0)
@@ -432,6 +514,12 @@ sint32_t create_file(const char *path)
                 log_print(LOG_ERROR, "can not create file %s. \n", file_path);
                 return (sint32_t)-2;
             }
+            else
+            {
+            }
+        }
+        else
+        {
         }
     }
 

@@ -73,25 +73,25 @@
  *******************************************************/
 
 /* 串口回调消息结构体 */
-struct rx_msg
+typedef struct rx_msg
 {
     rt_device_t dev; /* 串口设备 */
     rt_size_t size;  /* 数据长度 */
-};
+} rx_msg_t;
 
 /* TAX2应答事件通信包 */
-typedef struct _Tax2EchoEvent
+typedef struct
 {
-    char data[TAX_ACK_MSG_LEN];
+    char data[TAX_ACK_MSG_LEN]; /*应答包通信数据*/
 } tax2_echo_event_t;
 
 /* TAX2应答事件通信包列表*/
-typedef struct _tax2_echo_event_list_t
+typedef struct
 {
-    tax2_echo_event_t echo_event[TAX_EVENT_NUMS];
-    sint32_t head;
-    sint32_t tail;
-    pthread_mutex_t mutex;
+    tax2_echo_event_t echo_event[TAX_EVENT_NUMS]; /*应答事件通信包*/
+    sint32_t head;                                /*头部序号*/
+    sint32_t tail;                                /*尾部序号*/
+    pthread_mutex_t mutex;                        /*互斥量*/
 } tax2_echo_event_list_t;
 
 /*******************************************************
@@ -149,7 +149,8 @@ static void tax_init_echo_event_list(tax2_echo_event_list_t *list)
 {
     memset(list, 0, sizeof(tax2_echo_event_list_t));
     pthread_mutex_init(&list->mutex, NULL);
-    list->head = list->tail = 0;
+    list->head = 0;
+    list->tail = 0;
 }
 /*******************************************************
  *
@@ -187,6 +188,9 @@ static sint32_t tax_read_echo_event_list(tax2_echo_event_list_t *list, uint8_t *
         pthread_mutex_unlock(&list->mutex);
         return (sint32_t)-1;
     }
+    else
+    {
+    }
     memcpy(data, list->echo_event[list->tail].data, TAX_ACK_MSG_LEN);
     list->tail++;
     list->tail %= TAX_EVENT_NUMS;
@@ -207,12 +211,12 @@ static void tax_set_check_sum(uint8_t *buf, sint32_t len)
     uint8_t mask_val = 0;
     sint32_t i = 0;
 
-    while (i < len - 1)
+    while (i < (len - 1))
     {
         mask_val += buf[i];
         i++;
     }
-    buf[len - 1] = ~mask_val + 1;
+    buf[len - 1] = (uint8_t)(~mask_val) + 1;
 }
 /*******************************************************
  *
@@ -223,12 +227,18 @@ static void tax_set_check_sum(uint8_t *buf, sint32_t len)
  * @retval 0:成功 -1:失败
  *
  *******************************************************/
-sint32_t tax_send_echo_event(uint8_t Event, tax40_t *tax40)
+sint32_t tax_send_echo_event(uint8_t Event, const tax40_t *tax40)
 {
     uint8_t buf[TAX_ACK_MSG_LEN] = {0};
 
+    /* 判断指针的有效性 */
     if (tax40 == NULL)
+    {
         return (sint32_t)-1;
+    }
+    else
+    {
+    }
 
     buf[0] = TAX_UNIT_TRACK_DETECT; /* 语音记录单元代号 */
     buf[1] = (TAX_RECV_SUCCESS << 4) | (TAX_VALID_RECOED << 0);
@@ -255,6 +265,7 @@ sint32_t tax_send_echo_event(uint8_t Event, tax40_t *tax40)
     buf[16] = 0;
     buf[17] = 0;
 
+    /* 设置校验和 */
     tax_set_check_sum(buf, TAX_ACK_MSG_LEN);
     return tax_push_echo_event_list(echo_list, buf);
 }
@@ -268,8 +279,8 @@ sint32_t tax_send_echo_event(uint8_t Event, tax40_t *tax40)
  *******************************************************/
 static void update_tax_data(void)
 {
-    memcpy((char *)&g_tax32, &tax_info_all[0], TAX_BOARD1_PACKAGE_LEN);
-    memcpy((char *)&g_tax40, &tax_info_all[TAX_BOARD1_PACKAGE_LEN], TAX_BOARD2_PACKAGE_LEN);
+    memcpy((void *)&g_tax32, (void *)&tax_info_all[0], TAX_BOARD1_PACKAGE_LEN);
+    memcpy((void *)&g_tax40, (void *)&tax_info_all[TAX_BOARD1_PACKAGE_LEN], TAX_BOARD2_PACKAGE_LEN);
 }
 /*******************************************************
  *
@@ -287,7 +298,7 @@ static rt_err_t uart_input(rt_device_t dev, rt_size_t size)
     msg.dev = dev;
     msg.size = size;
 
-    result = rt_mq_send(uart_mq, &msg, sizeof(msg));
+    result = rt_mq_send(uart_mq, (void*)&msg, sizeof(msg));
     return result;
 }
 /*******************************************************
@@ -309,6 +320,9 @@ static sint32_t tax_open(char *name)
     {
         log_print(LOG_ERROR, "can not find %s device.\n", name);
         return (sint32_t)-1;
+    }
+    else
+    {
     }
 
     /* 修改串口配置参数 */
@@ -333,6 +347,9 @@ static sint32_t tax_open(char *name)
         rt_device_close(uart_dev);
         return (sint32_t)-1;
     }
+    else
+    {
+    }
 
     /* step4:打开串口设备.以非阻塞接收和阻塞发送模式打开串口设备 */
 #ifdef RT_USING_SERIAL_V2
@@ -344,25 +361,34 @@ static sint32_t tax_open(char *name)
         {
             rt_device_close(uart_dev);
         }
+        else
+        {
+        }
     log_print(LOG_INFO, "open uart '%s' sucess. \n", name);
 
     /* 初始化消息队列 */
     uart_mq = rt_mq_create("uart", sizeof(struct rx_msg), 8, RT_IPC_FLAG_FIFO);
     if (uart_mq == RT_NULL)
     {
-        log_print(LOG_ERROR, "init uart mq error. " );
+        log_print(LOG_ERROR, "init uart mq error. ");
         rt_device_close(uart_dev);
         return (sint32_t)-1;
+    }
+    else
+    {
     }
 
     /* 设置接收回调函数 */
     ret = rt_device_set_rx_indicate(uart_dev, uart_input);
     if (ret != RT_EOK)
     {
-        log_print(LOG_ERROR, "set uart recv callback error. error_code:%d.\n",ret);
+        log_print(LOG_ERROR, "set uart recv callback error. error_code:%d.\n", ret);
         rt_mq_delete(uart_mq);
         rt_device_close(uart_dev);
         return (sint32_t)-1;
+    }
+    else
+    {
     }
 
     return 0;
@@ -380,13 +406,13 @@ static sint32_t tax_recv_data(void)
     static bool is_recving = false; /* 接收通信数据中 */
     static uint8_t *ptr = NULL;
     static uint8_t packet_len /* 通信包的长度*/, recv_cnt, check_sum /* 校验和结果*/;
-    static sint32_t len, len_r;
+    static sint32_t len /*未处理的数据长度*/, len_r /*从缓冲区中读取的数据长度*/;
     static uint8_t buf[BUFFER_LEN];
     sint32_t ret;
     uint8_t byte;
 
     /* 清空消息队列 */
-    rt_memset(&msg, 0, sizeof(msg));
+    rt_memset((void *)&msg, 0, sizeof(msg));
 
     /* 从消息队列中读取消息 */
     ret = rt_mq_recv(uart_mq, (void *)&msg, sizeof(msg), (rt_int32_t)READ_MESSAGE_QUEUE_TIMEOUT);
@@ -394,6 +420,9 @@ static sint32_t tax_recv_data(void)
     {
         log_print(LOG_ERROR, "send uart message queue error. \n");
         return (sint32_t)-1;
+    }
+    else
+    {
     }
 
     /* 环形缓冲区中的数据已经处理完成, 开始接受新的数据. */
@@ -405,10 +434,16 @@ static sint32_t tax_recv_data(void)
         if (len_r < 0)
         {
             log_print(LOG_ERROR, "read uart device error.\n");
-            return -2;
+            return (sint32_t)-2;
+        }
+        else
+        {
         }
         /* 读取的数据压入环形缓冲区中 */
-        len += len_r;
+        len = len_r;
+    }
+    else
+    {
     }
 
     while (len > 0)
@@ -422,7 +457,8 @@ static sint32_t tax_recv_data(void)
             {
                 recv_cnt = 0;
                 ptr = &tax_info_all[0];
-                ptr[recv_cnt++] = byte;
+                ptr[recv_cnt] = byte;
+                recv_cnt++;
                 packet_len = TAX_BOARD1_PACKAGE_LEN;
                 check_sum = byte;
                 is_recving = true;
@@ -431,7 +467,8 @@ static sint32_t tax_recv_data(void)
             {
                 recv_cnt = 0;
                 ptr = &tax_info_all[0] + TAX_BOARD1_PACKAGE_LEN;
-                ptr[recv_cnt++] = byte;
+                ptr[recv_cnt] = byte;
+                recv_cnt++;
                 packet_len = TAX_BOARD2_PACKAGE_LEN;
                 check_sum = byte;
                 is_recving = true;
@@ -444,7 +481,8 @@ static sint32_t tax_recv_data(void)
         }
         else /* 接收数据中... */
         {
-            ptr[recv_cnt++] = byte;
+            ptr[recv_cnt] = byte;
+            recv_cnt++;
             check_sum += byte;
             if (recv_cnt >= packet_len)
             {
@@ -457,11 +495,14 @@ static sint32_t tax_recv_data(void)
                 }
                 log_print(LOG_DEBUG, "\n");
 #endif
-                return (check_sum == 0) ? packet_len : -3;
+                return (check_sum == 0) ? (sint32_t)packet_len : (sint32_t)-3;
+            }
+            else
+            {
             }
         }
     }
-    return 0;
+    return (sint32_t)0;
 }
 
 /*******************************************************
@@ -486,6 +527,9 @@ static sint32_t tax_send_tax2_back(void)
         {
             return (sint32_t)-1;
         }
+        else
+        {
+        }
     }
     else /* 有缓冲的应答事件通信包 */
     {
@@ -494,6 +538,9 @@ static sint32_t tax_send_tax2_back(void)
         if (ret < TAX_ACK_MSG_LEN)
         {
             return (sint32_t)-1;
+        }
+        else
+        {
         }
     }
     return 0;
@@ -545,9 +592,12 @@ static void *tax_thread(void *args)
             case TAX_UNIT_TRACK_DETECT: /* 轨道检测 */
                 update_tax_data();
                 break;
-            default:
+            default: /* 缺省 */
                 break;
             }
+        }
+        else
+        {
         }
     }
     return NULL;
@@ -570,7 +620,13 @@ sint32_t tax_init(void)
     /* 申请事件列表缓冲区 */
     echo_list = (tax2_echo_event_list_t *)malloc(sizeof(tax2_echo_event_list_t));
     if (echo_list == NULL)
+    {
+
         return (sint32_t)-1;
+    }
+    else
+    {
+    }
     /* 初始化TAX2应答事件列表 */
     tax_init_echo_event_list(echo_list);
 
@@ -584,6 +640,9 @@ sint32_t tax_init(void)
     {
         log_print(LOG_ERROR, "create tax thread error,error_code:%d.\n", ret);
         return (sint32_t)-1;
+    }
+    else
+    {
     }
 
     return 0;

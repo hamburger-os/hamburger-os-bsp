@@ -51,10 +51,11 @@
 /*******************************************************
  * 全局变量
  *******************************************************/
-typedef struct rec_msg
+typedef struct
 {
-    sint32_t cmd;
-    sint32_t buf_size;
+    sint32_t cmd;      /* 录音命令 */
+    sint32_t buf_size; /*缓冲区实际数据的大小*/
+    /*缓冲区*/
     uint8_t buf[PCM_READ_BUFFER_SIZE / 2];
 } rec_msg_t;
 
@@ -72,7 +73,7 @@ static rt_mq_t rec_ctrl_mq = RT_NULL;
  *******************************************************/
 
 /* 开始录音 */
-static void record_beginrec();
+static void record_beginrec(void);
 /* 结束录音 */
 static void record_endrec(void);
 /* 录音线程 */
@@ -84,11 +85,10 @@ static void *record_handler_thread(void *arg);
  *
  * @brief  开始录音
  *
- * @param  channel: 通道数
  * @retval none
  *
  *******************************************************/
-static void record_beginrec()
+static void record_beginrec(void)
 {
     char full_path[PATH_NAME_MAX_LEN];
     sint32_t ret = 0;
@@ -111,23 +111,30 @@ static void record_beginrec()
         {
             log_print(LOG_ERROR, "create file error, ret=%d\n", ret);
         }
+        else
+        {
+        }
+
         /* 打开文件 */
-        g_cur_rec_file_info.fd = open(full_path, O_CREAT | O_RDWR | O_TRUNC, F_MODE);
+        g_cur_rec_file_info.fd = open(full_path, (int)((uint32_t)O_CREAT | (uint32_t)O_RDWR | (uint32_t)O_TRUNC), (uint32_t)F_MODE);
         if (g_cur_rec_file_info.fd < 0)
         {
             log_print(LOG_ERROR, "open file error, ret=%d\n", g_cur_rec_file_info.fd);
         }
+        else
+        {
+        }
 
         if (g_cur_rec_file_info.fd > 0)
         {
-            g_cur_rec_file_info.voices_num = 0;     /* 语音条数归零 */
-            g_cur_rec_file_info.voice_index = 0;    /* 语音序号归零 */
-            g_cur_rec_file_info.record_datalen = 0; /* 语音有效长度归零 */
+            g_cur_rec_file_info.voices_num = (uint32_t)0;     /* 语音条数归零 */
+            g_cur_rec_file_info.voice_index = (uint32_t)0;    /* 语音序号归零 */
+            g_cur_rec_file_info.record_datalen = (uint32_t)0; /* 语音有效长度归零 */
 
             fm_write_file_head(g_cur_rec_file_info.fd); /* 写文件头 */
             g_cur_rec_file_info.new_voice_head_offset =
-                lseek(g_cur_rec_file_info.fd, 0, SEEK_CUR); /* 得到当前文件偏移 */
-            fm_write_voice_head(g_cur_rec_file_info.fd);    /* 写语音头 */
+                lseek(g_cur_rec_file_info.fd, (off_t)0, SEEK_CUR); /* 得到当前文件偏移 */
+            fm_write_voice_head(g_cur_rec_file_info.fd);           /* 写语音头 */
 
             log_print(LOG_INFO, "create a new file '%s', start record ... \n", full_path);
             /* 把g_cur_rec_file_info.filename写入latest_filename.conf文件中 */
@@ -147,15 +154,15 @@ static void record_beginrec()
 
         if (g_cur_rec_file_info.fd > 0)
         {
-            g_cur_rec_file_info.record_datalen = 0; /* 语音有效长度归零 */
+            g_cur_rec_file_info.record_datalen = (uint32_t)0; /* 语音有效长度归零 */
             /* 先把文件指针移到最后 */
             g_cur_rec_file_info.new_voice_head_offset =
-                lseek(g_cur_rec_file_info.fd, 0, SEEK_END);
+                lseek(g_cur_rec_file_info.fd, (off_t)0, SEEK_END);
             fm_write_voice_head(g_cur_rec_file_info.fd); /* 写入语音头 */
             log_print(LOG_INFO, "offset: 0x%x. \n", full_path, g_cur_rec_file_info.new_voice_head_offset);
 
             /* 通知tax箱录音开始 */
-            tax_send_echo_event(IN_BEGIN, &g_tax40);
+            tax_send_echo_event((uint8_t)IN_BEGIN, &g_tax40);
         }
         else
         {
@@ -184,13 +191,16 @@ static void record_endrec(void)
         if (g_cur_rec_file_info.fd > 0)
         {
             /* 按512字节对其填充文件 */
-            fill_len = g_cur_rec_file_info.record_datalen % PAGE_SIZE;
-            if (fill_len != 0)
+            fill_len = g_cur_rec_file_info.record_datalen % (uint32_t)PAGE_SIZE;
+            if (fill_len != (uint32_t)0)
             {
                 /* 需要填充FF */
-                fill_len = PAGE_SIZE - fill_len;
+                fill_len = (uint32_t)PAGE_SIZE - fill_len;
                 write(g_cur_rec_file_info.fd, fill_buf, fill_len);
                 fsync(g_cur_rec_file_info.fd);
+            }
+            else
+            {
             }
             g_cur_rec_file_info.voices_num++;
 
@@ -206,15 +216,21 @@ static void record_endrec(void)
             g_cur_rec_file_info.fd = -1;
 
             /* 这里不太对, 每帧语音数据20ms, 但是编码出来的长度不一定都为 27字节(VOICE_VALID_LENGTH) */
-            log_print(LOG_INFO, "end, total time: %ds. \n",
-                      ((g_cur_rec_file_info.record_datalen / VOICE_VALID_LENGTH) * 20) / 1000);
+            log_print(LOG_INFO, "end, total timedata: %ds. \n",
+                      ((g_cur_rec_file_info.record_datalen / (uint32_t)VOICE_VALID_LENGTH) * (uint32_t)20) / (uint32_t)1000);
+        }
+        else
+        {
         }
 
         /* 通知tax箱录音结束 */
-        tax_send_echo_event(IN_END, &g_tax40);
+        tax_send_echo_event((uint8_t)IN_END, &g_tax40);
 
         /* 释放存储空间 */
         free_space();
+    }
+    else
+    {
     }
 }
 /*******************************************************
@@ -227,25 +243,39 @@ static void record_endrec(void)
  *******************************************************/
 static void *record_thread(void *args)
 {
-    sint32_t ret = 0;
+    rt_err_t ret = 0;
     sint32_t i = 0;
-    pcm_config_t config;
+    pcm_config_t *p_config = NULL;
     sint32_t rec_ctrl_msg = 0;
-    rec_msg_t rec_msg;
+    rec_msg_t rec_msg_data;
 
-    if ((rec_mq == RT_NULL) | (rec_ctrl_mq == RT_NULL))
+    // 获取声卡配置信息
+    p_config = pcm_get_config_instance();
+
+    if ((rec_mq == RT_NULL) || (rec_ctrl_mq == RT_NULL))
     {
-        perror("record thread error.");
+        log_print(LOG_INFO, "record thread start error.\n");
         return NULL;
+    }
+    else
+    {
     }
 
     log_print(LOG_INFO, "record thread start ...\n");
     while (true)
     {
         /* 接收录音控制消息 */
-        ret = rt_mq_recv(rec_ctrl_mq, (void *)&rec_ctrl_msg, sizeof(rec_ctrl_msg), (rt_int32_t)RT_WAITING_FOREVER);
+        ret = rt_mq_recv(rec_ctrl_mq,
+                         (void *)&rec_ctrl_msg,
+                         (rt_size_t)sizeof(rec_ctrl_msg),
+                         (rt_int32_t)RT_WAITING_FOREVER);
         if (ret != RT_EOK)
+        {
             continue;
+        }
+        else
+        {
+        }
 
         if (rec_ctrl_msg == REC_CTRL_MSG_START)
         {
@@ -260,17 +290,20 @@ static void *record_thread(void *args)
             data_set_pcm_state(PCM_STATE_RECORDING);
 
             /* 设置PCM设备参数 */
-            config.mode = SOUND_MODE_CAPTURE;
-            config.channels = CHANNEL_NUM;
-            config.sample_rate = SMAPLE_RATE;
-            config.format = SMAPLE_BITS;
+            p_config->mode = SOUND_MODE_CAPTURE;
+            p_config->channels = CHANNEL_NUM;
+            p_config->sample_rate = SMAPLE_RATE;
+            p_config->format = SMAPLE_BITS;
 
             /* pcm设备初始化 */
-            ret = pcm_init(&config);
+            ret = pcm_init(p_config);
             if (ret < 0)
             {
                 log_print(LOG_ERROR, "init pcm device error, error code is %d. \n", ret);
                 continue;
+            }
+            else
+            {
             }
 #if DEBUG_PCM_FILE
             /* 如果文件存在,则删除文件 */
@@ -278,12 +311,18 @@ static void *record_thread(void *args)
             {
                 unlink(BUFFER_DIR); /* 删除文件 */
             }
+            else
+            {
+            }
 
             /* 创建文件 */
             ret = create_file(BUFFER_DIR);
             if (ret < 0)
             {
                 log_print(LOG_ERROR, "create_dir error, error code is %d. \n", ret);
+            }
+            else
+            {
             }
 
             /* 打开缓存文件 */
@@ -293,27 +332,35 @@ static void *record_thread(void *args)
                 log_print(LOG_ERROR, "open error! fd=%d src='%s' \n", fd, BUFFER_DIR);
                 continue;
             }
+            else
+            {
+            }
 #else
             /* 继续运行录音处理线程 */
-            rec_msg.cmd = REC_MQ_BEGIN;
-            rec_msg.buf_size = 0;
-            ret = rt_mq_send(rec_mq, &rec_msg, sizeof(rec_msg));
+            rec_msg_data.cmd = REC_MQ_BEGIN;
+            rec_msg_data.buf_size = 0;
+            ret = rt_mq_send(rec_mq, &rec_msg_data, sizeof(rec_msg_data));
             if (ret != RT_EOK)
             {
                 /* todo, 是否合理? */
-                pcm_exit(&config);
+                pcm_exit(p_config);
                 continue;
+            }
+            else
+            {
             }
 #endif
             while (true)
             {
                 /* 读取音频数据 */
-                memset(config.p_buffer, 0, config.size);
-                ret = pcm_read(config.dev, config.p_buffer, config.size);
-                if (ret == -EPIPE)
+                memset(p_config->p_buffer, 0, p_config->size);
+                ret = pcm_read(p_config->dev, p_config->p_buffer, p_config->size);
+                if (ret < 0)
                 {
-                    rt_kprintf("overrun occurred. \n");
                     continue;
+                }
+                else
+                {
                 }
                 /**
                  *  样本数据图示:
@@ -325,30 +372,37 @@ static void *record_thread(void *args)
                  * | low byte | high byte | low byte | high byte |
                  * +----------+-----------+----------+-----------+
                  */
-                /* 将右通道的值放到左通道 */
-                for (i = 0; i < ret / 2 - 1; i = i + 2)
+                /* 将右通道的值变为单通道 */
+                for (i = 0; i < (ret / 2 - 1); i = i + 2)
                 {
-                    config.p_buffer[i + 0] = config.p_buffer[i * 2 + 2];
-                    config.p_buffer[i + 1] = config.p_buffer[i * 2 + 3];
+                    p_config->p_buffer[i + 0] = p_config->p_buffer[i * 2 + 2];
+                    p_config->p_buffer[i + 1] = p_config->p_buffer[i * 2 + 3];
                 }
 #if DEBUG_PCM_FILE
                 /* 写入文件缓存文件中 */
-                ret = write(fd, config.buffer, ret / 2);
+                ret = write(fd, p_config->buffer, ret / 2);
                 if (ret < 0)
                 {
                     log_print(LOG_ERROR, "write error. \n");
                 }
+                else
+                {
+                }
 #endif
                 /* 通知录音处理线程录音结束 */
-                rec_msg.cmd = REC_MQ_DATA;
-                rec_msg.buf_size = ret / 2;
-                memset(rec_msg.buf, 0, config.size / 2);
-                memcpy(rec_msg.buf, config.p_buffer, ret / 2);
+                rec_msg_data.cmd = REC_MQ_DATA;
+                /* 设置缓冲区大小 */
+                rec_msg_data.buf_size = ret / 2;
+                memset(rec_msg_data.buf, 0, p_config->size / 2);
+                memcpy(rec_msg_data.buf, p_config->p_buffer, ret / 2);
 
-                ret = rt_mq_send(rec_mq, &rec_msg, sizeof(rec_msg));
+                ret = rt_mq_send(rec_mq, &rec_msg_data, sizeof(rec_msg_data));
                 if (ret != RT_EOK)
                 {
                     /* rt_kprintf("*"); */
+                }
+                else
+                {
                 }
                 /* 接收录音控制消息, 采用非阻塞方式. */
                 ret = rt_mq_recv(rec_ctrl_mq, (void *)&rec_ctrl_msg, sizeof(sint32_t), (rt_int32_t)RT_WAITING_NO);
@@ -356,9 +410,15 @@ static void *record_thread(void *args)
                 {
                     continue;
                 }
+                else
+                {
+                }
                 if (rec_ctrl_msg == REC_CTRL_MSG_STOP)
                 {
                     break; /* 结束录音 */
+                }
+                else
+                {
                 }
             }
 #if DEBUG_PCM_FILE
@@ -370,20 +430,29 @@ static void *record_thread(void *args)
 #endif
 
             /* 通知录音处理线程录音结束 */
-            rec_msg.cmd = REC_MQ_END;
-            rec_msg.buf_size = 0;
-            ret = rt_mq_send(rec_mq, &rec_msg, sizeof(rec_msg));
+            rec_msg_data.cmd = REC_MQ_END;
+            rec_msg_data.buf_size = 0;
+            ret = rt_mq_send(rec_mq, &rec_msg_data, sizeof(rec_msg_data));
             if (ret != RT_EOK)
             {
                 rt_kprintf("send end msg error, ret:%d. \n", ret);
             }
+            else
+            {
+            }
 
             /* pcm设备初始化 */
-            ret = pcm_exit(&config);
+            ret = pcm_exit(p_config);
             if (ret < 0)
             {
-                return NULL;
+                rt_kprintf("pcm exit error.\n", ret);
             }
+            else
+            {
+            }
+        }
+        else
+        {
         }
     }
     return NULL;
@@ -405,7 +474,7 @@ static void *record_handler_thread(void *arg)
     uint8_t serial_data[AMR_FRAME_MAX_LEN];
     sint32_t dtx = 1;
     char encoder_buffer[AMR_FRAME_SRC_DATA_MAX_LEN]; /* 一帧的数据. */
-    rec_msg_t rec_msg;
+    rec_msg_t rec_msg_data;
     sint32_t encoder_buffer_used = 0; /* 编码缓存区中数据的大小 */
     sint32_t src_buf_handled_len;     /* 已经处理的数据长度 */
 
@@ -413,15 +482,21 @@ static void *record_handler_thread(void *arg)
     while (true)
     {
         /* 接收处理消息 */
-        ret = rt_mq_recv(rec_mq, (void *)&rec_msg, sizeof(rec_msg), (rt_int32_t)RT_WAITING_FOREVER);
+        ret = rt_mq_recv(rec_mq, (void *)&rec_msg_data, sizeof(rec_msg_data), (rt_int32_t)RT_WAITING_FOREVER);
         if (ret != RT_EOK)
         {
             continue;
         }
+        else
+        {
+        }
         /* 接收到的不是录音线程发送的开始命令, 则重新等待. */
-        if (rec_msg.cmd != REC_MQ_BEGIN)
+        if (rec_msg_data.cmd != REC_MQ_BEGIN)
         {
             continue;
+        }
+        else
+        {
         }
 
         /* 显示当前状态 */
@@ -436,35 +511,43 @@ static void *record_handler_thread(void *arg)
         while (true)
         {
             /* 增加1s超时, 防止录音线程卡死, 不发送结束命令 */
-            ret = rt_mq_recv(rec_mq, (void *)&rec_msg, sizeof(rec_msg), (rt_int32_t)1000);
+            ret = rt_mq_recv(rec_mq, (void *)&rec_msg_data, sizeof(rec_msg_data), (rt_int32_t)1000);
             if (ret != RT_EOK)
             {
                 break;
             }
-            if (rec_msg.cmd == REC_MQ_END) /* 接收结束命令 */
+            else
+            {
+            }
+
+            if (rec_msg_data.cmd == REC_MQ_END) /* 接收结束命令 */
             {
                 break;
             }
-            if (rec_msg.cmd == REC_MQ_DATA) /* 接收到数据 */
+            else
+            {
+            }
+
+            if (rec_msg_data.cmd == REC_MQ_DATA) /* 接收到数据 */
             {
                 /* rt_kprintf("."); */
                 src_buf_handled_len = 0;
                 while (true)
                 {
-                    if ((rec_msg.buf_size - src_buf_handled_len) < (AMR_FRAME_SRC_DATA_MAX_LEN - encoder_buffer_used))
+                    if ((rec_msg_data.buf_size - src_buf_handled_len) < (AMR_FRAME_SRC_DATA_MAX_LEN - encoder_buffer_used))
                     {
                         /* 消息队列中的剩余数据不足以填满一帧, 拷贝剩余数据到缓冲区中. */
                         memcpy(&encoder_buffer[encoder_buffer_used],
-                               &rec_msg.buf[src_buf_handled_len],
-                               rec_msg.buf_size - src_buf_handled_len);
-                        encoder_buffer_used = rec_msg.buf_size - src_buf_handled_len;
+                               &rec_msg_data.buf[src_buf_handled_len],
+                               rec_msg_data.buf_size - src_buf_handled_len);
+                        encoder_buffer_used = rec_msg_data.buf_size - src_buf_handled_len;
                         break;
                     }
                     else
                     {
                         /* 消息队列中的剩余数据可以填满一帧,拷贝剩余数据到缓冲区中. */
                         memcpy(&encoder_buffer[encoder_buffer_used],
-                               &rec_msg.buf[src_buf_handled_len],
+                               &rec_msg_data.buf[src_buf_handled_len],
                                AMR_FRAME_SRC_DATA_MAX_LEN - encoder_buffer_used);
                         src_buf_handled_len += AMR_FRAME_SRC_DATA_MAX_LEN - encoder_buffer_used;
 
@@ -472,14 +555,6 @@ static void *record_handler_thread(void *arg)
                         memset(serial_data, 0, AMR_FRAME_MAX_LEN);
 
                         /* rt_tick_t rt_tick = rt_tick_get_millisecond(); */
-#if 0
-                        sint32_t i = 0;
-                        for (i = 0; i < 320; i++)
-                        {
-                            rt_kprintf("%d ", encoder_buffer[i]);
-                        }
-                        rt_kprintf("\n");
-#endif
                         /* 调用AMR编码器 */
                         byte_counter = Encoder_Interface_Encode(enstate, req_mode, (short *)encoder_buffer, serial_data, 0);
 
@@ -508,6 +583,9 @@ static void *record_handler_thread(void *arg)
                         encoder_buffer_used = 0;
                     }
                 }
+            }
+            else
+            {
             }
         }
 
@@ -541,11 +619,17 @@ sint32_t record_start_record(void)
     {
         return (sint32_t)-1;
     }
+    else
+    {
+    }
 
     ret = rt_mq_send(rec_ctrl_mq, &msg, sizeof(sint32_t));
     if (ret != RT_EOK)
     {
         log_print(LOG_ERROR, "send record start mq error. \n");
+    }
+    else
+    {
     }
     return 0;
 }
@@ -565,11 +649,16 @@ sint32_t record_stop_record(void)
     {
         return (sint32_t)-1;
     }
-
+    else
+    {
+    }
     ret = rt_mq_send(rec_ctrl_mq, &msg, sizeof(sint32_t));
     if (ret != RT_EOK)
     {
         log_print(LOG_ERROR, "send record stop mq error. \n");
+    }
+    else
+    {
     }
     return 0;
 }
@@ -578,7 +667,8 @@ sint32_t record_stop_record(void)
  *
  * @brief  录音模块初始化
  *
- * @retval 0:成功 -1:失败
+ * @retval  =0:成功
+ *          <0:失败
  *
  *******************************************************/
 
@@ -591,10 +681,21 @@ sint32_t record_init(void)
     /* 初始化消息队列 */
     rec_mq = rt_mq_create("rec_mq", sizeof(rec_msg_t), 8, RT_IPC_FLAG_FIFO);
     if (rec_mq == RT_NULL)
+    {
         return (sint32_t)-1;
+    }
+    else
+    {
+    }
     rec_ctrl_mq = rt_mq_create("rec_ctrl_mq", sizeof(uint32_t), 8, RT_IPC_FLAG_FIFO);
     if (rec_ctrl_mq == RT_NULL)
-        return -2;
+    {
+
+        return (sint32_t)-2;
+    }
+    else
+    {
+    }
 
     /* 初始化录音线程 */
     pthread_attr_init(&pthread_attr_data);
@@ -605,7 +706,10 @@ sint32_t record_init(void)
     if (ret < 0)
     {
         log_print(LOG_ERROR, "pthread_create error\n ");
-        return -3;
+        return (sint32_t)-3;
+    }
+    else
+    {
     }
 
     /* 初始化录音处理线程 */
@@ -617,7 +721,10 @@ sint32_t record_init(void)
     if (ret < 0)
     {
         log_print(LOG_ERROR, "pthread_create error\n ");
-        return -4;
+        return (sint32_t)-4;
+    }
+    else
+    {
     }
     return 0;
 }

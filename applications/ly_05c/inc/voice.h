@@ -99,4 +99,7 @@ sint32_t record_init(void);
  *******************************************************/
 sint32_t voice_init(void);
 
+
+void set_play_detail_state(int state);
+int get_play_detail_state();
 #endif

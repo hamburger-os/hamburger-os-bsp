@@ -31,7 +31,9 @@
 #define SMAPLE_RATE 8000
 /* 采样样本数据大小 */
 #define SMAPLE_BITS 16
+/* 编码模式的种类长度 */
+#define AMR_MODE_SIZE 16
 /* 编码模式 */
-extern short g_block_size[16];
+extern sint16_t g_block_size[AMR_MODE_SIZE];
 
 #endif /* _AMR_H_*/

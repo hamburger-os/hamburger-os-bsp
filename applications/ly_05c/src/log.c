@@ -10,7 +10,6 @@
 #include <stdarg.h>
 #include <rtdbg.h>
 #include <pthread.h>
-#include "file_manager.h"
 #include "log.h"
 #include "utils.h"
 #include "file_manager.h"
@@ -31,13 +30,9 @@
 /*******************************************************
  * 全局变量
  *******************************************************/
-/* 日志文件句柄 */
-static int fd = -1;
+
 /* 日志锁,用于保护fp */
 static pthread_mutex_t log_mutex;
-
-/* 当前日志文件的文件名 */
-char cur_log_name[PATH_NAME_MAX_LEN];
 
 /*******************************************************
  * 函数实现
@@ -56,7 +51,9 @@ void log_print(sint32_t level, const char *format, ...)
 {
     va_list args;
     char name[PATH_NAME_MAX_LEN];
-    char log_buffer[LOG_BUFFER_LEN]; /* 为保证线程安全, 采用局部变量. */
+    char log_buffer[LOG_BUFFER_LEN];             /* 为保证线程安全, 采用局部变量. */
+    static sint32_t fd = -1;                     /* 日志文件句柄 */
+    static char cur_log_name[PATH_NAME_MAX_LEN]; /* 当前日志文件的文件名 */
 
     /* 通过调试等级,判断是否记录信息. */
     if (level < LOG_LEVEL)
@@ -87,25 +84,36 @@ void log_print(sint32_t level, const char *format, ...)
     /* 日志文件名发生变化时 */
     if (strcmp(name, cur_log_name) != 0)
     {
-        if (fd > 0)
+        if (fd >= 0)
         {
             close(fd);
             fd = -1;
         }
+        else
+        {
+        }
+    }
+    else
+    {
     }
     strcpy(cur_log_name, name);
-    
+
     /* 记录日志 */
     if (fd < 0)
     {
         fd = open(cur_log_name, O_CREAT | O_WRONLY | O_APPEND, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     }
-    if (fd > 0)
+    else
+    {
+    }
+    if (fd >= 0)
     {
         write(fd, log_buffer, strlen(log_buffer));
         fsync(fd); /* 使用fflush不行 */
     }
-
+    else
+    {
+    }
     pthread_mutex_unlock(&log_mutex);
 }
 /*******************************************************
@@ -128,6 +136,9 @@ sint32_t log_init(void)
     if (ret < 0)
     {
         return ret;
+    }
+    else
+    {
     }
     return 0;
 }

@@ -37,9 +37,9 @@
 #define PLAY_KEY "PH.7"  /* 播放控制引脚,低电平有效 */
 
 /* 按键队列消息 */
-#define KEY_CREC0_MSG 0
-#define KEY_CREC1_MSG 1
-#define KEY_PLAY_MSG 2
+#define KEY_CREC0_MSG 0  /* 声控+电控按键消息 */
+#define KEY_CREC1_MSG 1/* 电控按键消息 */
+#define KEY_PLAY_MSG 2/* 播放按键消息 */
 
 /*******************************************************
  * 全局变量
@@ -63,7 +63,7 @@ static rt_mq_t key_mq = NULL;
  *******************************************************/
 
 /* KEY延时处理 */
-static void *key_thread(const void *args);
+static void *key_thread( void *args);
 /* CREC0引脚电平变化处理函数 */
 static void key_crec0_irq(const void *args);
 /* CREC1引脚电平变化处理函数 */
@@ -84,7 +84,7 @@ static void key_play_irq(const void *args);
  *
  *******************************************************/
 
-static void *key_thread(const void *args)
+static void *key_thread( void *args)
 {
     rt_err_t ret = 0;
     sint32_t key_val = 0;
@@ -118,7 +118,7 @@ static void *key_thread(const void *args)
                 msleep((uint32_t)10);
                 if ((key_val == rt_pin_read((rt_base_t)g_key_crec0_pin)) && (g_key_crec0_state != key_val))
                 {
-                    rt_kprintf("Key_CREC0 value: %d\n", key_val);
+                    // rt_kprintf("Key_CREC0 value: %d\n", key_val);
                     /* 按键电平确实发生变化 */
                     if (key_val == 0) /* 开始录音 */
                     {
@@ -143,7 +143,7 @@ static void *key_thread(const void *args)
                 msleep((uint32_t)10);
                 if ((key_val == rt_pin_read((rt_base_t)g_key_crec1_pin)) && (g_key_crec1_state != key_val))
                 {
-                    rt_kprintf("Key_CREC1 value: %d\n", key_val);
+                    // rt_kprintf("Key_CREC1 value: %d\n", key_val);
                     /* 按键电平确实发生变化 */
                     if (key_val == 0) /* 开始录音 */
                     {
@@ -167,7 +167,7 @@ static void *key_thread(const void *args)
                 msleep((uint32_t)10);
                 if ((key_val == rt_pin_read((rt_base_t)g_key_play_pin)) && (g_key_play_state != key_val))
                 {
-                    rt_kprintf("KeyPlayPin value: %d\n", key_val);
+                    // rt_kprintf("KeyPlayPin value: %d\n", key_val);
                     /* 按键电平确实发生变化 */
                     if (key_val == 0) /* 播放按钮被按下 */
                     {
@@ -233,6 +233,7 @@ static void key_crec1_irq(const void *args)
     }
     else
     {
+
         /* 表明有电平变化发生 */
         rt_mq_send(key_mq, (void *)&msg, sizeof(msg));
     }
@@ -256,6 +257,7 @@ static void key_play_irq(const void *args)
     }
     else
     {
+
         /* 表明有电平变化发生 */
         rt_mq_send(key_mq, (void *)&msg, sizeof(msg));
     }
@@ -302,7 +304,7 @@ sint32_t key_init(void)
 
     /* 创建key抖动处理线程 */
     pthread_attr_init(&pthread_attr_data);
-    pthread_attr_data.stacksize = 1024 * 1;
+    pthread_attr_data.stacksize = 1024 * 2;
     pthread_attr_data.schedparam.sched_priority = 19;
     ret = pthread_create(&key_tid, &pthread_attr_data, key_thread, NULL);
     pthread_attr_destroy(&pthread_attr_data);

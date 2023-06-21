@@ -23,13 +23,13 @@
 
 /* 文件操作的定义 */
 #ifndef SEEK_SET
-#define	SEEK_SET	0	/* set file offset to offset */
+#define SEEK_SET 0 /* set file offset to offset */
 #endif
 #ifndef SEEK_CUR
-#define	SEEK_CUR	1	/* set file offset to current plus offset */
+#define SEEK_CUR 1 /* set file offset to current plus offset */
 #endif
 #ifndef SEEK_END
-#define	SEEK_END	2	/* set file offset to EOF plus offset */
+#define SEEK_END 2 /* set file offset to EOF plus offset */
 #endif
 
 /*******************************************************
@@ -37,11 +37,11 @@
  *******************************************************/
 
 /* VSW文件的信息 */
-typedef struct _file_info_t
+typedef struct file_info_t
 {
-    uint32_t file_id;             /* 文件序号 */
-    sint32_t file_size;                    /* 文件大小 */
-    struct _file_info_t *next;        /* 下一文件 */
+    uint32_t file_id;                 /* 文件序号 */
+    sint32_t file_size;               /* 文件大小 */
+    struct file_info_t *next;        /* 下一文件 */
     char filename[PATH_NAME_MAX_LEN]; /* 文件名 */
 } file_info_t;
 
@@ -67,7 +67,7 @@ char *get_sigle_file_name(char *full_path);
  * @retval sint32_t 0:不满 -1:已满
  *
  *******************************************************/
-sint32_t is_disk_full(char *name);
+sint32_t check_disk_full(const char *name);
 
 /*******************************************************
  *
@@ -87,7 +87,7 @@ sint32_t get_disk_free_space(const char *path);
  * @retval 正数:文件的大小 负数:失败
  *
  *******************************************************/
-sint32_t dir_size(char *name);
+sint32_t dir_size(const char *name);
 
 /*******************************************************
  *
@@ -98,7 +98,7 @@ sint32_t dir_size(char *name);
  * @retval file_info_t * 文件列表
  *
  *******************************************************/
-file_info_t *get_org_file_info(char *path);
+file_info_t *get_org_file_info(const char *path);
 
 /*******************************************************
  *
@@ -159,6 +159,6 @@ sint32_t create_file(const char *path);
  * @retval 正数:文件的大小 负数:失败
  *
  *******************************************************/
-long file_size(char *name);
+uint32_t file_size(char *name);
 
 #endif

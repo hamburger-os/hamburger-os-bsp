@@ -84,7 +84,6 @@ static E_EVENT pop_event_queue(void)
     else
     {
     }
-
     return event;
 }
 

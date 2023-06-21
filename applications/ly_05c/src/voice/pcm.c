@@ -18,6 +18,7 @@
 #include <rtdbg.h>
 #include <stdio.h>
 #include <sp_enc.h>
+#include <pthread.h>
 
 #include "pcm.h"
 #include "log.h"
@@ -28,6 +29,34 @@
 /* 声卡设备 */
 #define SOUND_DEVICE "sound0"
 
+/* 录音缓冲区 */
+static uint8_t pcm_capture_buf[PCM_READ_BUFFER_SIZE];
+/* 放音缓冲区 */
+static uint8_t pcm_play_buf[PCM_WRITE_BUFFER_SIZE];
+// 声卡配置
+static pcm_config_t *pcm_config = NULL;
+static pthread_mutex_t pcm_mutex;
+
+void pcm_init_data(void)
+{
+    pthread_mutex_init(&pcm_mutex, NULL);
+}
+
+pcm_config_t *pcm_get_config_instance(void)
+{
+    if (pcm_config == NULL)
+    {
+        pthread_mutex_lock(&pcm_mutex);
+        if (pcm_config == NULL)
+        {
+            pcm_config = (pcm_config_t *)malloc(sizeof(pcm_config_t));
+            memset(pcm_config, 0, sizeof(pcm_config_t));
+        }
+        pthread_mutex_unlock(&pcm_mutex);
+    }
+    return pcm_config;
+}
+
 /*******************************************************
  *
  * @brief  PCM初始化化
@@ -36,11 +65,13 @@
  * @retval 0:成功 -1:失败
  *
  *******************************************************/
+
 sint32_t pcm_init(pcm_config_t *config)
 {
-    sint32_t ret = 0;
+    rt_err_t ret = 0;
     struct rt_audio_caps caps;
 
+    // pthread_mutex_lock(&pcm_mutex);
     /* 判断指针有效性 */
     if (config == NULL)
     {
@@ -49,24 +80,16 @@ sint32_t pcm_init(pcm_config_t *config)
     else
     {
     }
-    config->size = (uint32_t)PCM_WRITE_BUFFER_SIZE;
 
     if (config->mode == SOUND_MODE_CAPTURE)
     {
         config->size = (uint32_t)PCM_READ_BUFFER_SIZE;
+        config->p_buffer = pcm_capture_buf;
     }
     else
     {
         config->size = (uint32_t)PCM_WRITE_BUFFER_SIZE;
-    }
-
-    config->p_buffer = (char *)malloc(config->size);
-    if (config->p_buffer == NULL)
-    {
-        return (sint32_t)-1;
-    }
-    else
-    {
+        config->p_buffer = pcm_play_buf;
     }
 
     /* find device */
@@ -79,7 +102,8 @@ sint32_t pcm_init(pcm_config_t *config)
     else
     {
     }
-    /* set the play time */
+
+    /* set the play timedata */
     config->start = rt_tick_get_millisecond();
 
     /* open sound device */
@@ -91,7 +115,6 @@ sint32_t pcm_init(pcm_config_t *config)
     {
         ret = rt_device_open(config->dev, (rt_uint16_t)RT_DEVICE_OFLAG_WRONLY);
     }
-
     if (ret != RT_EOK)
     {
         log_print(LOG_ERROR, "open %s device failed. \n", SOUND_DEVICE);
@@ -114,12 +137,10 @@ sint32_t pcm_init(pcm_config_t *config)
     caps.udata.config.samplerate = config->sample_rate;
     caps.udata.config.channels = config->channels;
     caps.udata.config.samplebits = config->format;
-    /* caps.udata.value = 0; */
-    /* read amrfile header information from file */
 #if 0
     log_print(LOG_ERROR, "Information: samplerate %d, channels %d, samplebits %d.\n",
-              caps.udata.config.samplerate,
-              caps.udata.config.channels, caps.udata.config.samplebits);
+            caps.udata.config.samplerate,
+            caps.udata.config.channels, caps.udata.config.samplebits);
 #endif
 
     /* set sampletate,channels, samplebits */
@@ -130,8 +151,9 @@ sint32_t pcm_init(pcm_config_t *config)
     caps.sub_type = AUDIO_MIXER_VOLUME;
     caps.udata.value = 60;
     ret = rt_device_control(config->dev, AUDIO_CTL_CONFIGURE, (void *)&caps);
+    // pthread_mutex_unlock(&pcm_mutex);
 
-    return ret;
+    return (sint32_t)ret;
 }
 
 /*******************************************************
@@ -147,8 +169,27 @@ sint32_t pcm_init(pcm_config_t *config)
 
 rt_size_t pcm_write(rt_device_t pcm_dev, const void *buffer_w, rt_size_t size_w)
 {
+    rt_size_t ret;
+
+    // pthread_mutex_lock(&pcm_mutex);
+    if (pcm_config == NULL)
+    {
+        return (rt_size_t)-1;
+    }
+    if (pcm_config->mode == SOUND_MODE_CAPTURE)
+    {
+        return (rt_size_t)-1;
+    }
+
+    if (buffer_w == NULL)
+    {
+        return (rt_size_t)-1;
+    }
     /* write raw data from sound device */
-    return rt_device_write(pcm_dev, (rt_off_t)0, buffer_w, size_w);
+    ret = rt_device_write(pcm_dev, (rt_off_t)0, buffer_w, size_w);
+    // pthread_mutex_unlock(&pcm_mutex);
+
+    return ret;
 }
 
 /*******************************************************
@@ -164,8 +205,26 @@ rt_size_t pcm_write(rt_device_t pcm_dev, const void *buffer_w, rt_size_t size_w)
 
 rt_size_t pcm_read(rt_device_t pcm_dev, void *buffer_r, rt_size_t size_r)
 {
+    rt_size_t ret;
+
+    // pthread_mutex_lock(&pcm_mutex);
+    if (pcm_config == NULL)
+    {
+        return (rt_size_t)-1;
+    }
+    if (pcm_config->mode == SOUND_MODE_PLAY)
+    {
+        return (rt_size_t)-2;
+    }
+    if (buffer_r == NULL)
+    {
+        return (rt_size_t)-3;
+    }
     /* read raw data from sound device */
-    return rt_device_read(pcm_dev, (rt_off_t)0, buffer_r, size_r);
+    ret = rt_device_read(pcm_dev, (rt_off_t)0, buffer_r, size_r);
+    // pthread_mutex_unlock(&pcm_mutex);
+
+    return ret;
 }
 
 /*******************************************************
@@ -179,6 +238,8 @@ rt_size_t pcm_read(rt_device_t pcm_dev, void *buffer_r, rt_size_t size_r)
  *******************************************************/
 sint32_t pcm_exit(pcm_config_t *config)
 {
+
+    // pthread_mutex_lock(&pcm_mutex);
     /* 关闭音频设备 */
     if (config->dev != NULL)
     {
@@ -190,16 +251,7 @@ sint32_t pcm_exit(pcm_config_t *config)
         return (sint32_t)-1;
     }
     config->start = rt_tick_get_millisecond() - config->start;
-
-    /* 释放缓冲区 */
-    if (config->p_buffer != NULL)
-    {
-        free((void *)config->p_buffer);
-        config->p_buffer = NULL;
-    }
-    else
-    {
-    }
+    // pthread_mutex_unlock(&pcm_mutex);
 
     return 0;
 }

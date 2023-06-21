@@ -31,8 +31,8 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <dirent.h>
-#include <time.h>
-#include <utime.h>
+/* #include <timedata.h> */
+/* #include <utime.h> */
 #include <pthread.h>
 #include <stdbool.h>
 #include <sys/vfs.h>

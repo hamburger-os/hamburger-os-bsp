@@ -102,12 +102,12 @@ typedef struct __attribute__((packed)) /* 按照字节对齐*/
     char filename[FILE_NAME_MAX_LEN]; /* 最新的文件名 */
     sint32_t fd;                      /* 文件句柄 */
     uint32_t voices_num;              /* 文件中的语音条数 */
-    sint32_t new_voice_head_offset;   /* 最新语音的偏移量 */
+    off_t new_voice_head_offset;      /* 最新语音的偏移量 */
     uint32_t file_index;              /* 文件的序号 */
     uint32_t voice_index;             /* 语音序号 */
     sint32_t not_exsit;               /* 为1表示录音板中还没有生成文件 */
     uint32_t record_datalen;          /* 录音数据长度 */
-    sint32_t channel;                 /* 通道号 */
+    sint32_t channel;                 /* todo, 通道号, 录音通道,放音通道? */
 } current_rec_file_info_t;
 
 /* 文件头结构体 */
@@ -345,7 +345,7 @@ sint32_t fm_modify_play_flag(sint32_t fd);
  * @retval 0:成功 -1:失败
  *
  *******************************************************/
-sint32_t fm_get_file_name(char *name, sint32_t bak_flag);
+sint32_t fm_get_file_name(const char *name, sint32_t bak_flag);
 
 /*******************************************************
  *

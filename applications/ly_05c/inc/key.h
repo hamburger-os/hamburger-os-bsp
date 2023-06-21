@@ -3,9 +3,9 @@
  * @FileName: log.c
  * @Date: 2023-05-24 16:06:26
  * @Author: ccy
- * @Description: 按键模块的头文件 
- * 
- * Copyright (c) 2023 by thinker, All Rights Reserved. 
+ * @Description: 按键模块的头文件
+ *
+ * Copyright (c) 2023 by thinker, All Rights Reserved.
  *
  *******************************************************/
 
@@ -26,6 +26,4 @@
  *******************************************************/
 sint32_t key_init(void);
 
-
 #endif
-

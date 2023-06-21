@@ -60,7 +60,7 @@ static sint32_t to_uppers(char *str)
         if (((char)'a' <= str[count]) && ((char)'z' >= str[count]))
         {
             /* 小写字母的值比大写字母的值大32,所以转化为大写时,需要减去32. */
-            str[count] = str[count] - (char)32;
+            str[count] = (char)(str[count] - (char)32);
         }
         else
         {
@@ -94,7 +94,7 @@ static sint32_t check_udisk(const char *udisk_id, const char *code_file)
     }
 
     /* 打开文件, 此处并没有在不同的线程中使用, 故不存在共享资源竞争  */
-    fd = open((const char *)code_file, O_RDONLY);
+    fd = open(code_file, O_RDONLY);
     if (fd < 0)
     {
         return (sint32_t)-1;
@@ -108,7 +108,6 @@ static sint32_t check_udisk(const char *udisk_id, const char *code_file)
     ret = read(fd, udisk_id_coded, sizeof(udisk_id_coded));
     if (ret < 0)
     {
-
         /* 关闭文件 */
         close(fd);
         return (sint32_t)-1;
@@ -149,7 +148,6 @@ sint32_t check_udisk_id(char *id)
 
     if (id == NULL)
     {
-
         return (sint32_t)-1;
     }
     else
@@ -168,5 +166,6 @@ sint32_t check_udisk_id(char *id)
     }
 
     /* 经过和股份人员沟通, U盘鉴权很少用到, 暂时将此功能给关掉 */
-    return check_udisk(id, SW_KEY_FILE_PATH);
+    /* return check_udisk(id, SW_KEY_FILE_PATH); */
+    return 0;
 }

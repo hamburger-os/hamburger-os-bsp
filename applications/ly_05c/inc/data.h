@@ -91,7 +91,7 @@ typedef struct _work_state_t
  * @retval none
  *
  *******************************************************/
-void data_set_usb_state (E_USB_STATE state);
+void data_set_usb_state(E_USB_STATE state);
 
 /*******************************************************
  *

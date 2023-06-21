@@ -33,6 +33,9 @@ sint32_t voice_init(void)
 {
     sint32_t ret = 0;
 
+    // 初始化声卡设备数据
+    pcm_init_data();
+
     /* 初始化录音模块 */
     ret = record_init();
     if (ret < 0)
