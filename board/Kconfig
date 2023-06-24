@@ -51,6 +51,10 @@ menu "On-chip Peripheral Drivers"
                 config SOC_H7COREBOARD_NOSRAM
                     bool "Select H7 core board with no sram"
                     select SOC_SERIES_STM32H7
+    
+                config SOC_H7_RECORD_BOARD
+                    bool "Select H7 record board"
+                    select SOC_SERIES_STM32H7
 
             endchoice
             
