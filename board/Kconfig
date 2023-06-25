@@ -2508,6 +2508,17 @@ menu "Onboard Peripheral Drivers"
                 hex "Set the i2c device address, default: 0x38"
                 default (0x38)
                 
+            choice
+                prompt "Select the MCLK frequency"
+                default ADAU1761_MCLK_12288
+                
+                config ADAU1761_MCLK_12288
+                    bool "Select MCLK 12.288MHz"
+                    
+                config ADAU1761_MCLK_12
+                    bool "Select MCLK 12MHz"
+            endchoice
+                
             config ADAU1761_USING_PWR_PIN
                 bool "Enable audio power pin"
                 default n

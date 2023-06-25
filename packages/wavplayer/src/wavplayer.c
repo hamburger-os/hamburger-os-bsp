@@ -414,6 +414,21 @@ static void wavplayer_entry(void *parameter)
                 {
                     /*witte data to sound device*/
                     rt_device_write(player.device, 0, player.buffer, WP_BUFFER_SIZE);
+
+#if 0
+                    struct __attribute__ ((packed)) LRDef
+                    {
+                        int32_t L: 16;
+                        int32_t R: 16;
+                    };
+
+                    struct LRDef *LRData;
+                    for (uint32_t i = 0; i < size; i += sizeof(struct LRDef))
+                    {
+                        LRData = (struct LRDef *)&player.buffer[i];
+                        rt_kprintf("%d,%d\n", LRData->L, LRData->R);
+                    }
+#endif
                 }
                 break;
             }

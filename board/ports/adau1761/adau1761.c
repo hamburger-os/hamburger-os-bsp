@@ -64,10 +64,10 @@ static void adau1761_program(uint16_t addr, uint8_t *data, uint16_t len_u16)
 {
     char addr_str[16];
     uint8_t cmp[len_u16];
-    rt_snprintf(addr_str, sizeof(addr_str), "0x%x ->", addr);
 
     adau1761_write_reg(addr, data, len_u16);
-    // LOG_HEX(addr_str, 16, data, len_u16);
+//    rt_snprintf(addr_str, sizeof(addr_str), "0x%x ->", addr);
+//    LOG_HEX(addr_str, 16, data, len_u16);
 
     uint8_t i = 0, max = 4;
     for (i = 0; i < max; i++)
@@ -167,11 +167,19 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
     adau1761_program(ADDR_R0_0x4000_Clock_control, (uint8_t *)&r0, sizeof(R0_0x4000_Clock_control));
 
     R1_0x4002_PLL_control r1 = {
-        .M = __SWP16(125),
-        .N = __SWP16(12),
-        .Type = 1,
+#ifdef ADAU1761_MCLK_12288
+        .M = __SWP16(1),
+        .N = __SWP16(0),
         .X = 0b00,
         .R = 0b0100,
+#endif
+#ifdef ADAU1761_MCLK_12
+        .M = __SWP16(125),
+        .N = __SWP16(12),
+        .X = 0b00,
+        .R = 0b0100,
+#endif
+        .Type = 1,
         .PLLEN = 1,
         .Lock = 1,
     };
@@ -561,7 +569,7 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
     };
     adau1761_program(ADDR_R66_0x40FA_Clock_Enable_1, (uint8_t *)&r66, sizeof(R66_0x40FA_Clock_Enable_1));
 
-    // adau1761_show();
+    adau1761_show();
 
     return 0;
 }
