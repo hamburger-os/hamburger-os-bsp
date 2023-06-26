@@ -411,16 +411,14 @@ int Max3182x_ReadTemp(rt_uint16_t * u16p_temp_value)
 /* RT-Thread Device Driver Interface */
 static rt_size_t _max31826_polling_get_data(struct rt_sensor_device *sensor, struct rt_sensor_data *data)
 {
-    rt_int32_t temperature_x10;
     if (sensor->info.type == RT_SENSOR_CLASS_TEMP)
     {
         rt_uint16_t s32Tmp = 0;
 
-        Max3182x_ReadTemp(&s32Tmp);   //这里面扩大了100
-        temperature_x10 = s32Tmp / 10.0;
+        Max3182x_ReadTemp(&s32Tmp);
 
-        LOG_D("temp : %d", temperature_x10);
-        data->data.temp = temperature_x10;
+        LOG_D("temp : %d", s32Tmp);
+        data->data.temp = s32Tmp;
         data->timestamp = rt_tick_get_millisecond();
     }
     return 1;
