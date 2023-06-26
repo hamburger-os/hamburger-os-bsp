@@ -16,7 +16,7 @@
 #define DBG_LVL DBG_INFO
 #include <rtdbg.h>
 
-#ifdef BSP_USING_ONE_WIRE
+#ifdef BSP_USING_IO
 
 #define MAX31826_PIN    rt_pin_get(MAX31826_GPIO)
 #define SET_DQ()        rt_pin_write(MAX31826_PIN, PIN_HIGH)
@@ -25,7 +25,7 @@
 #define IN_DQ()         rt_pin_mode(MAX31826_PIN, PIN_MODE_INPUT)
 #define GET_DQ()        rt_pin_read(MAX31826_PIN)
 
-#endif  /* BSP_USING_ONE_WIRE */
+#endif  /* BSP_USING_IO */
 
 /* ***************************MAX31826 DEFININS****************************************/
 #define MAX31826_EEPROM_SIZE                (0x80U)             /*  EEPROM容量，单位:字节 */
@@ -52,7 +52,7 @@
 #define DEV_HW_INF_ADDR                     (0x10)              /*  整机信息起始地址 */
 
 
-#ifdef BSP_USING_DS2484
+#ifdef BSP_USING_IIC_DS2484
 
 #include "drv_ds2484.h"
 
@@ -148,7 +148,7 @@ static rt_err_t max31826_init_by_ds2484(void)
   return RT_EOK;
 }
 
-#endif /* BSP_USING_DS2484 */
+#endif /* BSP_USING_IIC_DS2484 */
 
 /*
  * @brief 复位
@@ -158,7 +158,7 @@ static rt_int32_t DEV_MAX31826_Reset1Wire(void)
 {
     rt_int32_t ret = 0xFF;
 
-#ifdef BSP_USING_ONE_WIRE
+#ifdef BSP_USING_IO
     OUT_DQ();
     CLR_DQ();
     rt_hw_us_delay(750);
@@ -171,9 +171,9 @@ static rt_int32_t DEV_MAX31826_Reset1Wire(void)
         ret = 1;
     else
         ret = 0;
-#endif  /* BSP_USING_ONE_WIRE */
+#endif  /* BSP_USING_IO */
 
-#ifdef BSP_USING_DS2484
+#ifdef BSP_USING_IIC_DS2484
     if(ds2484_dev != NULL)
     {
       if(ds2484_dev->control(ds2484_dev, DS2484_Control_Reset, NULL) != RT_EOK)
@@ -191,7 +191,7 @@ static rt_int32_t DEV_MAX31826_Reset1Wire(void)
       LOG_E("MAX31826 reset ds2484_dev is null.");
       ret = 0;
     }
-#endif /* BSP_USING_DS2484 */
+#endif /* BSP_USING_IIC_DS2484 */
 
     return ret;
 }
@@ -204,7 +204,7 @@ static rt_int32_t DEV_MAX31826_Reset1Wire(void)
 ******************************/
 static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
 {
-#ifdef BSP_USING_ONE_WIRE
+#ifdef BSP_USING_IO
     OUT_DQ();
     CLR_DQ();
     rt_hw_us_delay(2);
@@ -215,9 +215,9 @@ static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
     rt_hw_us_delay(55);
     SET_DQ();
     rt_hw_us_delay(15);
-#endif /* BSP_USING_ONE_WIRE */
+#endif /* BSP_USING_IO */
 
-#ifdef BSP_USING_DS2484
+#ifdef BSP_USING_IIC_DS2484
     rt_uint8_t send_data;
 
     send_data = sendbit;
@@ -232,7 +232,7 @@ static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
     {
       LOG_E("MAX31826 write ds2484_dev is null.");
     }
-#endif /* BSP_USING_DS2484 */
+#endif /* BSP_USING_IIC_DS2484 */
 }
 
 /****************************
@@ -245,7 +245,7 @@ static rt_uint8_t DEV_MAX31826_ReadBit(void)
 {
     rt_uint8_t readbit = 0;
 
-#ifdef BSP_USING_ONE_WIRE
+#ifdef BSP_USING_IO
 
     OUT_DQ();
     CLR_DQ();
@@ -258,10 +258,10 @@ static rt_uint8_t DEV_MAX31826_ReadBit(void)
     readbit = GET_DQ();
     rt_hw_us_delay(60);
 
-#endif /* BSP_USING_ONE_WIRE */
+#endif /* BSP_USING_IO */
 
 
-#ifdef BSP_USING_DS2484
+#ifdef BSP_USING_IIC_DS2484
     if(ds2484_dev != NULL)
     {
       if(ds2484_dev->control(ds2484_dev, DS2484_Control_Read_Byte, (void *)&readbit) != RT_EOK)
@@ -273,11 +273,11 @@ static rt_uint8_t DEV_MAX31826_ReadBit(void)
     {
       LOG_E("MAX31826 read ds2484_dev is null.");
     }
-#endif /* BSP_USING_DS2484 */
+#endif /* BSP_USING_IIC_DS2484 */
     return readbit;
 }
 
-#ifdef BSP_USING_DS2484
+#ifdef BSP_USING_IIC_DS2484
 
 static rt_int32_t DEV_MAX31826_ReadID(rt_uint8_t  * u8p_SensorID)
 {
@@ -426,9 +426,9 @@ static rt_size_t _max31826_polling_get_data(struct rt_sensor_device *sensor, str
     return 1;
 }
 
-#endif /* BSP_USING_DS2484 */
+#endif /* BSP_USING_IIC_DS2484 */
 
-#ifdef BSP_USING_ONE_WIRE
+#ifdef BSP_USING_IO
 /*
  * @brief 读数据
  * @param 无
@@ -639,7 +639,7 @@ static rt_size_t _max31826_polling_get_data(struct rt_sensor_device *sensor, str
     }
     return 1;
 }
-#endif /* BSP_USING_ONE_WIRE */
+#endif /* BSP_USING_IO */
 
 static rt_size_t max31826_fetch_data(struct rt_sensor_device *sensor, void *buf, rt_size_t len)
 {
@@ -686,13 +686,17 @@ static int rt_hw_max31826_init()
     rt_int8_t result;
     rt_sensor_t sensor_temp = RT_NULL;
 
-#ifdef BSP_USING_DS2484
+#ifdef BSP_USING_IIC_DS2484
+    if(rt_hw_ds2484_init() != RT_EOK)
+    {
+      return -RT_ERROR;
+    }
     if(max31826_init_by_ds2484() != RT_EOK)
     {
       LOG_E("max31826_init_by_ds2484 fail");
       return -RT_ERROR;
     }
-#endif /* BSP_USING_DS2484 */
+#endif /* BSP_USING_IIC_DS2484 */
 
     /* temperature sensor register */
     sensor_temp = rt_calloc(1, sizeof(struct rt_sensor_device));
@@ -717,9 +721,9 @@ static int rt_hw_max31826_init()
         goto __exit;
     }
 
-#ifdef BSP_USING_ONE_WIRE
+#ifdef BSP_USING_IO
     DEV_MAX31826_ReadTemp();
-#endif /* BSP_USING_ONE_WIRE */
+#endif /* BSP_USING_IO */
     return RT_EOK;
 
 __exit:

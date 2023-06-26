@@ -9,7 +9,7 @@
  */
 #include "drv_ds2484.h"
 
-#ifdef BSP_USING_DS2484
+#ifdef BSP_USING_IIC_DS2484
 
 #define DBG_TAG "ds2484"
 #define DBG_LVL DBG_LOG
@@ -395,7 +395,7 @@ static rt_err_t rt_ds2484_control(rt_device_t dev, int cmd, void *args)
   return ret;
 }
 
-static int rt_hw_ds2484_init(void)
+int rt_hw_ds2484_init(void)
 {
   memset(&ds2484_dev, 0, sizeof(Ds2484_Dev));
 
@@ -414,6 +414,4 @@ static int rt_hw_ds2484_init(void)
   return RT_EOK;
 }
 
-/* 导出到自动初始化 */
-INIT_DEVICE_EXPORT(rt_hw_ds2484_init);
 #endif
