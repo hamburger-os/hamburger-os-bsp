@@ -1,0 +1,16 @@
+# RT-Thread building script for bridge
+
+import rtconfig
+from building import *
+
+cwd     = GetCurrentDir()
+CPPPATH = [cwd, cwd + '/inc']
+
+src =  Split('''
+    led_ctrl.c
+    '''
+    )
+
+group = DefineGroup('sto_record_board', src, depend = ['APP_STO_RECORD_BOART'], CPPPATH = CPPPATH)
+
+Return('group')
