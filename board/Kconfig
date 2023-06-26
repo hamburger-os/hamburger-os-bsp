@@ -2868,9 +2868,20 @@ menu "Onboard Peripheral Drivers"
         default n
         
         if BSP_USING_MAX31826
-            config MAX31826_GPIO
-		        string "Set the GPIO of the sensor pin, default: PI.8"
-		        default "PI.8"
+                
+            config BSP_USING_DS2484
+                bool "Using iic Control(ds2484)"
+                default n
+                
+            config BSP_USING_ONE_WIRE
+                bool "Using 1-Wire Control"
+                default n
+        	
+        	if BSP_USING_ONE_WIRE
+	            config MAX31826_GPIO
+			        string "Set the GPIO of the sensor pin, default: PI.8"
+			        default "PI.8"
+	        endif
         endif
         
     menuconfig BSP_USING_DS1682
@@ -3053,6 +3064,20 @@ menu "Onboard Peripheral Drivers"
                 string "Set the pin of the power, default: PC.13"
                 depends on BSP_GNSS_USING_POWER_PIN
                 default "PC.13"
+        endif
+        
+    menuconfig BSP_USING_DS2484
+        bool "Enable Protocol conversion between I2C host and downstream 1-Wire slave (DS2484)"
+        default n
+        
+        if BSP_USING_DS2484
+            config DS2484_I2C_DEV
+		        string "Set the i2c device name used, default: i2c2"
+		        default "i2c2"
+		        
+		    config DS2484_I2C_ADD
+		        hex "Set the i2c device address, default: 0x30"
+		        default (0x18)
         endif
         
 endmenu
