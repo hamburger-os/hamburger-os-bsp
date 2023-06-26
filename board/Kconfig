@@ -52,7 +52,7 @@ menu "On-chip Peripheral Drivers"
                     bool "Select H7 core board with no sram"
                     select SOC_SERIES_STM32H7
     
-                config STO_SOC_H7_RECORD_BOARD
+                config SOC_H7_STO_RECORD_BOARD
                     bool "Select STO H7 record board"
                     select SOC_SERIES_STM32H7
 
