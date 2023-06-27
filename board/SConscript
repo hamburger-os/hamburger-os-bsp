@@ -101,6 +101,19 @@ if GetDepend(['SOC_H7COREBOARD_NOSRAM']):
     elif rtconfig.PLATFORM in ['iccarm']:
         src += [startup_path_prefix + '/STM32H7xx_HAL/CMSIS/Device/ST/STM32H7xx/Source/Templates/iar/startup_stm32h743xx.s']
 
+if GetDepend(['SOC_H7_STO_RECORD_BOARD']):
+    src += Glob('CubeMX_Config/H7_RecordBoard/Src/main.c')
+    src += Glob('CubeMX_Config/H7_RecordBoard/Src/stm32h7xx_hal_msp.c')
+    src += Glob('drv_mpu.c')
+    path += [cwd + '/CubeMX_Config/H7_RecordBoard/Inc']
+    CPPDEFINES = ['STM32H743xx']
+    if rtconfig.PLATFORM in ['gcc']:
+        src += [startup_path_prefix + '/STM32H7xx_HAL/CMSIS/Device/ST/STM32H7xx/Source/Templates/gcc/startup_stm32h743xx.s']
+    elif rtconfig.PLATFORM in ['armcc', 'armclang']:
+        src += [startup_path_prefix + '/STM32H7xx_HAL/CMSIS/Device/ST/STM32H7xx/Source/Templates/arm/startup_stm32h743xx.s']
+    elif rtconfig.PLATFORM in ['iccarm']:
+        src += [startup_path_prefix + '/STM32H7xx_HAL/CMSIS/Device/ST/STM32H7xx/Source/Templates/iar/startup_stm32h743xx.s']
+
 if GetDepend(['RT_USING_FAL']):
     src += Glob('ports/drv_fal.c')
     src += Glob('ports/fal_init.c')
@@ -181,6 +194,7 @@ if GetDepend(['BSP_USING_KSZ8851']):
  
 if GetDepend(['BSP_USING_MAX31826']):
     src += Glob('ports/drv_max31826.c')
+    src += Glob('ports/drv_ds2484.c')
 
 if GetDepend(['BSP_USING_DS28E01']):
     src += Glob('ports/drv_ds28e01.c')
