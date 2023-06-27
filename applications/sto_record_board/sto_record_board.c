@@ -10,7 +10,7 @@
 #include "sto_record_board.h"
 #include "led_ctrl.h"
 
-static STORecordBoardInit(void)
+static void STORecordBoardInit(void)
 {
   LedCtrlInit();
 }
