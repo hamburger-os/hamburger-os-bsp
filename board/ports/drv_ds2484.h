@@ -12,7 +12,7 @@
 
 #include "board.h"
 
-#ifdef BSP_USING_IIC_DS2484
+#ifdef MAX31826_USING_I2C_DS2484
 
 typedef enum {
   DS2484_Control_Reset      = (rt_uint8_t)(0x01),

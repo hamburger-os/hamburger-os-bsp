@@ -34,6 +34,7 @@ typedef struct {
 
 void LedCtrlON(LedIndex index);
 void LedCtrlOFF(LedIndex index);
+void LedCtrlInit(void);
 
 
 #endif /* APPLICATIONS_RECORD_BOARD_LED_CTRL_H_ */

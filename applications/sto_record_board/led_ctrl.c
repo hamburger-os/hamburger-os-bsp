@@ -28,7 +28,7 @@ void LedCtrlOFF(LedIndex index)
   rt_pin_write(led_ctrl.pin_index[index], PIN_HIGH);
 }
 
-void LedInit(void)
+void LedCtrlInit(void)
 {
   led_ctrl.pin_index[ERR_LED] = rt_pin_get(LED_CTRL_ERR_NAME);
   rt_pin_mode(led_ctrl.pin_index[ERR_LED], PIN_MODE_OUTPUT);
@@ -50,6 +50,4 @@ void LedInit(void)
   rt_pin_mode(led_ctrl.pin_index[CAN_LED], PIN_MODE_OUTPUT);
   rt_pin_write(led_ctrl.pin_index[CAN_LED], PIN_LOW);
 }
-
-INIT_DEVICE_EXPORT(LedInit);
 

@@ -9,7 +9,7 @@
  */
 #include "drv_ds2484.h"
 
-#ifdef BSP_USING_IIC_DS2484
+#ifdef MAX31826_USING_I2C_DS2484
 
 #define DBG_TAG "ds2484"
 #define DBG_LVL DBG_LOG
