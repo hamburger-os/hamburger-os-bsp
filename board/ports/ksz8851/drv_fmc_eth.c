@@ -156,6 +156,7 @@ static void fmc_eth_hard_reset(void)
     {
         rt_pin_write(fmc_eth_device.port[i].rst_pin, PIN_HIGH);
     }
+    rt_thread_mdelay(100);
 }
 
 static void fmc_eth_irq_callback(void *args)
