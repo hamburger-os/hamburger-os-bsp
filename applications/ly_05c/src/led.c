@@ -178,10 +178,10 @@ void led_set(E_LED_State led_state)
         set_pin_state((uint16_t)LED_PIN_INDEX_3A, LedPinStateBlink);
         break;
     case LED_STATE_DUMP_SUCCESS: /* 转储成功 */
-        set_pin_state((uint16_t)LED_PIN_INDEX_3A, LedPinStateOn);
+        set_pin_state((uint16_t)LED_PIN_INDEX_3A, LedPinStateOff);
         break;
     case LED_STATE_DUMP_FAIL: /* 转储失败 */
-        set_pin_state((uint16_t)LED_PIN_INDEX_3A, LedPinStateOff);
+        set_pin_state((uint16_t)LED_PIN_INDEX_3A, LedPinStateOn);
         break;
     case LED_STATE_VOICE_DATA_RECORDING: /* 正在记录语音数据 */
         set_pin_state((uint16_t)LED_PIN_INDEX_3B, LedPinStateBlink);
@@ -200,6 +200,7 @@ void led_set(E_LED_State led_state)
         break;
     case LED_STATE_USB_NO: /* 拔下U盘 */
         set_pin_state((uint16_t)LED_PIN_INDEX_4B, LedPinStateOff);
+        set_pin_state((uint16_t)LED_PIN_INDEX_3A, LedPinStateOn);
         break;
     case LED_STATE_SYS_OK: /* 系统工作正常 */
         set_pin_state((uint16_t)LED_PIN_INDEX_5B, LedPinStateBlink);

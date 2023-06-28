@@ -248,6 +248,7 @@ static void *record_thread(void *args)
     pcm_config_t *p_config = NULL;
     sint32_t rec_ctrl_msg = 0;
     rec_msg_t rec_msg_data;
+    int times = 0;
 
     /* 获取声卡配置信息 */
     p_config = pcm_get_config_instance();

@@ -606,11 +606,9 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
 /*******************************************************
  *
  * @brief   格式化板载存储器emmc.具体步骤如下:
- *          1.查看USB上是否存在格式化目录.如果存在,则进行步骤2,
- *          不存在则,进行步骤4.
- *          2.删除板载存储器的yysj文件夹.
- *          3.创建新的目录:yysj, yysj/voice,并拷贝提示音文件.
- *          4.退出.
+ *          1.删除板载存储器的yysj文件夹.
+ *          2.创建新的目录:yysj, yysj/voice,并拷贝提示音文件.
+ *          3.退出.
  *
  * @param  无
  * @retval none
@@ -618,23 +616,19 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
  *******************************************************/
 static void format_board_emmc(void)
 {
+    // 提示开始擦除U盘.
+    event_push_queue(EVENT_BEGIN_FORMAT_STORAGE);
+    // 删除板载存储器的yysj文件夹.
+    delete_file(YUYIN_PATH_NAME);
+    // 创建新的目录:yysj, yysj/voice,并拷贝提示音文件.
+    create_dir(TARGET_DIR_NAME);
+    // 并拷贝提示音文件.
+    copy_files(FORMAT_DIR_NAME,TARGET_DIR_NAME);
+    // 提示开始删除U盘.
+    event_push_queue(EVENT_FINISH_FORMAT_STORAGE);
+
 }
-/*******************************************************
- *
- * @brief   格式化板载存储器emmc.具体步骤如下:
- *          1.查看USB上是否存在格式化目录.如果存在,则进行步骤2,
- *          不存在则,进行步骤4.
- *          2.删除板载存储器的yysj文件夹.
- *          3.创建新的目录:yysj, yysj/voice,并拷贝提示音文件.
- *          4.退出.
- *
- * @param  无
- * @retval none
- *
- *******************************************************/
-static int is_format_board_emmc(void)
-{
-}
+
 /*******************************************************
  *
  * @brief  USB转储线程入口函数
@@ -690,7 +684,8 @@ static void usb_thread(void *args)
             ret = stat(FORMAT_DIR_NAME, &stat_l);
             if (ret == 0)
             {
-                // 格式化.
+                // 格式化U盘.
+                format_board_emmc();
                 break;
             }
             else
@@ -718,7 +713,7 @@ static void usb_thread(void *args)
             }
             else
             {
-                /* 已经读取到了U盘的ID,进行鉴权认证 */
+                /* 已经读取到了U盘的ID, 进行鉴权认证 */
                 ret = check_udisk_id(udisk_id);
                 if (ret < 0)
                 {

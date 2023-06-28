@@ -21,7 +21,6 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
-/* #include <sys/wait.h> */
 #include <sys/select.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -30,8 +29,11 @@
 #include <dirent.h>
 /* #include <utime.h>*/
 #include <pthread.h>
-/* #include <sys/file.h> */
+#include <sys/stat.h>
 #include <sys/vfs.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include "utils.h"
 #include "file_manager.h"
 #include "log.h"
@@ -44,11 +46,79 @@
 #define R_OK 4
 #define W_OK 2
 #define X_OK 1
+#define FILE_COPY_BUFF_SIZE 1024
 
 /*******************************************************
  * 函数声明
  *******************************************************/
 
+/*******************************************************
+ *
+ * @brief  判断是否为常规文件
+ *
+ * @param  *path: 路径
+ * @retval 0:否 1:是
+ *
+ *******************************************************/
+
+static int is_dir(const char *path)
+{
+    struct stat statbuf;
+    if (stat(path, &statbuf) == 0) // lstat返回文件的信息,文件信息存放在stat结构中
+    {
+        return S_ISDIR(statbuf.st_mode) != 0; // S_ISDIR宏,判断文件类型是否为目录
+    }
+    return 0;
+}
+
+
+/*******************************************************
+ *
+ * @brief  判断是否为常规文件
+ *
+ * @param  *path: 路径
+ * @retval 0:否 1:是
+ *
+ *******************************************************/
+static int is_file(const char *path)
+{
+    struct stat statbuf;
+    if (stat(path, &statbuf) == 0){
+        return S_ISREG(statbuf.st_mode) != 0; // 判断文件是否为常规文件
+    }
+    return 0;
+}
+
+/*******************************************************
+ *
+ * @brief  判断是否是特殊目录
+ *
+ * @param  *path: 文件路径
+ * @retval 0:否 1:是
+ *
+ *******************************************************/
+static int is_special_dir(const char *path)
+{
+    return strcmp(path, ".") == 0 || strcmp(path, "..") == 0;
+}
+
+/*******************************************************
+ *
+ * @brief 生成完整的文件路径
+ *
+ * @param path 文件所在的目录
+ * @param file 文件名
+ * @param file_path 文件的路径
+ * 
+ *******************************************************/
+
+static void get_file_path(const char *path, const char *file, char *file_path)
+{
+    strcpy(file_path, path);
+    if (file_path[strlen(path) - 1] != '/')
+        strcat(file_path, "/");
+    strcat(file_path, file);
+}
 /*******************************************************
  *
  * @brief  获取U盘剩余空间,单位:KB
@@ -562,4 +632,88 @@ int delete_file(const char *path)
         return (rmdir(path) == 0) ? 0 : -1;
     }
     return -1;
+}
+
+/*******************************************************
+ *
+ * @brief  递归拷贝文件夹
+ *
+ * @param source 源目录
+ * @param destination 目标目录
+ * @retval none
+ *
+ *******************************************************/
+void copy_files(const char *source, const char *destination)
+{
+    DIR *dir;
+    struct dirent *entry;
+    struct stat statbuf;
+    char source_path[PATH_NAME_MAX_LEN];
+    char destination_path[PATH_NAME_MAX_LEN];
+
+    dir = opendir(source);
+    if (dir == NULL)
+    {
+        printf("can not open source directory\n");
+        return;
+    }
+
+    while ((entry = readdir(dir)) != NULL)
+    {
+        // 构建源文件/目录路径
+        snprintf(source_path, sizeof(source_path), "%s/%s", source, entry->d_name);
+        // 构建目标文件/目录路径
+        snprintf(destination_path, sizeof(destination_path), "%s/%s", destination, entry->d_name);
+
+        if (stat(source_path, &statbuf) == -1)
+        {
+            printf("can not get file stats.\n");
+            continue;
+        }
+
+        if (S_ISDIR(statbuf.st_mode))
+        {
+            // 如果是子目录,则递归拷贝
+            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+            {
+                continue;
+            }
+            if (mkdir(destination_path, statbuf.st_mode) == -1)
+            {
+                printf("can not create directory.\n");
+                continue;
+            }
+            copy_files(source_path, destination_path);
+        }
+        else
+        {
+            // 如果是文件,则拷贝文件
+            FILE *source_file = fopen(source_path, "rb");
+            if (source_file == NULL)
+            {
+                printf("can not opening source file. \n");
+                continue;
+            }
+
+            FILE *destination_file = fopen(destination_path, "wb");
+            if (destination_file == NULL)
+            {
+                printf("can not create destination file.\n");
+                fclose(source_file);
+                continue;
+            }
+
+            char buffer[FILE_COPY_BUFF_SIZE];
+            size_t bytes_read;
+            while ((bytes_read = fread(buffer, 1, sizeof(buffer), source_file)) > 0)
+            {
+                fwrite(buffer, 1, bytes_read, destination_file);
+            }
+
+            fclose(source_file);
+            fclose(destination_file);
+        }
+    }
+
+    closedir(dir);
 }
