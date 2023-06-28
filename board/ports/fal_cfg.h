@@ -52,9 +52,9 @@ extern const struct fal_flash_dev at45dbxx_fram;
 #endif
 
 #ifdef BSP_USING_SPI_FLASH
-//w25qxx定义,无需修改
+//spiflash定义,无需修改
 #define SPI_FLASH_START_ADRESS          (0)
-#define SPI_FLASH_DEV_NAME              "w25qxx"
+#define SPI_FLASH_DEV_NAME              "spi_flash"
 #define BLK_SPI_FLASH                   "spiflash"
 #endif
 

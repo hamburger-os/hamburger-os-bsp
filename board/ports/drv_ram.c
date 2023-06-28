@@ -320,6 +320,11 @@ static int rt_mem_init(void)
 /* 导出到自动初始化 */
 INIT_PREV_EXPORT(rt_mem_init);
 
+uint32_t memory_info_size(void)
+{
+    return total;
+}
+
 #ifdef BSP_FMCSRAM_ENABLE_BLK
 static int fal_sram_init(void);
 static int fal_sram_read(long offset, rt_uint8_t *buf, size_t size);

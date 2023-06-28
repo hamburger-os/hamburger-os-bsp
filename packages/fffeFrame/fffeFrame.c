@@ -347,22 +347,23 @@ int16_t fffeFrame_accept(fffeFrame *ff, uint16_t size)
 {
     rt_mutex_take(ff->rx_mutex, RT_WAITING_FOREVER);
     uint16_t nblk = ((size % ff->maxlen) > 0)?(size/ff->maxlen + 1):(size/ff->maxlen);
-    LOG_D("nblk  : %d %d %d", nblk, size, ff->maxlen);
+    LOG_D("  nblk: %d %d %d", nblk, size, ff->maxlen);
     while (nblk > 0)
     {
         uint16_t nsize = 0;
         if (nblk == 1)
         {
-            nsize = (size % ff->rx_len)?(size % ff->rx_len):(ff->rx_len);
+            nsize = (size % ff->maxlen == 0)?(ff->maxlen):(size % ff->maxlen);
         }
         else
         {
-            nsize = ff->rx_len;
+            nsize = ff->maxlen;
         }
 
         if (ff->rx_len + nsize > ff->maxlen)
         {
             LOG_E("Buffer size limit exceeded %d/%d", ff->rx_len + nsize, ff->maxlen);
+            ff->rx_len = 0;
         }
         uint16_t rx_length = ff->read(ff, ff->rx_buffer + ff->rx_len, nsize);
         if (rx_length  > 0)
@@ -377,8 +378,8 @@ int16_t fffeFrame_accept(fffeFrame *ff, uint16_t size)
                 LOG_HEX("       get", 16, ff->rx_buffer, ff->rx_len);
 
                 uint16_t mode = 0;
-                uint16_t indexS = 0;
-                uint16_t indexE = 0;
+                int16_t indexS = -1;
+                int16_t indexE = -1;
                 uint16_t fffeLength = 0;
                 for (uint16_t n = 0; n < ff->rx_len - 1; n++)
                 {
@@ -438,7 +439,7 @@ int16_t fffeFrame_accept(fffeFrame *ff, uint16_t size)
                     }
                 }
                 uint16_t lessindex = indexS;
-                if (indexS == 0 && indexE == 0)
+                if (indexS == -1 && indexE == -1)
                 {
                     lessindex = ff->rx_len;
                 }
@@ -450,7 +451,7 @@ int16_t fffeFrame_accept(fffeFrame *ff, uint16_t size)
                 rt_memcpy(ff->rx_buffer, &ff->rx_buffer[lessindex], lessLength);
                 ff->rx_len = lessLength;
                 LOG_D("  less: %d", ff->rx_len);
-                LOG_HEX("    less", 16, ff->rx_buffer, ff->rx_len);
+                LOG_HEX("      less", 16, ff->rx_buffer, ff->rx_len);
             }
             else
             {

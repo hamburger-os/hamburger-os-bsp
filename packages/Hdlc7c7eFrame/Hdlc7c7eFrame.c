@@ -197,13 +197,13 @@ int8_t Hdlc7c7eFrame_accept(Hdlc7c7eFrame *hdlc, uint16_t size)
 {
     rt_mutex_take(hdlc->rx_mutex, RT_WAITING_FOREVER);
     uint16_t nblk = ((size % hdlc->maxlen) > 0)?(size/hdlc->maxlen + 1):(size/hdlc->maxlen);
-    LOG_D("nblk  : %d %d %d", nblk, size, hdlc->maxlen);
+    LOG_D("  nblk: %d %d %d", nblk, size, hdlc->maxlen);
     while (nblk > 0)
     {
         uint16_t nsize = 0;
         if (nblk == 1)
         {
-            nsize = (size % hdlc->maxlen)?(size % hdlc->maxlen):(hdlc->maxlen);
+            nsize = (size % hdlc->maxlen == 0)?(hdlc->maxlen):(size % hdlc->maxlen);
         }
         else
         {
@@ -213,6 +213,7 @@ int8_t Hdlc7c7eFrame_accept(Hdlc7c7eFrame *hdlc, uint16_t size)
         if (hdlc->rx_len + nsize > hdlc->maxlen)
         {
             LOG_E("Buffer size limit exceeded %d/%d", hdlc->rx_len + nsize, hdlc->maxlen);
+            hdlc->rx_len = 0;
         }
         uint16_t rx_length = hdlc->read(hdlc, hdlc->rx_buffer + hdlc->rx_len, nsize);
         if (rx_length > 0)
@@ -226,8 +227,9 @@ int8_t Hdlc7c7eFrame_accept(Hdlc7c7eFrame *hdlc, uint16_t size)
                 LOG_D("   get: %d", hdlc->rx_len);
                 LOG_HEX("       get", 16, hdlc->rx_buffer, hdlc->rx_len);
 
-                uint16_t indexS = 0;
-                uint16_t indexE = 0;
+                uint16_t mode = 0;
+                int16_t indexS = -1;
+                int16_t indexE = -1;
                 uint16_t hdlcLength = 0;
                 for (uint16_t n = 0; n < hdlc->rx_len; n++)
                 {
@@ -239,11 +241,13 @@ int8_t Hdlc7c7eFrame_accept(Hdlc7c7eFrame *hdlc, uint16_t size)
 
                     if (data8 == HDLC7c7eFRAME_START)
                     {
+                        mode = 1;
                         indexS = n;
                         LOG_D("indexS: %d", indexS);
                     }
-                    else if (data8 == HDLC7c7eFRAME_END)
+                    else if (mode == 1 && data8 == HDLC7c7eFRAME_END)
                     {
+                        mode = 0;
                         indexE = n;
                         LOG_D("indexE: %d", indexE);
 
@@ -285,11 +289,11 @@ int8_t Hdlc7c7eFrame_accept(Hdlc7c7eFrame *hdlc, uint16_t size)
                     }
                 }
                 uint16_t lessindex = indexS;
-                if (indexS == 0 && indexE == 0)
+                if (indexS == -1 && indexE == -1)
                 {
                     lessindex = hdlc->rx_len;
                 }
-                else
+                else if (indexE != -1)
                 {
                     lessindex = (indexE > indexS)?(indexE + 1):(indexS);
                 }
@@ -297,7 +301,7 @@ int8_t Hdlc7c7eFrame_accept(Hdlc7c7eFrame *hdlc, uint16_t size)
                 rt_memcpy(hdlc->rx_buffer, &hdlc->rx_buffer[lessindex], lessLength);
                 hdlc->rx_len = lessLength;
                 LOG_D("  less: %d", hdlc->rx_len);
-                LOG_HEX("    less", 16, hdlc->rx_buffer, hdlc->rx_len);
+                LOG_HEX("      less", 16, hdlc->rx_buffer, hdlc->rx_len);
             }
             else
             {

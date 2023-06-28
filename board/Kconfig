@@ -51,6 +51,10 @@ menu "On-chip Peripheral Drivers"
                 config SOC_H7COREBOARD_NOSRAM
                     bool "Select H7 core board with no sram"
                     select SOC_SERIES_STM32H7
+    
+                config SOC_H7_STO_RECORD_BOARD
+                    bool "Select STO H7 record board"
+                    select SOC_SERIES_STM32H7
 
             endchoice
             
@@ -1998,6 +2002,21 @@ menu "On-chip Peripheral Drivers"
                         default n
                 endif
         endif
+        
+    menuconfig BSP_USING_CPUTEMP
+        bool "Enable CPU temperature"
+        default n
+        select BSP_USING_ADC
+        
+        if BSP_USING_CPUTEMP
+            config CPUTEMP_ADC_DEV
+                string "Set the adc temp device name used, default: adc1"
+                default "adc1"
+                
+            config CPUTEMP_ADC_DEV_CHANNEL
+                int "Set the adc temp device channel, default: 18"
+                default 18
+        endif
 
     menuconfig BSP_USING_ADC
         bool "Enable ADC"
@@ -2465,7 +2484,7 @@ menu "Onboard Peripheral Drivers"
         endif
         
     menuconfig BSP_USING_WM8978
-        bool "Enable AUDIO (WM8978)"
+        bool "Enable WM8978, a low power, high quality stereo CODEC"
         select RT_USING_AUDIO
         select RT_USING_MEMPOOL
         select BSP_USING_I2S
@@ -2492,6 +2511,17 @@ menu "Onboard Peripheral Drivers"
             config ADAU1761_I2C_ADD
                 hex "Set the i2c device address, default: 0x38"
                 default (0x38)
+                
+            choice
+                prompt "Select the MCLK frequency"
+                default ADAU1761_MCLK_12288
+                
+                config ADAU1761_MCLK_12288
+                    bool "Select MCLK 12.288MHz"
+                    
+                config ADAU1761_MCLK_12
+                    bool "Select MCLK 12MHz"
+            endchoice
                 
             config ADAU1761_USING_PWR_PIN
                 bool "Enable audio power pin"
@@ -2655,7 +2685,7 @@ menu "Onboard Peripheral Drivers"
         endif
         
     menuconfig BSP_USING_SPI_FLASH
-        bool "Enable SPI FLASH (W25Qxx)"
+        bool "Enable SPI FLASH (sfud: W25Qxx)"
         select RT_USING_DFS
         select RT_USING_DFS_ROMFS
         select PKG_USING_LITTLEFS
@@ -2671,6 +2701,10 @@ menu "Onboard Peripheral Drivers"
             config BSP_SPI_FLASH_SPI_CS_PIN
                 string "Set the pin of the chip select, default: PB.14"
                 default "PB.14"
+                
+            config BSP_SPI_FLASH_SPI_SPEED
+                int "Set the rate of spi, default: (80 * 1000 *1000)"
+                default (80000000)
             
             config SPI_FLASH_SIZE_GRANULARITY_TOTAL
                 int "Set storage space size, default: (16 * 1024 * 1024)"
@@ -2864,9 +2898,32 @@ menu "Onboard Peripheral Drivers"
         default n
         
         if BSP_USING_MAX31826
+          choice
+              prompt "Select io or iic mode"
+              default MAX31826_USING_IO
+              
+              config MAX31826_USING_I2C_DS2484
+                  bool "iic mode(ds2484)"
+                  
+              config MAX31826_USING_IO
+                  bool "io mode"
+	        endchoice
+	        
+          if MAX31826_USING_IO
             config MAX31826_GPIO
-		        string "Set the GPIO of the sensor pin, default: PI.8"
-		        default "PI.8"
+            string "Set the GPIO of the sensor pin, default: PI.8"
+            default "PI.8"
+          endif
+          
+          if MAX31826_USING_I2C_DS2484
+            config DS2484_I2C_DEV
+              string "Set the i2c device name used, default: i2c2"
+              default "i2c2"
+              
+            config DS2484_I2C_ADD
+              hex "Set the i2c device address, default: 0x18"
+              default (0x18)
+          endif
         endif
         
     menuconfig BSP_USING_DS1682

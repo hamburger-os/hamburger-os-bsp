@@ -152,7 +152,6 @@ static void wavrecord_entry(void *parameter)
     struct wav_header wav = {0};
     struct rt_audio_caps caps;
     rt_uint32_t recv_evt, total_length = 0;
-    int i;
 
     result = wavrecorder_open(&record);
     if (result != RT_EOK)
@@ -201,6 +200,22 @@ static void wavrecord_entry(void *parameter)
         {
             fwrite(record.buffer, size, 1, record.fp);
             total_length += size;
+
+#if 0
+            struct __attribute__ ((packed)) LRDef
+            {
+                int32_t L: 16;
+                int32_t R: 16;
+            };
+
+            struct LRDef *LRData;
+            for (uint32_t i = 0; i < size; i += sizeof(struct LRDef))
+            {
+                LRData = (struct LRDef *)&record.buffer[i];
+                rt_kprintf("%d,%d\n", LRData->L, LRData->R);
+            }
+            rt_thread_delay(1);
+#endif
         }
         /* recive stop event */
         if (rt_event_recv(record.event, RECORD_EVENT_STOP,

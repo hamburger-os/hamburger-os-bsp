@@ -27,6 +27,14 @@ menuconfig PKG_USING_HDLC7c7eFRAME
             depends on PKG_HDLC7c7eFRAME_USING_EXAMPLE
             default "uart7"
     endif
+    
+menuconfig PKG_USING_SYSINFO
+    bool "Enable systerm info"
+    default n
+    
+    if PKG_USING_SYSINFO
+    
+    endif
 
 menuconfig PKG_USING_ULOG_BACK
     bool "Enable the ulog backend"

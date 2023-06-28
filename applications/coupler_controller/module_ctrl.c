@@ -19,7 +19,7 @@
 
 #define DEBUG_LED   LED_CAN2
 
-#define FFFE_RX_MAX_LEN 2048
+#define FFFE_RX_MAX_LEN 512
 
 /* 用户自定义协议 */
 enum
@@ -209,11 +209,19 @@ static void process_thread_entry(void *parameter)
                     fffeFrame_cmd(frame, ID_CMD_READ, (uint8_t *)&cmd, sizeof(cmd));
 
                     puserdata->timeout = rt_tick_get_millisecond() - puserdata->timeout;
-                    if (puserdata->timeout > 0)
+                    if (puserdata->timeout > 500)
                     {
                         LOG_W("ID_CMD_READ timeout %d", puserdata->timeout);
                     }
                     puserdata->timeout = rt_tick_get_millisecond();
+                }
+                else
+                {
+                    //关闭
+                    CMD_OPENDef cmd = {
+                        .function = 0,
+                    };
+                    fffeFrame_cmd(frame, ID_CMD_OPEN, (uint8_t *)&cmd, sizeof(cmd));
                 }
             }
                 break;
@@ -407,8 +415,15 @@ void coupler_controller_moduleinit(void)
 
 void module_ctrl_open(uint8_t isopen)
 {
-    CMD_OPENDef cmd = {
-        .function = isopen,
-    };
-    fffeFrame_cmd(&frame, ID_CMD_OPEN, (uint8_t *)&cmd, sizeof(cmd));
+    if (isopen)
+    {
+        CMD_OPENDef cmd = {
+            .function = 1,
+        };
+        fffeFrame_cmd(&frame, ID_CMD_OPEN, (uint8_t *)&cmd, sizeof(cmd));
+    }
+    else
+    {
+        coupler_controller_userdata.isopen = 0;
+    }
 }

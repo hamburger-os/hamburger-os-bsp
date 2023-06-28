@@ -116,21 +116,21 @@ static rt_err_t stm32_adc_get_channel(rt_int8_t rt_channel, uint32_t *stm32_chan
         *stm32_channel = ADC_CHANNEL_19;
         break;
 #endif /* ADC_CHANNEL_19 */
-#ifdef ADC_CHANNEL_VREFINT
-    case RT_ADC_INTERN_CH_VREF:
-        *stm32_channel = ADC_CHANNEL_VREFINT;
-        break;
-#endif /* ADC_CHANNEL_VREFINT */
-#ifdef ADC_CHANNEL_VBAT
-    case RT_ADC_INTERN_CH_VBAT:
-        *stm32_channel = ADC_CHANNEL_VBAT;
-        break;
-#endif /* ADC_CHANNEL_VBAT */
-#ifdef ADC_CHANNEL_TEMPSENSOR
-    case RT_ADC_INTERN_CH_TEMPER:
-        *stm32_channel = ADC_CHANNEL_TEMPSENSOR;
-        break;
-#endif /* ADC_CHANNEL_TEMPSENSOR */
+//#ifdef ADC_CHANNEL_VREFINT
+//    case ADC_CHANNEL_VREFINT:
+//        *stm32_channel = ADC_CHANNEL_VREFINT;
+//        break;
+//#endif /* ADC_CHANNEL_VREFINT */
+//#ifdef ADC_CHANNEL_VBAT
+//    case ADC_CHANNEL_VBAT:
+//        *stm32_channel = ADC_CHANNEL_VBAT;
+//        break;
+//#endif /* ADC_CHANNEL_VBAT */
+//#ifdef ADC_CHANNEL_TEMPSENSOR
+//    case ADC_CHANNEL_TEMPSENSOR:
+//        *stm32_channel = ADC_CHANNEL_TEMPSENSOR;
+//        break;
+//#endif /* ADC_CHANNEL_TEMPSENSOR */
     default:
         return -RT_EINVAL;
     }
@@ -265,10 +265,10 @@ static rt_int16_t stm32_adc_get_vref (struct rt_adc_device *device)
 
     ADC_HandleTypeDef *stm32_adc_handler = device->parent.user_data;
 
-    ret = rt_adc_enable(device, RT_ADC_INTERN_CH_VREF);
+    ret = rt_adc_enable(device, ADC_CHANNEL_VREFINT);
     if (ret != RT_EOK) return (rt_int16_t)ret;
-    vref_value = rt_adc_read(device, RT_ADC_INTERN_CH_VREF);
-    ret = rt_adc_disable(device, RT_ADC_INTERN_CH_VREF);
+    vref_value = rt_adc_read(device, ADC_CHANNEL_VREFINT);
+    ret = rt_adc_disable(device, ADC_CHANNEL_VREFINT);
     if (ret != RT_EOK) return (rt_int16_t)ret;
 
 #ifdef SOC_SERIES_STM32U5
