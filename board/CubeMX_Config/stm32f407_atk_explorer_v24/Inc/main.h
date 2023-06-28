@@ -77,6 +77,7 @@ void Error_Handler(void);
 #define USB_PWR_GPIO_Port GPIOA
 #define ETH_RST_Pin GPIO_PIN_3
 #define ETH_RST_GPIO_Port GPIOD
+
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

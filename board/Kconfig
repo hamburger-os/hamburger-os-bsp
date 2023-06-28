@@ -2484,7 +2484,7 @@ menu "Onboard Peripheral Drivers"
         endif
         
     menuconfig BSP_USING_WM8978
-        bool "Enable AUDIO (WM8978)"
+        bool "Enable WM8978, a low power, high quality stereo CODEC"
         select RT_USING_AUDIO
         select RT_USING_MEMPOOL
         select BSP_USING_I2S
@@ -2685,7 +2685,7 @@ menu "Onboard Peripheral Drivers"
         endif
         
     menuconfig BSP_USING_SPI_FLASH
-        bool "Enable SPI FLASH (W25Qxx)"
+        bool "Enable SPI FLASH (sfud: W25Qxx)"
         select RT_USING_DFS
         select RT_USING_DFS_ROMFS
         select PKG_USING_LITTLEFS
@@ -2701,6 +2701,10 @@ menu "Onboard Peripheral Drivers"
             config BSP_SPI_FLASH_SPI_CS_PIN
                 string "Set the pin of the chip select, default: PB.14"
                 default "PB.14"
+                
+            config BSP_SPI_FLASH_SPI_SPEED
+                int "Set the rate of spi, default: (80 * 1000 *1000)"
+                default (80000000)
             
             config SPI_FLASH_SIZE_GRANULARITY_TOTAL
                 int "Set storage space size, default: (16 * 1024 * 1024)"

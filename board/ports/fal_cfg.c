@@ -21,7 +21,7 @@
 #endif
 
 #ifdef BSP_USING_SPI_FLASH
-    extern struct fal_flash_dev w25qxx_flash;
+    extern struct fal_flash_dev spiflash;
 #endif
 
 #ifdef BSP_FMCSRAM_ENABLE_BLK
@@ -50,7 +50,7 @@ const struct fal_flash_dev * const device_table[] =
 #endif
 
 #ifdef BSP_USING_SPI_FLASH
-    &w25qxx_flash,
+    &spiflash,
 #endif
 
 #ifdef BSP_FMCSRAM_ENABLE_BLK

@@ -120,6 +120,7 @@ static const struct mount_fs _mount_fs[] =
 #endif
 };
 
+#ifdef BSP_USING_ROOTFS
 static const struct mount_fs _mount_rootfs[] =
 {
     {"bin"           , "bin"          , "lfs"         },
@@ -127,6 +128,7 @@ static const struct mount_fs _mount_rootfs[] =
     {"lib"           , "lib"          , "lfs"         },
     {"usr"           , "usr"          , "lfs"         },
 };
+#endif
 
 static int rt_dfs_init(void)
 {

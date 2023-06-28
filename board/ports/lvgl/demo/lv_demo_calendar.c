@@ -1,6 +1,5 @@
 #include <lvgl.h>
 #include <board.h>
-#include <drv_fmclcd.h>
 
 static void event_handler(lv_event_t * e)
 {
