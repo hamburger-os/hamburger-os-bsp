@@ -2815,7 +2815,7 @@ menu "Onboard Peripheral Drivers"
 			            default "PH.2"
 	        	endif
 	        
-	        menuconfig BSP_USE_ETH2
+	          menuconfig BSP_USE_ETH2
 		        bool "Enable ETH port 2"
 		        default n
 		        
@@ -2836,6 +2836,28 @@ menu "Onboard Peripheral Drivers"
 			            string "Set the GPIO of the isr pin, default: PH.3"
 			            default "PH.3"
 	        	endif
+          
+            menuconfig BSP_USE_ETH3
+            bool "Enable ETH port 3"
+            default n
+            
+            if BSP_USE_ETH3
+              config ETH3_NE
+                  hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
+                  default (0x2)
+    
+                config ETH3_CMD
+                  hex "Set the cmd address, default: NE2 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE2 - 1)) | (1 << (A0 + 1))))"
+                  default (0x64000002)
+                  
+              config ETH3_RST
+                  string "Set the GPIO of the reset pin, default: PA.0"
+                  default "PA.0"
+                
+                config ETH3_ISR
+                  string "Set the GPIO of the isr pin, default: PA.1"
+                  default "PA.1"
+            endif
         endif
         
     menuconfig BSP_USING_ETH
