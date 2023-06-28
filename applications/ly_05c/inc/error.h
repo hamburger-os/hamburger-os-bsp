@@ -4,8 +4,8 @@
  * @Date: 2023-05-24 16:06:26
  * @Author: ccy
  * @Description: 错误模块头文件,文件中定义了各个模块的错误号.
- * 
- * Copyright (c) 2023 by thinker, All Rights Reserved. 
+ *
+ * Copyright (c) 2023 by thinker, All Rights Reserved.
  *
  *******************************************************/
 
@@ -29,6 +29,5 @@
 #define MODULE_UTILS 0x0a
 #define MODULE_UPGRADE 0x0b
 #define MODULE_PLAY 0x0c
-
 
 #endif

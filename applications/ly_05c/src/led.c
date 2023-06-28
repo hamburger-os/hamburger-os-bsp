@@ -201,6 +201,12 @@ void led_set(E_LED_State led_state)
     case LED_STATE_USB_NO: /* 拔下U盘 */
         set_pin_state((uint16_t)LED_PIN_INDEX_4B, LedPinStateOff);
         break;
+    case LED_STATE_SYS_OK: /* 系统工作正常 */
+        set_pin_state((uint16_t)LED_PIN_INDEX_5B, LedPinStateBlink);
+        break;
+    case LED_STATE_SYS_ERROR: /* 系统工作错误 */
+        set_pin_state((uint16_t)LED_PIN_INDEX_5B, LedPinStateOff);
+        break;
     default: /* 缺省 */
         break;
     }
@@ -275,7 +281,7 @@ static void *led_thread(const void *args)
                 break;
             }
         }
-        msleep((uint32_t)200);
+        msleep((uint32_t)200);/* 休眠200ms */
         led_pin_state_alter_blink_p = (bool)!led_pin_state_alter_blink_p;
     }
     return NULL;

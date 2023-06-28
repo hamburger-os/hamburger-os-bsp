@@ -27,6 +27,7 @@
 #include "usb.h"
 #include "key.h"
 #include "log.h"
+#include "rtc.h"
 
 /*******************************************************
  * 函数声明
@@ -105,7 +106,7 @@ static int ly_05c_init(void)
     if (ret < 0)
     {
         log_print(LOG_FATAL_ERROR, "init voice module error, error code: %d.\n", ret);
-        // todo-done, assert
+        /* todo-done, assert */
     }
     else
     {
@@ -119,7 +120,7 @@ static int ly_05c_init(void)
     if (ret < 0)
     {
         log_print(LOG_FATAL_ERROR, "init tax module error, error code: %d.\n", ret);
-        // todo-done, assert, 重复检查
+        /* todo-done, assert, 重复检查 */
     }
     else
     {
@@ -133,16 +134,12 @@ static int ly_05c_init(void)
     if (ret < 0)
     {
         log_print(LOG_FATAL_ERROR, "init event module error, error code: %d.\n", ret);
-        // todo-done, assert, 重复检查
+        /* todo-done, assert, 重复检查 */
     }
     else
     {
     }
     RT_ASSERT(ret == 0);
-#if 0
-    /* 播放语音测试 */
-    play_event(EVENT_DUMP_START_LAST);
-#endif
 
 #if 1
     /* 初始化Key模块 */
@@ -150,7 +147,7 @@ static int ly_05c_init(void)
     if (ret < 0)
     {
         log_print(LOG_FATAL_ERROR, "key_init error, error code: %d.\n", ret);
-        // todo-done, assert
+        /* todo-done, assert */
     }
     else
     {
@@ -193,8 +190,17 @@ static void *ly_05c_entry(void *args)
         return NULL;
     }
 
+    /* 播放提示音, 设备已经启动. */
+    play_event(EVENT_DEVICE_START);
+    /* 系统工作指示正常 */
+    event_push_queue(EVENT_SYS_WORK_OK);
+    /* 工作指示正常 */
+    event_push_queue(EVENT_WORK_NORMAL);
     /* 启动事件管理模块 */
     event_run();
+    
+    /* 此处不应该出现, 要不然会成为宕机模式 */
+    led_set(LED_STATE_WORK_ERROR);
 
     return NULL;
 }
@@ -212,9 +218,10 @@ sint32_t ly_05c_main(void)
     pthread_t main_tid;
     pthread_attr_t pthread_attr_data;
 
+
     /* 创建主线程 */
     pthread_attr_init(&pthread_attr_data);
-    pthread_attr_data.stacksize = 1024 * 5;
+    pthread_attr_data.stacksize = 1024 * 10;
     pthread_attr_data.schedparam.sched_priority = 17;
     ret = pthread_create(&main_tid, &pthread_attr_data, ly_05c_entry, NULL);
     pthread_attr_destroy(&pthread_attr_data);

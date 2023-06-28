@@ -20,6 +20,7 @@
 #include "voice.h"
 #include "data.h"
 #include "log.h"
+#include "pcm.h"
 
 /*******************************************************
  *
@@ -33,14 +34,14 @@ sint32_t voice_init(void)
 {
     sint32_t ret = 0;
 
-    // 初始化声卡设备数据
+    // 初始化声卡设备数据 */
     pcm_init_data();
 
     /* 初始化录音模块 */
     ret = record_init();
     if (ret < 0)
     {
-        log_print(LOG_ERROR, "record_init Err:%d", ret);
+        log_print(LOG_ERROR, "record init Err:%d", ret);
         return (sint32_t)-1;
     }
     else
@@ -51,7 +52,7 @@ sint32_t voice_init(void)
     ret = play_init();
     if (ret < 0)
     {
-        log_print(LOG_ERROR, "record_init Err:%d", ret);
+        log_print(LOG_ERROR, "play init Err:%d", ret);
         return (sint32_t)-1;
     }
     else

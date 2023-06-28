@@ -34,6 +34,8 @@ typedef enum
     LED_STATE_WORK_ERROR,           /* 故障指示 */
     LED_STATE_USB_PLUGED_IN,        /* 插上U盘 */
     LED_STATE_USB_NO,               /* 没插U盘 */
+    LED_STATE_SYS_OK,               /* 系统工作正常 */
+    LED_STATE_SYS_ERROR,            /* 系统工作错误 */
 } E_LED_State;
 
 /*******************************************************

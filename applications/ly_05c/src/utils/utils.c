@@ -85,7 +85,7 @@ sint32_t get_disk_free_space(const char *path)
     free_disk = disk_info.f_bfree * total_blocks;
     kb_free_disk = free_disk >> 10;
 
-    log_print(LOG_ERROR, "%s total=%dKB, free=%dKB. \n", path, kb_total_size, kb_free_disk);
+    /* log_print(LOG_ERROR, "'%s' info: total=%dKB, free=%dKB. \n", path, kb_total_size, kb_free_disk);*/
     return kb_free_disk;
 }
 /*******************************************************
@@ -524,4 +524,42 @@ sint32_t create_file(const char *path)
     }
 
     return 0;
+}
+
+/*******************************************************
+ *
+ * @brief  递归删除文件夹或者文件
+ *
+ * @param  *path: 文件夹或者文件路径
+ * @retval 0:成功 负数:失败
+ *
+ *******************************************************/
+
+int delete_file(const char *path)
+{
+    DIR *dir = NULL;
+    struct dirent *dir_info = NULL;
+    char file_path[PATH_NAME_MAX_LEN] = {0};
+
+    if (is_file(path))
+    {
+        return (remove(path) == 0) ? 0 : -1;
+    }
+    if (is_dir(path))
+    {
+        if ((dir = opendir(path)) == NULL)
+        {
+            return -1;
+        }
+        while ((dir_info = readdir(dir)) != NULL)
+        {
+            get_file_path(path, dir_info->d_name, file_path);
+            if (is_special_dir(dir_info->d_name))
+                continue;
+            delete_file(file_path);
+        }
+
+        return (rmdir(path) == 0) ? 0 : -1;
+    }
+    return -1;
 }

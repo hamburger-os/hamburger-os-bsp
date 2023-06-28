@@ -35,7 +35,8 @@ typedef enum _DUMP_STATE
     DUMP_STATE_INIT,    /* 初始化状态 */
     DUMP_STATE_DUMPING, /* 转储中 */
     DUMP_STATE_SUCCESS, /* 转储成功 */
-    DUMP_STATE_FAIL     /* 转储失败 */
+    DUMP_STATE_FAIL,    /* 转储失败 */
+    DUMP_STATE_EXIT     /* USB操作已完成,离开中 */
 } E_DUMP_STATE;
 
 /* PCM设备状态 */

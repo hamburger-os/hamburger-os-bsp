@@ -99,7 +99,9 @@ static E_EVENT pop_event_queue(void)
 sint32_t event_init(void)
 {
     /* 创建消息队列 */
-    event_mq = rt_mq_create("event_mq", sizeof(E_EVENT), (rt_size_t)EVENT_MSG_QUEUE_MAX_LEN, (rt_uint8_t)RT_IPC_FLAG_FIFO);
+    event_mq = rt_mq_create("event_mq", sizeof(E_EVENT),
+                            (rt_size_t)EVENT_MSG_QUEUE_MAX_LEN,
+                            (rt_uint8_t)RT_IPC_FLAG_FIFO);
     if (event_mq == NULL)
     {
         return (sint32_t)-1;
@@ -214,6 +216,12 @@ void event_run(void)
             break;
         case EVENT_WORK_ERROR: /* 工作故障 */
             led_set(LED_STATE_WORK_ERROR);
+            break;
+        case EVENT_SYS_WORK_OK: /* 系统工作正常 */
+            led_set(LED_STATE_SYS_OK);
+            break;
+        case EVENT_SYS_WORK_ERR: /* 系统工作错误 */
+            led_set(LED_STATE_SYS_ERROR);
             break;
         default: /* 缺省 */
             break;

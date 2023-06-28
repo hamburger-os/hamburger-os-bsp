@@ -474,7 +474,7 @@ void I2S_Samplebits_Set(uint16_t samplebits)
     switch (samplebits)
     {
     case 16:
-        i2s_config.hi2s.Init.DataFormat = I2S_DATAFORMAT_16B;
+        i2s_config.hi2s.Init.DataFormat = I2S_DATAFORMAT_16B_EXTENDED;
         break;
     case 24:
         i2s_config.hi2s.Init.DataFormat = I2S_DATAFORMAT_24B;
@@ -483,7 +483,7 @@ void I2S_Samplebits_Set(uint16_t samplebits)
         i2s_config.hi2s.Init.DataFormat = I2S_DATAFORMAT_32B;
         break;
     default:
-        i2s_config.hi2s.Init.DataFormat = I2S_DATAFORMAT_16B;
+        i2s_config.hi2s.Init.DataFormat = I2S_DATAFORMAT_16B_EXTENDED;
         break;
     }
     if (HAL_I2S_Init(&i2s_config.hi2s) != HAL_OK)

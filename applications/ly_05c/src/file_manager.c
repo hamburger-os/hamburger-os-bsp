@@ -1,4 +1,3 @@
-
 /*******************************************************
  *
  * @FileName: log.c
@@ -71,7 +70,6 @@ sint32_t check_disk_full(const char *name)
     else
     {
     }
-    log_print(LOG_INFO, "voice file size: %d kbytes.\n", used_size);
     if (used_size < YUYIN_STORAGE_MAX_SIZE)
     {
         return 0;
@@ -79,6 +77,7 @@ sint32_t check_disk_full(const char *name)
     else
     {
     }
+    log_print(LOG_INFO, "disk is full, total size is %d KB.\n", used_size);
     return (sint32_t)-1;
 }
 
@@ -99,7 +98,7 @@ sint32_t free_space(void)
 
     /* 得到板载存储器的剩余空间大小 */
     disk_free_space = get_disk_free_space(YUYIN_PATH_NAME);
-    log_print(LOG_INFO, "free space: %d kbytes. \n", disk_free_space);
+    // log_print(LOG_INFO, "free space: %d KB. \n", disk_free_space);
     if (check_disk_full(YUYIN_PATH_NAME) == 0)
     {
         return 0;
@@ -107,7 +106,7 @@ sint32_t free_space(void)
     else
     {
     }
-    /* 如果剩余空间不够,先删除bak目录中的文件 */
+    /* 如果剩余空间不够, 先删除bak目录中的文件 */
     /* 获取bak目录中的文件列表 */
     p_file_list_head = get_org_file_info(YUYIN_BAK_PATH_NAME);
     if (p_file_list_head != NULL)
@@ -605,9 +604,9 @@ sint32_t fm_is_new(void)
  * @retval 无
  *
  *******************************************************/
-void fm_build_file_head(file_head_t *ps_FileHead)
+void fm_build_file_head(file_head_t *p_filehead)
 {
-    if (ps_FileHead == NULL)
+    if (p_filehead == NULL)
     {
         return;
     }
@@ -615,69 +614,69 @@ void fm_build_file_head(file_head_t *ps_FileHead)
     {
     }
 
-    memset((char *)ps_FileHead, 0xFF, sizeof(file_head_t));
-    memcpy(ps_FileHead->file_head_flag, FILE_HEAD_FLAG, sizeof(FILE_HEAD_FLAG));
+    memset((char *)p_filehead, 0xFF, sizeof(file_head_t));
+    memcpy(p_filehead->file_head_flag, FILE_HEAD_FLAG, sizeof(FILE_HEAD_FLAG));
 
-    ps_FileHead->file_len = 0x01;                               /* 文件长度(512页为单位),暂时写入1 */
-    ps_FileHead->file_index = ++g_cur_rec_file_info.file_index; /* 文件序号 */
+    p_filehead->file_len = 0x01;                               /* 文件长度(512页为单位),暂时写入1 */
+    p_filehead->file_index = ++g_cur_rec_file_info.file_index; /* 文件序号 */
 
-    ps_FileHead->trainid_type[0] = g_tax32.train_num_type[0]; /* 车次种类 */
-    ps_FileHead->trainid_type[1] = g_tax32.train_num_type[1]; /* 车次种类 */
-    ps_FileHead->trainid_type[2] = g_tax32.train_num_type[2]; /* 车次种类 */
-    ps_FileHead->trainid_type[3] = g_tax32.train_num_type[3]; /* 车次种类 */
+    p_filehead->trainid_type[0] = g_tax32.train_num_type[0]; /* 车次种类 */
+    p_filehead->trainid_type[1] = g_tax32.train_num_type[1]; /* 车次种类 */
+    p_filehead->trainid_type[2] = g_tax32.train_num_type[2]; /* 车次种类 */
+    p_filehead->trainid_type[3] = g_tax32.train_num_type[3]; /* 车次种类 */
 
-    ps_FileHead->train_id[0] = g_tax32.train_id[0]; /* 车次 */
-    ps_FileHead->train_id[1] = g_tax32.train_id[1]; /* 车次 */
-    ps_FileHead->train_id[2] = g_tax32.train_id[2];
+    p_filehead->train_id[0] = g_tax32.train_id[0]; /* 车次 */
+    p_filehead->train_id[1] = g_tax32.train_id[1]; /* 车次 */
+    p_filehead->train_id[2] = g_tax32.train_id[2];
 
-    ps_FileHead->benbu_kehuo = g_tax40.benbu_kehuo; /* 本/补、客/货 */
+    p_filehead->benbu_kehuo = g_tax40.benbu_kehuo; /* 本/补、客/货 */
 
-    ps_FileHead->driver_id[0] = g_tax40.driver_id[0]; /* 司机号 */
-    ps_FileHead->driver_id[1] = g_tax40.driver_id[1]; /* 司机号 */
-    ps_FileHead->driver_id[2] = g_tax32.driver_id;    /* 司机号 */
+    p_filehead->driver_id[0] = g_tax40.driver_id[0]; /* 司机号 */
+    p_filehead->driver_id[1] = g_tax40.driver_id[1]; /* 司机号 */
+    p_filehead->driver_id[2] = g_tax32.driver_id;    /* 司机号 */
 
-    ps_FileHead->version = PRG_VERISON; /* 程序版本 */
+    p_filehead->version = PRG_VERISON; /* 程序版本 */
 
-    ps_FileHead->date_time[0] = g_tax40.date[0]; /* 年、月、日、时、分、秒 */
-    ps_FileHead->date_time[1] = g_tax40.date[1]; /* 年、月、日、时、分、秒 */
-    ps_FileHead->date_time[2] = g_tax40.date[2]; /* 年、月、日、时、分、秒 */
-    ps_FileHead->date_time[3] = g_tax40.date[3]; /* 年、月、日、时、分、秒 */
+    p_filehead->date_time[0] = g_tax40.date[0]; /* 年、月、日、时、分、秒 */
+    p_filehead->date_time[1] = g_tax40.date[1]; /* 年、月、日、时、分、秒 */
+    p_filehead->date_time[2] = g_tax40.date[2]; /* 年、月、日、时、分、秒 */
+    p_filehead->date_time[3] = g_tax40.date[3]; /* 年、月、日、时、分、秒 */
 
-    ps_FileHead->kilometer_post[0] = g_tax40.kilometer_post[0];        /* 公里标 */
-    ps_FileHead->kilometer_post[1] = g_tax40.kilometer_post[1];        /* 公里标 */
-    ps_FileHead->kilometer_post[2] = g_tax40.kilometer_post[2] & 0xBF; /* 公里标 */
+    p_filehead->kilometer_post[0] = g_tax40.kilometer_post[0];        /* 公里标 */
+    p_filehead->kilometer_post[1] = g_tax40.kilometer_post[1];        /* 公里标 */
+    p_filehead->kilometer_post[2] = g_tax40.kilometer_post[2] & 0xBF; /* 公里标 */
 
-    ps_FileHead->speed[0] = g_tax40.speed[0]; /* 实速 */
-    ps_FileHead->speed[1] = g_tax40.speed[1]; /* 实速 */
-    ps_FileHead->speed[2] = g_tax40.speed[2]; /* 实速 */
+    p_filehead->speed[0] = g_tax40.speed[0]; /* 实速 */
+    p_filehead->speed[1] = g_tax40.speed[1]; /* 实速 */
+    p_filehead->speed[2] = g_tax40.speed[2]; /* 实速 */
 
-    ps_FileHead->real_road = g_tax32.real_road; /* 实际交路号 */
+    p_filehead->real_road = g_tax32.real_road; /* 实际交路号 */
 
-    ps_FileHead->input_road = g_tax40.section_id; /* 区段号(输入交路号) */
+    p_filehead->input_road = g_tax40.section_id; /* 区段号(输入交路号) */
 
-    ps_FileHead->station[0] = g_tax40.station_ext;        /* 车站号 */
-    ps_FileHead->station[1] = g_tax32.station_ext & 0x7F; /* 车站号 */
+    p_filehead->station[0] = g_tax40.station_ext;        /* 车站号 */
+    p_filehead->station[1] = g_tax32.station_ext & 0x7F; /* 车站号 */
 
-    ps_FileHead->total_weight[0] = g_tax40.total_weight[0]; /* 总重 */
-    ps_FileHead->total_weight[1] = g_tax40.total_weight[1]; /* 总重 */
+    p_filehead->total_weight[0] = g_tax40.total_weight[0]; /* 总重 */
+    p_filehead->total_weight[1] = g_tax40.total_weight[1]; /* 总重 */
 
-    ps_FileHead->assistant_driver[0] = g_tax40.assistant_driver[0]; /* 副司机号 */
-    ps_FileHead->assistant_driver[1] = g_tax40.assistant_driver[1]; /* 副司机号 */
-    ps_FileHead->assistant_driver[2] = g_tax32.assistant_driver;    /* 副司机号 */
+    p_filehead->assistant_driver[0] = g_tax40.assistant_driver[0]; /* 副司机号 */
+    p_filehead->assistant_driver[1] = g_tax40.assistant_driver[1]; /* 副司机号 */
+    p_filehead->assistant_driver[2] = g_tax32.assistant_driver;    /* 副司机号 */
 
-    ps_FileHead->locomotive_num[0] = g_tax40.locomotive_num[0]; /* 机车号 */
-    ps_FileHead->locomotive_num[1] = g_tax40.locomotive_num[1]; /* 机车号 */
+    p_filehead->locomotive_num[0] = g_tax40.locomotive_num[0]; /* 机车号 */
+    p_filehead->locomotive_num[1] = g_tax40.locomotive_num[1]; /* 机车号 */
 
-    ps_FileHead->locomotive_type[0] = g_tax40.locomotive_type;        /* 机车型号 */
-    ps_FileHead->locomotive_type[1] = g_tax32.locomotive_type & 0x01; /* 机车型号 */
+    p_filehead->locomotive_type[0] = g_tax40.locomotive_type;        /* 机车型号 */
+    p_filehead->locomotive_type[1] = g_tax32.locomotive_type & 0x01; /* 机车型号 */
 
-    ps_FileHead->total_voice_number[0] = 0; /* 总的语音条数 */
-    ps_FileHead->total_voice_number[1] = 0; /* 总的语音条数 */
+    p_filehead->total_voice_number[0] = 0; /* 总的语音条数 */
+    p_filehead->total_voice_number[1] = 0; /* 总的语音条数 */
 
     /* 下面是测试代码 */
-    memcpy(ps_FileHead->reserve3 + 11, (char *)(&g_tax32), sizeof(g_tax32));
-    memcpy(ps_FileHead->reserve3 + 11 + sizeof(g_tax32), (char *)(&g_tax40), sizeof(g_tax40));
-    memcpy(ps_FileHead->reserve3 + 11 + 72 + 24, VERISON, strlen(VERISON));
+    memcpy(p_filehead->reserve3 + 11, (char *)(&g_tax32), sizeof(g_tax32));
+    memcpy(p_filehead->reserve3 + 11 + sizeof(g_tax32), (char *)(&g_tax40), sizeof(g_tax40));
+    memcpy(p_filehead->reserve3 + 11 + 72 + 24, VERISON, strlen(VERISON));
 }
 
 /*******************************************************
@@ -865,7 +864,7 @@ sint32_t fm_modify_play_flag(sint32_t fd)
 
     if (voice_head.voice_flag & 0x01)
     {
-        log_print(LOG_INFO, "增加放音标识. \n");
+        printf("增加放音标识. \n");
         voice_head.voice_flag &= ~(0x01);
         voice_head.voice_play_time[0] = g_tax40.date[0];
         voice_head.voice_play_time[1] = g_tax40.date[1];

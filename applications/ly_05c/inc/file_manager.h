@@ -27,6 +27,7 @@
 /* 文件路径的相关宏 */
 #define TARGET_DIR_NAME "/mnt/udisk/ud0p0/yysj/voice"     /* U盘中保存语音文件的路径 */
 #define UPGRADE_FILE_NAME "/mnt/udisk/ud0p0/rtthread.rbl" /* 升级文件 */
+#define FORMAT_DIR_NAME "/mnt/udisk/ud0p0/format"       /* 格式化文件 */
 #define YUYIN_PATH_NAME "/mnt/emmc/yysj"                  /* 语音文件在板子上的存储路径 */
 #define YUYIN_BAK_PATH_NAME "/mnt/emmc/yysj/bak"          /* 语音文件在板子上的备份路径 */
 #define NEW_FILE_NAME_CONF "latest_filename.conf"         /* 存放最新文件名的配置文件名称 */
@@ -86,6 +87,7 @@
 #define TAX32_TOTAL_DISPLACEMENT_LEN 2   /* 累计位移字段长度 */
 
 /* tax40 */
+#define TAX40_TRAIN_ID_LEN 2            /* 车次字段长度 */
 #define TAX40_SIGNAL_MACHINE_ID_LEN 2   /* 信号机编号字段长度 */
 #define TAX40_TOTAL_LEN_LEN 2           /* 计长字段长度 */
 #define TAX40_DRIVER_ID_LEN 2           /* 司机号字段长度 */
@@ -217,7 +219,7 @@ typedef struct __attribute__((packed)) /* 按照字节对齐*/
     uint8_t total_len[TAX40_TOTAL_LEN_LEN];                  /* 计长 */
     uint8_t train_num;                                       /* 辆数 */
     uint8_t benbu_kehuo;                                     /* 本/补、客/货 */
-    uint8_t train_id[TRAIN_ID_LEN];                          /* 车次 */
+    uint8_t train_id[TAX40_TRAIN_ID_LEN];                    /* 车次 */
     uint8_t section_id;                                      /* 区段号(交路号) */
     uint8_t station_ext;                                     /* 车站号 */
     uint8_t driver_id[TAX40_DRIVER_ID_LEN];                  /* 司机号 */

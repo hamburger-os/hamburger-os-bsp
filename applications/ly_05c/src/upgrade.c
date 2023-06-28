@@ -192,7 +192,7 @@ void ota_from_file_handle(OtaHandleTypeDef type)
         {
         }
         break;
-    default:
+    default:/*缺省*/
         break;
     }
 }

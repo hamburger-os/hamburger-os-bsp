@@ -38,7 +38,7 @@
 
 /* 转储最新,全部语音文件按钮 */
 #define NEW_ALL_PIN "PF.11"
-/* Size大,转储速度快 */
+/* size大,转储速度快 */
 #define BUFFER_SIZE 4096
 
 /*******************************************************
@@ -51,6 +51,13 @@ typedef enum
     CopyMode_New = 0, /* 转储最新文件模式 */
     CopyMode_All = 1  /* 转储全部文件模式 */
 } E_CopyMode;
+
+/* 备份模式 */
+typedef enum
+{
+    Backup_No = 0, /* 只是复制文件到U盘 */
+    Backup_Ok = 1  /* 先复制文件到U盘,再备份文件 */
+} E_Backup;
 
 /*******************************************************
  * 全局变量
@@ -80,7 +87,7 @@ static sint32_t get_minute(const uint8_t *timedata);
 static sint32_t change_file_date(const char *filename);
 /* 将文件(from)拷贝到文件(to)中去 */
 static sint32_t copy_file(const char *from, const char *to);
-/* 转储语音文件到U盘.如果mode为0,只是复制文件到U盘;mode为1,先复制文件到U盘,再备份文件 */
+/* 转储语音文件到U盘. 如果mode为0, 只是复制文件到U盘;mode为1, 先复制文件到U盘,再备份文件 */
 static sint32_t store_file(const char *source, const char *target, sint32_t mode);
 /* 将语音文件自动转储到U盘中 */
 static sint32_t usb_auto_copy(E_CopyMode mode);
@@ -199,8 +206,8 @@ static sint32_t change_file_date(const char *filename)
     sint32_t fd;
     sint32_t year, month, day, hour, minute;
     struct tm tm_v;
-    /* time_t time_v; */
-    /* struct utimbuf utimebuf;*/
+    time_t time_v;
+    // struct utimbuf utimebuf;
     fd = open(filename, O_RDONLY);
     if (fd < 0)
     {
@@ -266,10 +273,11 @@ static sint32_t change_file_date(const char *filename)
             tm_v.tm_hour = hour;
             tm_v.tm_min = minute;
             tm_v.tm_sec = 0;
-            /* time_v = mktime(&tm_v); */ /* 更改文件的修改日期 */
+            time_v = mktime(&tm_v);
 
-            /* utimebuf.actime = utimebuf.modtime = time_v;*/
-            /* utime(filename, &utimebuf); */
+            /* 更改文件的修改日期 */
+            // utimebuf.actime = utimebuf.modtime = time_v;
+            // utime(filename, &utimebuf);
 
             g_locomotive_id = file_head.locomotive_num[0] + file_head.locomotive_num[1] * 0x100;
             g_locomotive_type = file_head.locomotive_type[0] + file_head.locomotive_type[1] * 0x100;
@@ -291,7 +299,7 @@ static sint32_t change_file_date(const char *filename)
  *
  * @brief  将文件(from)拷贝到文件(to)中去
  *
- * @param  *From: 需要拷贝的文件名
+ * @param  *from: 需要拷贝的文件名
  * @param  *to: 目的地址文件名
  * @retval 0:成功 负数:失败
  *
@@ -422,7 +430,7 @@ static sint32_t store_file(const char *source, const char *target, sint32_t mode
         p = p_file_list_head;
         while (p != NULL)
         {
-            log_print(LOG_INFO, "copy '%32s' to dir '%s'.\n", p->filename, target);
+            log_print(LOG_INFO, "copy '%s' to dir '%s'.\n", p->filename, target);
             name = get_sigle_file_name(p->filename);
             if (strstr(name, "VSW") == NULL) /* 没有找到VSW */
             {
@@ -443,7 +451,6 @@ static sint32_t store_file(const char *source, const char *target, sint32_t mode
             {
             }
 
-            log_print(LOG_INFO, "targetname:%s\n", targetname);
             change_file_date(targetname);
 
             if (mode == COPY_MODE_COPY_BAK) /* mode为1,先复制文件到U盘,再备份文件 */
@@ -495,17 +502,14 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
     struct stat stat_l;
     char logname[PATH_NAME_MAX_LEN];
 
+    // 获取最新语音文件名.
     fm_get_file_name(latest_filename, 0);
-    log_print(LOG_INFO, "最新的语音文件名是:%s.\n", latest_filename);
-
     create_dir(TARGET_DIR_NAME);     /* 在U盘目录中建立语音文件目录 */
     create_dir(YUYIN_BAK_PATH_NAME); /* 建立语音文件的备份的目录 */
 
     /* step1: 查看所有文件的大小 */
     /* U盘的剩余空间大小 */
     udisk_free_space = get_disk_free_space(YUYIN_PATH_NAME);
-    log_print(LOG_INFO, "U盘的剩余空间大小:%dKB.\n", udisk_free_space);
-
     /* 所有文件的大小 */
     if (mode == CopyMode_All)
     {
@@ -515,11 +519,7 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
     {
         voice_size = dir_size(YUYIN_PATH_NAME) - dir_size(YUYIN_BAK_PATH_NAME);
     }
-    log_print(LOG_INFO, "所有文件的大小:%dKB %dKB %dKB.\n",
-              voice_size,
-              dir_size(YUYIN_PATH_NAME),
-              dir_size(YUYIN_BAK_PATH_NAME));
-    voice_size = voice_size / 1024;
+    /* U盘没有剩余空间, 则播放提示音 */
     if (udisk_free_space == -1)
     {
         /* 播放提示音, U盘转储失败 */
@@ -530,10 +530,9 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
     else
     {
     }
-
-    if (voice_size > udisk_free_space)
+    if (voice_size / 1024 > udisk_free_space)
     {
-        log_print(LOG_ERROR, "U盘空间不够! U盘剩余空间:%dK, 语音文件大小:%d kbytes.\n", udisk_free_space, voice_size);
+        log_print(LOG_ERROR, "U盘空间不够! U盘剩余空间:%dK, 语音文件大小:%dKB.\n", udisk_free_space, voice_size / 1024);
         /* 播放语音提示, U盘已满 */
         event_push_queue(EVENT_DUMP_USB_FULL);
         return (sint32_t)-1;
@@ -549,7 +548,7 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
         /* 播放提示音, 开始转储全部文件 */
         event_push_queue(EVENT_DUMP_START_ALL);
         /* 把"yysj/bak"目录下面的所有文件复制到U盘 */
-        if (store_file(YUYIN_BAK_PATH_NAME, TARGET_DIR_NAME, 0) != 0)
+        if (store_file(YUYIN_BAK_PATH_NAME, TARGET_DIR_NAME, Backup_No) != 0)
         {
             /* 播放提示音,转储失败 */
             log_print(LOG_ERROR, "转储失败.\n");
@@ -562,15 +561,15 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
     }
     else /* 开始转储最新文件 */
     {
-        log_print(LOG_INFO, "转储最新语音文件到U盘......\n");
+        log_print(LOG_INFO, "转储最新语音文件到U盘...\n");
         /* 播放语音提示,开始转储最新文件. */
         event_push_queue(EVENT_DUMP_START_LAST);
     }
 
     /* step3:转储日志文件 */
-    /* 搜索"yysj/目录"下面的所有文件,把语音文件分别复制到U盘,并把文件移动到bak子目录中 */
-    log_print(LOG_INFO, "\n开始转储、移动yysj/目录下的文件. \n");
-    if (store_file(YUYIN_PATH_NAME, TARGET_DIR_NAME, 1))
+    /* 搜索"yysj/目录"下面的所有文件, 把语音文件分别复制到U盘, 并把文件移动到bak子目录中 */
+    log_print(LOG_INFO, "开始转储、移动yysj/目录下的文件. \n");
+    if (store_file(YUYIN_PATH_NAME, TARGET_DIR_NAME, Backup_Ok))
     {
         log_print(LOG_ERROR, "转储失败.\n");
         event_push_queue(EVENT_DUMP_FAIL);
@@ -580,10 +579,10 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
     {
     }
     /* 增加转储日志文件的功能,如果发现有日志文件,则复制到U盘 */
-    if (stat(LOG_FILE_NAME, &stat_l) == 0)
+    sprintf(logname, "%s/LY05C_%d-%d.log", LOG_FILE_PATH, g_locomotive_type, g_locomotive_id);
+    if (stat(logname, &stat_l) == 0)
     {
         log_print(LOG_ERROR, "转储日志.\n");
-        sprintf(logname, "%s/LY05C_%d-%d.log", LOG_FILE_PATH, g_locomotive_type, g_locomotive_id);
         copy_file(logname, logname);
     }
     else
@@ -604,6 +603,38 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
     return 0;
 }
 
+/*******************************************************
+ *
+ * @brief   格式化板载存储器emmc.具体步骤如下:
+ *          1.查看USB上是否存在格式化目录.如果存在,则进行步骤2,
+ *          不存在则,进行步骤4.
+ *          2.删除板载存储器的yysj文件夹.
+ *          3.创建新的目录:yysj, yysj/voice,并拷贝提示音文件.
+ *          4.退出.
+ *
+ * @param  无
+ * @retval none
+ *
+ *******************************************************/
+static void format_board_emmc(void)
+{
+}
+/*******************************************************
+ *
+ * @brief   格式化板载存储器emmc.具体步骤如下:
+ *          1.查看USB上是否存在格式化目录.如果存在,则进行步骤2,
+ *          不存在则,进行步骤4.
+ *          2.删除板载存储器的yysj文件夹.
+ *          3.创建新的目录:yysj, yysj/voice,并拷贝提示音文件.
+ *          4.退出.
+ *
+ * @param  无
+ * @retval none
+ *
+ *******************************************************/
+static int is_format_board_emmc(void)
+{
+}
 /*******************************************************
  *
  * @brief  USB转储线程入口函数
@@ -649,6 +680,17 @@ static void usb_thread(void *args)
             if (ret == 0)
             {
                 msleep((uint32_t)500);
+                break;
+            }
+            else
+            {
+            }
+
+            /* 如果存在格式化文件, 则不进行转储. */
+            ret = stat(FORMAT_DIR_NAME, &stat_l);
+            if (ret == 0)
+            {
+                // 格式化.
                 break;
             }
             else
@@ -719,7 +761,12 @@ static void usb_thread(void *args)
             }
             break;
         case DUMP_STATE_SUCCESS: /* 转储成功 */
-        case DUMP_STATE_FAIL:    /* 转储失败 */
+            state = DUMP_STATE_EXIT;
+            break;
+        case DUMP_STATE_FAIL: /* 转储失败 */
+            state = DUMP_STATE_EXIT;
+            break;
+        case DUMP_STATE_EXIT: /* USB操作已完成, 离开中 */
             ret = stat(UDISK_ID_PATH, &stat_l);
             /* 等待U盘拔出 */
             while (ret == 0)

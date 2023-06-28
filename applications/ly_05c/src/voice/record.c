@@ -216,7 +216,7 @@ static void record_endrec(void)
             g_cur_rec_file_info.fd = -1;
 
             /* 这里不太对, 每帧语音数据20ms, 但是编码出来的长度不一定都为 27字节(VOICE_VALID_LENGTH) */
-            log_print(LOG_INFO, "end, total timedata: %ds. \n",
+            log_print(LOG_INFO, "record end, total time: %ds. \n",
                       ((g_cur_rec_file_info.record_datalen / (uint32_t)VOICE_VALID_LENGTH) * (uint32_t)20) / (uint32_t)1000);
         }
         else
@@ -249,7 +249,7 @@ static void *record_thread(void *args)
     sint32_t rec_ctrl_msg = 0;
     rec_msg_t rec_msg_data;
 
-    // 获取声卡配置信息
+    /* 获取声卡配置信息 */
     p_config = pcm_get_config_instance();
 
     if ((rec_mq == RT_NULL) || (rec_ctrl_mq == RT_NULL))
@@ -261,7 +261,7 @@ static void *record_thread(void *args)
     {
     }
 
-    log_print(LOG_INFO, "record thread start ...\n");
+    log_print(LOG_INFO, "record thread start ok\n");
     while (true)
     {
         /* 接收录音控制消息 */
@@ -375,8 +375,11 @@ static void *record_thread(void *args)
                 /* 将右通道的值变为单通道 */
                 for (i = 0; i < (ret / 2 - 1); i = i + 2)
                 {
-                    p_config->p_buffer[i + 0] = p_config->p_buffer[i * 2 + 2];
-                    p_config->p_buffer[i + 1] = p_config->p_buffer[i * 2 + 3];
+                    // p_config->p_buffer[i + 0] = p_config->p_buffer[i * 2 + 2];
+                    // p_config->p_buffer[i + 1] = p_config->p_buffer[i * 2 + 3];
+
+                    p_config->p_buffer[i + 0] = p_config->p_buffer[i * 2 + 0];
+                    p_config->p_buffer[i + 1] = p_config->p_buffer[i * 2 + 1];
                 }
 #if DEBUG_PCM_FILE
                 /* 写入文件缓存文件中 */
@@ -478,7 +481,7 @@ static void *record_handler_thread(void *arg)
     sint32_t encoder_buffer_used = 0; /* 编码缓存区中数据的大小 */
     sint32_t src_buf_handled_len;     /* 已经处理的数据长度 */
 
-    log_print(LOG_INFO, "record handler thread start ...\n");
+    log_print(LOG_INFO, "record handler thread start ok\n");
     while (true)
     {
         /* 接收处理消息 */

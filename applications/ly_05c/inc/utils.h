@@ -41,7 +41,7 @@ typedef struct file_info_t
 {
     uint32_t file_id;                 /* 文件序号 */
     sint32_t file_size;               /* 文件大小 */
-    struct file_info_t *next;        /* 下一文件 */
+    struct file_info_t *next;         /* 下一文件 */
     char filename[PATH_NAME_MAX_LEN]; /* 文件名 */
 } file_info_t;
 

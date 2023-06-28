@@ -163,43 +163,6 @@ E_TAX_STATE data_get_tax_comm_state(void)
 
 /*******************************************************
  *
- * @brief  设置升级状态
- *
- * @param  update_state: 升级状态
- * @retval none
- *
- *******************************************************/
-#if 0
-void data_set_update_state(E_UPDATE_STATE update_state)
-{
-
-    pthread_mutex_lock(&g_work_state.mutex);
-    g_work_state.update_state = update_state;
-    pthread_mutex_unlock(&g_work_state.mutex);
-}
-#endif
-/*******************************************************
- *
- * @brief  获取升级状态
- *
- * @param  none
- * @retval E_UPDATE_STATE 升级状态
- *
- *******************************************************/
-#if 0
-E_UPDATE_STATE data_get_update_state(void)
-{
-    E_UPDATE_STATE ret;
-
-    pthread_mutex_lock(&g_work_state.mutex);
-    ret = g_work_state.update_state;
-    pthread_mutex_unlock(&g_work_state.mutex);
-
-    return ret;
-}
-#endif
-/*******************************************************
- *
  * @brief  数据模块初始化
  *
  * @param  list: 提示音播放列表的数据指针

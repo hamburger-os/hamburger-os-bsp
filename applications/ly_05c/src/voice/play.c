@@ -25,6 +25,7 @@
 #include "delay.h"
 #include "log.h"
 #include "utils.h"
+#include "tax.h"
 
 /*******************************************************
  * 宏定义
@@ -37,7 +38,6 @@
 /* 标准amr文件头部的大小 */
 #define AMR_FILE_HEADER_LEN 6
 
-// todo, 增加自动拷贝功能.
 #define EVENT_VOICE_DIR "/mnt/emmc/yysj/voice"                   /* 提示音存放路径 */
 #define EVENT_VOICE_DUMP_START_ALL "BeginAll.amr"                /* 开始转储全部文件 */
 #define EVENT_VOICE_DUMP_START_LAST "BeginNew.amr"               /* 开始转储最新文件 */
@@ -51,6 +51,7 @@
 #define EVENT_VOICE_UPDATE_FAIL "UpdateAppERR.amr"               /* 更新程序失败 */
 #define EVENT_VOICE_BEGIN_FORMAT_STORAGE "BeginFormatSD2.amr"    /* 开始擦除全部语音数据,请稍后 */
 #define EVENT_VOICE_FINISH_FORMAT_STORAGE "EndFormatSD2.amr"     /* 全部语音数据擦除完成 */
+#define EVENT_VOICE_DEVICE_START "DeviceStarted.amr"             /* 设备已经启动 */
 
 /*******************************************************
  * 数据结构
@@ -61,7 +62,7 @@ typedef struct
 {
     char name[PLAY_FILE_NAME_LEN]; /* 文件名 */
     sint32_t offset;               /* 数据偏移地址 */
-    // todo, 根据实际情况选择是否播放.
+    /* todo, 根据实际情况选择是否播放. */
 } play_file_info_t;
 
 /* 提示音播放列表数据结构 */
@@ -176,6 +177,10 @@ static sint32_t push_play_list(play_list_t *list, const char *name, sint32_t off
  *******************************************************/
 static sint32_t read_play_list(play_list_t *list, const char *name, sint32_t *offset)
 {
+    if ((list == NULL) || (name == NULL) || (offset == NULL))
+    {
+        return (sint32_t)-1;
+    }
     pthread_mutex_lock(&list->mutex);
 
     /*头序号和尾序号相等,表明缓冲区中为空*/
@@ -376,8 +381,6 @@ static sint32_t play_stop_play(sint32_t *fd, pcm_config_t *config)
     else
     {
     }
-    /* 音频接口进入空闲状态 */
-    log_print(LOG_INFO, "end play! \n");
     return ret;
 }
 /*******************************************************
@@ -389,7 +392,6 @@ static sint32_t play_stop_play(sint32_t *fd, pcm_config_t *config)
  *
  *******************************************************/
 
-
 static void *play_thread(void *args)
 {
     sint32_t ret = 0;
@@ -398,35 +400,36 @@ static void *play_thread(void *args)
     sint32_t read_size = 0;
     off_t play_size = 0;
     char play_file_name[PLAY_FILE_NAME_LEN];
-    E_PCM_STATE pcm_state = PCM_STATE_IDLE; /* PCM接口状态 */
-    E_PlayMode play_mode = PlayMode_Voice;  /* 播放模式 */
+    E_PCM_STATE pcm_state = PCM_STATE_IDLE;                     /* PCM接口状态 */
+    E_PlayMode play_mode = PlayMode_Voice;                      /* 播放模式 */
     E_PlayDetailState play_detail_state = PlayDetailState_Idle; /* 播放线程的播放状态 */
-    sint32_t play_fd = 0;          /* 播放文件句柄 */
-    pcm_config_t *p_config = NULL; /* 放音模块配置 */
-    off_t play_offset;             /* 播放语音的偏移量 */
+    sint32_t play_fd = 0;                                       /* 播放文件句柄 */
+    pcm_config_t *p_config = NULL;                              /* 放音模块配置 */
+    off_t play_offset;                                          /* 播放语音的偏移量 */
     struct stat sb;
     sint32_t i = 0;
 
-    // 获取声卡配置信息
+    /* 获取声卡配置信息 */
     p_config = pcm_get_config_instance();
     /* 初始化解码器 */
     p_destate = (sint32_t *)Decoder_Interface_init();
-    log_print(LOG_INFO, "play thread start ...\n");
+    log_print(LOG_INFO, "play thread start ok\n");
+
     while (true)
     {
-        // 接收到停止命令.
+        /* 接收到停止命令. */
         if ((true == g_stop_play) && (play_detail_state == PlayDetailState_PlayReading))
         {
             ret = play_stop_play(&play_fd, p_config);
             if (ret < 0)
             {
-                log_print(LOG_ERROR, "error, stop play error, ret=%d.\n", ret);
+                log_print(LOG_ERROR, "stop play error, ret=%d.\n", ret);
             }
             play_detail_state = PlayDetailState_PlayRecordFinishPlay;
             g_stop_play = false;
         }
 
-        // 接收到开始播放命令
+        /* 接收到开始播放命令 */
         if ((true == g_play_voice) && (data_get_pcm_state() != PCM_STATE_RECORDING))
         {
             ret = play_stop_play(&play_fd, p_config);
@@ -479,11 +482,11 @@ static void *play_thread(void *args)
                 ret = pcm_init(p_config);
                 if (ret < 0)
                 {
-                    // todo,???
+                    /* todo,??? */
                     printf("pcm_init error \n");
                     break;
                 }
-                /* 读取当前放音信息 */ // todo-done, sprintf 检查越界
+                /* 读取当前放音信息 */ /* todo-done, sprintf 检查越界 */
                 g_cur_rec_file_info.filename[FILE_NAME_MAX_LEN - 1] = (char)0;
                 if (PLAY_FILE_NAME_LEN < strlen(YUYIN_PATH_NAME) + strlen(g_cur_rec_file_info.filename))
                 {
@@ -493,7 +496,7 @@ static void *play_thread(void *args)
                 sprintf(play_file_name, "%s/%s", YUYIN_PATH_NAME, g_cur_rec_file_info.filename);
                 play_offset = g_cur_rec_file_info.new_voice_head_offset + (off_t)PAGE_SIZE;
 
-                /* 打开录音文件,这里不能为只读, 因为要修改放音标志位 */ // todo, 这里不能为只读
+                /* 打开录音文件,这里不能为只读, 因为要修改放音标志位 */ /* todo, 这里不能为只读 */
                 play_fd = open(play_file_name, O_RDWR);
                 if (play_fd > 0)
                 {
@@ -514,6 +517,9 @@ static void *play_thread(void *args)
                     log_print(LOG_INFO,
                               "begin play voice: %s, offset: %x, data len: %x. \n",
                               play_file_name, play_offset, play_size);
+
+                    /* 通知tax箱放音开始 */
+                    tax_send_echo_event((uint8_t)OUT_BEGIN, &g_tax40);
                 }
                 else
                 {
@@ -551,8 +557,10 @@ static void *play_thread(void *args)
                         else
                         {
                         }
-                        log_print(LOG_INFO, "begin play : %s, offset: %d, data len: %d.\n",
+#if 0
+                        log_print(LOG_INFO, "begin play: %s, offset: %d, data len: %d.\n",
                                   play_file_name, play_offset, play_size);
+#endif
                     }
                     else
                     {
@@ -629,6 +637,9 @@ static void *play_thread(void *args)
             {
                 log_print(LOG_ERROR, "stop play error, ret=%d.\n", ret);
             }
+            /* 通知tax箱放音结束 */
+            tax_send_echo_event((uint8_t)OUT_END, &g_tax40);
+
             event_push_queue(EVENT_PLAY_END);
             play_detail_state = PlayDetailState_Idle;
             data_set_pcm_state(PCM_STATE_IDLE);
@@ -727,6 +738,9 @@ void play_event(E_EVENT event)
         break;
     case EVENT_FINISH_FORMAT_STORAGE: /* 全部语音数据擦除完成 */
         filename = EVENT_VOICE_FINISH_FORMAT_STORAGE;
+        break;
+    case EVENT_DEVICE_START: /* 设备已启动 */
+        filename = EVENT_VOICE_DEVICE_START;
         break;
     default: /*缺省*/
         break;

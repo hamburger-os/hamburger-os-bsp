@@ -14,6 +14,7 @@
 #include "utils.h"
 #include "file_manager.h"
 #include "usb.h"
+#include "rtc.h"
 
 /*******************************************************
  *  宏定义
@@ -54,6 +55,9 @@ void log_print(sint32_t level, const char *format, ...)
     char log_buffer[LOG_BUFFER_LEN];             /* 为保证线程安全, 采用局部变量. */
     static sint32_t fd = -1;                     /* 日志文件句柄 */
     static char cur_log_name[PATH_NAME_MAX_LEN]; /* 当前日志文件的文件名 */
+    time_t t;
+    struct tm *timeinfo = NULL;
+    int ret = 0;
 
     /* 通过调试等级,判断是否记录信息. */
     if (level < LOG_LEVEL)
@@ -64,9 +68,14 @@ void log_print(sint32_t level, const char *format, ...)
     {
     }
 
+    // 获取时间
+    t = time(NULL);
+    timeinfo = localtime(&t);
+    strftime(log_buffer, sizeof(log_buffer), "[%Y-%m-%d %H:%M:%S] ", timeinfo);
+
     /* 格式化文件信息 */
     va_start(args, format);
-    vsprintf(log_buffer, format, args);
+    vsprintf(&log_buffer[strlen(log_buffer)], format, args);
     va_end(args);
 
     /* 在ulog中记录, LOG_E为线程安全函数. */
@@ -101,15 +110,21 @@ void log_print(sint32_t level, const char *format, ...)
     /* 记录日志 */
     if (fd < 0)
     {
-        fd = open(cur_log_name, O_CREAT | O_WRONLY | O_APPEND, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+        fd = open(cur_log_name, O_CREAT | O_WRONLY | O_APPEND);
     }
     else
     {
     }
+
     if (fd >= 0)
     {
         write(fd, log_buffer, strlen(log_buffer));
         fsync(fd); /* 使用fflush不行 */
+        /* 文件系统特性, 文件处于打开状态, 则不能删除这个文件; 所以写入一次日志信息, 需要关闭一次文件, 防止干扰其他线程操作这个文件, 比较耗时. */
+        if (close(fd) >= 0)
+        {
+            fd = -1;
+        }
     }
     else
     {
