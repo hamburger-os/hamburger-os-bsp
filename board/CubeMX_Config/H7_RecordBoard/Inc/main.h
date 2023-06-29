@@ -57,6 +57,18 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define NET3_RST_Pin GPIO_PIN_0
+#define NET3_RST_GPIO_Port GPIOA
+#define NET3_IRQ_Pin GPIO_PIN_1
+#define NET3_IRQ_GPIO_Port GPIOA
+#define NET1_RST_Pin GPIO_PIN_7
+#define NET1_RST_GPIO_Port GPIOG
+#define NET2_RST_Pin GPIO_PIN_6
+#define NET2_RST_GPIO_Port GPIOD
+#define NET2_IRQ_Pin GPIO_PIN_7
+#define NET2_IRQ_GPIO_Port GPIOD
+#define NET1_IRQ_Pin GPIO_PIN_10
+#define NET1_IRQ_GPIO_Port GPIOG
 
 /* USER CODE BEGIN Private defines */
 

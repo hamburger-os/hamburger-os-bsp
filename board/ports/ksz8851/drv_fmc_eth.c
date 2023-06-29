@@ -28,6 +28,10 @@ enum
 #ifdef BSP_USE_ETH2
     ETH2_INDEX,
 #endif
+
+#ifdef BSP_USE_ETH3
+    ETH3_INDEX,
+#endif
 };
 
 static struct rt_fmc_eth_port fmc_eth_port[] = {
@@ -45,6 +49,14 @@ static struct rt_fmc_eth_port fmc_eth_port[] = {
         .hw_addr_cmd = (volatile void *)ETH2_CMD,
         .hw_addr = (volatile void *)(ETH2_CMD - 2),
         .NE = ETH2_NE,
+    },
+#endif
+#ifdef BSP_USE_ETH3
+    {
+        .dev_name = "e2",
+        .hw_addr_cmd = (volatile void *)ETH3_CMD,
+        .hw_addr = (volatile void *)(ETH3_CMD - 2),
+        .NE = ETH3_NE,
     },
 #endif
 };
@@ -156,6 +168,7 @@ static void fmc_eth_hard_reset(void)
     {
         rt_pin_write(fmc_eth_device.port[i].rst_pin, PIN_HIGH);
     }
+    rt_thread_mdelay(100);
 }
 
 static void fmc_eth_irq_callback(void *args)
@@ -310,6 +323,11 @@ static void fmc_eth_get_config(void)
 #ifdef BSP_USE_ETH2
     fmc_eth_port[ETH2_INDEX].rst_pin = rt_pin_get(ETH2_RST);
     fmc_eth_port[ETH2_INDEX].isr_pin = rt_pin_get(ETH2_ISR);
+#endif
+
+#ifdef BSP_USE_ETH3
+    fmc_eth_port[ETH3_INDEX].rst_pin = rt_pin_get(ETH3_RST);
+    fmc_eth_port[ETH3_INDEX].isr_pin = rt_pin_get(ETH3_ISR);
 #endif
 }
 
