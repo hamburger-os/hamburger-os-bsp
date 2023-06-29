@@ -130,12 +130,6 @@ if GetDepend(['BSP_USING_ROOTFS']):
     
 if GetDepend(['BSP_USING_FM25xx']):
     src += Glob('ports/drv_fm25xx.c')
-     
-if GetDepend(['BSP_USING_AT45DB321']):
-    src += Glob('ports/drv_at45db321.c')
-   
-if GetDepend(['BSP_USING_S25FL512S']):
-    src += Glob('ports/drv_﻿s25fl512s.c')
         
 if GetDepend(['BSP_USING_SPI_FLASH']):
     src += Glob('ports/drv_spiflash.c')

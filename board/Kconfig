@@ -2354,12 +2354,12 @@ menu "Onboard Peripheral Drivers"
                 default BSP_USING_LCD_RGB
 
                 config BSP_USING_LCD_RGB
-                    bool "Enable LCD RGB565"
+                    bool "Enable LCD LTDC"
                     select BSP_USING_LCD
                     select RT_TOUCH_PIN_IRQ
                     
                 config BSP_USING_FMCLCD
-                    bool "Enable ATK LCD"
+                    bool "Enable LCD FMC"
                     select BSP_USING_FMC
                     select BSP_USING_SRAM
             endchoice
@@ -2703,8 +2703,8 @@ menu "Onboard Peripheral Drivers"
                 default "PB.14"
                 
             config BSP_SPI_FLASH_SPI_SPEED
-                int "Set the rate of spi, default: (80 * 1000 *1000)"
-                default (80000000)
+                int "Set the rate of spi, default: (50 * 1000 *1000)"
+                default (50000000)
             
             config SPI_FLASH_SIZE_GRANULARITY_TOTAL
                 int "Set storage space size, default: (16 * 1024 * 1024)"

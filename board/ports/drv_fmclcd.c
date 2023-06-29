@@ -10,78 +10,85 @@
  * 2022-6-26      solar        Improve the api required for resistive touch screen calibration
  */
 
-#include <board.h>
-#include "drv_fmclcd.h"
 #include "string.h"
 
-//#define DRV_DEBUG
+#include <board.h>
+
+#include "drv_fmclcd.h"
+
+#define DRV_DEBUG
 #define LOG_TAG "drv.lcd"
 #include <drv_log.h>
 
-_lcd_dev lcddev;
 static SRAM_HandleTypeDef hsram;
 
 #define LCD_BL rt_pin_get(BSP_FMCLCD_BL_PIN)
 #define LCD_BASE ((uint32_t)(BSP_FMCLCD_BASE - 2))
-#define LCD ((LCD_CONTROLLER_TypeDef *)LCD_BASE)
+#define LCD ((LCD_TypeDef *)LCD_BASE)
 
 #define LCD_DEVICE(dev) (struct drv_lcd_device *)(dev)
 
 struct drv_lcd_device
 {
     struct rt_device parent;
-
     struct rt_device_graphic_info lcd_info;
 };
-
 static struct drv_lcd_device _lcd;
+
+//管理LCD重要参数
+//默认为竖屏
+_lcd_dev lcddev;
 
 //写寄存器函数
 //regval:寄存器值
-void LCD_WR_REG(uint16_t regval)
+void LCD_WR_REG(volatile uint16_t regval)
 {
-    LCD->REG = regval; //写入要写的寄存器序号
+    regval = regval;      //使用-O2优化的时候,必须插入的延时
+    LCD->LCD_REG = regval;      //写入要写的寄存器序号
 }
 //写LCD数据
 //data:要写入的值
-void LCD_WR_DATA(uint16_t data)
+void LCD_WR_DATA(volatile uint16_t data)
 {
-    LCD->RAM = data;
+    data = data;          //使用-O2优化的时候,必须插入的延时
+    LCD->LCD_RAM = data;
 }
 //读LCD数据
 //返回值:读到的值
 uint16_t LCD_RD_DATA(void)
 {
-    return LCD->RAM;
+    volatile uint16_t ram;           //防止被优化
+    ram = LCD->LCD_RAM;
+    return ram;
 }
 //写寄存器
 //LCD_Reg:寄存器地址
 //LCD_RegValue:要写入的数据
 void LCD_WriteReg(uint16_t LCD_Reg, uint16_t LCD_RegValue)
 {
-    LCD->REG = LCD_Reg;      //写入要写的寄存器序号
-    LCD->RAM = LCD_RegValue; //写入数据
+    LCD->LCD_REG = LCD_Reg;     //写入要写的寄存器序号
+    LCD->LCD_RAM = LCD_RegValue;     //写入数据
 }
 //读寄存器
 //LCD_Reg:寄存器地址
 //返回值:读到的数据
 uint16_t LCD_ReadReg(uint16_t LCD_Reg)
 {
-    LCD_WR_REG(LCD_Reg);  //写入要读的寄存器序号
-    return LCD_RD_DATA(); //返回读到的值
+    LCD_WR_REG(LCD_Reg);        //写入要读的寄存器序号
+    rt_thread_delay(5);
+    return LCD_RD_DATA();       //返回读到的值
 }
 //开始写GRAM
 void LCD_WriteRAM_Prepare(void)
 {
-    LCD->REG = lcddev.wramcmd;
+    LCD->LCD_REG = lcddev.wramcmd;
 }
 //LCD写GRAM
 //RGB_Code:颜色值
 void LCD_WriteRAM(uint16_t RGB_Code)
 {
-    LCD->RAM = RGB_Code; //写十六位GRAM
+    LCD->LCD_RAM = RGB_Code;       //写十六位GRAM
 }
-
 //从ILI93xx读出的数据为GBR格式，而我们写入的时候为RGB格式。
 //通过该函数转换
 //c:GBR格式的颜色值
@@ -95,13 +102,19 @@ uint16_t LCD_BGR2RGB(uint16_t c)
     rgb = (b << 11) + (g << 5) + (r << 0);
     return (rgb);
 }
-
+//当mdk -O1时间优化时需要设置
+//延时i
+void opt_delay(uint8_t i)
+{
+    while (i--)
+        ;
+}
 //设置光标位置(对RGB屏无效)
 //Xpos:横坐标
 //Ypos:纵坐标
 void LCD_SetCursor(uint16_t Xpos, uint16_t Ypos)
 {
-    if (lcddev.id == 0X9341 || lcddev.id == 0X5310)
+    if (lcddev.id == 0X9341 || lcddev.id == 0X5310 || lcddev.id == 0x7789)
     {
         LCD_WR_REG(lcddev.setxcmd);
         LCD_WR_DATA(Xpos >> 8);
@@ -112,7 +125,7 @@ void LCD_SetCursor(uint16_t Xpos, uint16_t Ypos)
     }
     else if (lcddev.id == 0X1963)
     {
-        if (lcddev.dir == 0) //x坐标需要变换
+        if (lcddev.dir == 0)   //x坐标需要变换
         {
             Xpos = lcddev.width - 1 - Xpos;
             LCD_WR_REG(lcddev.setxcmd);
@@ -134,6 +147,7 @@ void LCD_SetCursor(uint16_t Xpos, uint16_t Ypos)
         LCD_WR_DATA(Ypos & 0XFF);
         LCD_WR_DATA((lcddev.height - 1) >> 8);
         LCD_WR_DATA((lcddev.height - 1) & 0XFF);
+
     }
     else if (lcddev.id == 0X5510)
     {
@@ -147,7 +161,6 @@ void LCD_SetCursor(uint16_t Xpos, uint16_t Ypos)
         LCD_WR_DATA(Ypos & 0XFF);
     }
 }
-
 //读取个某点的颜色值
 //x,y:坐标
 //返回值:此点的颜色
@@ -161,42 +174,41 @@ void LCD_ReadPoint(char *pixel, int x, int y)
         return;
     }
     LCD_SetCursor(x, y);
-    if (lcddev.id == 0X9341 || lcddev.id == 0X5310 || lcddev.id == 0X1963)
-        LCD_WR_REG(0X2E); //9341/3510/1963 发送读GRAM指令
+    if (lcddev.id == 0X9341 || lcddev.id == 0X5310 || lcddev.id == 0X1963 || lcddev.id == 0x7789)
+        LCD_WR_REG(0X2E);                           //9341/3510/1963/7789 发送读GRAM指令
     else if (lcddev.id == 0X5510)
-        LCD_WR_REG(0X2E00); //5510 发送读GRAM指令
-    r = LCD_RD_DATA();      //dummy Read
+        LCD_WR_REG(0X2E00);   //5510 发送读GRAM指令
+    r = LCD_RD_DATA();                                //dummy Read
     if (lcddev.id == 0X1963)
     {
         *color = r;
         return; //1963直接读就可以
     }
-
-    r = LCD_RD_DATA(); //实际坐标颜色
-    //9341/NT35310/NT35510要分2次读出
-
+    opt_delay(2);
+    r = LCD_RD_DATA();                                //实际坐标颜色
+    //9341/NT35310/NT35510/7789要分2次读出
+    opt_delay(2);
     b = LCD_RD_DATA();
-    g = r & 0XFF; //对于9341/5310/5510,第一次读取的是RG的值,R在前,G在后,各占8位
+    g = r & 0XFF;       //对于9341/5310/5510/7789,第一次读取的是RG的值,R在前,G在后,各占8位
     g <<= 8;
     *color = (((r >> 11) << 11) | ((g >> 10) << 5) | (b >> 11)); //ILI9341/NT35310/NT35510需要公式转换一下
 }
 //LCD开启显示
 void LCD_DisplayOn(void)
 {
-    if (lcddev.id == 0X9341 || lcddev.id == 0X5310 || lcddev.id == 0X1963)
-        LCD_WR_REG(0X29); //开启显示
+    if (lcddev.id == 0X9341 || lcddev.id == 0X5310 || lcddev.id == 0X1963 || lcddev.id == 0x7789)
+        LCD_WR_REG(0X29);    //开启显示
     else if (lcddev.id == 0X5510)
-        LCD_WR_REG(0X2900); //开启显示
+        LCD_WR_REG(0X2900);   //开启显示
 }
 //LCD关闭显示
 void LCD_DisplayOff(void)
 {
-    if (lcddev.id == 0X9341 || lcddev.id == 0X5310 || lcddev.id == 0X1963)
-        LCD_WR_REG(0X28); //关闭显示
+    if (lcddev.id == 0X9341 || lcddev.id == 0X5310 || lcddev.id == 0X1963 || lcddev.id == 0x7789)
+        LCD_WR_REG(0X28);    //关闭显示
     else if (lcddev.id == 0X5510)
-        LCD_WR_REG(0X2800); //关闭显示
+        LCD_WR_REG(0X2800);   //关闭显示
 }
-
 //设置LCD的自动扫描方向(对RGB屏无效)
 //注意:其他函数可能会受到此函数设置的影响(尤其是9341),
 //所以,一般设置为L2R_U2D即可,如果设置为其他扫描方式,可能导致显示不正常.
@@ -209,7 +221,8 @@ void LCD_Scan_Dir(uint8_t dir)
     uint16_t temp;
     if ((lcddev.dir == 1 && lcddev.id != 0X1963) || (lcddev.dir == 0 && lcddev.id == 0X1963)) //横屏时，对1963不改变扫描方向！竖屏时1963改变方向
     {
-        switch (dir) //方向转换
+        switch (dir)
+        //方向转换
         {
         case 0:
             dir = 6;
@@ -237,32 +250,32 @@ void LCD_Scan_Dir(uint8_t dir)
             break;
         }
     }
-    if (lcddev.id == 0x9341 || lcddev.id == 0X5310 || lcddev.id == 0X5510 || lcddev.id == 0X1963) //9341/5310/5510/1963,特殊处理
+    if (lcddev.id == 0x9341 || lcddev.id == 0X5310 || lcddev.id == 0X5510 || lcddev.id == 0X1963 || lcddev.id == 0x7789) //9341/5310/5510/1963/7789,特殊处理
     {
         switch (dir)
         {
-        case L2R_U2D: //从左到右,从上到下
+        case L2R_U2D:   //从左到右,从上到下
             regval |= (0 << 7) | (0 << 6) | (0 << 5);
             break;
-        case L2R_D2U: //从左到右,从下到上
+        case L2R_D2U:   //从左到右,从下到上
             regval |= (1 << 7) | (0 << 6) | (0 << 5);
             break;
-        case R2L_U2D: //从右到左,从上到下
+        case R2L_U2D:   //从右到左,从上到下
             regval |= (0 << 7) | (1 << 6) | (0 << 5);
             break;
-        case R2L_D2U: //从右到左,从下到上
+        case R2L_D2U:   //从右到左,从下到上
             regval |= (1 << 7) | (1 << 6) | (0 << 5);
             break;
-        case U2D_L2R: //从上到下,从左到右
+        case U2D_L2R:   //从上到下,从左到右
             regval |= (0 << 7) | (0 << 6) | (1 << 5);
             break;
-        case U2D_R2L: //从上到下,从右到左
+        case U2D_R2L:   //从上到下,从右到左
             regval |= (0 << 7) | (1 << 6) | (1 << 5);
             break;
-        case D2U_L2R: //从下到上,从左到右
+        case D2U_L2R:   //从下到上,从左到右
             regval |= (1 << 7) | (0 << 6) | (1 << 5);
             break;
-        case D2U_R2L: //从下到上,从右到左
+        case D2U_R2L:   //从下到上,从右到左
             regval |= (1 << 7) | (1 << 6) | (1 << 5);
             break;
         }
@@ -271,13 +284,13 @@ void LCD_Scan_Dir(uint8_t dir)
         else
             dirreg = 0X36;
         if ((lcddev.id != 0X5310) && (lcddev.id != 0X5510) && (lcddev.id != 0X1963))
-            regval |= 0X08; //5310/5510/1963不需要BGR
+            regval |= 0X08;   //5310/5510/1963/7789 不需要BGR
         LCD_WriteReg(dirreg, regval);
-        if (lcddev.id != 0X1963) //1963不做坐标处理
+        if (lcddev.id != 0X1963)   //1963不做坐标处理
         {
             if (regval & 0X20)
             {
-                if (lcddev.width < lcddev.height) //交换X,Y
+                if (lcddev.width < lcddev.height)   //交换X,Y
                 {
                     temp = lcddev.width;
                     lcddev.width = lcddev.height;
@@ -286,7 +299,7 @@ void LCD_Scan_Dir(uint8_t dir)
             }
             else
             {
-                if (lcddev.width > lcddev.height) //交换X,Y
+                if (lcddev.width > lcddev.height)   //交换X,Y
                 {
                     temp = lcddev.width;
                     lcddev.width = lcddev.height;
@@ -328,14 +341,13 @@ void LCD_Scan_Dir(uint8_t dir)
         }
     }
 }
-
 //快速画点
 //x,y:坐标
 //color:颜色
 static void LCD_Fast_DrawPoint(const char *pixel, int x, int y)
 {
     uint16_t color = *((uint16_t *)pixel);
-    if (lcddev.id == 0X9341 || lcddev.id == 0X5310)
+    if (lcddev.id == 0X9341 || lcddev.id == 0X5310 || lcddev.id == 0x7789)
     {
         LCD_WR_REG(lcddev.setxcmd);
         LCD_WR_DATA(x >> 8);
@@ -370,32 +382,32 @@ static void LCD_Fast_DrawPoint(const char *pixel, int x, int y)
         LCD_WR_DATA(y >> 8);
         LCD_WR_DATA(y & 0XFF);
     }
-    LCD->REG = lcddev.wramcmd;
-    LCD->RAM = color;
+    LCD->LCD_REG = lcddev.wramcmd;
+    LCD->LCD_RAM = color;
 }
 //SSD1963 背光设置
 //pwm:背光等级,0~100.越大越亮.
 void LCD_SSD_BackLightSet(uint8_t pwm)
 {
-    LCD_WR_REG(0xBE);        //配置PWM输出
-    LCD_WR_DATA(0x05);       //1设置PWM频率
-    LCD_WR_DATA(pwm * 2.55); //2设置PWM占空比
-    LCD_WR_DATA(0x01);       //3设置C
-    LCD_WR_DATA(0xFF);       //4设置D
-    LCD_WR_DATA(0x00);       //5设置E
-    LCD_WR_DATA(0x00);       //6设置F
+    LCD_WR_REG(0xBE);   //配置PWM输出
+    LCD_WR_DATA(0x05);  //1设置PWM频率
+    LCD_WR_DATA(pwm * 2.55);  //2设置PWM占空比
+    LCD_WR_DATA(0x01);  //3设置C
+    LCD_WR_DATA(0xFF);  //4设置D
+    LCD_WR_DATA(0x00);  //5设置E
+    LCD_WR_DATA(0x00);  //6设置F
 }
 
 //设置LCD显示方向
 //dir:0,竖屏；1,横屏
 void LCD_Display_Dir(uint8_t dir)
 {
-    lcddev.dir = dir; //竖屏/横屏
-    if (dir == 0)     //竖屏
+    lcddev.dir = dir;     //竖屏/横屏
+    if (dir == 0)          //竖屏
     {
         lcddev.width = 240;
         lcddev.height = 320;
-        if (lcddev.id == 0X9341 || lcddev.id == 0X5310)
+        if (lcddev.id == 0X9341 || lcddev.id == 0X5310 || lcddev.id == 0x7789)
         {
             lcddev.wramcmd = 0X2C;
             lcddev.setxcmd = 0X2A;
@@ -416,18 +428,18 @@ void LCD_Display_Dir(uint8_t dir)
         }
         else if (lcddev.id == 0X1963)
         {
-            lcddev.wramcmd = 0X2C; //设置写入GRAM的指令
-            lcddev.setxcmd = 0X2B; //设置写X坐标指令
-            lcddev.setycmd = 0X2A; //设置写Y坐标指令
-            lcddev.width = 480;    //设置宽度480
-            lcddev.height = 800;   //设置高度800
+            lcddev.wramcmd = 0X2C;    //设置写入GRAM的指令
+            lcddev.setxcmd = 0X2B;    //设置写X坐标指令
+            lcddev.setycmd = 0X2A;    //设置写Y坐标指令
+            lcddev.width = 480;       //设置宽度480
+            lcddev.height = 800;      //设置高度800
         }
     }
-    else //横屏
+    else               //横屏
     {
         lcddev.width = 320;
         lcddev.height = 240;
-        if (lcddev.id == 0X9341 || lcddev.id == 0X5310)
+        if (lcddev.id == 0X9341 || lcddev.id == 0X5310 || lcddev.id == 0x7789)
         {
             lcddev.wramcmd = 0X2C;
             lcddev.setxcmd = 0X2A;
@@ -443,11 +455,11 @@ void LCD_Display_Dir(uint8_t dir)
         }
         else if (lcddev.id == 0X1963)
         {
-            lcddev.wramcmd = 0X2C; //设置写入GRAM的指令
-            lcddev.setxcmd = 0X2A; //设置写X坐标指令
-            lcddev.setycmd = 0X2B; //设置写Y坐标指令
-            lcddev.width = 800;    //设置宽度800
-            lcddev.height = 480;   //设置高度480
+            lcddev.wramcmd = 0X2C;    //设置写入GRAM的指令
+            lcddev.setxcmd = 0X2A;    //设置写X坐标指令
+            lcddev.setycmd = 0X2B;    //设置写Y坐标指令
+            lcddev.width = 800;       //设置宽度800
+            lcddev.height = 480;      //设置高度480
         }
         if (lcddev.id == 0X5310)
         {
@@ -457,7 +469,6 @@ void LCD_Display_Dir(uint8_t dir)
     }
     LCD_Scan_Dir(DFT_SCAN_DIR); //默认扫描方向
 }
-
 //清屏函数
 //color:要清屏的填充色
 void LCD_Clear(uint32_t color)
@@ -469,7 +480,7 @@ void LCD_Clear(uint32_t color)
     LCD_WriteRAM_Prepare();      //开始写入GRAM
     for (index = 0; index < totalpoint; index++)
     {
-        LCD->RAM = color;
+        LCD->LCD_RAM = color;
     }
 }
 
@@ -544,7 +555,7 @@ void LCD_BlitLine(const char *pixel, int x, int y, rt_size_t size)
     LCD_WriteRAM_Prepare();
     uint16_t *p = (uint16_t *)pixel;
     for (; size > 0; size--, p++)
-        LCD->RAM = *p;
+        LCD->LCD_RAM = *p;
 }
 
 void lcd_fill_array(rt_uint16_t x_start, rt_uint16_t y_start, rt_uint16_t x_end, rt_uint16_t y_end, void *pcolor)
@@ -560,15 +571,16 @@ void lcd_fill_array(rt_uint16_t x_start, rt_uint16_t y_start, rt_uint16_t x_end,
         LCD_WriteRAM_Prepare();
         for(x_offset = 0;x_start + x_offset <= x_end; x_offset++)
         {
-            LCD->RAM = *pixel++;
+            LCD->LCD_RAM = *pixel++;
         }
         cycle_y++;
     }
 }
 
+//初始化lcd
+//该初始化函数可以初始化各种型号的LCD(详见本.c文件最前面的描述)
 static rt_err_t drv_lcd_init(struct rt_device *device)
 {
-
     __HAL_RCC_GPIOD_CLK_ENABLE();
     __HAL_RCC_GPIOE_CLK_ENABLE();
     __HAL_RCC_GPIOF_CLK_ENABLE();
@@ -617,45 +629,68 @@ static rt_err_t drv_lcd_init(struct rt_device *device)
 
     //尝试9341 ID的读取
     LCD_WR_REG(0XD3);
-    lcddev.id = LCD_RD_DATA(); //dummy read
-    lcddev.id = LCD_RD_DATA(); //读到0X00
-    lcddev.id = LCD_RD_DATA(); //读取93
+    lcddev.id = LCD_RD_DATA();    //dummy read
+    lcddev.id = LCD_RD_DATA();    //读到0X00
+    lcddev.id = LCD_RD_DATA();    //读取93
     lcddev.id <<= 8;
-    lcddev.id |= LCD_RD_DATA(); //读取41
-    if (lcddev.id != 0X9341)    //非9341,尝试看看是不是NT35310
+    lcddev.id |= LCD_RD_DATA();   //读取41
+    if (lcddev.id != 0X9341)       //非9341,尝试看看是不是NT35310
     {
-        LCD_WR_REG(0XD4);
-        lcddev.id = LCD_RD_DATA(); //dummy read
-        lcddev.id = LCD_RD_DATA(); //读回0X01
-        lcddev.id = LCD_RD_DATA(); //读回0X53
+        LCD_WR_REG(0X04);
+        lcddev.id = LCD_RD_DATA();      //dummy read
+        lcddev.id = LCD_RD_DATA();      //读到0X85
+        lcddev.id = LCD_RD_DATA();      //读取0X85
         lcddev.id <<= 8;
-        lcddev.id |= LCD_RD_DATA(); //这里读回0X10
-        if (lcddev.id != 0X5310)    //也不是NT35310,尝试看看是不是NT35510
+        lcddev.id |= LCD_RD_DATA();     //读取0X52
+
+        if (lcddev.id == 0X8552)        //将8552的ID转换成7789
         {
-            LCD_WR_REG(0XDA00);
-            lcddev.id = LCD_RD_DATA(); //读回0X00
-            LCD_WR_REG(0XDB00);
-            lcddev.id = LCD_RD_DATA(); //读回0X80
+            lcddev.id = 0x7789;
+        }
+
+        if (lcddev.id != 0x7789)        //也不是ST7789, 尝试是不是 NT35310
+        {
+            LCD_WR_REG(0XD4);
+            lcddev.id = LCD_RD_DATA();        //dummy read
+            lcddev.id = LCD_RD_DATA();        //读回0X01
+            lcddev.id = LCD_RD_DATA();        //读回0X53
             lcddev.id <<= 8;
-            LCD_WR_REG(0XDC00);
-            lcddev.id |= LCD_RD_DATA(); //读回0X00
-            if (lcddev.id == 0x8000)
-                lcddev.id = 0x5510;  //NT35510读回的ID是8000H,为方便区分,我们强制设置为5510
-            if (lcddev.id != 0X5510) //也不是NT5510,尝试看看是不是SSD1963
+            lcddev.id |= LCD_RD_DATA();   //这里读回0X10
+            if (lcddev.id != 0X5310)       //也不是NT35310,尝试看看是不是NT35510
             {
-                LCD_WR_REG(0XA1);
-                lcddev.id = LCD_RD_DATA();
-                lcddev.id = LCD_RD_DATA(); //读回0X57
+                //发送秘钥（厂家提供,照搬即可）
+                LCD_WriteReg(0xF000, 0x0055);
+                LCD_WriteReg(0xF001, 0x00AA);
+                LCD_WriteReg(0xF002, 0x0052);
+                LCD_WriteReg(0xF003, 0x0008);
+                LCD_WriteReg(0xF004, 0x0001);
+
+                LCD_WR_REG(0xC500);             //读取ID高8位
+                lcddev.id = LCD_RD_DATA();      //读回0X55
                 lcddev.id <<= 8;
-                lcddev.id |= LCD_RD_DATA(); //读回0X61
-                if (lcddev.id == 0X5761)
-                    lcddev.id = 0X1963; //SSD1963读回的ID是5761H,为方便区分,我们强制设置为1963
+
+                LCD_WR_REG(0xC501);             //读取ID低8位
+                lcddev.id |= LCD_RD_DATA();     //读回0X10
+                rt_thread_delay(5);
+                if (lcddev.id == 0x8000)
+                    lcddev.id = 0x5510;     //NT35510读回的ID是8000H,为方便区分,我们强制设置为5510
+                if (lcddev.id != 0X5510)           //也不是NT5510,尝试看看是不是SSD1963
+                {
+                    LCD_WR_REG(0XA1);
+                    lcddev.id = LCD_RD_DATA();
+                    lcddev.id = LCD_RD_DATA();    //读回0X57
+                    lcddev.id <<= 8;
+                    lcddev.id |= LCD_RD_DATA();   //读回0X61
+                    if (lcddev.id == 0X5761)
+                        lcddev.id = 0X1963;   //SSD1963读回的ID是5761H,为方便区分,我们强制设置为1963
+                }
             }
         }
     }
-    LOG_I(" LCD ID:%x", lcddev.id); //打印LCD ID
-    if (lcddev.id == 0X9341)        //9341初始化
+    LOG_D(" LCD ID:0x%x", lcddev.id); //打印LCD ID
+    if (lcddev.id == 0X9341)   //9341初始化
     {
+
         LCD_WR_REG(0xCF);
         LCD_WR_DATA(0x00);
         LCD_WR_DATA(0xC1);
@@ -680,30 +715,30 @@ static rt_err_t drv_lcd_init(struct rt_device *device)
         LCD_WR_REG(0xEA);
         LCD_WR_DATA(0x00);
         LCD_WR_DATA(0x00);
-        LCD_WR_REG(0xC0);  //Power control
-        LCD_WR_DATA(0x1B); //VRH[5:0]
-        LCD_WR_REG(0xC1);  //Power control
-        LCD_WR_DATA(0x01); //SAP[2:0];BT[3:0]
-        LCD_WR_REG(0xC5);  //VCM control
-        LCD_WR_DATA(0x30); //3F
-        LCD_WR_DATA(0x30); //3C
-        LCD_WR_REG(0xC7);  //VCM control2
+        LCD_WR_REG(0xC0);    //Power control
+        LCD_WR_DATA(0x1B);   //VRH[5:0]
+        LCD_WR_REG(0xC1);    //Power control
+        LCD_WR_DATA(0x01);   //SAP[2:0];BT[3:0]
+        LCD_WR_REG(0xC5);    //VCM control
+        LCD_WR_DATA(0x30);   //3F
+        LCD_WR_DATA(0x30);   //3C
+        LCD_WR_REG(0xC7);    //VCM control2
         LCD_WR_DATA(0XB7);
-        LCD_WR_REG(0x36); // Memory Access Control
+        LCD_WR_REG(0x36);    // Memory Access Control
         LCD_WR_DATA(0x48);
         LCD_WR_REG(0x3A);
         LCD_WR_DATA(0x55);
         LCD_WR_REG(0xB1);
         LCD_WR_DATA(0x00);
         LCD_WR_DATA(0x1A);
-        LCD_WR_REG(0xB6); // Display Function Control
+        LCD_WR_REG(0xB6);    // Display Function Control
         LCD_WR_DATA(0x0A);
         LCD_WR_DATA(0xA2);
-        LCD_WR_REG(0xF2); // 3Gamma Function Disable
+        LCD_WR_REG(0xF2);    // 3Gamma Function Disable
         LCD_WR_DATA(0x00);
-        LCD_WR_REG(0x26); //Gamma curve selected
+        LCD_WR_REG(0x26);    //Gamma curve selected
         LCD_WR_DATA(0x01);
-        LCD_WR_REG(0xE0); //Set Gamma
+        LCD_WR_REG(0xE0);    //Set Gamma
         LCD_WR_DATA(0x0F);
         LCD_WR_DATA(0x2A);
         LCD_WR_DATA(0x28);
@@ -719,7 +754,7 @@ static rt_err_t drv_lcd_init(struct rt_device *device)
         LCD_WR_DATA(0x00);
         LCD_WR_DATA(0x00);
         LCD_WR_DATA(0x00);
-        LCD_WR_REG(0XE1); //Set Gamma
+        LCD_WR_REG(0XE1);    //Set Gamma
         LCD_WR_DATA(0x00);
         LCD_WR_DATA(0x15);
         LCD_WR_DATA(0x17);
@@ -746,8 +781,98 @@ static rt_err_t drv_lcd_init(struct rt_device *device)
         LCD_WR_DATA(0x00);
         LCD_WR_DATA(0xef);
         LCD_WR_REG(0x11); //Exit Sleep
-        rt_thread_mdelay(120);
+        rt_thread_delay(120);
         LCD_WR_REG(0x29); //display on
+    }
+    else if (lcddev.id == 0x7789)      //7789初始化
+    {
+        LCD_WR_REG(0x11);
+
+        rt_thread_delay(120);
+
+        LCD_WR_REG(0x36);
+        LCD_WR_DATA(0x00);
+
+        LCD_WR_REG(0x3A);
+        LCD_WR_DATA(0X05);
+
+        LCD_WR_REG(0xB2);
+        LCD_WR_DATA(0x0C);
+        LCD_WR_DATA(0x0C);
+        LCD_WR_DATA(0x00);
+        LCD_WR_DATA(0x33);
+        LCD_WR_DATA(0x33);
+
+        LCD_WR_REG(0xB7);
+        LCD_WR_DATA(0x35);
+
+        LCD_WR_REG(0xBB);       //vcom
+        LCD_WR_DATA(0x32);      //30
+
+        LCD_WR_REG(0xC0);
+        LCD_WR_DATA(0x0C);
+
+        LCD_WR_REG(0xC2);
+        LCD_WR_DATA(0x01);
+
+        LCD_WR_REG(0xC3);       //vrh
+        LCD_WR_DATA(0x10);      //17 0D
+
+        LCD_WR_REG(0xC4);       //vdv
+        LCD_WR_DATA(0x20);      //20
+
+        LCD_WR_REG(0xC6);
+        LCD_WR_DATA(0x0f);
+
+        LCD_WR_REG(0xD0);
+        LCD_WR_DATA(0xA4);
+        LCD_WR_DATA(0xA1);
+
+        LCD_WR_REG(0xE0);       //Set Gamma
+        LCD_WR_DATA(0xd0);
+        LCD_WR_DATA(0x00);
+        LCD_WR_DATA(0x02);
+        LCD_WR_DATA(0x07);
+        LCD_WR_DATA(0x0a);
+        LCD_WR_DATA(0x28);
+        LCD_WR_DATA(0x32);
+        LCD_WR_DATA(0X44);
+        LCD_WR_DATA(0x42);
+        LCD_WR_DATA(0x06);
+        LCD_WR_DATA(0x0e);
+        LCD_WR_DATA(0x12);
+        LCD_WR_DATA(0x14);
+        LCD_WR_DATA(0x17);
+
+        LCD_WR_REG(0XE1);       //Set Gamma
+        LCD_WR_DATA(0xd0);
+        LCD_WR_DATA(0x00);
+        LCD_WR_DATA(0x02);
+        LCD_WR_DATA(0x07);
+        LCD_WR_DATA(0x0a);
+        LCD_WR_DATA(0x28);
+        LCD_WR_DATA(0x31);
+        LCD_WR_DATA(0x54);
+        LCD_WR_DATA(0x47);
+        LCD_WR_DATA(0x0e);
+        LCD_WR_DATA(0x1c);
+        LCD_WR_DATA(0x17);
+        LCD_WR_DATA(0x1b);
+        LCD_WR_DATA(0x1e);
+
+        LCD_WR_REG(0x2A);
+        LCD_WR_DATA(0x00);
+        LCD_WR_DATA(0x00);
+        LCD_WR_DATA(0x00);
+        LCD_WR_DATA(0xef);
+
+        LCD_WR_REG(0x2B);
+        LCD_WR_DATA(0x00);
+        LCD_WR_DATA(0x00);
+        LCD_WR_DATA(0x01);
+        LCD_WR_DATA(0x3f);
+
+        LCD_WR_REG(0x29);       //display on
     }
     else if (lcddev.id == 0x5310)
     {
@@ -766,7 +891,7 @@ static rt_err_t drv_lcd_init(struct rt_device *device)
 
         //VCOMvoltage//
         LCD_WR_REG(0xC4);
-        LCD_WR_DATA(0x8F); //5f
+        LCD_WR_DATA(0x8F);    //5f
 
         LCD_WR_REG(0xC6);
         LCD_WR_DATA(0x00);
@@ -1413,10 +1538,10 @@ static rt_err_t drv_lcd_init(struct rt_device *device)
         LCD_WR_DATA(0x00);
 
         LCD_WR_REG(0x3A);
-        LCD_WR_DATA(0x55); //66
+        LCD_WR_DATA(0x55);  //66
 
         LCD_WR_REG(0x11);
-        rt_thread_mdelay(100);
+        rt_thread_delay(100);
         LCD_WR_REG(0x29);
         LCD_WR_REG(0x35);
         LCD_WR_DATA(0x00);
@@ -1837,43 +1962,43 @@ static rt_err_t drv_lcd_init(struct rt_device *device)
         LCD_WriteReg(0xC903, 0x50);
         LCD_WriteReg(0xC904, 0x50);
         LCD_WriteReg(0x3500, 0x00);
-        LCD_WriteReg(0x3A00, 0x55); //16-bit/pixel
+        LCD_WriteReg(0x3A00, 0x55);  //16-bit/pixel
         LCD_WR_REG(0x1100);
-        rt_thread_mdelay(1);
+        rt_hw_us_delay(120);
         LCD_WR_REG(0x2900);
     }
     else if (lcddev.id == 0X1963)
     {
-        LCD_WR_REG(0xE2);  //Set PLL with OSC = 10MHz (hardware),   Multiplier N = 35, 250MHz < VCO < 800MHz = OSC*(N+1), VCO = 300MHz
-        LCD_WR_DATA(0x1D); //参数1
-        LCD_WR_DATA(0x02); //参数2 Divider M = 2, PLL = 300/(M+1) = 100MHz
-        LCD_WR_DATA(0x04); //参数3 Validate M and N values
-        rt_thread_mdelay(1);
-        LCD_WR_REG(0xE0);  // Start PLL command
-        LCD_WR_DATA(0x01); // enable PLL
-        rt_thread_mdelay(10);
-        LCD_WR_REG(0xE0);  // Start PLL command again
-        LCD_WR_DATA(0x03); // now, use PLL output as system clock
-        rt_thread_mdelay(12);
-        LCD_WR_REG(0x01); //软复位
-        rt_thread_mdelay(10);
+        LCD_WR_REG(0xE2); //Set PLL with OSC = 10MHz (hardware),  Multiplier N = 35, 250MHz < VCO < 800MHz = OSC*(N+1), VCO = 300MHz
+        LCD_WR_DATA(0x1D);      //参数1
+        LCD_WR_DATA(0x02);      //参数2 Divider M = 2, PLL = 300/(M+1) = 100MHz
+        LCD_WR_DATA(0x04);      //参数3 Validate M and N values
+        rt_hw_us_delay(100);
+        LCD_WR_REG(0xE0);       // Start PLL command
+        LCD_WR_DATA(0x01);      // enable PLL
+        rt_thread_delay(10);
+        LCD_WR_REG(0xE0);       // Start PLL command again
+        LCD_WR_DATA(0x03);      // now, use PLL output as system clock
+        rt_thread_delay(12);
+        LCD_WR_REG(0x01);       //软复位
+        rt_thread_delay(10);
 
-        LCD_WR_REG(0xE6); //设置像素频率,33Mhz
+        LCD_WR_REG(0xE6);       //设置像素频率,33Mhz
         LCD_WR_DATA(0x2F);
         LCD_WR_DATA(0xFF);
         LCD_WR_DATA(0xFF);
 
-        LCD_WR_REG(0xB0);  //设置LCD模式
-        LCD_WR_DATA(0x20); //24位模式
-        LCD_WR_DATA(0x00); //TFT 模式
+        LCD_WR_REG(0xB0);       //设置LCD模式
+        LCD_WR_DATA(0x20);      //24位模式
+        LCD_WR_DATA(0x00);      //TFT 模式
 
-        LCD_WR_DATA((SSD_HOR_RESOLUTION - 1) >> 8); //设置LCD水平像素
+        LCD_WR_DATA((SSD_HOR_RESOLUTION - 1) >> 8);      //设置LCD水平像素
         LCD_WR_DATA(SSD_HOR_RESOLUTION - 1);
-        LCD_WR_DATA((SSD_VER_RESOLUTION - 1) >> 8); //设置LCD垂直像素
+        LCD_WR_DATA((SSD_VER_RESOLUTION - 1) >> 8);      //设置LCD垂直像素
         LCD_WR_DATA(SSD_VER_RESOLUTION - 1);
-        LCD_WR_DATA(0x00); //RGB序列
+        LCD_WR_DATA(0x00);      //RGB序列
 
-        LCD_WR_REG(0xB4); //Set horizontal period
+        LCD_WR_REG(0xB4);       //Set horizontal period
         LCD_WR_DATA((SSD_HT - 1) >> 8);
         LCD_WR_DATA(SSD_HT - 1);
         LCD_WR_DATA(SSD_HPS >> 8);
@@ -1882,7 +2007,7 @@ static rt_err_t drv_lcd_init(struct rt_device *device)
         LCD_WR_DATA(0x00);
         LCD_WR_DATA(0x00);
         LCD_WR_DATA(0x00);
-        LCD_WR_REG(0xB6); //Set vertical period
+        LCD_WR_REG(0xB6);       //Set vertical period
         LCD_WR_DATA((SSD_VT - 1) >> 8);
         LCD_WR_DATA(SSD_VT - 1);
         LCD_WR_DATA(SSD_VPS >> 8);
@@ -1891,55 +2016,45 @@ static rt_err_t drv_lcd_init(struct rt_device *device)
         LCD_WR_DATA(0x00);
         LCD_WR_DATA(0x00);
 
-        LCD_WR_REG(0xF0);  //设置SSD1963与CPU接口为16bit
-        LCD_WR_DATA(0x03); //16-bit(565 format) data for 16bpp
+        LCD_WR_REG(0xF0);   //设置SSD1963与CPU接口为16bit
+        LCD_WR_DATA(0x03);  //16-bit(565 format) data for 16bpp
 
-        LCD_WR_REG(0x29); //开启显示
+        LCD_WR_REG(0x29);   //开启显示
         //设置PWM输出  背光通过占空比可调
-        LCD_WR_REG(0xD0);  //设置自动白平衡DBC
-        LCD_WR_DATA(0x00); //disable
+        LCD_WR_REG(0xD0);   //设置自动白平衡DBC
+        LCD_WR_DATA(0x00);  //disable
 
-        LCD_WR_REG(0xBE);  //配置PWM输出
-        LCD_WR_DATA(0x05); //1设置PWM频率
-        LCD_WR_DATA(0xFE); //2设置PWM占空比
-        LCD_WR_DATA(0x01); //3设置C
-        LCD_WR_DATA(0x00); //4设置D
-        LCD_WR_DATA(0x00); //5设置E
-        LCD_WR_DATA(0x00); //6设置F
+        LCD_WR_REG(0xBE);   //配置PWM输出
+        LCD_WR_DATA(0x05);  //1设置PWM频率
+        LCD_WR_DATA(0xFE);  //2设置PWM占空比
+        LCD_WR_DATA(0x01);  //3设置C
+        LCD_WR_DATA(0x00);  //4设置D
+        LCD_WR_DATA(0x00);  //5设置E
+        LCD_WR_DATA(0x00);  //6设置F
 
-        LCD_WR_REG(0xB8);  //设置GPIO配置
-        LCD_WR_DATA(0x03); //2个IO口设置成输出
-        LCD_WR_DATA(0x01); //GPIO使用正常的IO功能
+        LCD_WR_REG(0xB8);   //设置GPIO配置
+        LCD_WR_DATA(0x03);  //2个IO口设置成输出
+        LCD_WR_DATA(0x01);  //GPIO使用正常的IO功能
         LCD_WR_REG(0xBA);
-        LCD_WR_DATA(0X01); //GPIO[1:0]=01,控制LCD方向
+        LCD_WR_DATA(0X01);  //GPIO[1:0]=01,控制LCD方向
 
-        LCD_SSD_BackLightSet(100); //背光设置为最亮
+        LCD_SSD_BackLightSet(100);  //背光设置为最亮
     }
-    //初始化完成以后,提速
-//    if (lcddev.id == 0X9341 || lcddev.id == 0X5310 || lcddev.id == 0X5510 || lcddev.id == 0X1963) //如果是这几个IC,则设置WR时序为最快
-//    {
-//        //重新配置写时序控制寄存器的时序
-//        FSMC_Bank1E->BWTR[6] &= ~(0XF << 0); //地址建立时间(ADDSET)清零
-//        FSMC_Bank1E->BWTR[6] &= ~(0XF << 8); //数据保存时间清零
-//        FSMC_Bank1E->BWTR[6] |= 3 << 0;      //地址建立时间(ADDSET)为3个HCLK =18ns
-//        FSMC_Bank1E->BWTR[6] |= 2 << 8;      //数据保存时间(DATAST)为6ns*3个HCLK=18ns
-//    }
-    LCD_Display_Dir(0);
 
+    LCD_Display_Dir(0);     //默认为竖屏
     rt_pin_write(LCD_BL, PIN_HIGH);
-
-    LCD_Clear(0xffff);
+    LCD_Clear(WHITE);
 
     return RT_EOK;
 }
 
 struct rt_device_graphic_ops fsmc_lcd_ops =
-    {
-        LCD_Fast_DrawPoint,
-        LCD_ReadPoint,
-        LCD_HLine,
-        LCD_VLine,
-        LCD_BlitLine,
+{
+    LCD_Fast_DrawPoint,
+    LCD_ReadPoint,
+    LCD_HLine,
+    LCD_VLine,
+    LCD_BlitLine,
 };
 
 static rt_err_t drv_lcd_control(struct rt_device *device, int cmd, void *args)
@@ -1949,17 +2064,21 @@ static rt_err_t drv_lcd_control(struct rt_device *device, int cmd, void *args)
     {
     case RTGRAPHIC_CTRL_GET_INFO:
     {
-        struct rt_device_graphic_info *info = (struct rt_device_graphic_info *)args;
-
+        struct rt_device_graphic_info *info = (struct rt_device_graphic_info *) args;
         RT_ASSERT(info != RT_NULL);
+        lcd->lcd_info.width = lcddev.width;
+        lcd->lcd_info.height = lcddev.height;
 
         //this needs to be replaced by the customer
-        info->pixel_format  = lcd->lcd_info.pixel_format;
+        info->pixel_format = lcd->lcd_info.pixel_format;
         info->bits_per_pixel = lcd->lcd_info.bits_per_pixel;
-        info->width = lcddev.width;
-        info->height = lcddev.height;
+        info->width = lcd->lcd_info.width;
+        info->height = lcd->lcd_info.height;
+        LOG_D("get info: (%d, %d) (%d, %d)"
+                , info->pixel_format, info->bits_per_pixel
+                , info->width, info->height);
     }
-    break;
+        break;
     }
 
     return RT_EOK;
@@ -1967,13 +2086,13 @@ static rt_err_t drv_lcd_control(struct rt_device *device, int cmd, void *args)
 
 #ifdef RT_USING_DEVICE_OPS
 const static struct rt_device_ops lcd_ops =
-    {
-        drv_lcd_init,
-        RT_NULL,
-        RT_NULL,
-        RT_NULL,
-        RT_NULL,
-        drv_lcd_control};
+{
+    drv_lcd_init,
+    RT_NULL,
+    RT_NULL,
+    RT_NULL,
+    RT_NULL,
+    drv_lcd_control};
 #endif
 
 int drv_lcd_hw_init(void)
@@ -2002,43 +2121,43 @@ int drv_lcd_hw_init(void)
 INIT_DEVICE_EXPORT(drv_lcd_hw_init);
 
 #ifdef BSP_USING_FMCLCD_TEST
-void lcd_auto_fill(void *para)
-{
-    int num = (int)para;
-    do
-    {
-        LCD_Clear(rt_tick_get());
-        rt_thread_mdelay(500);
-    }while(--num);
-}
 
 #include <stdlib.h> /* atoi */
-void lcd_fill(int argc, void **argv)
+static void lcd_test(int argc, void **argv)
 {
-    static rt_uint8_t lcd_init = 0;
-    rt_device_t lcd = RT_NULL;
-
-    if(lcd_init == 0)
+    struct drv_lcd_device *lcd = (struct drv_lcd_device *)rt_device_find("lcd");
+    if (lcd == NULL)
     {
-        lcd_init = 1;
-
-        lcd = rt_device_find("lcd");
-        rt_device_init(lcd);
+        LOG_E("find device NULL");
     }
+    else
+    {
+        LOG_D("info: (%d, %d) (%d, %d)"
+                        , lcd->lcd_info.pixel_format, lcd->lcd_info.bits_per_pixel
+                        , lcd->lcd_info.width, lcd->lcd_info.height);
+        uint16_t color = WHITE;
 
-    if(argc == 1)
-    {
-        lcd_auto_fill((void *)1);
-    }
-    else if(argc == 3)
-    {
-        if(rt_strcmp(argv[1], "-t")==0)
+        rt_tick_t tick = rt_tick_get();
+        LCD_Clear(WHITE);
+        for (uint16_t i = 0; i < 240; i++)
         {
-            rt_thread_t tid = RT_NULL;
-            tid = rt_thread_create("lcd_fill", lcd_auto_fill, (void *)atoi(argv[2]), 512, 23,10);
-            rt_thread_startup(tid);
+            color = RED;
+            LCD_Fast_DrawPoint((char *)&color, i, i);
+            color = YELLOW;
+            LCD_Fast_DrawPoint((char *)&color, lcd->lcd_info.width - i, lcd->lcd_info.height - i);
+            rt_thread_delay(2);
+            tick += 2;
         }
+        color = GREEN;
+        LCD_HLine((char *)&color, 0, lcd->lcd_info.width, lcd->lcd_info.height/2);
+        rt_thread_delay(100);
+        tick += 100;
+        color = BLUE;
+        LCD_VLine((char *)&color, lcd->lcd_info.width/2, 0, lcd->lcd_info.height);
+        rt_thread_delay(100);
+        tick += 100;
+        LOG_D("test end used %d ms.", rt_tick_get() - tick);
     }
 }
-MSH_CMD_EXPORT(lcd_fill, lcd fill test for mcu lcd);
+MSH_CMD_EXPORT(lcd_test, lcd fmc test show a coordinate system);
 #endif

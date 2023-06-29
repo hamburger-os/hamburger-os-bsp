@@ -10,14 +10,16 @@
 #include <lvgl.h>
 #include <board.h>
 
-//#define DRV_DEBUG
+#include "drv_fmclcd.h"
+
+#define DRV_DEBUG
 #define LOG_TAG "drv.lv"
 #include <drv_log.h>
 
 /*A static or global variable to store the buffers*/
 static lv_disp_draw_buf_t disp_buf;
 
-static rt_device_t lcd_device = 0;
+static rt_device_t lcd_device = RT_NULL;
 static struct rt_device_graphic_info info;
 
 static lv_disp_drv_t disp_drv;  /*Descriptor of a display driver*/
@@ -25,25 +27,13 @@ static lv_disp_drv_t disp_drv;  /*Descriptor of a display driver*/
 /*Flush the content of the internal buffer the specific area on the display
  *You can use DMA or any hardware acceleration to do this operation in the background but
  *'lv_disp_flush_ready()' has to be called when finished.*/
-static void lcd_fb_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p)
+static void lcd_flush_cb(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p)
 {
-    uint32_t x;
-    uint32_t y;
-    uint32_t location = 0;
+    /* color_p is a buffer pointer; the buffer is provided by LVGL */
+    lcd_fill_array(area->x1, area->y1, area->x2, area->y2, color_p);
 
-    /* 16 bit per pixel */
-    lv_color16_t *fbp16 = (lv_color16_t *)info.framebuffer;
-
-    for (y = area->y1; y <area->y2 + 1; y++)
-    {
-        for (x = area->x1; x <area->x2 + 1; x++)
-        {
-            location = x + y * info.width;
-            fbp16[location].full = color_p->full;
-            color_p++;
-        }
-    }
-
+    /*IMPORTANT!!!
+     *Inform the graphics library that you are ready with the flushing*/
     lv_disp_flush_ready(disp_drv);
 }
 
@@ -55,20 +45,20 @@ void lv_port_disp_init(void)
     lcd_device = rt_device_find("lcd");
     if (lcd_device == 0)
     {
-        rt_kprintf("error!\n");
+        LOG_E("find lcd error!");
         return;
     }
     result = rt_device_open(lcd_device, 0);
     if (result != RT_EOK)
     {
-        rt_kprintf("error!\n");
+        LOG_E("open lcd error!");
         return;
     }
     /* get framebuffer address */
     result = rt_device_control(lcd_device, RTGRAPHIC_CTRL_GET_INFO, &info);
     if (result != RT_EOK)
     {
-        rt_kprintf("error!\n");
+        LOG_E("get lcd info error!");
         /* get device information failed */
         return;
     }
@@ -79,14 +69,14 @@ void lv_port_disp_init(void)
     fbuf1 = rt_malloc(info.width * info.height * sizeof(lv_color_t));
     if (fbuf1 == RT_NULL)
     {
-        rt_kprintf("Error: alloc disp buf fail\n");
+        LOG_E("alloc disp buf fail!");
         return;
     }
 
     fbuf2 = rt_malloc(info.width * info.height * sizeof(lv_color_t));
     if (fbuf2 == RT_NULL)
     {
-        rt_kprintf("Error: alloc disp buf fail\n");
+        LOG_E("alloc disp buf fail!");
         rt_free(fbuf1);
         return;
     }
@@ -104,7 +94,7 @@ void lv_port_disp_init(void)
     disp_drv.draw_buf = &disp_buf;
 
     /*Used to copy the buffer's content to the display*/
-    disp_drv.flush_cb = lcd_fb_flush;
+    disp_drv.flush_cb = lcd_flush_cb;
 
     /*Finally register the driver*/
     lv_disp_drv_register(&disp_drv);
