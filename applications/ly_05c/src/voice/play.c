@@ -38,7 +38,6 @@
 /* 标准amr文件头部的大小 */
 #define AMR_FILE_HEADER_LEN 6
 
-#define EVENT_VOICE_DIR "/mnt/emmc/yysj/voice"                   /* 提示音存放路径 */
 #define EVENT_VOICE_DUMP_START_ALL "BeginAll.amr"                /* 开始转储全部文件 */
 #define EVENT_VOICE_DUMP_START_LAST "BeginNew.amr"               /* 开始转储最新文件 */
 #define EVENT_VOICE_DUMP_END_LAST "EndNew.amr"                   /* 最新文件转储成功 */
@@ -483,17 +482,13 @@ static void *play_thread(void *args)
                 if (ret < 0)
                 {
                     /* todo,??? */
-                    printf("pcm_init error \n");
+                    play_detail_state = PlayDetailState_PlayRecordFinishPlay;
+                    printf("init pcm error. \n");
                     break;
                 }
                 /* 读取当前放音信息 */ /* todo-done, sprintf 检查越界 */
-                g_cur_rec_file_info.filename[FILE_NAME_MAX_LEN - 1] = (char)0;
-                if (PLAY_FILE_NAME_LEN < strlen(YUYIN_PATH_NAME) + strlen(g_cur_rec_file_info.filename))
-                {
-                    log_print(LOG_ERROR, "there is not enough space for the variable 'play_file_name'\n");
-                    RT_ASSERT(false);
-                }
-                sprintf(play_file_name, "%s/%s", YUYIN_PATH_NAME, g_cur_rec_file_info.filename);
+                // sprintf(play_file_name, "%s/%s", YUYIN_PATH_NAME, g_cur_rec_file_info.filename);
+                snprintf(play_file_name, sizeof(play_file_name), "%s/%s", YUYIN_PATH_NAME, g_cur_rec_file_info.filename);
                 play_offset = g_cur_rec_file_info.new_voice_head_offset + (off_t)PAGE_SIZE;
 
                 /* 打开录音文件,这里不能为只读, 因为要修改放音标志位 */ /* todo, 这里不能为只读 */
@@ -515,7 +510,7 @@ static void *play_thread(void *args)
 
                     /* 记录当前信息 */
                     log_print(LOG_INFO,
-                              "begin play voice: %s, offset: %x, data len: %x. \n",
+                              "begin play voice: %s, offset: 0x%x, data len: 0x%x. \n",
                               play_file_name, play_offset, play_size);
 
                     /* 通知tax箱放音开始 */
@@ -523,6 +518,8 @@ static void *play_thread(void *args)
                 }
                 else
                 {
+                    play_detail_state = PlayDetailState_PlayRecordFinishPlay;
+                    break;
                 }
             }
             else /* 播放提示音 */
@@ -753,7 +750,8 @@ void play_event(E_EVENT event)
     {
     }
 
-    sprintf(event_path, "%s/%s", EVENT_VOICE_DIR, filename);
+    // sprintf(event_path, "%s/%s", EVENT_VOICE_DIR, filename);
+    snprintf(event_path, sizeof(event_path), "%s/%s", EVENT_VOICE_DIR, filename);
     push_play_list(g_play_list, event_path, AMR_FILE_HEADER_LEN);
 }
 /*******************************************************

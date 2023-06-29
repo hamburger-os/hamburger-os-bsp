@@ -64,7 +64,7 @@ typedef enum
     /* 文件管理事件 */
     EVENT_SYS_WORK_OK,  /* 系统工作正常 */
     EVENT_SYS_WORK_ERR, /* 系统工作错误 */
-    
+
     /* 设备启动 */
     EVENT_DEVICE_START, /* 设备已经启动 */
 

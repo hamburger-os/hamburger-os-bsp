@@ -26,8 +26,6 @@
  * @retval tptr * 系统时间数据.
  *
  *******************************************************/
-void rtc_setdata( struct tm *ptm);
-
-
+void rtc_setdata(struct tm *ptm);
 
 #endif

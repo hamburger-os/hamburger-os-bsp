@@ -189,7 +189,6 @@ static void *ly_05c_entry(void *args)
         printf("init ly-05c device error.\n");
         return NULL;
     }
-
     /* 播放提示音, 设备已经启动. */
     play_event(EVENT_DEVICE_START);
     /* 系统工作指示正常 */
@@ -198,7 +197,7 @@ static void *ly_05c_entry(void *args)
     event_push_queue(EVENT_WORK_NORMAL);
     /* 启动事件管理模块 */
     event_run();
-    
+
     /* 此处不应该出现, 要不然会成为宕机模式 */
     led_set(LED_STATE_WORK_ERROR);
 
@@ -217,7 +216,6 @@ sint32_t ly_05c_main(void)
     sint32_t ret = 0;
     pthread_t main_tid;
     pthread_attr_t pthread_attr_data;
-
 
     /* 创建主线程 */
     pthread_attr_init(&pthread_attr_data);

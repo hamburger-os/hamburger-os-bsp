@@ -71,7 +71,6 @@ static int is_dir(const char *path)
     return 0;
 }
 
-
 /*******************************************************
  *
  * @brief  判断是否为常规文件
@@ -83,7 +82,8 @@ static int is_dir(const char *path)
 static int is_file(const char *path)
 {
     struct stat statbuf;
-    if (stat(path, &statbuf) == 0){
+    if (stat(path, &statbuf) == 0)
+    {
         return S_ISREG(statbuf.st_mode) != 0; // 判断文件是否为常规文件
     }
     return 0;
@@ -109,7 +109,7 @@ static int is_special_dir(const char *path)
  * @param path 文件所在的目录
  * @param file 文件名
  * @param file_path 文件的路径
- * 
+ *
  *******************************************************/
 
 static void get_file_path(const char *path, const char *file, char *file_path)
@@ -703,6 +703,7 @@ void copy_files(const char *source, const char *destination)
                 continue;
             }
 
+            printf("cp %s %s\n", source_path, destination_path);
             char buffer[FILE_COPY_BUFF_SIZE];
             size_t bytes_read;
             while ((bytes_read = fread(buffer, 1, sizeof(buffer), source_file)) > 0)
@@ -711,7 +712,9 @@ void copy_files(const char *source, const char *destination)
             }
 
             fclose(source_file);
+            source_file = NULL;
             fclose(destination_file);
+            destination_file = NULL;
         }
     }
 

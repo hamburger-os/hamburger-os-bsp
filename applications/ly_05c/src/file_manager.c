@@ -168,27 +168,37 @@ sint32_t free_space(void)
 
 /*******************************************************
  *
- * @brief  从保存最新文件名的配置文件中,得到最新的语音文件名,放到Name中返回
+ * @brief  从保存最新文件名的配置文件中, 得到最新的语音文件名, 放到Name中返回.
  *
  * @param  *name: 保存最新文件名的配置文件.
  * @param  bak: 1:备份文件 0:非备份文件
- * @retval 正确得到最新文件名,返回0; 否则返回-1
+ * @retval 正确得到最新文件名, 返回0; 否则返回-1
  *
  *******************************************************/
 sint32_t fm_get_file_name(const char *name, sint32_t bak)
 {
     FILE *fp = NULL;
-    sint32_t len;
+    sint32_t len, str_len;
     char filename[PATH_NAME_MAX_LEN] = {0};
     char full_path[PATH_NAME_MAX_LEN] = {0};
 
     if (bak != 0)
     {
-        sprintf(full_path, "%s/%s.bak", YUYIN_PATH_NAME, NEW_FILE_NAME_CONF);
+        str_len = snprintf(full_path, sizeof(full_path), "%s/%s.bak", YUYIN_PATH_NAME, NEW_FILE_NAME_CONF);
+        if (str_len > sizeof(full_path))
+        {
+            // 缓冲区溢出, 字符被截断了.
+            return -1;
+        }
     }
     else
     {
-        sprintf(full_path, "%s/%s", YUYIN_PATH_NAME, NEW_FILE_NAME_CONF);
+        str_len = snprintf(full_path, sizeof(full_path), "%s/%s", YUYIN_PATH_NAME, NEW_FILE_NAME_CONF);
+        if (str_len > sizeof(full_path))
+        {
+            // 缓冲区溢出, 字符被截断了.
+            return -1;
+        }
     }
 
     fp = fopen(full_path, "r");
@@ -264,13 +274,13 @@ static sint32_t fm_analyze_file(char *filename)
     char data[PAGE_SIZE] = {0};
     off_t offset;
     sint32_t ret;
-    sint32_t file_len;
+    sint32_t file_len, pathlen;
     sint32_t voices_num;
     sint32_t num;
     sint32_t last_voice_head_offset;
 
     /* 获取录音文件的文件信息. */
-    sprintf(full_path, "%s/%s", YUYIN_PATH_NAME, filename);
+    pathlen = snprintf(full_path, sizeof(full_path), "%s/%s", YUYIN_PATH_NAME, filename);
     ret = stat(full_path, &stat_l);
     if (ret < 0)
     {
@@ -453,10 +463,20 @@ static sint32_t fm_check_dup_file_name(char *filename)
     char full_path[PATH_NAME_MAX_LEN] = {0};
     char bak_full_path[PATH_NAME_MAX_LEN] = {0};
     struct stat stat_l;
-    sint32_t i;
+    sint32_t i, pathlen;
 
-    sprintf(full_path, "%s/%s", YUYIN_PATH_NAME, filename);
-    sprintf(bak_full_path, "%s/%s", YUYIN_BAK_PATH_NAME, filename);
+    pathlen = snprintf(full_path, sizeof(full_path), "%s/%s", YUYIN_PATH_NAME, filename);
+    if (pathlen > sizeof(full_path))
+    {
+        // 缓冲区溢出, 字符被截断了.
+        return -1;
+    }
+    pathlen = snprintf(bak_full_path, sizeof(bak_full_path), "%s/%s", YUYIN_BAK_PATH_NAME, filename);
+    if (pathlen > sizeof(bak_full_path))
+    {
+        // 缓冲区溢出, 字符被截断了.
+        return -1;
+    }
     if (stat(full_path, &stat_l) == -1)
     {
         /* 如果文件不存在重名,则返回 */
@@ -477,14 +497,24 @@ static sint32_t fm_check_dup_file_name(char *filename)
     i = 1;
     while (i < 100)
     {
-        sprintf(full_path, "%s/%s%d", YUYIN_PATH_NAME, filename, i);
-        sprintf(bak_full_path, "%s/%s%d", YUYIN_BAK_PATH_NAME, filename, i);
+        // sprintf(full_path, "%s/%s%d", YUYIN_PATH_NAME, filename, i);
+        pathlen = snprintf(full_path, sizeof(full_path), "%s/%s%d", YUYIN_PATH_NAME, filename, i);
+        if (pathlen > sizeof(full_path))
+        {
+            return -1; // 缓冲区溢出, 字符被截断了.
+        }
+        // sprintf(bak_full_path, "%s/%s%d", YUYIN_BAK_PATH_NAME, filename, i);
+        pathlen = snprintf(bak_full_path, sizeof(bak_full_path), "%s/%s%d", YUYIN_BAK_PATH_NAME, filename, i);
+        if (pathlen > sizeof(bak_full_path))
+        {
+            return -1; // 缓冲区溢出, 字符被截断了.
+        }
         if (stat(full_path, &stat_l) == -1)
         {
             /* 如果文件不存在重名, 则返回 */
             if (stat(bak_full_path, &stat_l) == -1)
             {
-                sprintf(filename, "%s%d", filename, i);
+                // sprintf(filename, "%s%d", filename, i);
                 return 0;
             }
             else
@@ -510,7 +540,7 @@ static sint32_t fm_check_dup_file_name(char *filename)
  *******************************************************/
 sint32_t fm_is_new(void)
 {
-    sint32_t train_id, driver_id, day, Month, i, j, locomotive_num;
+    sint32_t train_id, driver_id, day, Month, i, j, locomotive_num, pathlen;
     char filename[PATH_NAME_MAX_LEN] = {0};
     char CheCiInString[PATH_NAME_MAX_LEN] = {0};
     char tmp1[PATH_NAME_MAX_LEN] = {0}, tmp2[PATH_NAME_MAX_LEN] = {0};
@@ -543,6 +573,7 @@ sint32_t fm_is_new(void)
         {
         }
     }
+    // 经判断, 此处不可能溢出.
     sprintf(CheCiInString + (4 - i), "%d", train_id);
 
     locomotive_num = g_tax40.locomotive_num[0] + g_tax40.locomotive_num[1] * 0x100;
@@ -574,8 +605,12 @@ sint32_t fm_is_new(void)
     log_print(LOG_INFO, "车次:%s,司机号:%d,机车号:%d,月:%d,日:%d\n", CheCiInString, driver_id, locomotive_num, Month, day);
 
     /* 根据实时信息,产生文件名(车次-司机号.月日) */
-    sprintf(filename, "%s-%d-%d-%02d%02d.VSW", CheCiInString, driver_id, locomotive_num, Month, day);
-
+    // sprintf(filename, "%s-%d-%d-%02d%02d.VSW", CheCiInString, driver_id, locomotive_num, Month, day);
+    pathlen = snprintf(filename, sizeof(filename), "%s-%d-%d-%02d%02d.VSW", CheCiInString, driver_id, locomotive_num, Month, day);
+    if (pathlen > sizeof(filename))
+    {
+        return -1; // 缓冲区溢出, 字符被截断了.
+    }
     strcpy(tmp1, filename);
     strcpy(tmp2, g_cur_rec_file_info.filename);
     ptr = strstr(tmp1, ".");

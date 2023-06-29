@@ -57,7 +57,6 @@ void log_print(sint32_t level, const char *format, ...)
     static char cur_log_name[PATH_NAME_MAX_LEN]; /* 当前日志文件的文件名 */
     time_t t;
     struct tm *timeinfo = NULL;
-    int ret = 0;
 
     /* 通过调试等级,判断是否记录信息. */
     if (level < LOG_LEVEL)
@@ -67,7 +66,6 @@ void log_print(sint32_t level, const char *format, ...)
     else
     {
     }
-
     // 获取时间
     t = time(NULL);
     timeinfo = localtime(&t);
@@ -83,10 +81,10 @@ void log_print(sint32_t level, const char *format, ...)
     rt_kprintf("%s", log_buffer);
 
     /* 在日志文件中记录,防止日志信息丢失,每次log都及时写入文件. */
-    sprintf(name, "%s/LY05C_%d-%d.log",
-            LOG_FILE_PATH,
-            get_locomotive_type(),
-            get_locomotive_id());
+    snprintf(name, sizeof(name), "%s/LY05C_%d-%d.log",
+             LOG_FILE_PATH,
+             get_locomotive_type(),
+             get_locomotive_id());
 
     pthread_mutex_lock(&log_mutex);
 

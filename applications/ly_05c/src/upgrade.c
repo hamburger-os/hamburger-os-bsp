@@ -75,7 +75,8 @@ static sint32_t upgrade_set_flag(E_UPGRADE_STATE state)
     }
 
     /* 写入标志 */
-    sprintf(buf, "%d", state);
+    snprintf(buf, sizeof(buf), "%d", state);
+
     ret = write(fd, buf, strlen(buf) + 1);
     if (ret < 0)
     {
@@ -192,7 +193,7 @@ void ota_from_file_handle(OtaHandleTypeDef type)
         {
         }
         break;
-    default:/*缺省*/
+    default: /*缺省*/
         break;
     }
 }

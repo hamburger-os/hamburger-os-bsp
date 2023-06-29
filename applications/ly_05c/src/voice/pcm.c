@@ -99,12 +99,12 @@ sint32_t pcm_init(pcm_config_t *config)
     if (config->mode == SOUND_MODE_CAPTURE)
     {
         config->size = (uint32_t)PCM_READ_BUFFER_SIZE;
-        config->p_buffer = (char*)pcm_capture_buf;
+        config->p_buffer = (char *)pcm_capture_buf;
     }
     else
     {
         config->size = (uint32_t)PCM_WRITE_BUFFER_SIZE;
-        config->p_buffer = (char*) pcm_play_buf;
+        config->p_buffer = (char *)pcm_play_buf;
     }
 
     /* find device */
@@ -193,7 +193,14 @@ rt_size_t pcm_write(rt_device_t pcm_dev, const void *buffer_w, rt_size_t size_w)
         return (rt_size_t)-1;
     }
     /* write raw data from sound device */
-    ret = rt_device_write(pcm_dev, (rt_off_t)0, buffer_w, size_w);
+    if (rt_device_write(pcm_dev, (rt_off_t)0, buffer_w, size_w) > 0)
+    {
+        ret = 0;
+    }
+    else
+    {
+        ret = -1;
+    }
 
     return ret;
 }
@@ -226,7 +233,14 @@ rt_size_t pcm_read(rt_device_t pcm_dev, void *buffer_r, rt_size_t size_r)
         return (rt_size_t)-3;
     }
     /* read raw data from sound device */
-    ret = rt_device_read(pcm_dev, (rt_off_t)0, buffer_r, size_r);
+    if (rt_device_read(pcm_dev, (rt_off_t)0, buffer_r, size_r) > 0)
+    {
+        ret = 0;
+    }
+    else
+    {
+        ret = -1;
+    }
 
     return ret;
 }

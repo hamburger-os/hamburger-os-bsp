@@ -282,7 +282,7 @@ static void *led_thread(const void *args)
                 break;
             }
         }
-        msleep((uint32_t)200);/* 休眠200ms */
+        msleep((uint32_t)200); /* 休眠200ms */
         led_pin_state_alter_blink_p = (bool)!led_pin_state_alter_blink_p;
     }
     return NULL;

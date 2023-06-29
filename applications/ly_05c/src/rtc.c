@@ -21,7 +21,7 @@
 #include <sys/time.h>
 #include "rtc.h"
 
-//#include <time.h>
+// #include <time.h>
 
 /*******************************************************
  *
@@ -31,7 +31,7 @@
  * @retval tptr * 系统时间数据.
  *
  *******************************************************/
-void rtc_setdata( struct tm *ptm)
+void rtc_setdata(struct tm *ptm)
 {
     struct timeval tv;
     if (ptm == NULL)
@@ -43,9 +43,27 @@ void rtc_setdata( struct tm *ptm)
     int ret = settimeofday(&tv, NULL);
     if (ret < 0)
     {
-        printf("settimeofday error. ret = %d\n", ret);
+        // printf("settimeofday error. ret = %d\n", ret);
     }
-
 }
 
+/*******************************************************
+ *
+ * @brief  测试rtc函数
+ *
+ * @param  none
+ * @retval none
+ *
+ *******************************************************/
+void rtc_test(void)
+{
+    struct tm tm;
+    tm.tm_year = 2024 - 1900;
+    tm.tm_mon = 1 - 1;
+    tm.tm_mday = 2;
+    tm.tm_hour = 3;
+    tm.tm_min = 15;
+    tm.tm_sec = 16;
 
+    rtc_setdata(&tm);
+}

@@ -104,7 +104,8 @@ static void record_beginrec(void)
     if (fm_is_new() == 0)            /* 判断是否需要形成新的文件 */
     {
         /* 生成新文件 */
-        sprintf(full_path, "%s/%s", YUYIN_PATH_NAME, g_cur_rec_file_info.filename);
+        // sprintf(full_path, "%s/%s", YUYIN_PATH_NAME, g_cur_rec_file_info.filename);
+        snprintf(full_path, sizeof(full_path), "%s/%s", YUYIN_PATH_NAME, g_cur_rec_file_info.filename);
         log_print(LOG_INFO, "create a new file '%s'. \n", full_path);
         ret = create_file(full_path);
         if (ret < 0)
@@ -148,7 +149,8 @@ static void record_beginrec(void)
     else /* 不需要生成新文件 */
     {
         /* 追加语言到文件末尾 */
-        sprintf(full_path, "%s/%s", YUYIN_PATH_NAME, g_cur_rec_file_info.filename);
+        // sprintf(full_path, "%s/%s", YUYIN_PATH_NAME, g_cur_rec_file_info.filename);
+        snprintf(full_path, sizeof(full_path), "%s/%s", YUYIN_PATH_NAME, g_cur_rec_file_info.filename);
         log_print(LOG_INFO, "append data to file '%s'. ", full_path);
         g_cur_rec_file_info.fd = open(full_path, O_RDWR); /* 此处不能以APPEND方式打开,否则不能改写前面的内容 */
 
@@ -730,5 +732,6 @@ sint32_t record_init(void)
     else
     {
     }
+
     return 0;
 }
