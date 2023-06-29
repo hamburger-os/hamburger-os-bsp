@@ -2440,42 +2440,34 @@ menu "Onboard Peripheral Drivers"
                 config BSP_USING_NONETOUCH
                     bool "Disable TOUCH"
 
-                config BSP_USING_ATKTOUCH
-                    bool "Enable ATK LCD TOUCH"
-            endchoice
-            
-            if BSP_USING_ATKTOUCH
-                config BSP_USING_TOUCH_CAP
-                    bool "Use LCD TOUCH Capacitance"
-                    default n
-                    if BSP_USING_TOUCH_CAP
-                        config BSP_TOUCH_I2C_DEVNAME
-                            string "Touch i2c devname, default: i2c2"
-                            default "i2c2"
-                            
-                        config BSP_TOUCH_INT_PIN
-                            string "Touch interrupt pin, default: PB.1"
-                            default "PB.1"
-                    endif
-    
-                config BSP_USING_TOUCH_RES
-                    bool "Use LCD TOUCH Resistance"
+                config BSP_USING_TOUCH
+                    bool "Enable TOUCH"
                     select RT_USING_TOUCH
                     select RT_TOUCH_PIN_IRQ
-                    default y
-                    if BSP_USING_TOUCH_RES
-                        config BSP_TOUCH_SPI_BUS
-                            string "Set the spi bus used, default: sspi1"
-                            default "sspi1"
-                            
-                        config BSP_XPT2046_CS_PIN
-                            string "pin name for the chip select pin, default: PC.13"
-                            default "PC.13"
-    
-                        config BSP_XPT2046_IRQ_PIN
-                            string "pin name for the irq pin, default: PB.1"
-                            default "PB.1"
-                    endif
+            endchoice
+            
+            if BSP_USING_TOUCH
+                choice
+                    prompt "Select touch driver"
+                    default TOUCH_USING_XPT2046
+                    
+                    config TOUCH_USING_XPT2046
+                        bool "Enable touch driver xpt2046"
+                endchoice
+                
+                config TOUCH_IRQ_PIN
+                    string "pin name for the irq pin, default: PB.1"
+                    default "PB.1"
+                
+                if TOUCH_USING_XPT2046
+                    config TOUCH_XPT2046_SPI_BUS
+                        string "Set the spi bus used, default: sspi1"
+                        default "sspi1"
+                        
+                    config TOUCH_XPT2046_CS_PIN
+                        string "pin name for the chip select pin, default: PC.13"
+                        default "PC.13"
+                endif
             endif
             
             config BSP_USING_LVGL_DEMO

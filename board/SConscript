@@ -137,13 +137,6 @@ if GetDepend(['BSP_USING_SPI_FLASH']):
 if GetDepend(['BSP_USING_FMCLCD']):
     src += Glob('ports/drv_fmclcd.c')
     
-if GetDepend(['BSP_USING_ATKTOUCH']):
-    src += Glob('ports/atk_touch/drv_touch.c')
-    src += Glob('ports/atk_touch/drv_touch_ft.c')
-    src += Glob('ports/atk_touch/drv_touch_xpt.c')
-    src += Glob('ports/atk_touch/drv_xpt2046_init.c')
-    path += [cwd + '/ports/atk_touch']
-    
 if GetDepend(['BSP_USING_LVGL']):
     src += Glob('ports/lvgl/lv_port_disp.c')
     src += Glob('ports/lvgl/lv_port_indev.c')
@@ -151,6 +144,13 @@ if GetDepend(['BSP_USING_LVGL']):
     if GetDepend(['BSP_USING_LVGL_DEMO']):
         src += Glob('ports/lvgl/demo/lv_demo.c')
         src += Glob('ports/lvgl/demo/lv_demo_calendar.c')
+        
+if GetDepend(['BSP_USING_TOUCH']):
+    src += Glob('ports/atk_touch/drv_touch.c')
+    src += Glob('ports/atk_touch/drv_touch_ft.c')
+    src += Glob('ports/atk_touch/drv_touch_xpt.c')
+    src += Glob('ports/atk_touch/drv_xpt2046_init.c')
+    path += [cwd + '/ports/atk_touch']
         
 if GetDepend(['BSP_USING_WM8978']):
     src += Glob('ports/wm8978/drv_wm8978.c')
