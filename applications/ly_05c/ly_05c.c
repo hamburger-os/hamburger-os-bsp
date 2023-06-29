@@ -106,12 +106,11 @@ static int ly_05c_init(void)
     if (ret < 0)
     {
         log_print(LOG_FATAL_ERROR, "init voice module error, error code: %d.\n", ret);
-        /* todo-done, assert */
+        return -1;
     }
     else
     {
     }
-    RT_ASSERT(ret == 0);
 #endif
 
 #if 1
@@ -120,26 +119,23 @@ static int ly_05c_init(void)
     if (ret < 0)
     {
         log_print(LOG_FATAL_ERROR, "init tax module error, error code: %d.\n", ret);
-        /* todo-done, assert, 重复检查 */
+        return -1;
     }
     else
     {
     }
-    RT_ASSERT(ret == 0);
 #endif
 
     /* 初始化事件管理模块 */
     ret = event_init();
-    RT_ASSERT(ret == 0);
     if (ret < 0)
     {
         log_print(LOG_FATAL_ERROR, "init event module error, error code: %d.\n", ret);
-        /* todo-done, assert, 重复检查 */
+        return -1;
     }
     else
     {
     }
-    RT_ASSERT(ret == 0);
 
 #if 1
     /* 初始化Key模块 */
@@ -147,26 +143,24 @@ static int ly_05c_init(void)
     if (ret < 0)
     {
         log_print(LOG_FATAL_ERROR, "key_init error, error code: %d.\n", ret);
-        /* todo-done, assert */
+        return -1;
     }
     else
     {
     }
-    RT_ASSERT(ret == 0);
 #endif
 
 #if 1
     /* 初始化USB模块 */
     ret = usb_init();
-    RT_ASSERT(ret == 0);
     if (ret < 0)
     {
         log_print(LOG_ERROR, "usb_init error, error code: %d.\n", ret);
+        return -1;
     }
     else
     {
     }
-    RT_ASSERT(ret == 0);
 #endif
     return 0;
 }
@@ -187,6 +181,8 @@ static void *ly_05c_entry(void *args)
     if (ret < 0)
     {
         printf("init ly-05c device error.\n");
+        led_set(LED_STATE_WORK_ERROR);
+        RT_ASSERT(false);
         return NULL;
     }
     /* 播放提示音, 设备已经启动. */
@@ -198,9 +194,9 @@ static void *ly_05c_entry(void *args)
     /* 启动事件管理模块 */
     event_run();
 
-    /* 此处不应该出现, 要不然会成为宕机模式 */
+    /* 此处不应该出现, 要不然会出现故障 */
     led_set(LED_STATE_WORK_ERROR);
-
+    RT_ASSERT(false);
     return NULL;
 }
 

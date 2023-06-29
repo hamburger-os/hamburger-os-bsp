@@ -259,6 +259,7 @@ static void *record_thread(void *args)
     else
     {
     }
+
     log_print(LOG_INFO, "record thread start ok\n");
     while (true)
     {
@@ -345,7 +346,6 @@ static void *record_thread(void *args)
                     p_config->p_buffer[i + 1] = p_config->p_buffer[i * 2 + 1];
                 }
 
-              
                 /* 通知录音处理线程录音结束 */
                 rec_msg_data.cmd = REC_MQ_DATA;
                 /* 设置缓冲区大小 */
