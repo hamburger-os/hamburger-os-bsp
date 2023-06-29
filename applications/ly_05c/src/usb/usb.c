@@ -208,7 +208,7 @@ static sint32_t change_file_date(const char *filename)
     sint32_t year, month, day, hour, minute;
     struct tm tm_v;
     time_t time_v;
-    // struct utimbuf utimebuf;
+    /* struct utimbuf utimebuf;*/
     fd = open(filename, O_RDONLY);
     if (fd < 0)
     {
@@ -277,8 +277,8 @@ static sint32_t change_file_date(const char *filename)
             time_v = mktime(&tm_v);
 
             /* 更改文件的修改日期 */
-            // utimebuf.actime = utimebuf.modtime = time_v;
-            // utime(filename, &utimebuf);
+            /* utimebuf.actime = utimebuf.modtime = time_v;*/
+            /* utime(filename, &utimebuf);*/
 
             g_locomotive_id = file_head.locomotive_num[0] + file_head.locomotive_num[1] * 0x100;
             g_locomotive_type = file_head.locomotive_type[0] + file_head.locomotive_type[1] * 0x100;
@@ -435,22 +435,20 @@ static sint32_t store_file(const char *source, const char *target, sint32_t mode
             name = get_sigle_file_name(p->filename);
             if (strstr(name, "VSW") == NULL) /* 没有找到VSW */
             {
-                // sprintf(targetname, "%s/%s.VSW", target, name);
-                pathlen = snprintf(targetname, sizeof(targetname) "%s/%s.VSW", target, name);
+                pathlen = snprintf(targetname, sizeof(targetname), "%s/%s.VSW", target, name);
                 if (pathlen > sizeof(targetname))
                 {
                     error = -1;
-                    break; // 缓冲区溢出, 字符被截断了.
+                    break; /* 缓冲区溢出, 字符串被截断了.*/
                 }
             }
             else
             {
-                // sprintf(targetname, "%s/%s", target, name);
-                pathlen = snprintf(targetname, sizeof(targetname) "%s/%s", target, name);
+                pathlen = snprintf(targetname, sizeof(targetname), "%s/%s", target, name);
                 if (pathlen > sizeof(targetname))
                 {
                     error = -1;
-                    break; // 缓冲区溢出, 字符被截断了.
+                    break; /* 缓冲区溢出, 字符串被截断了.*/
                 }
             }
 
@@ -470,12 +468,11 @@ static sint32_t store_file(const char *source, const char *target, sint32_t mode
             {
                 if (strcmp(name, latest_filename) != 0)
                 {
-                    // sprintf(bakname, "%s/%s", YUYIN_BAK_PATH_NAME, name);
-                    pathlen = snprintf(bakname, sizeof(bakname) "%s/%s", YUYIN_BAK_PATH_NAME, name);
+                    pathlen = snprintf(bakname, sizeof(bakname), "%s/%s", YUYIN_BAK_PATH_NAME, name);
                     if (pathlen > sizeof(bakname))
                     {
                         error = -2;
-                        break; // 缓冲区溢出, 字符被截断了.
+                        break; /* 缓冲区溢出, 字符串被截断了.*/
                     }
 
                     log_print(LOG_INFO, "备份文件%32s到%s\n", p->filename, bakname);
@@ -522,7 +519,7 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
     struct stat stat_l;
     char logname[PATH_NAME_MAX_LEN];
 
-    // 获取最新语音文件名.
+    /* 获取最新语音文件名.*/
     fm_get_file_name(latest_filename, 0);
     create_dir(TARGET_DIR_NAME);     /* 在U盘目录中建立语音文件目录 */
     create_dir(YUYIN_BAK_PATH_NAME); /* 建立语音文件的备份的目录 */
@@ -599,7 +596,6 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
     {
     }
     /* 增加转储日志文件的功能,如果发现有日志文件,则复制到U盘 */
-    // snprintf(logname, "%s/LY05C_%d-%d.log", LOG_FILE_PATH, g_locomotive_type, g_locomotive_id);
     snprintf(logname, sizeof(logname), "%s/LY05C_%d-%d.log", LOG_FILE_PATH, g_locomotive_type, g_locomotive_id);
     if (stat(logname, &stat_l) == 0)
     {
@@ -637,17 +633,19 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
  *******************************************************/
 static void format_board_emmc(void)
 {
-    // 提示开始擦除U盘.
+    /* 提示开始擦除U盘.*/
     event_push_queue(EVENT_BEGIN_FORMAT_STORAGE);
-    // 删除板载存储器的yysj文件夹.
+    log_print(LOG_INFO, "begin format emmc...\n");
+    /* 删除板载存储器的yysj文件夹.*/
     delete_file(YUYIN_PATH_NAME);
-    // 创建新的目录:yysj, yysj/voice,并拷贝提示音文件.
+    /* 创建新的目录:yysj, yysj/voice,并拷贝提示音文件.*/
     create_dir(EVENT_VOICE_DIR);
-    // 并拷贝提示音文件.
+    /* 并拷贝提示音文件.*/
     copy_files(FORMAT_DIR_NAME, EVENT_VOICE_DIR);
     msleep((uint32_t)500);
-    // 提示开始删除U盘.
+    /* 提示开始删除U盘.*/
     event_push_queue(EVENT_FINISH_FORMAT_STORAGE);
+    log_print(LOG_INFO, "format emmc finished. \n");
 }
 
 /*******************************************************
@@ -688,7 +686,7 @@ static void usb_thread(void *args)
                 event_push_queue(EVENT_UNPLUG_USB);
             }
 
-            // 等待系统识别U盘内部的数据.
+            /* 等待系统识别U盘内部的数据.*/
             msleep((uint32_t)500);
 
             /* 表明插上U盘 */
@@ -709,9 +707,11 @@ static void usb_thread(void *args)
             ret = stat(FORMAT_DIR_NAME, &stat_l);
             if (ret == 0)
             {
-                // 格式化U盘.
+                /* 格式化U盘.*/
                 format_board_emmc();
-                // 进入离开模式,等待拔出U盘
+                /* 重新初始化文件管理模块.*/
+                fm_init();
+                /* 进入离开模式,等待拔出U盘*/
                 state = DUMP_STATE_EXIT;
                 break;
             }

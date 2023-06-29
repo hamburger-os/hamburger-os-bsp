@@ -21,7 +21,7 @@
 #include <sys/time.h>
 #include "rtc.h"
 
-// #include <time.h>
+/* #include <time.h>*/
 
 /*******************************************************
  *
@@ -43,7 +43,7 @@ void rtc_setdata(struct tm *ptm)
     int ret = settimeofday(&tv, NULL);
     if (ret < 0)
     {
-        // printf("settimeofday error. ret = %d\n", ret);
+        /* printf("settimeofday error. ret = %d\n", ret);*/
     }
 }
 

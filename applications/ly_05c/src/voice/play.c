@@ -305,7 +305,7 @@ static sint32_t read_frame_from_amr_file(sint32_t fd, uint8_t *out_buf, sint32_t
         sint32_t i;
         for (i = 0; i < frame_size; i++) {
 
-            rt_kprintf( "%02x ", out_buf[i]);
+            rt_kprintf("%02x ", out_buf[i]);
         }
 #endif
 
@@ -397,7 +397,7 @@ static void *play_thread(void *args)
     sint32_t *p_destate = NULL;
     uint8_t analysis[AMR_FRAME_MAX_LEN]; /* 需要分析的数据 */
     sint32_t read_size = 0;
-    off_t play_size = 0;
+    off_t play_size = 0; /* 播放长度 */
     char play_file_name[PLAY_FILE_NAME_LEN];
     E_PCM_STATE pcm_state = PCM_STATE_IDLE;                     /* PCM接口状态 */
     E_PlayMode play_mode = PlayMode_Voice;                      /* 播放模式 */
@@ -481,13 +481,11 @@ static void *play_thread(void *args)
                 ret = pcm_init(p_config);
                 if (ret < 0)
                 {
-                    /* todo,??? */
                     play_detail_state = PlayDetailState_PlayRecordFinishPlay;
                     printf("init pcm error. \n");
                     break;
                 }
                 /* 读取当前放音信息 */ /* todo-done, sprintf 检查越界 */
-                // sprintf(play_file_name, "%s/%s", YUYIN_PATH_NAME, g_cur_rec_file_info.filename);
                 snprintf(play_file_name, sizeof(play_file_name), "%s/%s", YUYIN_PATH_NAME, g_cur_rec_file_info.filename);
                 play_offset = g_cur_rec_file_info.new_voice_head_offset + (off_t)PAGE_SIZE;
 
@@ -570,49 +568,56 @@ static void *play_thread(void *args)
                 {
                 }
             }
-            play_detail_state = PlayDetailState_PlayReading;
+            if (play_size > 0)
+            {
+                play_detail_state = PlayDetailState_PlayReading;
+            }
+            else
+            {
+                play_detail_state = PlayDetailState_PlayRecordFinishPlay;
+            }
             break;
         case PlayDetailState_PlayReading: /* 播放状态,读取语音数据中,并同时播放 */
             ret = read_frame_from_amr_file(play_fd, analysis, &read_size, &play_size);
             if (ret == 0) /* 读取一帧数据成功 */
-            {
-                /* 清空PCM缓冲区 */
-                memset(p_config->p_buffer, 0, p_config->size);
-                /* 调用解码器 */
-                Decoder_Interface_Decode(p_destate, analysis, (Word16 *)p_config->p_buffer, 0);
-                /* 将单通道的数据变为双通道 */
-                /**
-                 *  样本数据图示:
-                 * +----------+-----------+----------+-----------+
-                 * |  byte0   |  byte1    |  byte2   |  byte3    |
-                 * +----------+-----------+----------+-----------+
-                 * |     left channel     |    right  channel    |
-                 * +----------+-----------+----------+-----------+
-                 * | low byte | high byte | low byte | high byte |
-                 * +----------+-----------+----------+-----------+
-                 */
-                for (i = (sint32_t)p_config->size / 2 - 2; i >= 0; i = i - 2)
                 {
-                    p_config->p_buffer[i * 2 + 0] = p_config->p_buffer[i + 0];
-                    p_config->p_buffer[i * 2 + 2] = p_config->p_buffer[i + 0];
-                    p_config->p_buffer[i * 2 + 1] = p_config->p_buffer[i + 1];
-                    p_config->p_buffer[i * 2 + 3] = p_config->p_buffer[i + 1];
-                }
-                /* 写音频数据到PCM设备 */
+                    /* 清空PCM缓冲区 */
+                    memset(p_config->p_buffer, 0, p_config->size);
+                    /* 调用解码器 */
+                    Decoder_Interface_Decode(p_destate, analysis, (Word16 *)p_config->p_buffer, 0);
+                    /* 将单通道的数据变为双通道 */
+                    /**
+                     *  样本数据图示:
+                     * +----------+-----------+----------+-----------+
+                     * |  byte0   |  byte1    |  byte2   |  byte3    |
+                     * +----------+-----------+----------+-----------+
+                     * |     left channel     |    right  channel    |
+                     * +----------+-----------+----------+-----------+
+                     * | low byte | high byte | low byte | high byte |
+                     * +----------+-----------+----------+-----------+
+                     */
+                    for (i = (sint32_t)p_config->size / 2 - 2; i >= 0; i = i - 2)
+                    {
+                        p_config->p_buffer[i * 2 + 0] = p_config->p_buffer[i + 0];
+                        p_config->p_buffer[i * 2 + 2] = p_config->p_buffer[i + 0];
+                        p_config->p_buffer[i * 2 + 1] = p_config->p_buffer[i + 1];
+                        p_config->p_buffer[i * 2 + 3] = p_config->p_buffer[i + 1];
+                    }
+                    /* 写音频数据到PCM设备 */
 
-                while ((ret = pcm_write(p_config->dev, p_config->p_buffer, p_config->size)) < 0)
-                {
-                    msleep((uint32_t)2);
-                    if (ret < 0)
+                    while ((ret = pcm_write(p_config->dev, p_config->p_buffer, p_config->size)) < 0)
                     {
-                        log_print(LOG_ERROR, "write pcm error.\n");
+                        msleep((uint32_t)2);
+                        if (ret < 0)
+                        {
+                            log_print(LOG_ERROR, "write pcm error.\n");
+                        }
+                        else
+                        {
+                        }
                     }
-                    else
-                    {
-                    }
+                    play_detail_state = PlayDetailState_PlayReading;
                 }
-                play_detail_state = PlayDetailState_PlayReading;
-            }
             else /* 读取一帧数据失败,表明读取AMR语音数据完毕. */
             {
                 play_detail_state = PlayDetailState_PlayRecordFinishRead;
@@ -750,7 +755,6 @@ void play_event(E_EVENT event)
     {
     }
 
-    // sprintf(event_path, "%s/%s", EVENT_VOICE_DIR, filename);
     snprintf(event_path, sizeof(event_path), "%s/%s", EVENT_VOICE_DIR, filename);
     push_play_list(g_play_list, event_path, AMR_FILE_HEADER_LEN);
 }

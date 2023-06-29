@@ -285,7 +285,7 @@ static void update_tax_data(void)
     memcpy((void *)&g_tax32, (void *)&tax_info_all[0], TAX_BOARD1_PACKAGE_LEN);
     memcpy((void *)&g_tax40, (void *)&tax_info_all[TAX_BOARD1_PACKAGE_LEN], TAX_BOARD2_PACKAGE_LEN);
 
-    // 更新系统时间
+    /* 更新系统时间*/
     if (times % 100 == 0)
     {
 
@@ -565,7 +565,7 @@ static sint32_t tax_recv_data(void)
     ret = rt_mq_recv(uart_mq, (void *)&msg, sizeof(msg), (rt_int32_t)READ_MESSAGE_QUEUE_TIMEOUT);
     if (ret != RT_EOK)
     {
-        // log_print(LOG_ERROR, "send uart message queue error. \n");
+        /* log_print(LOG_ERROR, "send uart message queue error. \n");*/
         return (sint32_t)-1;
     }
     else
@@ -719,7 +719,6 @@ static void *tax_thread(void *args)
 {
     sint32_t ret;
     uint8_t unit_code = 0;
-    int i = 0;
 
     /* 打开和TAX通讯的串口 */
     ret = tax_open(UART_DEVICE_NAME); /* 打开读取TAX信息的串口 */

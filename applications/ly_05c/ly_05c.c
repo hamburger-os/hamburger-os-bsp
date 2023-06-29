@@ -93,7 +93,7 @@ static int ly_05c_init(void)
     if (ret < 0)
     {
         /* 文件解析失败, 后续会自动修复, 这里把错误记录一下 */
-        log_print(LOG_FATAL_ERROR, "init file manager module error, error code: %d.\n", ret);
+        log_print(LOG_FATAL_ERROR, "file parsing error. \n");
     }
     else
     {

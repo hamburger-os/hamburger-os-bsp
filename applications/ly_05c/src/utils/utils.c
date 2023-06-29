@@ -64,9 +64,9 @@
 static int is_dir(const char *path)
 {
     struct stat statbuf;
-    if (stat(path, &statbuf) == 0) // lstat返回文件的信息,文件信息存放在stat结构中
+    if (stat(path, &statbuf) == 0) /* lstat返回文件的信息,文件信息存放在stat结构中*/
     {
-        return S_ISDIR(statbuf.st_mode) != 0; // S_ISDIR宏,判断文件类型是否为目录
+        return S_ISDIR(statbuf.st_mode) != 0; /* S_ISDIR宏,判断文件类型是否为目录*/
     }
     return 0;
 }
@@ -84,7 +84,7 @@ static int is_file(const char *path)
     struct stat statbuf;
     if (stat(path, &statbuf) == 0)
     {
-        return S_ISREG(statbuf.st_mode) != 0; // 判断文件是否为常规文件
+        return S_ISREG(statbuf.st_mode) != 0; /* 判断文件是否为常规文件*/
     }
     return 0;
 }
@@ -420,7 +420,8 @@ file_info_t *get_org_file_info(const char *path)
     /* 读取目录内文件名 */
     while ((next = readdir(p_dir)) != NULL)
     {
-        sprintf(full_path, "%s/%s", path, next->d_name);
+        snprintf(full_path, sizeof(full_path), "%s/%s", path, next->d_name);
+
         if (stat(full_path, &stat_l) == 0)
         {
             /* 成功所取文件的信息 */
@@ -546,7 +547,7 @@ sint32_t create_dir(const char *path)
 sint32_t create_file(const char *path)
 {
     char file_path[PATH_NAME_MAX_LEN] = {0};
-    sint32_t i, len;
+    sint32_t i, len, fd;
 
     strcpy(file_path, path);
     len = strlen(file_path);
@@ -579,13 +580,14 @@ sint32_t create_file(const char *path)
         if (file_path[i] == 0)
         {
             /* 创建文件 */
-            if (creat(file_path, 0766) < 0)
+            if ((fd = creat(file_path, 0766)) < 0)
             {
                 log_print(LOG_ERROR, "can not create file %s. \n", file_path);
                 return (sint32_t)-2;
             }
             else
             {
+                // close(fd);
             }
         }
         else
@@ -660,9 +662,9 @@ void copy_files(const char *source, const char *destination)
 
     while ((entry = readdir(dir)) != NULL)
     {
-        // 构建源文件/目录路径
+        /* 构建源文件/目录路径*/
         snprintf(source_path, sizeof(source_path), "%s/%s", source, entry->d_name);
-        // 构建目标文件/目录路径
+        /* 构建目标文件/目录路径*/
         snprintf(destination_path, sizeof(destination_path), "%s/%s", destination, entry->d_name);
 
         if (stat(source_path, &statbuf) == -1)
@@ -673,7 +675,7 @@ void copy_files(const char *source, const char *destination)
 
         if (S_ISDIR(statbuf.st_mode))
         {
-            // 如果是子目录,则递归拷贝
+            /* 如果是子目录,则递归拷贝*/
             if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
             {
                 continue;
@@ -687,7 +689,7 @@ void copy_files(const char *source, const char *destination)
         }
         else
         {
-            // 如果是文件,则拷贝文件
+            /* 如果是文件,则拷贝文件*/
             FILE *source_file = fopen(source_path, "rb");
             if (source_file == NULL)
             {

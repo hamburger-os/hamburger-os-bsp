@@ -66,7 +66,7 @@ void log_print(sint32_t level, const char *format, ...)
     else
     {
     }
-    // 获取时间
+    /* 获取时间*/
     t = time(NULL);
     timeinfo = localtime(&t);
     strftime(log_buffer, sizeof(log_buffer), "[%Y-%m-%d %H:%M:%S] ", timeinfo);
@@ -103,7 +103,7 @@ void log_print(sint32_t level, const char *format, ...)
     else
     {
     }
-    strcpy(cur_log_name, name);
+    snprintf(cur_log_name, sizeof(cur_log_name), "%s", name);
 
     /* 记录日志 */
     if (fd < 0)

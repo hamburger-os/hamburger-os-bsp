@@ -104,9 +104,7 @@ static void record_beginrec(void)
     if (fm_is_new() == 0)            /* 判断是否需要形成新的文件 */
     {
         /* 生成新文件 */
-        // sprintf(full_path, "%s/%s", YUYIN_PATH_NAME, g_cur_rec_file_info.filename);
         snprintf(full_path, sizeof(full_path), "%s/%s", YUYIN_PATH_NAME, g_cur_rec_file_info.filename);
-        log_print(LOG_INFO, "create a new file '%s'. \n", full_path);
         ret = create_file(full_path);
         if (ret < 0)
         {
@@ -149,9 +147,8 @@ static void record_beginrec(void)
     else /* 不需要生成新文件 */
     {
         /* 追加语言到文件末尾 */
-        // sprintf(full_path, "%s/%s", YUYIN_PATH_NAME, g_cur_rec_file_info.filename);
         snprintf(full_path, sizeof(full_path), "%s/%s", YUYIN_PATH_NAME, g_cur_rec_file_info.filename);
-        log_print(LOG_INFO, "append data to file '%s'. ", full_path);
+        log_print(LOG_INFO, "append data to file '%s'. \n", full_path);
         g_cur_rec_file_info.fd = open(full_path, O_RDWR); /* 此处不能以APPEND方式打开,否则不能改写前面的内容 */
 
         if (g_cur_rec_file_info.fd > 0)
@@ -161,7 +158,7 @@ static void record_beginrec(void)
             g_cur_rec_file_info.new_voice_head_offset =
                 lseek(g_cur_rec_file_info.fd, (off_t)0, SEEK_END);
             fm_write_voice_head(g_cur_rec_file_info.fd); /* 写入语音头 */
-            log_print(LOG_INFO, "offset: 0x%x. \n", full_path, g_cur_rec_file_info.new_voice_head_offset);
+            log_print(LOG_INFO, "offset: 0x%x. \n",  g_cur_rec_file_info.new_voice_head_offset);
 
             /* 通知tax箱录音开始 */
             tax_send_echo_event((uint8_t)IN_BEGIN, &g_tax40);
@@ -250,7 +247,6 @@ static void *record_thread(void *args)
     pcm_config_t *p_config = NULL;
     sint32_t rec_ctrl_msg = 0;
     rec_msg_t rec_msg_data;
-    int times = 0;
 
     /* 获取声卡配置信息 */
     p_config = pcm_get_config_instance();
@@ -263,7 +259,6 @@ static void *record_thread(void *args)
     else
     {
     }
-
     log_print(LOG_INFO, "record thread start ok\n");
     while (true)
     {
@@ -308,37 +303,6 @@ static void *record_thread(void *args)
             else
             {
             }
-#if DEBUG_PCM_FILE
-            /* 如果文件存在,则删除文件 */
-            if (access(BUFFER_DIR, 0) == 0)
-            {
-                unlink(BUFFER_DIR); /* 删除文件 */
-            }
-            else
-            {
-            }
-
-            /* 创建文件 */
-            ret = create_file(BUFFER_DIR);
-            if (ret < 0)
-            {
-                log_print(LOG_ERROR, "create_dir error, error code is %d. \n", ret);
-            }
-            else
-            {
-            }
-
-            /* 打开缓存文件 */
-            sint32_t fd = open(BUFFER_DIR, O_RDWR);
-            if (fd < 0)
-            {
-                log_print(LOG_ERROR, "open error! fd=%d src='%s' \n", fd, BUFFER_DIR);
-                continue;
-            }
-            else
-            {
-            }
-#else
             /* 继续运行录音处理线程 */
             rec_msg_data.cmd = REC_MQ_BEGIN;
             rec_msg_data.buf_size = 0;
@@ -352,7 +316,6 @@ static void *record_thread(void *args)
             else
             {
             }
-#endif
             while (true)
             {
                 /* 读取音频数据 */
@@ -375,26 +338,14 @@ static void *record_thread(void *args)
                  * | low byte | high byte | low byte | high byte |
                  * +----------+-----------+----------+-----------+
                  */
-                /* 将右通道的值变为单通道 */
+                /* 将左通道的值变为单通道 */
                 for (i = 0; i < (ret / 2 - 1); i = i + 2)
                 {
-                    // p_config->p_buffer[i + 0] = p_config->p_buffer[i * 2 + 2];
-                    // p_config->p_buffer[i + 1] = p_config->p_buffer[i * 2 + 3];
-
                     p_config->p_buffer[i + 0] = p_config->p_buffer[i * 2 + 0];
                     p_config->p_buffer[i + 1] = p_config->p_buffer[i * 2 + 1];
                 }
-#if DEBUG_PCM_FILE
-                /* 写入文件缓存文件中 */
-                ret = write(fd, p_config->buffer, ret / 2);
-                if (ret < 0)
-                {
-                    log_print(LOG_ERROR, "write error. \n");
-                }
-                else
-                {
-                }
-#endif
+
+              
                 /* 通知录音处理线程录音结束 */
                 rec_msg_data.cmd = REC_MQ_DATA;
                 /* 设置缓冲区大小 */
@@ -403,9 +354,9 @@ static void *record_thread(void *args)
                 memcpy(rec_msg_data.buf, p_config->p_buffer, ret / 2);
 
                 ret = rt_mq_send(rec_mq, &rec_msg_data, sizeof(rec_msg_data));
-                if (ret != RT_EOK)
+                if (ret == RT_EOK)
                 {
-                    /* rt_kprintf("*"); */
+                    // rt_kprintf("*"); 
                 }
                 else
                 {
@@ -427,14 +378,6 @@ static void *record_thread(void *args)
                 {
                 }
             }
-#if DEBUG_PCM_FILE
-            /* 关闭缓存文件 */
-            if (close(fd) < 0)
-            {
-                rt_kprintf("write record buffer error. \n");
-            }
-#endif
-
             /* 通知录音处理线程录音结束 */
             rec_msg_data.cmd = REC_MQ_END;
             rec_msg_data.buf_size = 0;
@@ -536,7 +479,7 @@ static void *record_handler_thread(void *arg)
 
             if (rec_msg_data.cmd == REC_MQ_DATA) /* 接收到数据 */
             {
-                /* rt_kprintf("."); */
+                // rt_kprintf("."); 
                 src_buf_handled_len = 0;
                 while (true)
                 {
@@ -577,11 +520,13 @@ static void *record_handler_thread(void *arg)
                         }
                         rt_kprintf("\n");
 #endif
+
                         /* 写入VSW文件 */
                         ret = write(g_cur_rec_file_info.fd, serial_data, byte_counter);
                         if (ret > 0)
                         {
                             g_cur_rec_file_info.record_datalen += ret;
+                        }else{
                         }
                         /* 此处不应该调用fsync, 会降低此线程的处理速度. */
                         /* fsync(g_cur_rec_file_info.fd); */
@@ -597,6 +542,7 @@ static void *record_handler_thread(void *arg)
 
         /* 关闭编码器 */
         Encoder_Interface_exit(enstate);
+        
         /* 结束录音 */
         record_endrec();
 
