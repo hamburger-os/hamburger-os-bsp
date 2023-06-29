@@ -481,8 +481,8 @@ static void *play_thread(void *args)
                 ret = pcm_init(p_config);
                 if (ret < 0)
                 {
-                    play_detail_state = PlayDetailState_PlayRecordFinishPlay;
                     printf("init pcm error. \n");
+                    play_detail_state = PlayDetailState_PlayRecordFinishPlay;
                     break;
                 }
                 /* 读取当前放音信息 */ /* todo-done, sprintf 检查越界 */

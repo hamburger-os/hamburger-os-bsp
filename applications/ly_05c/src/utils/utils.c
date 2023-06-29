@@ -587,7 +587,7 @@ sint32_t create_file(const char *path)
             }
             else
             {
-                // close(fd);
+                close(fd);
             }
         }
         else

@@ -595,7 +595,7 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
     else
     {
     }
-    /* 增加转储日志文件的功能,如果发现有日志文件,则复制到U盘 */
+    /* 增加转储日志文件的功能, 如果发现有日志文件, 则复制到U盘 */
     snprintf(logname, sizeof(logname), "%s/LY05C_%d-%d.log", LOG_FILE_PATH, g_locomotive_type, g_locomotive_id);
     if (stat(logname, &stat_l) == 0)
     {

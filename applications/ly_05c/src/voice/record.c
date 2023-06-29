@@ -158,7 +158,7 @@ static void record_beginrec(void)
             g_cur_rec_file_info.new_voice_head_offset =
                 lseek(g_cur_rec_file_info.fd, (off_t)0, SEEK_END);
             fm_write_voice_head(g_cur_rec_file_info.fd); /* 写入语音头 */
-            log_print(LOG_INFO, "offset: 0x%x. \n",  g_cur_rec_file_info.new_voice_head_offset);
+            log_print(LOG_INFO, "offset: 0x%x. \n", g_cur_rec_file_info.new_voice_head_offset);
 
             /* 通知tax箱录音开始 */
             tax_send_echo_event((uint8_t)IN_BEGIN, &g_tax40);
@@ -356,7 +356,7 @@ static void *record_thread(void *args)
                 ret = rt_mq_send(rec_mq, &rec_msg_data, sizeof(rec_msg_data));
                 if (ret == RT_EOK)
                 {
-                    // rt_kprintf("*"); 
+                    // rt_kprintf("*");
                 }
                 else
                 {
@@ -427,7 +427,7 @@ static void *record_handler_thread(void *arg)
     sint32_t encoder_buffer_used = 0; /* 编码缓存区中数据的大小 */
     sint32_t src_buf_handled_len;     /* 已经处理的数据长度 */
 
-    log_print(LOG_INFO, "record handler thread start ok\n");
+    log_print(LOG_INFO, "record handler thread start ok.\n");
     while (true)
     {
         /* 接收处理消息 */
@@ -479,7 +479,7 @@ static void *record_handler_thread(void *arg)
 
             if (rec_msg_data.cmd == REC_MQ_DATA) /* 接收到数据 */
             {
-                // rt_kprintf("."); 
+                // rt_kprintf(".");
                 src_buf_handled_len = 0;
                 while (true)
                 {
@@ -526,7 +526,9 @@ static void *record_handler_thread(void *arg)
                         if (ret > 0)
                         {
                             g_cur_rec_file_info.record_datalen += ret;
-                        }else{
+                        }
+                        else
+                        {
                         }
                         /* 此处不应该调用fsync, 会降低此线程的处理速度. */
                         /* fsync(g_cur_rec_file_info.fd); */
@@ -542,7 +544,7 @@ static void *record_handler_thread(void *arg)
 
         /* 关闭编码器 */
         Encoder_Interface_exit(enstate);
-        
+
         /* 结束录音 */
         record_endrec();
 
