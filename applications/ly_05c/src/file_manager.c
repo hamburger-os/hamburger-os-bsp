@@ -106,13 +106,14 @@ sint32_t free_space(void)
     else
     {
     }
+
     /* 如果剩余空间不够, 先删除bak目录中的文件 */
     /* 获取bak目录中的文件列表 */
     p_file_list_head = get_org_file_info(YUYIN_BAK_PATH_NAME);
     if (p_file_list_head != NULL)
     {
-        /* 如果目录中有文件,则按照文件序号,先删除序号最小的文件 */
-        p_file_list_head = sort_link(p_file_list_head, SORT_UP); /* 按照文件序号,由小到大排序 */
+        /* 如果目录中有文件,则按照文件序号,先删除序号最小的文件. */
+        p_file_list_head = sort_link(p_file_list_head, SORT_UP); 
         show_link(p_file_list_head);
         p = p_file_list_head;
         while (p != NULL)
@@ -134,10 +135,11 @@ sint32_t free_space(void)
     else
     {
     }
+
     log_print(LOG_INFO, "free space: %d K. \n", disk_free_space);
     if (p == NULL)
     {
-        /* 把bak目录中的文件全部删除了,但还是不行,就需要再进一步删除/yysj/目录下面未转储的文件了. */
+        /* 把bak目录中的文件全部删除了,但还是不行, 就需要再进一步删除/yysj/目录下面未转储的文件了. */
         free_link(p_file_list_head);
         p_file_list_head = get_org_file_info(YUYIN_PATH_NAME);
         p_file_list_head = sort_link(p_file_list_head, SORT_UP); /* 按照文件序号,由小到大排序 */
@@ -147,7 +149,7 @@ sint32_t free_space(void)
         {
             unlink(p->filename);
             /* sync(); */
-            log_print(LOG_INFO, "del file: '%s'. \n", p->filename);
+            log_print(LOG_INFO, "delete file: '%s'. \n", p->filename);
             if (check_disk_full(YUYIN_PATH_NAME) == 0)
             {
                 break;
@@ -168,7 +170,7 @@ sint32_t free_space(void)
 
 /*******************************************************
  *
- * @brief  从保存最新文件名的配置文件中, 得到最新的语音文件名, 放到Name中返回.
+ * @brief  从保存最新文件名的配置文件中, 得到最新的语音文件名, 放到name中返回.
  *
  * @param  *name: 保存最新文件名的配置文件.
  * @param  bak: 1:备份文件 0:非备份文件
@@ -178,7 +180,7 @@ sint32_t free_space(void)
 sint32_t fm_get_file_name(const char *name, sint32_t bak)
 {
     FILE *fp = NULL;
-    sint32_t len, str_len;
+    sint32_t len = 0, str_len = 0;
     char filename[PATH_NAME_MAX_LEN] = {0};
     char full_path[PATH_NAME_MAX_LEN] = {0};
 
@@ -188,7 +190,7 @@ sint32_t fm_get_file_name(const char *name, sint32_t bak)
         if (str_len > sizeof(full_path))
         {
             /* 缓冲区溢出, 字符串被截断了.*/
-            return -1;
+            return (sint32_t)-1;
         }
     }
     else
@@ -197,30 +199,25 @@ sint32_t fm_get_file_name(const char *name, sint32_t bak)
         if (str_len > sizeof(full_path))
         {
             /* 缓冲区溢出, 字符串被截断了.*/
-            return -1;
+            return (sint32_t)-1;
         }
     }
 
+    /* 打开文件存储文件名的文件, 并读取文件名 */
     fp = fopen(full_path, "r");
     if (fp == NULL)
     {
         return (sint32_t)-1;
     }
-    else
-    {
-    }
-
     fseek(fp, 0, SEEK_SET);
-    fgets(filename, 128, fp);
+    fgets(filename, PATH_NAME_MAX_LEN, fp);
     fclose(fp);
 
+    /* 修正数据 */
     len = strlen(filename);
     if (filename[len - 1] == '\n')
     {
         filename[len - 1] = 0;
-    }
-    else
-    {
     }
 
     strcpy(name, filename);
@@ -260,7 +257,7 @@ static sint32_t fm_check_voice_head(char *data)
 
 /*******************************************************
  *
- * @brief  分析文件名为filename的语音文件, 把相应信息放到CurrentRecFileInfo结构体中保存
+ * @brief  分析文件名为filename的语音文件, 把相应信息放到g_cur_rec_file_info结构体中保存
  *
  * @param  *filename: 文件名filename
  * @retval 文件正常,返回0;出现错误返回-1.
@@ -280,20 +277,29 @@ static sint32_t fm_analyze_file(char *filename)
     sint32_t last_voice_head_offset;
 
     /* 获取录音文件的文件信息. */
-    snprintf(full_path, sizeof(full_path), "%s/%s", YUYIN_PATH_NAME, filename);
+    snprintf(full_path,
+             sizeof(full_path),
+             "%s/%s",
+             YUYIN_PATH_NAME,
+             filename);
     ret = stat(full_path, &stat_l);
     if (ret < 0)
     {
-        log_print(LOG_ERROR, "can not stat file %s. error code: 0x%08x. \n", ret, full_path);
+        log_print(LOG_ERROR,
+                  "can not stat file %s. error code: 0x%08x. \n",
+                  ret, full_path);
         return (sint32_t)-1;
     }
     else
     {
     }
-    /* 如果录音文件的大小应大于(PAGE_SIZE * 2). */
+
+    /* 如果录音文件的大小应大于 (PAGE_SIZE * 2). */
     if (stat_l.st_size < (PAGE_SIZE * 2))
     {
-        log_print(LOG_ERROR, "file '%s' size :%ld. \n", full_path, stat_l.st_size);
+        log_print(LOG_ERROR,
+                  "file '%s' size :%ld. \n",
+                  full_path, stat_l.st_size);
         return (sint32_t)-1;
     }
     else
@@ -314,7 +320,8 @@ static sint32_t fm_analyze_file(char *filename)
                 g_cur_rec_file_info.file_index = ((file_head_t *)data)->file_index;
                 strcpy(g_cur_rec_file_info.filename, filename);
                 file_len = ((file_head_t *)data)->file_len * PAGE_SIZE;
-                voices_num = ((file_head_t *)data)->total_voice_number[0] + ((file_head_t *)data)->total_voice_number[1] * 0x100;
+                voices_num = ((file_head_t *)data)->total_voice_number[0] +
+                             ((file_head_t *)data)->total_voice_number[1] * 0x100;
                 num = 0;
 
                 while ((ret = read(fd, data, PAGE_SIZE)) > 0)
@@ -325,9 +332,10 @@ static sint32_t fm_analyze_file(char *filename)
                         /* 读到了语音头 */
                         offset = lseek(fd, (((voice_head_t *)data)->voice_length - 1) * PAGE_SIZE, SEEK_CUR);
                         num++;
+
                         if (offset == stat_l.st_size)
                         {
-                            /* 可能正常的语言文件,整个语言链是正常的,还需要再进一步判断文件头是否正常 */
+                            /* 可能正常的语音文件,整个语音链是正常的,还需要再进一步判断文件头是否正常 */
                             if (file_len == stat_l.st_size)
                             {
                                 /* 文件头也正常,可以确定是正常的文件 */
@@ -424,7 +432,7 @@ sint32_t fm_init_latest_file(void)
 {
     char filename[PATH_NAME_MAX_LEN] = {0};
 
-    if (fm_get_file_name(filename, 0) == 0)
+    if (fm_get_file_name(filename, SRC_FILE) == 0)
     {
         log_print(LOG_INFO, "上一个文件名是: %s. \n", filename);
         if (fm_analyze_file(filename) == 0)
@@ -438,7 +446,7 @@ sint32_t fm_init_latest_file(void)
     }
     else
     {
-        // log_print(LOG_ERROR, "error, 得不到最新的语音文件名. \n");
+        log_print(LOG_ERROR, "error, 得不到最新的语音文件名. \n");
     }
     strcpy(g_cur_rec_file_info.filename, "0-0.0000");
     g_cur_rec_file_info.fd = -1;
@@ -465,13 +473,17 @@ static sint32_t fm_check_dup_file_name(char *filename)
     struct stat stat_l;
     sint32_t i, pathlen;
 
-    pathlen = snprintf(full_path, sizeof(full_path), "%s/%s", YUYIN_PATH_NAME, filename);
+    pathlen = snprintf(full_path,
+                       sizeof(full_path),
+                       "%s/%s", YUYIN_PATH_NAME, filename);
     if (pathlen > sizeof(full_path))
     {
         /* 缓冲区溢出, 字符串被截断了.*/
         return -1;
     }
-    pathlen = snprintf(bak_full_path, sizeof(bak_full_path), "%s/%s", YUYIN_BAK_PATH_NAME, filename);
+    pathlen = snprintf(bak_full_path,
+                       sizeof(bak_full_path),
+                       "%s/%s", YUYIN_BAK_PATH_NAME, filename);
     if (pathlen > sizeof(bak_full_path))
     {
         /* 缓冲区溢出, 字符串被截断了.*/
@@ -529,7 +541,8 @@ static sint32_t fm_check_dup_file_name(char *filename)
 }
 /*******************************************************
  *
- * @brief  监控信息, 判断是否需要生成新的文件,把相应信息放到CurrentRecFileInfo结构体中保存
+ * @brief  监控信息, 判断是否需要生成新的文件,把相应信息放到
+ *         g_cur_rec_file_info结构体中保存.
  *
  * @param  *args: 传输参数
  * @retval  0:产生新文件 1:追加文件
@@ -544,7 +557,9 @@ sint32_t fm_is_new(void)
     char *ptr = NULL;
 
     /* 先根据TAX2的信息生成文件名 */
-    train_id = g_tax32.train_id[0] + g_tax32.train_id[1] * 0x100 + g_tax32.train_id[2] * 0x10000;
+    train_id = g_tax32.train_id[0] +
+               g_tax32.train_id[1] * 0x100 +
+               g_tax32.train_id[2] * 0x10000;
     for (i = 0; i < 4; i++)
     {
         if (g_tax32.train_num_type[i] != 0x20)
@@ -555,7 +570,6 @@ sint32_t fm_is_new(void)
         {
         }
     }
-
     memcpy(trainid_string, &(g_tax32.train_num_type[i]), 4 - i);
     for (j = 0; j < 4 - i; j++)
     {
@@ -572,14 +586,24 @@ sint32_t fm_is_new(void)
     /* 经判断, 此处不可能溢出.*/
     sprintf(trainid_string + (4 - i), "%d", train_id);
 
-    locomotive_num = g_tax40.locomotive_num[0] + g_tax40.locomotive_num[1] * 0x100;
-    driver_id = g_tax40.driver_id[0] + g_tax40.driver_id[1] * 0x100 + g_tax32.driver_id * 0x10000;
+    locomotive_num = g_tax40.locomotive_num[0] +
+                     g_tax40.locomotive_num[1] * 0x100;
+    driver_id = g_tax40.driver_id[0] +
+                g_tax40.driver_id[1] * 0x100 +
+                g_tax32.driver_id * 0x10000;
     day = (g_tax40.date[2] & 0x3E) >> 1;
     Month = ((g_tax40.date[2] & 0xC0) >> 6) | ((g_tax40.date[3] & 0x03) << 2);
 
-    if (train_id == 0 || driver_id == 0 || Month == 0 || day == 0 || locomotive_num == 0 || strstr(trainid_string, "_")) /* 2010-5-24 10:15:41*/
+    if (train_id == 0 ||
+        driver_id == 0 ||
+        Month == 0 ||
+        day == 0 ||
+        locomotive_num == 0 ||
+        strstr(trainid_string, "_")) /* 2010-5-24 10:15:41*/
     {
-        log_print(LOG_INFO, "无监控信息,车次:%s,司机号:%d,机车号:%d,月:%d,日:%d\n", trainid_string, driver_id, locomotive_num, Month, day);
+        log_print(LOG_INFO,
+                  "无监控信息, 车次:%s, 司机号: %d, 机车号: %d, 月: %d, 日: %d\n",
+                  trainid_string, driver_id, locomotive_num, Month, day);
         /* 有2种情况:1.原来板子上没有语音文件;2.板子上有语音文件(即最新文件正常) */
         if (g_cur_rec_file_info.not_exsit)
         {
@@ -598,7 +622,9 @@ sint32_t fm_is_new(void)
     else
     {
     }
-    log_print(LOG_INFO, "车次:%s,司机号:%d,机车号:%d,月:%d,日:%d\n", trainid_string, driver_id, locomotive_num, Month, day);
+    log_print(LOG_INFO,
+              "车次: %s, 司机号: %d, 机车号: %d, 月: %d, 日: %d. \n",
+              trainid_string, driver_id, locomotive_num, Month, day);
 
     /* 根据实时信息,产生文件名(车次-司机号.月日) */
     snprintf(filename,
@@ -618,7 +644,7 @@ sint32_t fm_is_new(void)
 
     if (strcmp(tmp1, tmp2) == 0)
     {
-        /* 车次和司机号相同,追加处理 */
+        /* 车次和司机号相同, 追加处理 */
         return 1;
     }
     else
@@ -642,9 +668,6 @@ void fm_build_file_head(file_head_t *p_filehead)
     if (p_filehead == NULL)
     {
         return;
-    }
-    else
-    {
     }
 
     memset((char *)p_filehead, 0xFF, sizeof(file_head_t));
@@ -723,7 +746,6 @@ void fm_build_voice_head(voice_head_t *pvoice_head)
 {
     if (pvoice_head == NULL)
     {
-
         return;
     }
     else

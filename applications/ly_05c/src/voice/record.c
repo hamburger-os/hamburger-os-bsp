@@ -310,7 +310,6 @@ static void *record_thread(void *args)
             ret = rt_mq_send(rec_mq, &rec_msg_data, sizeof(rec_msg_data));
             if (ret != RT_EOK)
             {
-                /* todo, 是否合理? */
                 pcm_exit(p_config);
                 continue;
             }
@@ -356,7 +355,7 @@ static void *record_thread(void *args)
                 ret = rt_mq_send(rec_mq, &rec_msg_data, sizeof(rec_msg_data));
                 if (ret == RT_EOK)
                 {
-                    // rt_kprintf("*");
+                     // rt_kprintf("*");
                 }
                 else
                 {

@@ -51,10 +51,11 @@
 /* 路径最大长度 */
 #define FILE_NAME_MAX_LEN 32
 
-/* 升序 */
-#define SORT_UP 0x01
-/* 降序 */
-#define SORT_DOWN 0x10
+#define SORT_UP 0x01   /* 升序 */
+#define SORT_DOWN 0x10 /* 降序 */
+
+#define BACKUP_FILE 0x1 /* 备份文件 */
+#define SRC_FILE 0x0    /* 非备份文件 */
 
 /* 文件头 */
 #define FILE_HEAD_FLAG_LEN 32      /* 文件头标志字段长度 */
@@ -109,7 +110,7 @@ typedef struct __attribute__((packed)) /* 按照字节对齐*/
     uint32_t voice_index;             /* 语音序号 */
     sint32_t not_exsit;               /* 为1表示录音板中还没有生成文件 */
     uint32_t record_datalen;          /* 录音数据长度 */
-    sint32_t channel;                 /* todo, 通道号, 录音通道,放音通道? */
+    sint32_t channel;                 /* 通道号, 录音通道,放音通道? */
 } current_rec_file_info_t;
 
 /* 文件头结构体 */
@@ -169,7 +170,7 @@ typedef struct __attribute__((packed)) /* 按照字节对齐*/
     uint8_t signal_machine_id[VOICE_HEAD_SIGNAL_MACHINE_ID_LEN]; /* 信号机编号 */
     uint8_t signal_machine_type;                                 /* 信号机种类 */
     uint8_t monitor_state;                                       /* 监控状态 */
-    uint8_t reserve2[VOICE_HEAD_RESERVE2_LEN];                   /* Change 15 to 10 */
+    uint8_t reserve2[VOICE_HEAD_RESERVE2_LEN];                   /* 预留2 */
     uint8_t reserve3[VOICE_HEAD_RESERVE3_LEN];                   /* 预留3 */
     uint8_t check_sum;                                           /* 校验和 */
 } voice_head_t;
@@ -341,13 +342,14 @@ sint32_t fm_modify_play_flag(sint32_t fd);
 
 /*******************************************************
  *
- * @brief  修正语音头,增加语音已放音标识和时间.
+ * @brief  从保存最新文件名的配置文件中, 得到最新的语音文件名, 放到name中返回.
  *
- * @param  fd: 文件的句柄
- * @retval 0:成功 -1:失败
+ * @param  *name: 保存最新文件名的配置文件.
+ * @param  bak: 1:备份文件 0:非备份文件
+ * @retval 正确得到最新文件名, 返回0; 否则返回-1
  *
  *******************************************************/
-sint32_t fm_get_file_name(const char *name, sint32_t bak_flag);
+sint32_t fm_get_file_name(const char *name, sint32_t bak);
 
 /*******************************************************
  *

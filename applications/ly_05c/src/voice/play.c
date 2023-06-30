@@ -61,7 +61,6 @@ typedef struct
 {
     char name[PLAY_FILE_NAME_LEN]; /* 文件名 */
     sint32_t offset;               /* 数据偏移地址 */
-    /* todo, 根据实际情况选择是否播放. */
 } play_file_info_t;
 
 /* 提示音播放列表数据结构 */

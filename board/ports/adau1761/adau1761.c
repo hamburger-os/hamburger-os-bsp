@@ -250,7 +250,7 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
 
     R11_0x4011_ALC_0 r11 = {
         .ALCSEL = 0b011,
-        .ALCMAX = 0b010,
+        .ALCMAX = 0b110,
         .PGASLEW = 0b00,
     };
     adau1761_program(ADDR_R11_0x4011_ALC_0, (uint8_t *)&r11, sizeof(R11_0x4011_ALC_0));

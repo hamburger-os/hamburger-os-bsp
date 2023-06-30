@@ -49,15 +49,15 @@
 /* 转储模式 */
 typedef enum
 {
-    CopyMode_New = 0, /* 转储最新文件模式 */
-    CopyMode_All = 1  /* 转储全部文件模式 */
+    COPYMODE_NEW = 0, /* 转储最新文件模式 */
+    COPYMODE_ALL = 1  /* 转储全部文件模式 */
 } E_CopyMode;
 
 /* 备份模式 */
 typedef enum
 {
-    Backup_No = 0, /* 只是复制文件到U盘 */
-    Backup_Ok = 1  /* 先复制文件到U盘,再备份文件 */
+    BACKUP_NO = 0, /* 只是复制文件到U盘 */
+    BACKUP = 1  /* 先复制文件到U盘,再备份文件 */
 } E_Backup;
 
 /*******************************************************
@@ -225,13 +225,13 @@ static sint32_t change_file_date(const char *filename)
         {
             close(fd);
             /**
-             * sint32_t tm_sec 代表目前秒数,正常范围为0-59,但允许至61秒
-             * sint32_t tm_sec 代表目前秒数,正常范围为0-59,但允许至61秒
-             * sint32_t tm_min 代表目前分数,范围0-59
-             * sint32_t tm_hour 从午夜算起的时数,范围为0-23
-             * sint32_t tm_mday 目前月份的日数,范围01-31
-             * sint32_t tm_mon 代表目前月份,从一月算起,范围从0-11
-             * sint32_t tm_year 从1900 年算起至今的年数
+             * tm_sec 代表目前秒数,正常范围为0-59,但允许至61秒
+             * tm_sec 代表目前秒数,正常范围为0-59,但允许至61秒
+             * tm_min 代表目前分数,范围0-59
+             * tm_hour 从午夜算起的时数,范围为0-23
+             * tm_mday 目前月份的日数,范围01-31
+             * tm_mon 代表目前月份,从一月算起,范围从0-11
+             * tm_year 从1900 年算起至今的年数
              */
             year = get_year(file_head.date_time) + 2000 - 1900;
             month = get_month(file_head.date_time) - 1;
@@ -512,6 +512,7 @@ static sint32_t store_file(const char *source, const char *target, sint32_t mode
  * @retval sint32_t 0:成功 -1:失败
  *
  *******************************************************/
+
 static sint32_t usb_auto_copy(E_CopyMode mode)
 {
     sint32_t udisk_free_space;
@@ -520,15 +521,16 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
     char logname[PATH_NAME_MAX_LEN];
 
     /* 获取最新语音文件名.*/
-    fm_get_file_name(latest_filename, 0);
-    create_dir(TARGET_DIR_NAME);     /* 在U盘目录中建立语音文件目录 */
+    fm_get_file_name(latest_filename, SRC_FILE);
+    /* 建立U盘目录 */
+    create_dir(TARGET_DIR_NAME); /* 在U盘目录中建立语音文件目录 */
     create_dir(YUYIN_BAK_PATH_NAME); /* 建立语音文件的备份的目录 */
 
     /* step1: 查看所有文件的大小 */
     /* U盘的剩余空间大小 */
     udisk_free_space = get_disk_free_space(YUYIN_PATH_NAME);
     /* 所有文件的大小 */
-    if (mode == CopyMode_All)
+    if (mode == COPYMODE_ALL)
     {
         voice_size = dir_size(YUYIN_PATH_NAME);
     }
@@ -537,7 +539,7 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
         voice_size = dir_size(YUYIN_PATH_NAME) - dir_size(YUYIN_BAK_PATH_NAME);
     }
     /* U盘没有剩余空间, 则播放提示音 */
-    if (udisk_free_space == -1)
+    if (udisk_free_space < 0)
     {
         /* 播放提示音, U盘转储失败 */
         event_push_queue(EVENT_DUMP_USB_FULL);
@@ -549,7 +551,8 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
     }
     if (voice_size / 1024 > udisk_free_space)
     {
-        log_print(LOG_ERROR, "U盘空间不够! U盘剩余空间:%dK, 语音文件大小:%dKB.\n", udisk_free_space, voice_size / 1024);
+        log_print(LOG_ERROR, "U盘空间不够! U盘剩余空间:%dK, 语音文件大小:%dKB.\n",
+                  udisk_free_space, voice_size / 1024);
         /* 播放语音提示, U盘已满 */
         event_push_queue(EVENT_DUMP_USB_FULL);
         return (sint32_t)-1;
@@ -559,13 +562,13 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
     }
 
     /* step2: 转储语音文件 */
-    if (mode == CopyMode_All) /* 开始转储全部文件 */
+    if (mode == COPYMODE_ALL) /* 开始转储全部文件 */
     {
         log_print(LOG_INFO, "转储全部语音文件到U盘 ...\n");
         /* 播放提示音, 开始转储全部文件 */
         event_push_queue(EVENT_DUMP_START_ALL);
         /* 把"yysj/bak"目录下面的所有文件复制到U盘 */
-        if (store_file(YUYIN_BAK_PATH_NAME, TARGET_DIR_NAME, Backup_No) != 0)
+        if (store_file(YUYIN_BAK_PATH_NAME, TARGET_DIR_NAME, BACKUP_NO) != 0)
         {
             /* 播放提示音,转储失败 */
             log_print(LOG_ERROR, "转储失败.\n");
@@ -586,7 +589,7 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
     /* step3:转储日志文件 */
     /* 搜索"yysj/目录"下面的所有文件, 把语音文件分别复制到U盘, 并把文件移动到bak子目录中 */
     log_print(LOG_INFO, "开始转储、移动yysj/目录下的文件. \n");
-    if (store_file(YUYIN_PATH_NAME, TARGET_DIR_NAME, Backup_Ok))
+    if (store_file(YUYIN_PATH_NAME, TARGET_DIR_NAME, BACKUP))
     {
         log_print(LOG_ERROR, "转储失败.\n");
         event_push_queue(EVENT_DUMP_FAIL);
@@ -606,7 +609,7 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
     {
     }
 
-    if (mode == CopyMode_All)
+    if (mode == COPYMODE_ALL)
     {
         /* 播放语音提示, 转储全部文件完成. */
         event_push_queue(EVENT_DUMP_END_ALL);
@@ -617,6 +620,7 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
         event_push_queue(EVENT_DUMP_END_LAST);
     }
     log_print(LOG_INFO, "转储完成. \n");
+
     return 0;
 }
 
@@ -765,13 +769,13 @@ static void usb_thread(void *args)
             break;
         case DUMP_STATE_DUMPING: /* 转储文件中 */
             mode = (E_CopyMode)rt_pin_read(new_all_pin);
-            if (mode == CopyMode_All) /* 转储全部文件 */
+            if (mode == COPYMODE_ALL) /* 转储全部文件 */
             {
-                ret = usb_auto_copy(CopyMode_All);
+                ret = usb_auto_copy(COPYMODE_ALL);
             }
             else /* 转储最新文件 */
             {
-                ret = usb_auto_copy(CopyMode_New);
+                ret = usb_auto_copy(COPYMODE_NEW);
             }
             if (ret < 0)
             {

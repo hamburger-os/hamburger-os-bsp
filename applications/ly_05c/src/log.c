@@ -117,8 +117,12 @@ void log_print(sint32_t level, const char *format, ...)
     if (fd >= 0)
     {
         write(fd, log_buffer, strlen(log_buffer));
-        fsync(fd); /* 使用fflush不行 */
-        /* 文件系统特性, 文件处于打开状态, 则不能删除这个文件; 所以写入一次日志信息, 需要关闭一次文件, 防止干扰其他线程操作这个文件, 比较耗时. */
+        fsync(fd); /* 使用fflush不行*/
+        /**
+         文件系统特性, 文件处于打开状态, 则不能删除这个文件; 
+         所以写入一次日志信息, 需要关闭一次文件, 防止干扰其
+         他线程操作这个文件, 比较耗时. 
+        */
         if (close(fd) >= 0)
         {
             fd = -1;

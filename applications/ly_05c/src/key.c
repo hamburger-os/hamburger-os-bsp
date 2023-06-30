@@ -83,7 +83,6 @@ static void key_play_irq(const void *args);
  * @retval void * 线程结束数据
  *
  *******************************************************/
-
 static void *key_thread(void *args)
 {
     rt_err_t ret = 0;
@@ -135,7 +134,6 @@ static void *key_thread(void *args)
                 {
                     /* 抖动,不做任何处理 */
                 }
-
                 break;
             case KEY_CREC1_MSG:
                 /* 读取key的值 */
@@ -233,7 +231,6 @@ static void key_crec1_irq(const void *args)
     }
     else
     {
-
         /* 表明有电平变化发生 */
         rt_mq_send(key_mq, (void *)&msg, sizeof(msg));
     }
@@ -257,7 +254,6 @@ static void key_play_irq(const void *args)
     }
     else
     {
-
         /* 表明有电平变化发生 */
         rt_mq_send(key_mq, (void *)&msg, sizeof(msg));
     }
