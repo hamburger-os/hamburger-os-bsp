@@ -89,7 +89,7 @@ static sint32_t change_file_date(const char *filename);
 /* 将文件(from)拷贝到文件(to)中去 */
 static sint32_t copy_file(const char *from, const char *to);
 /* 转储语音文件到U盘. 如果mode为0, 只是复制文件到U盘;mode为1, 先复制文件到U盘,再备份文件 */
-static sint32_t store_file(const char *source, const char *target, sint32_t mode);
+static sint32_t store_file(const char *src, const char *target, sint32_t mode);
 /* 将语音文件自动转储到U盘中 */
 static sint32_t usb_auto_copy(E_CopyMode mode);
 /* USB转储线程入口函数 */
@@ -404,16 +404,16 @@ static sint32_t copy_file(const char *from, const char *to)
 }
 /*******************************************************
  *
- * @brief  转储语音文件到U盘.如果mode为0,只是复制文件到U盘;mode为1,先复制文件到U盘,再备份文件
+ * @brief  转储语音文件到U盘.如果mode为0,只是复制文件到U盘;mode为1,先复制文件到U盘,再备份文件.
  *
- * @param  *source: 语音文件在板子上的存储路径
- * @param  *target: U盘中保存语音文件的路径
- * @param  mode: 转储的方式;mode为0,只复制文件到U盘;mode为1,先复制文件到U盘,再备份文件
+ * @param  *src: 语音文件在板子上的存储路径.
+ * @param  *target: U盘中保存语音文件的路径.
+ * @param  mode: 转储的方式; mode为0,只复制文件到U盘; mode为1,先复制文件到U盘,再备份文件.
  * @retval 0:成功 非0:失败
  *
  *******************************************************/
-
-static sint32_t store_file(const char *source, const char *target, sint32_t mode)
+// todo, 增加文件列表大小限制.
+static sint32_t store_file(const char *src, const char *target, sint32_t mode)
 {
     char *name = NULL;
     char targetname[PATH_NAME_MAX_LEN]; /* 用于存放目标文件名 */
@@ -421,11 +421,11 @@ static sint32_t store_file(const char *source, const char *target, sint32_t mode
     sint32_t error = 0, pathlen;
     file_info_t *p_file_list_head = NULL, *p = NULL;
 
-    p_file_list_head = get_org_file_info(source);
-
+    /* 获取文件列表 */
+    p_file_list_head = get_org_file_info(src);
     if (p_file_list_head != NULL)
     {
-        /* 如果目录中有文件,则按照文件序号,先转储序号最小的文件 */
+        /* 如果目录中有文件, 则按照文件序号, 先转储序号最小的文件 */
         p_file_list_head = sort_link(p_file_list_head, SORT_DOWN);
         show_link(p_file_list_head);
         p = p_file_list_head;

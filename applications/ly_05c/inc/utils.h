@@ -171,4 +171,15 @@ uint32_t file_size(char *name);
  *******************************************************/
 
 int delete_file(const char *path);
+
+/*******************************************************
+ *
+ * @brief  递归拷贝文件夹
+ *
+ * @param src 源目录
+ * @param dest 目标目录
+ * @retval none
+ *
+ *******************************************************/
+void copy_files(const char *src, const char *dest);
 #endif

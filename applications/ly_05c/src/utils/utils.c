@@ -270,6 +270,7 @@ file_info_t *sort_link(file_info_t *h, sint32_t flag)
     else
     {
     }
+
     u->next = h;
     h = u;
     for (endpt = NULL; endpt != h; endpt = p)
@@ -640,34 +641,34 @@ int delete_file(const char *path)
  *
  * @brief  递归拷贝文件夹
  *
- * @param source 源目录
- * @param destination 目标目录
+ * @param src 源目录
+ * @param dest 目标目录
  * @retval none
  *
  *******************************************************/
-void copy_files(const char *source, const char *destination)
+void copy_files(const char *src, const char *dest)
 {
     DIR *dir;
     struct dirent *entry;
     struct stat statbuf;
-    char source_path[PATH_NAME_MAX_LEN];
-    char destination_path[PATH_NAME_MAX_LEN];
+    char src_path[PATH_NAME_MAX_LEN];
+    char dest_path[PATH_NAME_MAX_LEN];
 
-    dir = opendir(source);
+    dir = opendir(src);
     if (dir == NULL)
     {
-        printf("can not open source directory\n");
+        printf("can not open src directory\n");
         return;
     }
 
     while ((entry = readdir(dir)) != NULL)
     {
         /* 构建源文件/目录路径*/
-        snprintf(source_path, sizeof(source_path), "%s/%s", source, entry->d_name);
+        snprintf(src_path, sizeof(src_path), "%s/%s", src, entry->d_name);
         /* 构建目标文件/目录路径*/
-        snprintf(destination_path, sizeof(destination_path), "%s/%s", destination, entry->d_name);
+        snprintf(dest_path, sizeof(dest_path), "%s/%s", dest, entry->d_name);
 
-        if (stat(source_path, &statbuf) == -1)
+        if (stat(src_path, &statbuf) == -1)
         {
             printf("can not get file stats.\n");
             continue;
@@ -680,43 +681,43 @@ void copy_files(const char *source, const char *destination)
             {
                 continue;
             }
-            if (mkdir(destination_path, statbuf.st_mode) == -1)
+            if (mkdir(dest_path, statbuf.st_mode) == -1)
             {
                 printf("can not create directory.\n");
                 continue;
             }
-            copy_files(source_path, destination_path);
+            copy_files(src_path, dest_path);
         }
         else
         {
             /* 如果是文件,则拷贝文件*/
-            FILE *source_file = fopen(source_path, "rb");
-            if (source_file == NULL)
+            FILE *src_file = fopen(src_path, "rb");
+            if (src_file == NULL)
             {
-                printf("can not opening source file. \n");
+                printf("can not opening src file. \n");
                 continue;
             }
 
-            FILE *destination_file = fopen(destination_path, "wb");
-            if (destination_file == NULL)
+            FILE *dest_file = fopen(dest_path, "wb");
+            if (dest_file == NULL)
             {
-                printf("can not create destination file.\n");
-                fclose(source_file);
+                printf("can not create dest file.\n");
+                fclose(src_file);
                 continue;
             }
 
-            printf("cp %s %s\n", source_path, destination_path);
+            printf("cp %s %s\n", src_path, dest_path);
             char buffer[FILE_COPY_BUFF_SIZE];
             size_t bytes_read;
-            while ((bytes_read = fread(buffer, 1, sizeof(buffer), source_file)) > 0)
+            while ((bytes_read = fread(buffer, 1, sizeof(buffer), src_file)) > 0)
             {
-                fwrite(buffer, 1, bytes_read, destination_file);
+                fwrite(buffer, 1, bytes_read, dest_file);
             }
 
-            fclose(source_file);
-            source_file = NULL;
-            fclose(destination_file);
-            destination_file = NULL;
+            fclose(src_file);
+            src_file = NULL;
+            fclose(dest_file);
+            dest_file = NULL;
         }
     }
 

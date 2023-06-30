@@ -63,7 +63,7 @@ sint32_t check_disk_full(const char *name)
     sint32_t used_size;
 
     used_size = dir_size(name) / 1000;
-    if (used_size == -1)
+    if (used_size < 0)
     {
         return 0; /* todo, 无法获取,则认为不满, 避免??? */
     }
@@ -113,7 +113,7 @@ sint32_t free_space(void)
     if (p_file_list_head != NULL)
     {
         /* 如果目录中有文件,则按照文件序号,先删除序号最小的文件. */
-        p_file_list_head = sort_link(p_file_list_head, SORT_UP); 
+        p_file_list_head = sort_link(p_file_list_head, SORT_UP);
         show_link(p_file_list_head);
         p = p_file_list_head;
         while (p != NULL)
@@ -257,10 +257,11 @@ static sint32_t fm_check_voice_head(char *data)
 
 /*******************************************************
  *
- * @brief  分析文件名为filename的语音文件, 把相应信息放到g_cur_rec_file_info结构体中保存
+ * @brief  分析文件名为filename的语音文件, 把相应信息放到
+ *         g_cur_rec_file_info结构体中保存
  *
  * @param  *filename: 文件名filename
- * @retval 文件正常,返回0;出现错误返回-1.
+ * @retval 文件正常, 返回0; 出现错误返回-1.
  *
  *******************************************************/
 static sint32_t fm_analyze_file(char *filename)
@@ -371,7 +372,8 @@ static sint32_t fm_analyze_file(char *filename)
                         sint32_t fill_len;
                         char fill_buf[PAGE_SIZE];
 
-                        log_print(LOG_INFO, "上次录音时掉电, 偏移%d, 实际大小%ld. \n", last_voice_head_offset, stat_l.st_size);
+                        log_print(LOG_INFO, "上次录音时掉电, 偏移%d, 实际大小%ld. \n",
+                                  last_voice_head_offset, stat_l.st_size);
                         last_voice_head_offset = lseek(fd, 0, SEEK_CUR) - ret - PAGE_SIZE;
 
                         g_cur_rec_file_info.voices_num = voices_num + 1;
