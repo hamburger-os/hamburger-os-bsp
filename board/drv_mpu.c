@@ -145,6 +145,19 @@ static MPU_Region_InitTypeDef mpu_cfg[] =
     },
 #endif
 
+#ifdef BSP_USE_ETH3
+    {
+        .BaseAddress = 0x60000000 + ETH3_NE/2*0x4000000,
+        .Size = MPU_REGION_SIZE_64MB,
+        .SubRegionDisable = 0x0,
+        .TypeExtField = MPU_TEX_LEVEL0,
+        .AccessPermission = MPU_REGION_FULL_ACCESS,
+        .DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE,
+        .IsCacheable = MPU_ACCESS_NOT_CACHEABLE,
+        .IsBufferable = MPU_ACCESS_NOT_BUFFERABLE,
+    },
+#endif
+
 #ifdef BSP_USING_SDRAM
     {
         .BaseAddress = SDRAM_BANK_ADDR,

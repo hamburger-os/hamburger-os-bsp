@@ -327,8 +327,7 @@ int Max3182x_ReadTemp(rt_uint16_t * u16p_temp_value)
   rt_uint16_t u16_Temp = 0;
   U_MAX31826Memory u_DS_mem;
 
-  rt_hw_us_delay(58711);
-  rt_hw_us_delay(58712);
+  rt_thread_delay(118);
 
   /* 跳过读序号列号的操作 */
   DEV_MAX31826_WriteBit(MAX31826_CMD_SKIP_ROM);
