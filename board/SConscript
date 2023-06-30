@@ -147,9 +147,8 @@ if GetDepend(['BSP_USING_LVGL']):
         
 if GetDepend(['BSP_USING_TOUCH']):
     src += Glob('ports/atk_touch/drv_touch.c')
-    src += Glob('ports/atk_touch/drv_touch_ft.c')
-    src += Glob('ports/atk_touch/drv_touch_xpt.c')
-    src += Glob('ports/atk_touch/drv_xpt2046_init.c')
+    if GetDepend(['TOUCH_USING_XPT2046']):
+        src += Glob('ports/atk_touch/xpt2046.c')
     path += [cwd + '/ports/atk_touch']
         
 if GetDepend(['BSP_USING_WM8978']):

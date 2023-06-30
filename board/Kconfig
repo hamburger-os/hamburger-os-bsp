@@ -2467,6 +2467,10 @@ menu "Onboard Peripheral Drivers"
                     config TOUCH_XPT2046_CS_PIN
                         string "pin name for the chip select pin, default: PC.13"
                         default "PC.13"
+                        
+                    config TOUCH_XPT2046_SPI_SPEED
+                        int "Set the rate of spi, default: (2 * 1000 *1000)"
+                        default (2000000)
                 endif
             endif
             
