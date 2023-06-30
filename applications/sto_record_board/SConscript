@@ -9,6 +9,7 @@ CPPPATH = [cwd, cwd + '/inc']
 src =  Split('''
     led_ctrl.c
     sto_record_board.c
+    eth_manage.c
     '''
     )
 
