@@ -336,18 +336,18 @@ struct fal_flash_dev emmc_flash =
     .write_gran = 32,
 };
 
-static void emmc_thread_entry(void* parameter)
-{
-    uint8_t data[EMMC_BLK_SIZE];
-    while(1)
-    {
-        rt_thread_delay(1000*60);
-        if (fal_emmc_read(0, data, EMMC_BLK_SIZE) != EMMC_BLK_SIZE)
-        {
-            LOG_E("heartbeat read error!");
-        }
-    }
-}
+//static void emmc_thread_entry(void* parameter)
+//{
+//    uint8_t data[EMMC_BLK_SIZE];
+//    while(1)
+//    {
+//        rt_thread_delay(1000*60);
+//        if (fal_emmc_read(0, data, EMMC_BLK_SIZE) != EMMC_BLK_SIZE)
+//        {
+//            LOG_E("heartbeat read error!");
+//        }
+//    }
+//}
 
 static int fal_emmc_init(void)
 {
@@ -371,17 +371,17 @@ static int fal_emmc_init(void)
     else
         emmc_flash.len = CardInfo.LogBlockNbr * CardInfo.LogBlockSize;
 
-    //触发心跳读取
-    rt_thread_t emmc_thread = rt_thread_create( "emmc",
-                                     emmc_thread_entry,
-                                     NULL,
-                                     2048,
-                                     RT_THREAD_PRIORITY_MAX-3,
-                                     10);
-    if ( emmc_thread != RT_NULL)
-    {
-        rt_thread_startup(emmc_thread);
-    }
+    //触发心跳读取(当数据引脚有上拉时，不再需要心跳读取即可保持总线正确)
+//    rt_thread_t emmc_thread = rt_thread_create( "emmc",
+//                                     emmc_thread_entry,
+//                                     NULL,
+//                                     2048,
+//                                     RT_THREAD_PRIORITY_MAX-3,
+//                                     10);
+//    if ( emmc_thread != RT_NULL)
+//    {
+//        rt_thread_startup(emmc_thread);
+//    }
 
     LOG_I("init succeed %d MB [ %d block ] --> %d MB [ %d block ]"
         , CardInfo.LogBlockNbr / 1024 * CardInfo.LogBlockSize / 1024
@@ -443,6 +443,7 @@ static int fal_emmc_read(long offset, rt_uint8_t *buffer, size_t size)
             LOG_E("ReadBlocks comple Error (0x%p) %d %d", blk_addr, 1, ret);
         }
         rt_memcpy(buffer, emmc_obj.aRxBuffer, MMC_BLOCKSIZE);
+        LOG_HEX("rd", 16, (uint8_t *)buffer, MMC_BLOCKSIZE);
 
         nblk--;
         blk_addr++;
@@ -520,6 +521,7 @@ static int fal_emmc_write(long offset, const rt_uint8_t *buffer, size_t size)
         {
             LOG_E("WriteBlocks comple Error (0x%p) %d %d", blk_addr, 1, ret);
         }
+        LOG_HEX("wr", 16, (uint8_t *)buffer, MMC_BLOCKSIZE);
 
         nblk--;
         blk_addr++;
