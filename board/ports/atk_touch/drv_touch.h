@@ -14,42 +14,17 @@
 #include "rtthread.h"
 #include "rtdevice.h"
 
-#define TOUCH_DBG_LEVEL DBG_INFO
-
-#define IIC_RETRY_NUM 2
-
-#define TOUCH_EVENT_UP      (0x01)
-#define TOUCH_EVENT_DOWN    (0x02)
-#define TOUCH_EVENT_MOVE    (0x03)
-#define TOUCH_EVENT_NONE    (0x80)
-
-struct touch_message
+struct _rt_drv_touch
 {
-    rt_uint16_t x;
-    rt_uint16_t y;
-    rt_uint8_t event;
-};
-typedef struct touch_message *touch_msg_t;
+    uint16_t min_raw_x;
+    uint16_t min_raw_y;
+    uint16_t max_raw_x;
+    uint16_t max_raw_y;
 
-struct touch_ops
-{
-    void (* isr_enable)(rt_bool_t);
-    rt_err_t (* read_point)(touch_msg_t);
-    void (* init)(struct rt_i2c_bus_device *);
-    void (* deinit)(void);
+    struct rt_touch_device dev;
+    struct rt_spi_device *spidev;
 };
-typedef struct touch_ops *touch_ops_t;
 
-struct touch_drivers
-{
-    rt_list_t       list;
-    unsigned char   address;
-    rt_bool_t (*probe)(struct rt_i2c_bus_device *i2c_bus);
-    rt_sem_t        isr_sem;
-    touch_ops_t     ops;
-    void           *user_data;
-};
-typedef struct touch_drivers *touch_drv_t;
+int drv_touch_bus_init(struct _rt_drv_touch *config);
 
-extern void rt_touch_drivers_register(touch_drv_t drv);
 #endif

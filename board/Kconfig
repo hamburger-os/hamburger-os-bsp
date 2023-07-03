@@ -2354,12 +2354,12 @@ menu "Onboard Peripheral Drivers"
                 default BSP_USING_LCD_RGB
 
                 config BSP_USING_LCD_RGB
-                    bool "Enable LCD RGB565"
+                    bool "Enable LCD LTDC"
                     select BSP_USING_LCD
                     select RT_TOUCH_PIN_IRQ
                     
                 config BSP_USING_FMCLCD
-                    bool "Enable ATK LCD"
+                    bool "Enable LCD FMC"
                     select BSP_USING_FMC
                     select BSP_USING_SRAM
             endchoice
@@ -2440,42 +2440,38 @@ menu "Onboard Peripheral Drivers"
                 config BSP_USING_NONETOUCH
                     bool "Disable TOUCH"
 
-                config BSP_USING_ATKTOUCH
-                    bool "Enable ATK LCD TOUCH"
-            endchoice
-            
-            if BSP_USING_ATKTOUCH
-                config BSP_USING_TOUCH_CAP
-                    bool "Use LCD TOUCH Capacitance"
-                    default n
-                    if BSP_USING_TOUCH_CAP
-                        config BSP_TOUCH_I2C_DEVNAME
-                            string "Touch i2c devname, default: i2c2"
-                            default "i2c2"
-                            
-                        config BSP_TOUCH_INT_PIN
-                            string "Touch interrupt pin, default: PB.1"
-                            default "PB.1"
-                    endif
-    
-                config BSP_USING_TOUCH_RES
-                    bool "Use LCD TOUCH Resistance"
+                config BSP_USING_TOUCH
+                    bool "Enable TOUCH"
                     select RT_USING_TOUCH
                     select RT_TOUCH_PIN_IRQ
-                    default y
-                    if BSP_USING_TOUCH_RES
-                        config BSP_TOUCH_SPI_BUS
-                            string "Set the spi bus used, default: sspi1"
-                            default "sspi1"
-                            
-                        config BSP_XPT2046_CS_PIN
-                            string "pin name for the chip select pin, default: PC.13"
-                            default "PC.13"
-    
-                        config BSP_XPT2046_IRQ_PIN
-                            string "pin name for the irq pin, default: PB.1"
-                            default "PB.1"
-                    endif
+            endchoice
+            
+            if BSP_USING_TOUCH
+                choice
+                    prompt "Select touch driver"
+                    default TOUCH_USING_XPT2046
+                    
+                    config TOUCH_USING_XPT2046
+                        bool "Enable touch driver xpt2046"
+                endchoice
+                
+                config TOUCH_IRQ_PIN
+                    string "pin name for the irq pin, default: PB.1"
+                    default "PB.1"
+                
+                if TOUCH_USING_XPT2046
+                    config TOUCH_XPT2046_SPI_BUS
+                        string "Set the spi bus used, default: sspi1"
+                        default "sspi1"
+                        
+                    config TOUCH_XPT2046_CS_PIN
+                        string "pin name for the chip select pin, default: PC.13"
+                        default "PC.13"
+                        
+                    config TOUCH_XPT2046_SPI_SPEED
+                        int "Set the rate of spi, default: (2 * 1000 *1000)"
+                        default (2000000)
+                endif
             endif
             
             config BSP_USING_LVGL_DEMO
@@ -2703,8 +2699,8 @@ menu "Onboard Peripheral Drivers"
                 default "PB.14"
                 
             config BSP_SPI_FLASH_SPI_SPEED
-                int "Set the rate of spi, default: (80 * 1000 *1000)"
-                default (80000000)
+                int "Set the rate of spi, default: (50 * 1000 *1000)"
+                default (50000000)
             
             config SPI_FLASH_SIZE_GRANULARITY_TOTAL
                 int "Set storage space size, default: (16 * 1024 * 1024)"
@@ -2819,7 +2815,7 @@ menu "Onboard Peripheral Drivers"
 			            default "PH.2"
 	        	endif
 	        
-	        menuconfig BSP_USE_ETH2
+	          menuconfig BSP_USE_ETH2
 		        bool "Enable ETH port 2"
 		        default n
 		        
@@ -2840,6 +2836,28 @@ menu "Onboard Peripheral Drivers"
 			            string "Set the GPIO of the isr pin, default: PH.3"
 			            default "PH.3"
 	        	endif
+          
+            menuconfig BSP_USE_ETH3
+            bool "Enable ETH port 3"
+            default n
+            
+            if BSP_USE_ETH3
+              config ETH3_NE
+                  hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
+                  default (0x2)
+    
+                config ETH3_CMD
+                  hex "Set the cmd address, default: NE2 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE2 - 1)) | (1 << (A0 + 1))))"
+                  default (0x64000002)
+                  
+              config ETH3_RST
+                  string "Set the GPIO of the reset pin, default: PA.0"
+                  default "PA.0"
+                
+                config ETH3_ISR
+                  string "Set the GPIO of the isr pin, default: PA.1"
+                  default "PA.1"
+            endif
         endif
         
     menuconfig BSP_USING_ETH
