@@ -9,31 +9,30 @@
  *
  *******************************************************/
 
-#ifndef _TYPE_H_
-#define _TYPE_H_
+#ifndef TYPE_H_
+#define TYPE_H_
 
 /*******************************************************
  * 头文件
  *******************************************************/
 
 #include "config.h"
-#include "log.h"
 
 /*******************************************************
  * 重定义
  *******************************************************/
 
-typedef signed char sint8_t;
-typedef unsigned char uint8_t;
+typedef signed char sint8_t;   /* 重定义类型  */
+typedef unsigned char uint8_t; /* 重定义类型  */
 
-typedef signed short sint16_t;
-typedef unsigned short uint16_t;
+typedef signed short sint16_t;   /* 重定义类型  */
+typedef unsigned short uint16_t; /* 重定义类型  */
 
-typedef signed int sint32_t;
-/*在RT_Thread系统中, 其他模块定义了uint32_t,故在此处不定义. */
-/*typedef unsigned int uint32_t; */
+typedef signed int sint32_t; /* 重定义类型  */
+/* 在RT_Thread系统中, 其他模块定义了uint32_t,故在此处不定义. */
+/* typedef unsigned int uint32_t; */
 
-typedef float real32_t;
-typedef float real64_t;
+typedef float real32_t;  /* 重定义类型  */
+typedef double real64_t; /* 重定义类型  */
 
 #endif

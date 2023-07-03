@@ -230,14 +230,14 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
     R8_0x400E_Left_diff_input_vol r8 = {
         .LDEN = 1,
         .LDMUTE = 1,
-        .LDVOL = 0b100000,
+        .LDVOL = 0b110000,
     };
     adau1761_program(ADDR_R8_0x400E_Left_diff_input_vol, (uint8_t *)&r8, sizeof(R8_0x400E_Left_diff_input_vol));
 
     R9_0x400F_Right_diff_input_vol r9 = {
         .RDEN = 1,
         .RDMUTE = 1,
-        .RDVOL = 0b100000,
+        .RDVOL = 0b110000,
     };
     adau1761_program(ADDR_R9_0x400F_Right_diff_input_vol, (uint8_t *)&r9, sizeof(R9_0x400F_Right_diff_input_vol));
 
@@ -249,7 +249,7 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
     adau1761_program(ADDR_R10_0x4010_Record_mic_bias, (uint8_t *)&r10, sizeof(R10_0x4010_Record_mic_bias));
 
     R11_0x4011_ALC_0 r11 = {
-        .ALCSEL = 0b011,
+        .ALCSEL = 0b000,
         .ALCMAX = 0b010,
         .PGASLEW = 0b00,
     };
@@ -269,7 +269,7 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
 
     R14_0x4014_ALC_3 r14 = {
         .NGTHR = 0b10000,
-        .NGEN = 0,
+        .NGEN = 1,
         .NGTYP = 0b11,
     };
     adau1761_program(ADDR_R14_0x4014_ALC_3, (uint8_t *)&r14, sizeof(R14_0x4014_ALC_3));
@@ -317,12 +317,12 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
     adau1761_program(ADDR_R19_0x4019_ADC_control, (uint8_t *)&r19, sizeof(R19_0x4019_ADC_control));
 
     R20_0x401A_Left_digital_vol r20 = {
-        .LADVOL = 0b10100000,
+        .LADVOL = 0b00000000,
     };
     adau1761_program(ADDR_R20_0x401A_Left_digital_vol, (uint8_t *)&r20, sizeof(R20_0x401A_Left_digital_vol));
 
     R21_0x401B_Right_digital_vol r21 = {
-        .RADVOL = 0b10100000,
+        .RADVOL = 0b00000000,
     };
     adau1761_program(ADDR_R21_0x401B_Right_digital_vol, (uint8_t *)&r21, sizeof(R21_0x401B_Right_digital_vol));
 

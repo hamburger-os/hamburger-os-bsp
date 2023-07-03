@@ -4,17 +4,17 @@
  * @Date: 2023-05-24 16:06:26
  * @Author: ccy
  * @Description: 事件管理模块头文件.
- * 
- * Copyright (c) 2023 by thinker, All Rights Reserved. 
  *
-*******************************************************/
+ * Copyright (c) 2023 by thinker, All Rights Reserved.
+ *
+ *******************************************************/
 
-#ifndef _EVENT_H_
-#define _EVENT_H_
+#ifndef EVENT_H_
+#define EVENT_H_
 
 /*******************************************************
  * 头文件
-*******************************************************/
+ *******************************************************/
 
 #include "pthread.h"
 #include "type.h"
@@ -22,8 +22,8 @@
 
 /*******************************************************
  * 数据结构
-*******************************************************/
-typedef enum 
+ *******************************************************/
+typedef enum
 {
     /* 转储事件 */
     EVENT_PLUG_IN_USB,      /* 插上U盘 */
@@ -61,8 +61,15 @@ typedef enum
     EVENT_WORK_NORMAL, /* 工作正常 */
     EVENT_WORK_ERROR,  /* 工作故障 */
 
+    /* 文件管理事件 */
+    EVENT_SYS_WORK_OK,  /* 系统工作正常 */
+    EVENT_SYS_WORK_ERR, /* 系统工作错误 */
+
+    /* 设备启动 */
+    EVENT_DEVICE_START, /* 设备已经启动 */
+
     /* 无效事件 */
-    EVENT_INVALID, 
+    EVENT_INVALID,
 
 } E_EVENT;
 
@@ -84,7 +91,7 @@ void event_push_queue(E_EVENT event);
  * @retval 0:成功 -1:失败
  *
  *******************************************************/
-int event_init(void);
+sint32_t event_init(void);
 
 /*******************************************************
  *

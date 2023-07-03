@@ -9,26 +9,39 @@
  *
  *******************************************************/
 
-#ifndef _UTILS_H_
-#define _UTILS_H_
+#ifndef UTILS_H_
+#define UTILS_H_
+
+#include "type.h"
 
 /*******************************************************
  * 宏定义
  *******************************************************/
 
-/*路径的最大长度 */
+/* 路径的最大长度 */
 #define PATH_NAME_MAX_LEN 256
 
+/* 文件操作的定义 */
+#ifndef SEEK_SET
+#define SEEK_SET 0 /* set file offset to offset */
+#endif
+#ifndef SEEK_CUR
+#define SEEK_CUR 1 /* set file offset to current plus offset */
+#endif
+#ifndef SEEK_END
+#define SEEK_END 2 /* set file offset to EOF plus offset */
+#endif
+
 /*******************************************************
  * 宏定义
  *******************************************************/
 
-/*VSW文件的信息 */
-typedef struct _file_info_t
+/* VSW文件的信息,单个条目大小268字节 */
+typedef struct file_info_t
 {
-    unsigned int file_id;             /* 文件序号 */
-    int file_size;                    /* 文件大小 */
-    struct _file_info_t *next;        /* 下一文件 */
+    uint32_t file_id;                 /* 文件序号 */
+    sint32_t file_size;               /* 文件大小 */
+    struct file_info_t *next;         /* 下一文件 */
     char filename[PATH_NAME_MAX_LEN]; /* 文件名 */
 } file_info_t;
 
@@ -51,20 +64,20 @@ char *get_sigle_file_name(char *full_path);
  * @brief  判断EMMC存储器是满
  *
  * @param  *args: 参数描述
- * @retval int 0:不满 -1:已满
+ * @retval sint32_t 0:不满 -1:已满
  *
  *******************************************************/
-int is_disk_full(char *name);
+sint32_t check_disk_full(const char *name);
 
 /*******************************************************
  *
  * @brief  获取U盘剩余空间,单位:KB
  *
  * @param  *path: U盘的文件目录
- * @retval int 剩余空间大小
+ * @retval sint32_t 剩余空间大小
  *
  *******************************************************/
-int get_disk_free_space(const char *path);
+sint32_t get_disk_free_space(const char *path);
 
 /*******************************************************
  *
@@ -74,7 +87,7 @@ int get_disk_free_space(const char *path);
  * @retval 正数:文件的大小 负数:失败
  *
  *******************************************************/
-int dir_size(char *name);
+sint32_t dir_size(const char *name);
 
 /*******************************************************
  *
@@ -85,7 +98,7 @@ int dir_size(char *name);
  * @retval file_info_t * 文件列表
  *
  *******************************************************/
-file_info_t *get_org_file_info(char *path);
+file_info_t *get_org_file_info(const char *path);
 
 /*******************************************************
  *
@@ -96,7 +109,7 @@ file_info_t *get_org_file_info(char *path);
  * @retval 排序好的文件列表
  *
  *******************************************************/
-file_info_t *sort_link(file_info_t *h, int flag);
+file_info_t *sort_link(file_info_t *h, sint32_t flag);
 
 /*******************************************************
  *
@@ -123,10 +136,10 @@ void free_link(file_info_t *list_head);
  * @brief  递归创建目录
  *
  * @param  *path: 被创建的目录路径
- * @retval int 0:成功 负数:失败
+ * @retval sint32_t 0:成功 负数:失败
  *
  *******************************************************/
-int create_dir(const char *path);
+sint32_t create_dir(const char *path);
 
 /*******************************************************
  *
@@ -136,7 +149,7 @@ int create_dir(const char *path);
  * @retval 0:成功 负数:失败
  *
  *******************************************************/
-int create_file(const char *path);
+sint32_t create_file(const char *path);
 
 /*******************************************************
  *
@@ -146,6 +159,27 @@ int create_file(const char *path);
  * @retval 正数:文件的大小 负数:失败
  *
  *******************************************************/
-long file_size(char *name);
+uint32_t file_size(char *name);
 
+/*******************************************************
+ *
+ * @brief  递归删除文件夹或者文件
+ *
+ * @param  *path: 文件夹或者文件路径
+ * @retval 0:成功 负数:失败
+ *
+ *******************************************************/
+
+int delete_file(const char *path);
+
+/*******************************************************
+ *
+ * @brief  递归拷贝文件夹
+ *
+ * @param src 源目录
+ * @param dest 目标目录
+ * @retval none
+ *
+ *******************************************************/
+void copy_files(const char *src, const char *dest);
 #endif

@@ -1,29 +1,31 @@
 /*******************************************************
  *
- * @FileName: log.c
+ * @FileName: rtc.h
  * @Date: 2023-05-24 16:06:26
  * @Author: ccy
- * @Description: 按键模块的头文件
+ * @Description: 用于访问系统时间.
  *
  * Copyright (c) 2023 by thinker, All Rights Reserved.
  *
  *******************************************************/
 
-#ifndef KEY_H_
-#define KEY_H_
+#ifndef _RTC_H_
+#define _RTC_H_
 
 /*******************************************************
- * 函数声明
+ * 头文件
  *******************************************************/
+
+#include <time.h>
 
 /*******************************************************
  *
- * @brief  初始化key模块
+ * @brief  设置系统时间
  *
- * @param  none
- * @retval sint32_t 0:成功 -1:失败
+ * @param  无
+ * @retval tptr * 系统时间数据.
  *
  *******************************************************/
-sint32_t key_init(void);
+void rtc_setdata(struct tm *ptm);
 
 #endif

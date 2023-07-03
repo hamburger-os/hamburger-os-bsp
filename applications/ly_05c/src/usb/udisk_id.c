@@ -24,16 +24,24 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <sys/types.h>
-#include <sys/wait.h>
 #include <dirent.h>
 #include <errno.h>
 #include <sys/stat.h>
 
 #include "type.h"
 #include "usb.h"
+#include "log.h"
 
 /*******************************************************
  * 函数声明
+ *******************************************************/
+/* 将字符串的的小写转变为大写 */
+static sint32_t to_uppers(char *str);
+/* 模块内部函数, 校验U盘的ID. */
+static sint32_t check_udisk(const char *udisk_id, const char *code_file);
+
+/*******************************************************
+ * 函数实现
  *******************************************************/
 
 /*******************************************************
@@ -44,15 +52,15 @@
  * @retval 0:成功 -1:失败
  *
  *******************************************************/
-static int to_uppers(char *str)
+static sint32_t to_uppers(char *str)
 {
-    int count = 0;
-    while (str[count] != '\0')
+    sint32_t count = 0;
+    while (str[count] != (char)'\0')
     {
-        if (str[count] >= 'a' && str[count] <= 'z')
+        if (((char)'a' <= str[count]) && ((char)'z' >= str[count]))
         {
             /* 小写字母的值比大写字母的值大32,所以转化为大写时,需要减去32. */
-            str[count] -= 32;
+            str[count] = (char)(str[count] - (char)32);
         }
         count++;
     }
@@ -67,23 +75,23 @@ static int to_uppers(char *str)
  * @retval 0:成功 -1:失败
  *
  *******************************************************/
-static int __check_udisk_id(const char *udisk_id, const char *code_file)
+static sint32_t check_udisk(const char *udisk_id, const char *code_file)
 {
-    int i = 0;
-    int fd, ret;
+    sint32_t i = 0;
+    sint32_t fd, ret;
     char udisk_id_coded[USB_KEY_MAX_LEN];
 
     /* 判断是否有空指针 */
     if ((udisk_id == NULL) || (code_file == NULL))
     {
-        return -1;
+        return (sint32_t)-1;
     }
 
-    /* 打开文件 */
+    /* 打开文件, 此处并没有在不同的线程中使用, 故不存在共享资源竞争  */
     fd = open(code_file, O_RDONLY);
     if (fd < 0)
     {
-        return -1;
+        return (sint32_t)-1;
     }
 
     /* 读取U盘的ID */
@@ -91,18 +99,20 @@ static int __check_udisk_id(const char *udisk_id, const char *code_file)
     ret = read(fd, udisk_id_coded, sizeof(udisk_id_coded));
     if (ret < 0)
     {
-        return -1;
+        /* 关闭文件 */
+        close(fd);
+        return (sint32_t)-1;
     }
 
     /* 关闭文件 */
     close(fd);
 
     /* 校验U盘ID */
-    while (udisk_id[i] != '\0')
+    while (udisk_id[i] != (char)'\0')
     {
-        if (udisk_id[i] != (udisk_id_coded[i] ^ 0xAA))
+        if ((uint8_t)udisk_id[i] != (uint8_t)((uint8_t)udisk_id_coded[i] ^ (uint8_t)0xAA))
         {
-            return -1;
+            return (sint32_t)-1;
         }
         i++;
     }
@@ -117,22 +127,24 @@ static int __check_udisk_id(const char *udisk_id, const char *code_file)
  * @retval 0:成功 -1:失败
  *
  *******************************************************/
-int check_udisk_id(char *id)
+sint32_t check_udisk_id(char *id)
 {
-    int ret = 0;
+    sint32_t ret = 0;
 
     if (id == NULL)
-        return -1;
+    {
+        return (sint32_t)-1;
+    }
 
     /* 将key中的小写字母全部转化为大写字母. */
     ret = to_uppers(id);
     if (ret < 0)
     {
         log_print(LOG_ERROR, "to_uppers Err:%d\n", ret);
-        return -1;
+        return (sint32_t)-1;
     }
 
     /* 经过和股份人员沟通, U盘鉴权很少用到, 暂时将此功能给关掉 */
-    /* return __check_udisk_id(id, SW_KEY_FILE_PATH); */
+    /* return check_udisk(id, SW_KEY_FILE_PATH); */
     return 0;
 }

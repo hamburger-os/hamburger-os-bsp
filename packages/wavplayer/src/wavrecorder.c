@@ -180,7 +180,6 @@ static void wavrecord_entry(void *parameter)
     {
         /* read raw data from sound device */
         size = rt_device_read(record.device, 0, record.buffer, WR_BUFFER_SIZE);
-
         if (size)
         {
             fwrite(record.buffer, size, 1, record.fp);

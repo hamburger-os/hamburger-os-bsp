@@ -22,8 +22,8 @@ src =  Split('''
     src/led.c
     src/log.c
     src/upgrade.c
+    src/rtc.c
     ly_05c.c
-    ly_05c_test.c
     '''
     )
 

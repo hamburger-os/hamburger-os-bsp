@@ -1,28 +1,13 @@
 [
  {
-  "path": "/packages/multimedia/LVGL/LVGL", 
-  "ver": "v8.3-latest", 
-  "name": "LVGL"
- }, 
- {
-  "path": "/packages/multimedia/LVGL/lv_music_demo", 
-  "ver": "v0.3.2", 
-  "name": "LV_MUSIC_DEMO"
- }, 
- {
   "path": "/packages/multimedia/wavplayer", 
   "ver": "latest", 
   "name": "WAVPLAYER"
  }, 
  {
-  "path": "/packages/multimedia/helix", 
-  "ver": "v1.0.0", 
-  "name": "HELIX"
- }, 
- {
-  "path": "/packages/multimedia/mp3player", 
+  "path": "/packages/multimedia/3gpp_amrnb", 
   "ver": "latest", 
-  "name": "MP3PLAYER"
+  "name": "AMRNB"
  }, 
  {
   "path": "/packages/system/enhanced-kservice/rt_memcpy_cm", 
@@ -50,6 +35,11 @@
   "name": "CMSIS_RTOS2"
  }, 
  {
+  "path": "/packages/system/FlashDB", 
+  "ver": "v1.1.2", 
+  "name": "FLASHDB"
+ }, 
+ {
   "path": "/packages/system/littlefs", 
   "ver": "latest", 
   "name": "LITTLEFS"
@@ -63,5 +53,10 @@
   "path": "/packages/misc/optparse", 
   "ver": "latest", 
   "name": "OPTPARSE"
+ }, 
+ {
+  "path": "/packages/misc/crclib", 
+  "ver": "v1.02", 
+  "name": "CRCLIB"
  }
 ]
