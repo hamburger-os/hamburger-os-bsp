@@ -1042,6 +1042,10 @@ menu "On-chip Peripheral Drivers"
                     string "Set the usb power pin, default: PA.15"
                     depends on USBH_STM32_USING_POWER
                     default "PA.15"
+                
+                config USBH_STM32_USING_EXTERNAL_PHY
+                    bool "Enable EXTERNAL PHY"
+                    default n
             
                 config USBH_THREAD_STACK_SIZE
                     int "Set the size of the USB host task stack, default: 4096"

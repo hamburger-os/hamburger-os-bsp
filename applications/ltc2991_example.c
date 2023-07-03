@@ -21,11 +21,14 @@ static void ltc_2991_echo_test(int argc, char *argv[])
     }
     /* 以只读及轮询模式打开传感器设备 */
     rt_device_open(ltc2991dev, RT_DEVICE_FLAG_RDONLY);
-    rt_uint16_t ltc2991data[2] = {0};
-    if (rt_device_read(ltc2991dev, 0, &ltc2991data, sizeof(ltc2991data)) == 0)
+
+    rt_uint16_t ltc2991data[4] = {4};
+    if (rt_device_read(ltc2991dev, 4, &ltc2991data, sizeof(ltc2991data)) == 0)
     {
-        LOG_D("5v = %d.%dV", (ltc2991data[0] * 2) / 1000, (ltc2991data[0] * 2) % 1000);
-        LOG_D("3.3v = %d.%dV", (ltc2991data[1] * 2) / 1000, (ltc2991data[1] * 2) % 1000);
+        LOG_D("ch1 voltage = %d.%dV", (ltc2991data[0] * 2) / 1000, (ltc2991data[0] * 2) % 1000);
+        LOG_D("ch2 voltage = %d.%dV", (ltc2991data[1] * 2) / 1000, (ltc2991data[1] * 2) % 1000);
+        LOG_D("ch3 voltage = %d.%dV", (ltc2991data[2] * 2) / 1000, (ltc2991data[2] * 2) % 1000);
+        LOG_D("ch4 current = %d.%dA", (ltc2991data[3] / 2) / 1000, (ltc2991data[3] / 2) % 1000);
     }
 #endif
 }
