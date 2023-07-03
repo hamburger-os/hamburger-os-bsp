@@ -180,22 +180,6 @@ static void wavrecord_entry(void *parameter)
     {
         /* read raw data from sound device */
         size = rt_device_read(record.device, 0, record.buffer, WR_BUFFER_SIZE);
-#if 0
-        int i = 0;
-        for (i = 0; i < size; i++)
-        {
-            printf("%02x ", record.buffer[i]);
-            if (i % 4 == (4 - 1))
-                printf("  ");
-            if (i % 16 == (16 - 1))
-            {
-                msleep(1);
-                printf("\n");
-            }
-        }
-        continue;
-#endif
-
         if (size)
         {
             fwrite(record.buffer, size, 1, record.fp);
