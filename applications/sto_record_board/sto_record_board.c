@@ -88,7 +88,7 @@ static void *STORecordBoardThreadEntry(void *parameter)
 {
     LedCtrlInit();
     ETHManageInit();
-    ETHManageTestThreadInit();
+//    ETHManageTestThreadInit();
     while (1)
     {
         rt_thread_mdelay(500);
