@@ -57,7 +57,7 @@ typedef enum
 typedef enum
 {
     BACKUP_NO = 0, /* 只是复制文件到U盘 */
-    BACKUP = 1  /* 先复制文件到U盘,再备份文件 */
+    BACKUP = 1     /* 先复制文件到U盘,再备份文件 */
 } E_Backup;
 
 /*******************************************************
@@ -216,9 +216,6 @@ static sint32_t change_file_date(const char *filename)
                   filename);
         return (sint32_t)-1;
     }
-    else
-    {
-    }
     if (read(fd, (void *)&file_head, sizeof(file_head)) == sizeof(file_head))
     {
         if (strcmp((char *)file_head.file_head_flag, FILE_HEAD_FLAG) == 0)
@@ -243,29 +240,17 @@ static sint32_t change_file_date(const char *filename)
             {
                 month = 0;
             }
-            else
-            {
-            }
             if ((day > 31) || (day < 1))
             {
                 day = 1;
-            }
-            else
-            {
             }
             if ((hour > 23) || (hour < 0))
             {
                 hour = 0;
             }
-            else
-            {
-            }
             if ((minute > 59) || (minute < 0))
             {
                 minute = 0;
-            }
-            else
-            {
             }
 
             tm_v.tm_year = year;
@@ -285,12 +270,6 @@ static sint32_t change_file_date(const char *filename)
 
             return 0;
         }
-        else
-        {
-        }
-    }
-    else
-    {
     }
     close(fd);
     return (sint32_t)-1;
@@ -322,9 +301,6 @@ static sint32_t copy_file(const char *from, const char *to)
         ret = -1;
         return ret;
     }
-    else
-    {
-    }
 
     /* 创建目的文件 */
     to_fd = open(to, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR);
@@ -334,9 +310,6 @@ static sint32_t copy_file(const char *from, const char *to)
                   to);
         ret = -2;
         return ret;
-    }
-    else
-    {
     }
 
     while ((bytes_read = read(from_fd, buffer, BUFFER_SIZE)) != 0)
@@ -364,21 +337,12 @@ static sint32_t copy_file(const char *from, const char *to)
                     ptr += bytes_write;
                     bytes_read -= bytes_write;
                 }
-                else
-                {
-                }
             }
             if (bytes_write == -1) /* 写的时候发生的致命错误 */
             {
                 ret = -4;
                 break;
             }
-            else
-            {
-            }
-        }
-        else
-        {
         }
         i++;
         if (i > 128)
@@ -386,17 +350,11 @@ static sint32_t copy_file(const char *from, const char *to)
             fsync(to_fd);
             i = 0;
         }
-        else
-        {
-        }
     }
 
     if (ret == 0)
     {
         fsync(to_fd);
-    }
-    else
-    {
     }
     close(from_fd);
     close(to_fd);
@@ -431,11 +389,16 @@ static sint32_t store_file(const char *src, const char *target, sint32_t mode)
         p = p_file_list_head;
         while (p != NULL)
         {
-            log_print(LOG_INFO, "copy '%s' to dir '%s'.\n", p->filename, target);
+            log_print(LOG_INFO,
+                      "copy '%s' to dir '%s'.\n",
+                      p->filename, target);
             name = get_sigle_file_name(p->filename);
             if (strstr(name, "VSW") == NULL) /* 没有找到VSW */
             {
-                pathlen = snprintf(targetname, sizeof(targetname), "%s/%s.VSW", target, name);
+                pathlen = snprintf(targetname,
+                                   sizeof(targetname),
+                                   "%s/%s.VSW",
+                                   target, name);
                 if (pathlen > sizeof(targetname))
                 {
                     error = -1;
@@ -444,7 +407,10 @@ static sint32_t store_file(const char *src, const char *target, sint32_t mode)
             }
             else
             {
-                pathlen = snprintf(targetname, sizeof(targetname), "%s/%s", target, name);
+                pathlen = snprintf(targetname,
+                                   sizeof(targetname),
+                                   "%s/%s",
+                                   target, name);
                 if (pathlen > sizeof(targetname))
                 {
                     error = -1;
@@ -458,17 +424,15 @@ static sint32_t store_file(const char *src, const char *target, sint32_t mode)
                 log_print(LOG_ERROR, "copy file error ... \n");
                 break;
             }
-            else
-            {
-            }
-
             change_file_date(targetname);
-
             if (mode == COPY_MODE_COPY_BAK) /* mode为1,先复制文件到U盘,再备份文件 */
             {
                 if (strcmp(name, latest_filename) != 0)
                 {
-                    pathlen = snprintf(bakname, sizeof(bakname), "%s/%s", YUYIN_BAK_PATH_NAME, name);
+                    pathlen = snprintf(bakname,
+                                       sizeof(bakname),
+                                       "%s/%s",
+                                       YUYIN_BAK_PATH_NAME, name);
                     if (pathlen > sizeof(bakname))
                     {
                         error = -2;
@@ -481,24 +445,12 @@ static sint32_t store_file(const char *src, const char *target, sint32_t mode)
                         error = -2;
                         break;
                     }
-                    else
-                    {
-                    }
                 }
-                else
-                {
-                }
-            }
-            else
-            {
             }
             p = p->next;
         }
         /* 释放缓存空间 */
         free_link(p_file_list_head);
-    }
-    else
-    {
     }
 
     return error;
@@ -512,7 +464,6 @@ static sint32_t store_file(const char *src, const char *target, sint32_t mode)
  * @retval sint32_t 0:成功 -1:失败
  *
  *******************************************************/
-
 static sint32_t usb_auto_copy(E_CopyMode mode)
 {
     sint32_t udisk_free_space;
@@ -523,7 +474,7 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
     /* 获取最新语音文件名.*/
     fm_get_file_name(latest_filename, SRC_FILE);
     /* 建立U盘目录 */
-    create_dir(TARGET_DIR_NAME); /* 在U盘目录中建立语音文件目录 */
+    create_dir(TARGET_DIR_NAME);     /* 在U盘目录中建立语音文件目录 */
     create_dir(YUYIN_BAK_PATH_NAME); /* 建立语音文件的备份的目录 */
 
     /* step1: 查看所有文件的大小 */
@@ -546,9 +497,6 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
         log_print(LOG_ERROR, "U盘转储失败. \n");
         return (sint32_t)-1;
     }
-    else
-    {
-    }
     if (voice_size / 1024 > udisk_free_space)
     {
         log_print(LOG_ERROR, "U盘空间不够! U盘剩余空间:%dK, 语音文件大小:%dKB.\n",
@@ -556,9 +504,6 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
         /* 播放语音提示, U盘已满 */
         event_push_queue(EVENT_DUMP_USB_FULL);
         return (sint32_t)-1;
-    }
-    else
-    {
     }
 
     /* step2: 转储语音文件 */
@@ -574,9 +519,6 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
             log_print(LOG_ERROR, "转储失败.\n");
             event_push_queue(EVENT_DUMP_FAIL);
             return (sint32_t)-1;
-        }
-        else
-        {
         }
     }
     else /* 开始转储最新文件 */
@@ -595,18 +537,18 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
         event_push_queue(EVENT_DUMP_FAIL);
         return (sint32_t)-1;
     }
-    else
-    {
-    }
+
+    /* step4:转储日志文件 */
     /* 增加转储日志文件的功能, 如果发现有日志文件, 则复制到U盘 */
-    snprintf(logname, sizeof(logname), "%s/LY05C_%d-%d.log", LOG_FILE_PATH, g_locomotive_type, g_locomotive_id);
+    snprintf(logname, sizeof(logname),
+             "%s/LY05C_%d-%d.log",
+             LOG_FILE_PATH,
+             g_locomotive_type,
+             g_locomotive_id);
     if (stat(logname, &stat_l) == 0)
     {
         log_print(LOG_ERROR, "转储日志.\n");
         copy_file(logname, logname);
-    }
-    else
-    {
     }
 
     if (mode == COPYMODE_ALL)
@@ -670,7 +612,7 @@ static void usb_thread(void *args)
     sint32_t fd;
     E_CopyMode mode;
 
-    /* 获取引脚 */
+    /* 获取引脚句柄(全部或者最新转储模式选择引脚) */
     new_all_pin = rt_pin_get(NEW_ALL_PIN);
     /* 设置为输入模式 */
     rt_pin_mode(new_all_pin, PIN_MODE_INPUT);
@@ -703,9 +645,6 @@ static void usb_thread(void *args)
                 msleep((uint32_t)500);
                 break;
             }
-            else
-            {
-            }
 
             /* 如果存在格式化文件, 则不进行转储. */
             ret = stat(FORMAT_DIR_NAME, &stat_l);
@@ -719,19 +658,12 @@ static void usb_thread(void *args)
                 state = DUMP_STATE_EXIT;
                 break;
             }
-            else
-            {
-            }
-
             /* 打开文件 */
             fd = open(UDISK_ID_PATH, O_RDONLY);
             if (fd < 0)
             {
                 log_print(LOG_ERROR, "can not open udisk id file %s. \n", UDISK_ID_PATH);
                 break;
-            }
-            else
-            {
             }
 
             /* 读取U盘ID */
@@ -761,9 +693,6 @@ static void usb_thread(void *args)
             if (ret < 0)
             {
                 log_print(LOG_ERROR, "close error.\n");
-            }
-            else
-            {
             }
 
             break;

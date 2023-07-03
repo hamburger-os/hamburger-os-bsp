@@ -23,8 +23,8 @@
 #define DBG_TAG "ly-05c"
 #define DBG_LVL DBG_LOG
 
-/* 日志最大缓存, 单位:kbyte. */
-#define LOG_BUFFER_LEN (256)
+/* 日志最大缓存, 单位:byte. */
+#define LOG_BUFFER_LEN (512)
 /* 单个日志文件最大大小.单位: kbyte.  */
 #define LOG_FILE_MAX_SIZE (512)
 
@@ -63,9 +63,6 @@ void log_print(sint32_t level, const char *format, ...)
     {
         return; /* 低于日志记录等级, 不记录.*/
     }
-    else
-    {
-    }
     /* 获取时间*/
     t = time(NULL);
     timeinfo = localtime(&t);
@@ -87,7 +84,7 @@ void log_print(sint32_t level, const char *format, ...)
              get_locomotive_id());
 
     pthread_mutex_lock(&log_mutex);
-
+    // todo, 增加最大限制,做一次备份.
     /* 日志文件名发生变化时 */
     if (strcmp(name, cur_log_name) != 0)
     {
@@ -96,12 +93,6 @@ void log_print(sint32_t level, const char *format, ...)
             close(fd);
             fd = -1;
         }
-        else
-        {
-        }
-    }
-    else
-    {
     }
     snprintf(cur_log_name, sizeof(cur_log_name), "%s", name);
 
@@ -110,26 +101,20 @@ void log_print(sint32_t level, const char *format, ...)
     {
         fd = open(cur_log_name, O_CREAT | O_WRONLY | O_APPEND);
     }
-    else
-    {
-    }
 
     if (fd >= 0)
     {
         write(fd, log_buffer, strlen(log_buffer));
         fsync(fd); /* 使用fflush不行*/
         /**
-         文件系统特性, 文件处于打开状态, 则不能删除这个文件; 
+         文件系统特性, 文件处于打开状态, 则不能删除这个文件;
          所以写入一次日志信息, 需要关闭一次文件, 防止干扰其
-         他线程操作这个文件, 比较耗时. 
+         他线程操作这个文件, 比较耗时.
         */
         if (close(fd) >= 0)
         {
             fd = -1;
         }
-    }
-    else
-    {
     }
     pthread_mutex_unlock(&log_mutex);
 }
@@ -153,9 +138,6 @@ sint32_t log_init(void)
     if (ret < 0)
     {
         return ret;
-    }
-    else
-    {
     }
     return 0;
 }

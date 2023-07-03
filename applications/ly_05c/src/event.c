@@ -58,9 +58,6 @@ void event_push_queue(E_EVENT event)
     {
         rt_mq_send(event_mq, &event, sizeof(E_EVENT));
     }
-    else
-    {
-    }
 }
 /*******************************************************
  *
@@ -80,9 +77,6 @@ static E_EVENT pop_event_queue(void)
     if (ret < 0)
     {
         event = EVENT_INVALID;
-    }
-    else
-    {
     }
     return event;
 }
@@ -106,10 +100,7 @@ sint32_t event_init(void)
     {
         return (sint32_t)-1;
     }
-    else
-    {
-        return (sint32_t)0;
-    }
+    return (sint32_t)0;
 }
 
 /*******************************************************
@@ -169,17 +160,11 @@ void event_run(void)
                 play_voice();
                 led_set(LED_STATE_PLAYING);
             }
-            else
-            {
-            }
             break;
         case EVENT_PLAY_END: /* 回放结束 */
             if (data_get_pcm_state() != PCM_STATE_RECORDING)
             {
                 led_set(LED_STATE_RS485_NORMAL);
-            }
-            else
-            {
             }
             break;
         case EVENT_TAX_COMM_NORMAL: /* TAX通信正常 */

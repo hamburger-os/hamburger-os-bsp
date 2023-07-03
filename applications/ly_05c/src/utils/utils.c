@@ -144,9 +144,6 @@ sint32_t get_disk_free_space(const char *path)
         log_print(LOG_ERROR, "can not get mount dir %s. \n", path);
         return ret;
     }
-    else
-    {
-    }
     /* 获取块数 */
     total_blocks = disk_info.f_bsize;
     /* 获取总大小 */
@@ -176,9 +173,6 @@ uint32_t file_size(char *name)
     {
         return (sint32_t)-1;
     }
-    else
-    {
-    }
     return stat_buf.st_size;
 }
 
@@ -206,9 +200,6 @@ sint32_t dir_size(const char *dir_path)
         log_print(LOG_ERROR, "can not open dir %s \n", path);
         return (sint32_t)-1;
     }
-    else
-    {
-    }
 
     /* 如果打开成功,则循环读取目录 */
     struct dirent *ent = readdir(dir);
@@ -231,9 +222,6 @@ sint32_t dir_size(const char *dir_path)
         {
             return (sint32_t)-1;
         }
-        else
-        {
-        }
         total_size += (long)ret;
         ent = readdir(dir);
     }
@@ -242,9 +230,6 @@ sint32_t dir_size(const char *dir_path)
     if (ret < 0)
     {
         return (sint32_t)-1;
-    }
-    else
-    {
     }
     return total_size;
 }
@@ -287,9 +272,6 @@ file_info_t *sort_link(file_info_t *h, sint32_t flag)
                     u->next = v;
                     p = u->next->next;
                 }
-                else
-                {
-                }
             }
             else if (flag == SORT_DOWN)
             {
@@ -301,12 +283,6 @@ file_info_t *sort_link(file_info_t *h, sint32_t flag)
                     u->next = v;
                     p = u->next->next;
                 }
-                else
-                {
-                }
-            }
-            else
-            {
             }
         }
     }
@@ -378,9 +354,6 @@ char *get_sigle_file_name(char *full_path)
         {
             break;
         }
-        else
-        {
-        }
         p--;
     }
     return (p + 1);
@@ -413,9 +386,6 @@ file_info_t *get_org_file_info(const char *path)
     {
         rt_kprintf("get_org_file_info error,can not open %s.\n", path);
         return NULL;
-    }
-    else
-    {
     }
 
     /* 读取目录内文件名 */
@@ -455,28 +425,10 @@ file_info_t *get_org_file_info(const char *path)
                                 p_cur_file_list->file_id = ((file_head_t *)buffer)->file_index;
                                 p_cur_file_list->file_size = stat_l.st_size;
                             }
-                            else
-                            {
-                            }
-                        }
-                        else
-                        {
                         }
                     }
-                    else
-                    {
-                    }
-                }
-                else
-                {
                 }
             }
-            else
-            {
-            }
-        }
-        else
-        {
         }
     }
 
@@ -515,23 +467,11 @@ sint32_t create_dir(const char *path)
                     log_print(LOG_ERROR, "can not create dir %s. \n", dir_name);
                     return (sint32_t)-1;
                 }
-                else
-                {
-                }
-            }
-            else
-            {
             }
             if (i != len)
             {
                 dir_name[i] = '/';
             }
-            else
-            {
-            }
-        }
-        else
-        {
         }
     }
     return 0;
@@ -565,17 +505,8 @@ sint32_t create_file(const char *path)
                 {
                     return (sint32_t)-1;
                 }
-                else
-                {
-                }
-            }
-            else
-            {
             }
             file_path[i] = '/';
-        }
-        else
-        {
         }
 
         if (file_path[i] == 0)
@@ -590,9 +521,6 @@ sint32_t create_file(const char *path)
             {
                 close(fd);
             }
-        }
-        else
-        {
         }
     }
 
@@ -705,8 +633,6 @@ void copy_files(const char *src, const char *dest)
                 fclose(src_file);
                 continue;
             }
-
-            printf("cp %s %s\n", src_path, dest_path);
             char buffer[FILE_COPY_BUFF_SIZE];
             size_t bytes_read;
             while ((bytes_read = fread(buffer, 1, sizeof(buffer), src_file)) > 0)

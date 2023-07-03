@@ -70,9 +70,6 @@ static sint32_t upgrade_set_flag(E_UPGRADE_STATE state)
     {
         return (sint32_t)-1;
     }
-    else
-    {
-    }
 
     /* 写入标志 */
     snprintf(buf, sizeof(buf), "%d", state);
@@ -81,9 +78,6 @@ static sint32_t upgrade_set_flag(E_UPGRADE_STATE state)
     if (ret < 0)
     {
         return (sint32_t)-1;
-    }
-    else
-    {
     }
 
     /* 关闭文件 */
@@ -117,16 +111,10 @@ static E_UPGRADE_STATE upgrade_get_flag(void)
     {
         return UPGRADE_STATE_INVALID;
     }
-    else
-    {
-    }
     ret = read(fd, buff, 1);
     if (ret < 0)
     {
         return UPGRADE_STATE_INVALID;
-    }
-    else
-    {
     }
 
     /* 关闭文件 */
@@ -135,9 +123,6 @@ static E_UPGRADE_STATE upgrade_get_flag(void)
     {
 
         return UPGRADE_STATE_INVALID;
-    }
-    else
-    {
     }
 
     /* 返回值 */
@@ -178,9 +163,6 @@ void ota_from_file_handle(OtaHandleTypeDef type)
             upgrade_set_flag(UPGRADE_STATE_NOT);
             event_push_queue(EVENT_UPDATE_SUCCESS);
         }
-        else
-        {
-        }
         break;
     case OTA_HANDLE_FAILED: /* download 分区内的镜像文件没有被装载. */
         state = upgrade_get_flag();
@@ -188,9 +170,6 @@ void ota_from_file_handle(OtaHandleTypeDef type)
         {
             upgrade_set_flag(UPGRADE_STATE_NOT);
             event_push_queue(EVENT_UPDATE_FAIL);
-        }
-        else
-        {
         }
         break;
     default: /*缺省*/

@@ -44,9 +44,6 @@ sint32_t voice_init(void)
         log_print(LOG_ERROR, "record init Err:%d", ret);
         return (sint32_t)-1;
     }
-    else
-    {
-    }
 
     /* 初始化放音模块 */
     ret = play_init();
@@ -55,8 +52,5 @@ sint32_t voice_init(void)
         log_print(LOG_ERROR, "play init Err:%d", ret);
         return (sint32_t)-1;
     }
-    else
-    {
-        return 0;
-    }
+    return 0;
 }

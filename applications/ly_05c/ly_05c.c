@@ -50,16 +50,12 @@ static int ly_05c_init(void);
  *******************************************************/
 static int ly_05c_init(void)
 {
-
     sint32_t ret = 0;
     /* 初始化日志模块 */
     ret = log_init();
     if (ret < 0)
     {
         log_print(LOG_ERROR, "init log module error, error code: %d.\n", ret);
-    }
-    else
-    {
     }
 
     log_print(LOG_INFO, "==========================\n");
@@ -72,18 +68,12 @@ static int ly_05c_init(void)
     {
         log_print(LOG_FATAL_ERROR, "init data module error, error code: %d.\n", ret);
     }
-    else
-    {
-    }
 #if 1
     /* 初始化LED模块 */
     ret = led_init();
     if (ret < 0)
     {
         log_print(LOG_ERROR, "init led module error, error code: %d.\n", ret);
-    }
-    else
-    {
     }
 #endif
 
@@ -95,9 +85,6 @@ static int ly_05c_init(void)
         /* 文件解析失败, 后续会自动修复, 这里把错误记录一下 */
         log_print(LOG_FATAL_ERROR, "file parsing error. \n");
     }
-    else
-    {
-    }
 #endif
 
 #if 1
@@ -107,9 +94,6 @@ static int ly_05c_init(void)
     {
         log_print(LOG_FATAL_ERROR, "init voice module error, error code: %d.\n", ret);
         return -1;
-    }
-    else
-    {
     }
 #endif
 
@@ -121,9 +105,6 @@ static int ly_05c_init(void)
         log_print(LOG_FATAL_ERROR, "init tax module error, error code: %d.\n", ret);
         return -1;
     }
-    else
-    {
-    }
 #endif
 
     /* 初始化事件管理模块 */
@@ -132,9 +113,6 @@ static int ly_05c_init(void)
     {
         log_print(LOG_FATAL_ERROR, "init event module error, error code: %d.\n", ret);
         return -1;
-    }
-    else
-    {
     }
 
 #if 1
@@ -145,9 +123,6 @@ static int ly_05c_init(void)
         log_print(LOG_FATAL_ERROR, "key_init error, error code: %d.\n", ret);
         return -1;
     }
-    else
-    {
-    }
 #endif
 
 #if 1
@@ -157,9 +132,6 @@ static int ly_05c_init(void)
     {
         log_print(LOG_ERROR, "usb_init error, error code: %d.\n", ret);
         return -1;
-    }
-    else
-    {
     }
 #endif
     return 0;
@@ -222,9 +194,6 @@ sint32_t ly_05c_main(void)
     if (ret < 0)
     {
         return (sint32_t)-1;
-    }
-    else
-    {
     }
 
     return RT_EOK;

@@ -210,7 +210,7 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
 
     R5_0x400B_Rec_Mixer_Left_1 r5 = {
         .MX1AUXG = 0b000,
-        .LDBOOST = 0b10,
+        .LDBOOST = 0b01,
     };
     adau1761_program(ADDR_R5_0x400B_Rec_Mixer_Left_1, (uint8_t *)&r5, sizeof(R5_0x400B_Rec_Mixer_Left_1));
 
@@ -223,21 +223,21 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
 
     R7_0x400D_Rec_Mixer_Right_1 r7 = {
         .MX2AUXG = 0b000,
-        .RDBOOST = 0b10,
+        .RDBOOST = 0b01,
     };
     adau1761_program(ADDR_R7_0x400D_Rec_Mixer_Right_1, (uint8_t *)&r7, sizeof(R7_0x400D_Rec_Mixer_Right_1));
 
     R8_0x400E_Left_diff_input_vol r8 = {
         .LDEN = 1,
         .LDMUTE = 1,
-        .LDVOL = 0b111111,
+        .LDVOL = 0b110000,
     };
     adau1761_program(ADDR_R8_0x400E_Left_diff_input_vol, (uint8_t *)&r8, sizeof(R8_0x400E_Left_diff_input_vol));
 
     R9_0x400F_Right_diff_input_vol r9 = {
         .RDEN = 1,
         .RDMUTE = 1,
-        .RDVOL = 0b111111,
+        .RDVOL = 0b100000,
     };
     adau1761_program(ADDR_R9_0x400F_Right_diff_input_vol, (uint8_t *)&r9, sizeof(R9_0x400F_Right_diff_input_vol));
 
@@ -249,8 +249,8 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
     adau1761_program(ADDR_R10_0x4010_Record_mic_bias, (uint8_t *)&r10, sizeof(R10_0x4010_Record_mic_bias));
 
     R11_0x4011_ALC_0 r11 = {
-        .ALCSEL = 0b011,
-        .ALCMAX = 0b110,
+        .ALCSEL = 0b000,
+        .ALCMAX = 0b010,
         .PGASLEW = 0b00,
     };
     adau1761_program(ADDR_R11_0x4011_ALC_0, (uint8_t *)&r11, sizeof(R11_0x4011_ALC_0));

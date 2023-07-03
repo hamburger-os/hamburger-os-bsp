@@ -63,21 +63,13 @@ sint32_t check_disk_full(const char *name)
     sint32_t used_size;
 
     used_size = dir_size(name) / 1000;
-    if (used_size < 0)
-    {
-        return 0; /* todo, 无法获取,则认为不满, 避免??? */
-    }
-    else
-    {
-    }
     if (used_size < YUYIN_STORAGE_MAX_SIZE)
     {
         return 0;
     }
-    else
-    {
-    }
-    log_print(LOG_INFO, "disk is full, total size is %d KB.\n", used_size);
+    log_print(LOG_INFO,
+              "disk is full, total size is %d KB.\n",
+              used_size);
     return (sint32_t)-1;
 }
 
@@ -103,9 +95,6 @@ sint32_t free_space(void)
     {
         return 0;
     }
-    else
-    {
-    }
 
     /* 如果剩余空间不够, 先删除bak目录中的文件 */
     /* 获取bak目录中的文件列表 */
@@ -126,14 +115,8 @@ sint32_t free_space(void)
             {
                 break;
             }
-            else
-            {
-            }
             p = p->next;
         }
-    }
-    else
-    {
     }
 
     log_print(LOG_INFO, "free space: %d K. \n", disk_free_space);
@@ -154,14 +137,8 @@ sint32_t free_space(void)
             {
                 break;
             }
-            else
-            {
-            }
             p = p->next;
         }
-    }
-    else
-    {
     }
     log_print(LOG_INFO, "free space: %d K\n", disk_free_space);
     free_link(p_file_list_head);
@@ -186,7 +163,10 @@ sint32_t fm_get_file_name(const char *name, sint32_t bak)
 
     if (bak != 0)
     {
-        str_len = snprintf(full_path, sizeof(full_path), "%s/%s.bak", YUYIN_PATH_NAME, NEW_FILE_NAME_CONF);
+        str_len = snprintf(full_path,
+                           sizeof(full_path),
+                           "%s/%s.bak",
+                           YUYIN_PATH_NAME, NEW_FILE_NAME_CONF);
         if (str_len > sizeof(full_path))
         {
             /* 缓冲区溢出, 字符串被截断了.*/
@@ -258,7 +238,7 @@ static sint32_t fm_check_voice_head(char *data)
 /*******************************************************
  *
  * @brief  分析文件名为filename的语音文件, 把相应信息放到
- *         g_cur_rec_file_info结构体中保存
+ *         g_cur_rec_file_info结构体中保存.
  *
  * @param  *filename: 文件名filename
  * @retval 文件正常, 返回0; 出现错误返回-1.
@@ -287,12 +267,9 @@ static sint32_t fm_analyze_file(char *filename)
     if (ret < 0)
     {
         log_print(LOG_ERROR,
-                  "can not stat file %s. error code: 0x%08x. \n",
-                  ret, full_path);
+                  "can not stat file '%s'. error code: 0x%08x. \n",
+                  full_path, ret);
         return (sint32_t)-1;
-    }
-    else
-    {
     }
 
     /* 如果录音文件的大小应大于 (PAGE_SIZE * 2). */
@@ -302,9 +279,6 @@ static sint32_t fm_analyze_file(char *filename)
                   "file '%s' size :%ld. \n",
                   full_path, stat_l.st_size);
         return (sint32_t)-1;
-    }
-    else
-    {
     }
 
     /* 开始分析录音文件 */
@@ -409,7 +383,8 @@ static sint32_t fm_analyze_file(char *filename)
         {
             /*
              * 文件大小小于512,应作废.
-             * 在实际中,这种情况不会出现,因为只有文件头和语音头都写入Flash后,才会更新latest_filename.conf文件.
+             * 在实际中, 这种情况不会出现, 因为只有文件头和语音头都写入emmc后,
+             * 才会更新latest_filename.conf文件.
              */
             log_print(LOG_ERROR, "error, 文件%s的大小小于512.\n", full_path);
         }
@@ -436,19 +411,16 @@ sint32_t fm_init_latest_file(void)
 
     if (fm_get_file_name(filename, SRC_FILE) == 0)
     {
-        log_print(LOG_INFO, "上一个文件名是: %s. \n", filename);
+        log_print(LOG_INFO, "latest file name: %s. \n", filename);
         if (fm_analyze_file(filename) == 0)
         {
             g_cur_rec_file_info.not_exsit = 0;
             return 0;
         }
-        else
-        {
-        }
     }
     else
     {
-        log_print(LOG_ERROR, "error, 得不到最新的语音文件名. \n");
+        log_print(LOG_ERROR, "error, can not get latest file name. \n");
     }
     strcpy(g_cur_rec_file_info.filename, "0-0.0000");
     g_cur_rec_file_info.fd = -1;
@@ -462,7 +434,7 @@ sint32_t fm_init_latest_file(void)
 }
 /*******************************************************
  *
- * @brief 判断当前目录下面有没有同名的文件, 如果有, 在文件后面加1
+ * @brief 判断当前目录下面有没有同名的文件, 如果有, 在文件后面添加数字.
  *
  * @param  *filename: 文件名
  * @retval  0:成功 1:失败
@@ -511,12 +483,18 @@ static sint32_t fm_check_dup_file_name(char *filename)
     i = 1;
     while (i < 100)
     {
-        pathlen = snprintf(full_path, sizeof(full_path), "%s/%s%d", YUYIN_PATH_NAME, filename, i);
+        pathlen = snprintf(full_path,
+                           sizeof(full_path),
+                           "%s/%s%d",
+                           YUYIN_PATH_NAME, filename, i);
         if (pathlen > sizeof(full_path))
         {
             return -1; /* 缓冲区溢出, 字符串被截断了.*/
         }
-        pathlen = snprintf(bak_full_path, sizeof(bak_full_path), "%s/%s%d", YUYIN_BAK_PATH_NAME, filename, i);
+        pathlen = snprintf(bak_full_path,
+                           sizeof(bak_full_path),
+                           "%s/%s%d",
+                           YUYIN_BAK_PATH_NAME, filename, i);
         if (pathlen > sizeof(bak_full_path))
         {
             return -1; /* 缓冲区溢出, 字符串被截断了.*/
@@ -568,9 +546,6 @@ sint32_t fm_is_new(void)
         {
             break;
         }
-        else
-        {
-        }
     }
     memcpy(trainid_string, &(g_tax32.train_num_type[i]), 4 - i);
     for (j = 0; j < 4 - i; j++)
@@ -606,7 +581,7 @@ sint32_t fm_is_new(void)
         log_print(LOG_INFO,
                   "无监控信息, 车次:%s, 司机号: %d, 机车号: %d, 月: %d, 日: %d\n",
                   trainid_string, driver_id, locomotive_num, Month, day);
-        /* 有2种情况:1.原来板子上没有语音文件;2.板子上有语音文件(即最新文件正常) */
+        /* 有2种情况: 1.原来板子上没有语音文件; 2.板子上有语音文件(即最新文件正常) */
         if (g_cur_rec_file_info.not_exsit)
         {
             /* 新生成文件来处理 */
@@ -620,9 +595,6 @@ sint32_t fm_is_new(void)
             /* 如果板子上有文件, 则追加处理 */
             return 1;
         }
-    }
-    else
-    {
     }
     log_print(LOG_INFO,
               "车次: %s, 司机号: %d, 机车号: %d, 月: %d, 日: %d. \n",
@@ -730,11 +702,12 @@ void fm_build_file_head(file_head_t *p_filehead)
 
     p_filehead->total_voice_number[0] = 0; /* 总的语音条数 */
     p_filehead->total_voice_number[1] = 0; /* 总的语音条数 */
-
+#if 0
     /* 下面是测试代码 */
     memcpy(p_filehead->reserve3 + 11, (char *)(&g_tax32), sizeof(g_tax32));
     memcpy(p_filehead->reserve3 + 11 + sizeof(g_tax32), (char *)(&g_tax40), sizeof(g_tax40));
     memcpy(p_filehead->reserve3 + 11 + 72 + 24, VERISON, strlen(VERISON));
+#endif
 }
 
 /*******************************************************
@@ -749,9 +722,6 @@ void fm_build_voice_head(voice_head_t *pvoice_head)
     if (pvoice_head == NULL)
     {
         return;
-    }
-    else
-    {
     }
 
     memset((char *)pvoice_head, 0xFF, sizeof(voice_head_t));
@@ -819,10 +789,12 @@ void fm_build_voice_head(voice_head_t *pvoice_head)
     pvoice_head->signal_machine_type = g_tax40.signal_machine_type; /* 信号机种类 */
     pvoice_head->monitor_state = g_tax40.device_state;              /* 监控状态 */
 
+#if 0
     /* 下面是测试代码 */
     memcpy(pvoice_head->reserve3 + 12, (char *)(&g_tax32), sizeof(g_tax32));
     memcpy(pvoice_head->reserve3 + 12 + sizeof(g_tax32), (char *)(&g_tax40), sizeof(g_tax40));
     memcpy(pvoice_head->reserve3 + 12 + 72 + 24, VERISON, strlen(VERISON));
+#endif
 }
 
 /*******************************************************
@@ -830,7 +802,7 @@ void fm_build_voice_head(voice_head_t *pvoice_head)
  * @brief  写入文件头.
  *
  * @param  fd: 文件的句柄
- * @retval 0:成功 -1:失败
+ * @retval >=0:写入的字节数, <0:失败.
  *
  *******************************************************/
 sint32_t fm_write_file_head(sint32_t fd)
@@ -849,7 +821,7 @@ sint32_t fm_write_file_head(sint32_t fd)
  * @brief  写入语音头.
  *
  * @param  fd: 文件的句柄
- * @retval 0:成功 -1:失败
+ * @retval >=0:写入的字节数, <0:失败.
  *
  *******************************************************/
 sint32_t fm_write_voice_head(sint32_t fd)
@@ -866,7 +838,7 @@ sint32_t fm_write_voice_head(sint32_t fd)
 /*******************************************************
  *
  * @brief  修正语音头.其中要更改:
- *              1.语音长度 ( voice_length, 单位页page );
+ *              1.语音的长度 ( voice_length, 单位页page );
  *              2.语音的有效长度( valid_data_length );
  *
  * @param  fd: 文件的句柄
@@ -879,16 +851,15 @@ sint32_t fm_modify_voice_head(sint32_t fd)
 
     lseek(fd, g_cur_rec_file_info.new_voice_head_offset, SEEK_SET);
     read(fd, (char *)&voice_head, sizeof(voice_head));
-
+    /* 设置有效数据长度 */
     voice_head.valid_data_length = g_cur_rec_file_info.record_datalen;
-    voice_head.voice_length = g_cur_rec_file_info.record_datalen / PAGE_SIZE;
+    /* 设置语音的长度*/
+    voice_head.voice_length =
+        g_cur_rec_file_info.record_datalen / PAGE_SIZE;
     voice_head.voice_length++;
     if (g_cur_rec_file_info.record_datalen % PAGE_SIZE != 0)
     {
         voice_head.voice_length++;
-    }
-    else
-    {
     }
 
     lseek(fd, g_cur_rec_file_info.new_voice_head_offset, SEEK_SET);
@@ -897,7 +868,7 @@ sint32_t fm_modify_voice_head(sint32_t fd)
 }
 /*******************************************************
  *
- * @brief  修正语音头,增加语音已放音标识和时间.
+ * @brief  修正语音头, 增加语音已放音标识和时间.
  *
  * @param  fd: 文件的句柄
  * @retval 0:成功 -1:失败
@@ -914,9 +885,6 @@ sint32_t fm_modify_play_flag(sint32_t fd)
     if (ret < 0)
     {
         return (sint32_t)-1;
-    }
-    else
-    {
     }
 
     if (voice_head.voice_flag & 0x01)
@@ -990,17 +958,11 @@ sint32_t fm_write_name(char *name)
         log_print(LOG_ERROR, "不能修改文件:%s\n", full_path);
         return (sint32_t)-1;
     }
-    else
-    {
-    }
     ret = write(fd, name, strlen(name));
     if (ret < 0)
     {
 
         return (sint32_t)-1;
-    }
-    else
-    {
     }
 
     fsync(fd);
@@ -1029,24 +991,15 @@ sint32_t fm_init(void)
     {
         log_print(LOG_ERROR, "create_dir %s. \n", YUYIN_PATH_NAME);
     }
-    else
-    {
-    }
     ret = create_dir(YUYIN_BAK_PATH_NAME);
     if (ret < 0)
     {
         log_print(LOG_ERROR, "create_dir %s. \n", YUYIN_BAK_PATH_NAME);
     }
-    else
-    {
-    }
     ret = create_dir(LOG_FILE_PATH);
     if (ret < 0)
     {
         log_print(LOG_ERROR, "create_dir %s. \n", LOG_FILE_PATH);
-    }
-    else
-    {
     }
 
     /* 初始化最新的文件, 把最新文件的信息放到全局变量 g_cur_rec_file_info 中.  */
@@ -1055,9 +1008,6 @@ sint32_t fm_init(void)
     {
         // log_print(LOG_ERROR, "fm_init_latest_file error. \n");
         return (sint32_t)-1;
-    }
-    else
-    {
     }
     /* 打印相关信息 */
     log_print(LOG_INFO, "current rec file info: \n");

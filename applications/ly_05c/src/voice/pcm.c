@@ -92,9 +92,6 @@ sint32_t pcm_init(pcm_config_t *config)
     {
         return (sint32_t)-1;
     }
-    else
-    {
-    }
 
     if (config->mode == SOUND_MODE_CAPTURE)
     {
@@ -114,9 +111,6 @@ sint32_t pcm_init(pcm_config_t *config)
         log_print(LOG_ERROR, "device %s not find. \n", SOUND_DEVICE);
         return (sint32_t)-1;
     }
-    else
-    {
-    }
 
     /* set the play timedata */
     config->start = rt_tick_get_millisecond();
@@ -134,9 +128,6 @@ sint32_t pcm_init(pcm_config_t *config)
     {
         log_print(LOG_ERROR, "open %s device failed. \n", SOUND_DEVICE);
         return (sint32_t)-1;
-    }
-    else
-    {
     }
 
     /* 设置音频设备参数 */
@@ -233,7 +224,7 @@ rt_size_t pcm_read(rt_device_t pcm_dev, void *buffer_r, rt_size_t size_r)
     {
         ret = -1;
     }
-    
+
     return ret;
 }
 

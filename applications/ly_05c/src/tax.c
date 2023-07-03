@@ -187,9 +187,6 @@ static sint32_t tax_read_echo_event_list(tax2_echo_event_list_t *list, uint8_t *
         pthread_mutex_unlock(&list->mutex);
         return (sint32_t)-1;
     }
-    else
-    {
-    }
     memcpy(data, list->echo_event[list->tail].data, TAX_ACK_MSG_LEN);
     list->tail++;
     list->tail %= TAX_EVENT_NUMS;
@@ -302,133 +299,6 @@ static void update_tax_data(void)
 
         rtc_setdata(&tmdata);
     }
-
-#if 0
-    int i = 0;
-    /** 本版地址2 */
-    printf("本板1\n");
-    printf("data:");
-    for (i = 0; i < TAX_BOARD1_PACKAGE_LEN; i++)
-        printf(" 0x%02x", tax_info_all[i]);
-    printf("\n");
-    printf("特征码: 0x%02x\n", g_tax32.feature_code);
-    printf("标志: 0x%02x\n", g_tax32.flag);
-    printf("版本号: 0x%02x\n", g_tax32.version);
-    printf("车站号 车站号扩充字节:%02x\n", g_tax32.station_ext);
-    printf("车次种类标识符:");
-    for (i = 0; i < TAX32_TRAIN_NUM_TYPE_LEN; i++)
-        printf(" 0x%02x", g_tax32.board_addr);
-    printf("\n");
-    printf("司机号扩充字节:%02x\n", g_tax32.driver_id);
-    printf("副司机号扩充字节:%02x\n", g_tax32.assistant_driver);
-    printf("司机局段号:");
-    for (i = 0; i < TAX32_DRIVER_SECTION_LEN; i++)
-        printf(" 0x%02x", g_tax32.driver_section_id[i]);
-    printf("\n");
-    printf("机车型号扩充字节:%02x\n", g_tax32.locomotive_type);
-    printf("实际交路号: 0x%02x\n", g_tax32.real_road);
-    printf("闸缸压力:");
-    for (i = 0; i < TAX32_BRAKE_CYLINDER_PRESS_LEN; i++)
-        printf(" 0x%02x", g_tax32.brake_cylinder_pressure[i]);
-    printf("\n");
-    printf("制动输出: 0x%02x\n", g_tax32.brake_output);
-    printf("柴油机转速:");
-    for (i = 0; i < TAX32_DIESEL_ENGINE_SPEED_LEN; i++)
-        printf(" 0x%02x", g_tax32.diesel_engine_speed[i]);
-    printf("\n");
-    printf("累计位移:");
-    for (i = 0; i < TAX32_TOTAL_DISPLACEMENT_LEN; i++)
-        printf(" 0x%02x", g_tax32.total_displacement[i]);
-    printf("\n");
-    printf("本分区支线: 0x%02x\n", g_tax32.local_branch);
-    printf("本分区侧线: 0x%02x\n", g_tax32.local_branch_lateral);
-    printf("前方分区支线: 0x%02x\n", g_tax32.front_branch);
-    printf("前方分区侧线: 0x%02x\n", g_tax32.front_branch_lateral);
-    printf("本/补、客/货: 0x%02x\n", g_tax32.benbu_kehuo);
-    printf("车次:");
-    for (i = 0; i < TRAIN_ID_LEN; i++)
-        printf(" 0x%02x", g_tax32.train_id[i]);
-    printf("\n");
-
-    /** 本版地址2 */
-    printf("本板2\n");
-    printf("data:");
-    for (i = TAX_BOARD1_PACKAGE_LEN; i < TAX_BOARD1_PACKAGE_LEN + TAX_BOARD2_PACKAGE_LEN; i++)
-        printf(" 0x%02x", tax_info_all[i]);
-    printf("\n");
-    printf("本板地址: 0x%02x\n", g_tax40.board_addr);
-    printf("特征码: 0x%02x\n", g_tax40.feature_code);
-    printf("检测单元代号: 0x%02x\n", g_tax40.detect_unit_code);
-    printf("时间:");
-    for (i = 0; i < DATE_TIME_LEN; i++)
-        printf(" 0x%02x", g_tax40.date[i]);
-    uint32_t date_tmp = (g_tax40.date[0] << 0) |
-                        (g_tax40.date[1] << 8) |
-                        (g_tax40.date[2] << 16) |
-                        (g_tax40.date[3] << 24);
-    printf("   %d-%d-%d %d:%d:%d",
-           0x3f & (date_tmp >> 26),
-           0x0f & (date_tmp >> 22),
-           0x1f & (date_tmp >> 17),
-           0x1f & (date_tmp >> 12),
-           0x3f & (date_tmp >> 6),
-           0x3f & (date_tmp >> 0));
-    printf("\n");
-    printf("实速:");
-    for (i = 0; i < SPEED_LEN; i++)
-        printf(" 0x%02x", g_tax40.speed[i]);
-    printf("\n");
-
-    printf("机车信号: 0x%02x\n", g_tax40.locomotive_signal_type);
-    printf("机车工况: 0x%02x\n", g_tax40.locomotive_condition);
-    printf("信号机编号:");
-    for (i = 0; i < TAX40_SIGNAL_MACHINE_ID_LEN; i++)
-        printf(" 0x%02x", g_tax40.signal_machine_id[i]);
-    printf("\n");
-    printf("信号机种类: 0x%02x\n", g_tax40.signal_machine_type);
-    printf("公里标:");
-    for (i = 0; i < KILOMETER_POST_LEN; i++)
-        printf(" 0x%02x", g_tax40.kilometer_post[i]);
-    printf("\n");
-    printf("总重:");
-    for (i = 0; i < TOTAL_WEIGHT_LEN; i++)
-        printf(" 0x%02x", g_tax40.total_weight[i]);
-    printf("\n");
-    printf("计长:");
-    for (i = 0; i < TAX40_TOTAL_LEN_LEN; i++)
-        printf(" 0x%02x", g_tax40.total_len[i]);
-    printf("\n");
-
-    printf("辆数: 0x%02x\n", g_tax40.train_num);
-    printf("本/补、客/货: 0x%02x\n", g_tax40.benbu_kehuo);
-    printf("车次:");
-    for (i = 0; i < TAX40_TRAIN_ID_LEN; i++)
-        printf(" 0x%02x", g_tax40.train_id[i]);
-    printf("\n");
-    printf("区段号: 0x%02x\n", g_tax40.section_id);
-    printf("车站号: 0x%02x\n", g_tax40.station_ext);
-    printf("司机号:");
-    printf("%d(", (g_tax40.driver_id[1] << 8) | (g_tax40.driver_id[0] << 0));
-    for (i = 0; i < TAX40_DRIVER_ID_LEN; i++)
-        printf(" 0x%02x", g_tax40.driver_id[i]);
-
-    printf(")\n");
-    printf("副司机号:");
-    for (i = 0; i < TAX40_ASSISTANT_DRIVER_ID_LEN; i++)
-        printf(" 0x%02x", g_tax40.assistant_driver[i]);
-    printf("\n");
-    printf("机车号:");
-    for (i = 0; i < LOCOMOTIVE_NUM_LEN; i++)
-        printf(" 0x%02x", g_tax40.locomotive_num[i]);
-    printf("\n");
-    printf("机车型号: 0x%02x\n", g_tax40.locomotive_type);
-    printf("管压:");
-    for (i = 0; i < TAX40_TUBE_PRESS_LEN; i++)
-        printf(" 0x%02x", g_tax40.tube_press[i]);
-    printf("\n");
-    printf("装置状态: 0x%02x\n", g_tax40.device_state);
-    printf("检查和2: 0x%02x\n", g_tax40.check_sum);
-#endif
 }
 /*******************************************************
  *
@@ -469,9 +339,6 @@ static sint32_t tax_open(char *name)
         log_print(LOG_ERROR, "can not find %s device.\n", name);
         return (sint32_t)-1;
     }
-    else
-    {
-    }
 
     /* 修改串口配置参数 */
     struct serial_configure config = RT_SERIAL_CONFIG_DEFAULT;
@@ -509,9 +376,6 @@ static sint32_t tax_open(char *name)
         {
             rt_device_close(uart_dev);
         }
-        else
-        {
-        }
 
     /* 初始化消息队列 */
     uart_mq = rt_mq_create("uart", sizeof(struct rx_msg), 8, RT_IPC_FLAG_FIFO);
@@ -520,9 +384,6 @@ static sint32_t tax_open(char *name)
         log_print(LOG_ERROR, "init uart mq error. ");
         rt_device_close(uart_dev);
         return (sint32_t)-1;
-    }
-    else
-    {
     }
 
     /* 设置接收回调函数 */
@@ -533,9 +394,6 @@ static sint32_t tax_open(char *name)
         rt_mq_delete(uart_mq);
         rt_device_close(uart_dev);
         return (sint32_t)-1;
-    }
-    else
-    {
     }
 
     return 0;
@@ -568,9 +426,6 @@ static sint32_t tax_recv_data(void)
         /* log_print(LOG_ERROR, "send uart message queue error. \n");*/
         return (sint32_t)-1;
     }
-    else
-    {
-    }
 
     /* 环形缓冲区中的数据已经处理完成, 开始接受新的数据. */
     if (len == 0)
@@ -583,14 +438,8 @@ static sint32_t tax_recv_data(void)
             log_print(LOG_ERROR, "read uart device error.\n");
             return (sint32_t)-2;
         }
-        else
-        {
-        }
         /* 读取的数据压入环形缓冲区中 */
         len = len_r;
-    }
-    else
-    {
     }
 
     while (len > 0)
@@ -644,9 +493,6 @@ static sint32_t tax_recv_data(void)
 #endif
                 return (check_sum == 0) ? (sint32_t)packet_len : (sint32_t)-3;
             }
-            else
-            {
-            }
         }
     }
     return (sint32_t)0;
@@ -681,9 +527,6 @@ static sint32_t tax_send_tax2_back(void)
         {
             return (sint32_t)-1;
         }
-        else
-        {
-        }
     }
     else /* 有缓冲的应答事件通信包 */
     {
@@ -699,9 +542,6 @@ static sint32_t tax_send_tax2_back(void)
         if (ret < TAX_ACK_MSG_LEN)
         {
             return (sint32_t)-1;
-        }
-        else
-        {
         }
     }
     return 0;
@@ -734,6 +574,7 @@ static void *tax_thread(void *args)
     while (true)
     {
         /* 接收数据 */
+        // todo, 增加超时控制.
         ret = tax_recv_data();
         if (ret < 0)
         {
@@ -772,9 +613,6 @@ static void *tax_thread(void *args)
                 break;
             }
         }
-        else
-        {
-        }
     }
     return NULL;
 }
@@ -800,9 +638,6 @@ sint32_t tax_init(void)
 
         return (sint32_t)-1;
     }
-    else
-    {
-    }
     /* 初始化TAX2应答事件列表 */
     tax_init_echo_event_list(echo_list);
 
@@ -816,9 +651,6 @@ sint32_t tax_init(void)
     {
         log_print(LOG_ERROR, "create tax thread error,error_code:%d.\n", ret);
         return (sint32_t)-1;
-    }
-    else
-    {
     }
 
     return 0;

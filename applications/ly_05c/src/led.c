@@ -242,18 +242,12 @@ static void *led_thread(const void *args)
                     rt_pin_write(led_descs[i].pin, LED_ON);
                     led_descs[i].old_state = LED_ON;
                 }
-                else
-                {
-                }
                 break;
             case LedPinStateOff: /* 设置为引脚为低 */
                 if (led_descs[i].old_state != LED_OFF)
                 {
                     rt_pin_write(led_descs[i].pin, LED_OFF);
                     led_descs[i].old_state = LED_OFF;
-                }
-                else
-                {
                 }
                 break;
             case LedPinStateBlink: /* 设置引脚为闪烁 */

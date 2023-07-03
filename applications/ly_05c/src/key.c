@@ -95,9 +95,6 @@ static void *key_thread(void *args)
     {
         return NULL;
     }
-    else
-    {
-    }
 
     while (true)
     {

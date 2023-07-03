@@ -145,7 +145,7 @@ typedef struct __attribute__((packed)) /* 按照字节对齐*/
 typedef struct __attribute__((packed)) /* 按照字节对齐*/
 {
     char voice_head_flag[FILE_HEAD_FLAG_LEN];                    /* 语音头标志 */
-    uint32_t voice_length;                                       /* 语音长度(单位页page) */
+    uint32_t voice_length;                                       /* 语音文件的长度(单位页page) */
     uint8_t trainid_type[TRAIN_ID_TYPE_LEN];                     /* 车次种类 */
     uint8_t train_id[TRAIN_ID_LEN];                              /* 车次 */
     uint8_t benbu_kehuo;                                         /* 本/补、客/货 */

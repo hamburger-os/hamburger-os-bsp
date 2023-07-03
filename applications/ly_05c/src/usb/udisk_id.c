@@ -62,9 +62,6 @@ static sint32_t to_uppers(char *str)
             /* 小写字母的值比大写字母的值大32,所以转化为大写时,需要减去32. */
             str[count] = (char)(str[count] - (char)32);
         }
-        else
-        {
-        }
         count++;
     }
     return 0;
@@ -89,18 +86,12 @@ static sint32_t check_udisk(const char *udisk_id, const char *code_file)
     {
         return (sint32_t)-1;
     }
-    else
-    {
-    }
 
     /* 打开文件, 此处并没有在不同的线程中使用, 故不存在共享资源竞争  */
     fd = open(code_file, O_RDONLY);
     if (fd < 0)
     {
         return (sint32_t)-1;
-    }
-    else
-    {
     }
 
     /* 读取U盘的ID */
@@ -112,9 +103,6 @@ static sint32_t check_udisk(const char *udisk_id, const char *code_file)
         close(fd);
         return (sint32_t)-1;
     }
-    else
-    {
-    }
 
     /* 关闭文件 */
     close(fd);
@@ -125,9 +113,6 @@ static sint32_t check_udisk(const char *udisk_id, const char *code_file)
         if ((uint8_t)udisk_id[i] != (uint8_t)((uint8_t)udisk_id_coded[i] ^ (uint8_t)0xAA))
         {
             return (sint32_t)-1;
-        }
-        else
-        {
         }
         i++;
     }
@@ -150,9 +135,6 @@ sint32_t check_udisk_id(char *id)
     {
         return (sint32_t)-1;
     }
-    else
-    {
-    }
 
     /* 将key中的小写字母全部转化为大写字母. */
     ret = to_uppers(id);
@@ -160,9 +142,6 @@ sint32_t check_udisk_id(char *id)
     {
         log_print(LOG_ERROR, "to_uppers Err:%d\n", ret);
         return (sint32_t)-1;
-    }
-    else
-    {
     }
 
     /* 经过和股份人员沟通, U盘鉴权很少用到, 暂时将此功能给关掉 */
