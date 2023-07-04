@@ -236,7 +236,7 @@ sint32_t tax_send_echo_event(uint8_t Event, const tax40_t *tax40)
     {
     }
 
-    buf[0] = TAX_UNIT_TRACK_DETECT; /* 语音记录单元代号 */
+    buf[0] = TAX_UNIT_VOICE; /* 语音记录单元代号 */
     buf[1] = (TAX_RECV_SUCCESS << 4) | (TAX_VALID_RECOED << 0);
     buf[2] = Event;
 
