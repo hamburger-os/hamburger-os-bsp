@@ -41,7 +41,13 @@ static void bat_thread_entry(void *parameter)
             if (rt_pin_read(puserdata->bat_pin[BAT_DI]) == PIN_LOW)
             {
                 rt_pin_write(puserdata->bat_pin[BAT_EN], PIN_HIGH);
+                LOG_D("bat enable");
             }
+        }
+        else
+        {
+            rt_pin_write(puserdata->bat_pin[BAT_EN], PIN_LOW);
+            LOG_D("bat disable");
         }
     }
 }
