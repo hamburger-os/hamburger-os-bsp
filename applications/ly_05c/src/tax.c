@@ -515,7 +515,7 @@ static sint32_t tax_send_tax2_back(void)
         buf[0] = TAX_UNIT_TRACK_DETECT;
         buf[1] = (TAX_RECV_SUCCESS << 4) | (TAX_INVALID << 0);
         tax_set_check_sum(buf, TAX_ACK_NO_MSG_LEN); /* 设置校验和 */
-#if 0
+#if 1
         int i = 0;
         printf("send:");
         for (i = 0; i < 3; i++)
@@ -531,7 +531,7 @@ static sint32_t tax_send_tax2_back(void)
     else /* 有缓冲的应答事件通信包 */
     {
         tax_set_check_sum(buf, TAX_ACK_MSG_LEN); /* 设置校验和 */
-#if 0
+#if 1
         int i = 0;
         printf("send:");
         for (i = 0; i < TAX_ACK_MSG_LEN; i++)
@@ -598,8 +598,9 @@ static void *tax_thread(void *args)
             switch (unit_code)
             {
             case TAX_UNIT_VOICE: /* 语音录音 */
-#if 0
+#if 1
                 printf("recv:");
+                int i;
                 for (i = 0; i < TAX_BOARD1_PACKAGE_LEN + TAX_BOARD2_PACKAGE_LEN; i++)
                     printf(" 0x%02x", tax_info_all[i]);
                 printf("\n");
