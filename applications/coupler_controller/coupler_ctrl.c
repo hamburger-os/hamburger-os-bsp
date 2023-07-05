@@ -29,9 +29,11 @@ static void ctrl_thread_entry(void *parameter)
 
     puserdata->ctrl_pin[CTRL_DO1] = rt_pin_get(puserdata->ctrl_devname[CTRL_DO1]);
     rt_pin_mode(puserdata->ctrl_pin[CTRL_DO1], PIN_MODE_OUTPUT);
+    rt_pin_write(puserdata->ctrl_pin[CTRL_DO1], PIN_LOW);
 
     puserdata->ctrl_pin[CTRL_DO2] = rt_pin_get(puserdata->ctrl_devname[CTRL_DO2]);
     rt_pin_mode(puserdata->ctrl_pin[CTRL_DO2], PIN_MODE_OUTPUT);
+    rt_pin_write(puserdata->ctrl_pin[CTRL_DO2], PIN_LOW);
 
     puserdata->ctrl_pin[CTRL_DI1] = rt_pin_get(puserdata->ctrl_devname[CTRL_DI1]);
     rt_pin_mode(puserdata->ctrl_pin[CTRL_DI1], PIN_MODE_INPUT);
@@ -42,9 +44,15 @@ static void ctrl_thread_entry(void *parameter)
     while(puserdata->isThreadRun)
     {
         rt_thread_delay(1000);
-        rt_pin_write(puserdata->ctrl_pin[CTRL_DO1], rt_pin_read(puserdata->ctrl_pin[CTRL_DI1]));
-        rt_pin_write(puserdata->ctrl_pin[CTRL_DO2], rt_pin_read(puserdata->ctrl_pin[CTRL_DI2]));
     }
+}
+
+void ctrl_air_pressure(uint8_t onoff)
+{
+    rt_pin_write(coupler_controller_userdata.ctrl_pin[CTRL_DO1], onoff);
+    LOG_D("air pressure %d", onoff);
+    rt_thread_delay(2000);
+    rt_pin_write(coupler_controller_userdata.ctrl_pin[CTRL_DO1], PIN_LOW);
 }
 
 void coupler_controller_ctrlinit(void)

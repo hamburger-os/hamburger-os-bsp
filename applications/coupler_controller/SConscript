@@ -12,6 +12,7 @@ src     = Split("""
                 led_ctrl.c
                 coupler_ctrl.c
                 module_ctrl.c
+                bat_ctrl.c
                 """)
 
 group = DefineGroup('coupler_controller', src, depend = ['APP_COUPLER_CONTROLLER'], CPPPATH = CPPPATH)
