@@ -51,8 +51,6 @@ void ctrl_air_pressure(uint8_t onoff)
 {
     rt_pin_write(coupler_controller_userdata.ctrl_pin[CTRL_DO1], onoff);
     LOG_D("air pressure %d", onoff);
-    rt_thread_delay(2000);
-    rt_pin_write(coupler_controller_userdata.ctrl_pin[CTRL_DO1], PIN_LOW);
 }
 static void air_test(int argc, char **argv)
 {

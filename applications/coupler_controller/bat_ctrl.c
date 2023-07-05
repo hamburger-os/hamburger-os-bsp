@@ -37,11 +37,16 @@ static void bat_thread_entry(void *parameter)
         rt_thread_delay(100);
         if (rt_pin_read(puserdata->bat_pin[BAT_DI]) == PIN_LOW)
         {
-            rt_pin_write(puserdata->bat_pin[BAT_EN], PIN_HIGH);
-            LOG_D("bat enable");
-            rt_thread_delay(60 * 1000);
-            rt_pin_write(puserdata->bat_pin[BAT_EN], PIN_LOW);
-            LOG_D("bat disable");
+            rt_thread_delay(10);
+            if (rt_pin_read(puserdata->bat_pin[BAT_DI]) == PIN_LOW)
+            {
+                rt_pin_write(puserdata->bat_pin[BAT_EN], PIN_HIGH);
+                LOG_D("bat enable");
+                rt_thread_delay(60 * 1000);
+                rt_pin_write(puserdata->bat_pin[BAT_EN], PIN_LOW);
+                LOG_D("bat disable");
+                rt_thread_delay(60 * 1000);
+            }
         }
     }
 }
