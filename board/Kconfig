@@ -2785,78 +2785,78 @@ menu "Onboard Peripheral Drivers"
         default n
         
         if BSP_USING_KSZ8851
-        	config BSP_USING_KSZ8851_RX_DUMP
-		        bool "Enable KSZ8851 RX DUMP"
-		        default n
-		        
-		    config BSP_USING_KSZ8851_TX_DUMP
-		        bool "Enable KSZ8851 TX DUMP"
-		        default n
-	        
+            config BSP_USING_KSZ8851_RX_DUMP
+                bool "Enable KSZ8851 RX DUMP"
+                default n
+                
+            config BSP_USING_KSZ8851_TX_DUMP
+                bool "Enable KSZ8851 TX DUMP"
+                default n
+            
             menuconfig BSP_USE_ETH1
-		        bool "Enable ETH port 1"
-		        default n
+                bool "Enable ETH port 1"
+                default n
 	        
-	        	if BSP_USE_ETH1
-		        	config ETH1_NE
-			            hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
-			            default (0x4)
-		
-		            config ETH1_CMD
-			            hex "Set the cmd address, default: NE3 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE3 - 1)) | (1 << (A0 + 1))))"
-			            default (0x68000002)
-		            
-		            config ETH1_RST
-			            string "Set the GPIO of the reset pin, default: PG.14"
-			            default "PG.14"
-		            
-		            config ETH1_ISR
-			            string "Set the GPIO of the isr pin, default: PH.2"
-			            default "PH.2"
-	        	endif
-	        
-	          menuconfig BSP_USE_ETH2
-		        bool "Enable ETH port 2"
-		        default n
-		        
-		        if BSP_USE_ETH2
-		        	config ETH2_NE
-			            hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
-			            default (0x6)
-		
-		            config ETH2_CMD
-			            hex "Set the cmd address, default: NE4 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE4 - 1)) | (1 << (A0 + 1))))"
-			            default (0x6C000002)
-			            
-			        config ETH2_RST
-			            string "Set the GPIO of the reset pin, default: PG.14"
-			            default "PG.14"
-		            
-		            config ETH2_ISR
-			            string "Set the GPIO of the isr pin, default: PH.3"
-			            default "PH.3"
+            if BSP_USE_ETH1
+            	config ETH1_NE
+                    hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
+                    default (0x4)
+            
+                config ETH1_CMD
+                    hex "Set the cmd address, default: NE3 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE3 - 1)) | (1 << (A0 + 1))))"
+                    default (0x68000002)
+                
+                config ETH1_RST
+                    string "Set the GPIO of the reset pin, default: PG.14"
+                    default "PG.14"
+                
+                config ETH1_ISR
+                    string "Set the GPIO of the isr pin, default: PH.2"
+                    default "PH.2"
+            endif
+
+            menuconfig BSP_USE_ETH2
+                bool "Enable ETH port 2"
+                default n
+
+                if BSP_USE_ETH2
+                    config ETH2_NE
+                        hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
+                        default (0x6)
+                    
+                    config ETH2_CMD
+                        hex "Set the cmd address, default: NE4 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE4 - 1)) | (1 << (A0 + 1))))"
+                        default (0x6C000002)
+                        
+                    config ETH2_RST
+                        string "Set the GPIO of the reset pin, default: PG.14"
+                        default "PG.14"
+                    
+                    config ETH2_ISR
+                        string "Set the GPIO of the isr pin, default: PH.3"
+                        default "PH.3"
 	        	endif
           
             menuconfig BSP_USE_ETH3
-            bool "Enable ETH port 3"
-            default n
+                bool "Enable ETH port 3"
+                default n
             
             if BSP_USE_ETH3
-              config ETH3_NE
-                  hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
-                  default (0x2)
-    
-                config ETH3_CMD
-                  hex "Set the cmd address, default: NE2 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE2 - 1)) | (1 << (A0 + 1))))"
-                  default (0x64000002)
-                  
-              config ETH3_RST
-                  string "Set the GPIO of the reset pin, default: PA.0"
-                  default "PA.0"
+                config ETH3_NE
+                    hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
+                    default (0x2)
                 
+                config ETH3_CMD
+                    hex "Set the cmd address, default: NE2 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE2 - 1)) | (1 << (A0 + 1))))"
+                    default (0x64000002)
+                      
+                config ETH3_RST
+                    string "Set the GPIO of the reset pin, default: PA.0"
+                    default "PA.0"
+                    
                 config ETH3_ISR
-                  string "Set the GPIO of the isr pin, default: PA.1"
-                  default "PA.1"
+                    string "Set the GPIO of the isr pin, default: PA.1"
+                    default "PA.1"
             endif
         endif
         

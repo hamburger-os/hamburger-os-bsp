@@ -26,6 +26,12 @@ __WEAK void lv_user_gui_init(void)
     extern void lv_demo_calendar(void);
     lv_demo_calendar();
 #else
+    lv_color_t *cbuf = rt_malloc(LV_CANVAS_BUF_SIZE_TRUE_COLOR(LCD_WIDTH, LCD_HEIGHT));
+    extern lv_obj_t * lv_100ask_sketchpad_create(lv_obj_t * parent);
+    lv_obj_t * sketchpad = lv_100ask_sketchpad_create(lv_scr_act());
 
+    lv_canvas_set_buffer(sketchpad, cbuf, LCD_WIDTH, LCD_HEIGHT, LV_IMG_CF_RGB565);
+    lv_obj_center(sketchpad);
+    lv_canvas_fill_bg(sketchpad, lv_palette_lighten(LV_PALETTE_RED, 3), LV_OPA_TRANSP);
 #endif
 }

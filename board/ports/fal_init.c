@@ -21,9 +21,11 @@
     extern struct fal_flash_dev emmc_flash;
 #endif
 
+#ifdef BSP_USING_ROOTFS
 static const char *fal_rootfs[] = {
     "bin", "etc", "lib", "usr",
 };
+#endif
 
 static int rt_fal_init(void)
 {

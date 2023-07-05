@@ -141,9 +141,10 @@ if GetDepend(['BSP_USING_LVGL']):
     src += Glob('ports/lvgl/lv_port_disp.c')
     src += Glob('ports/lvgl/lv_port_indev.c')
     path += [cwd + '/ports/lvgl']
-    if GetDepend(['BSP_USING_LVGL_DEMO']):
-        src += Glob('ports/lvgl/demo/lv_demo.c')
-        src += Glob('ports/lvgl/demo/lv_demo_calendar.c')
+    src += Glob('ports/lvgl/demo/lv_demo.c')
+    src += Glob('ports/lvgl/demo/lv_demo_calendar.c')
+    src += Glob('ports/lvgl/demo/lv_100ask_sketchpad.c')
+    path += [cwd + '/ports/lvgl/demo']
         
 if GetDepend(['BSP_USING_TOUCH']):
     src += Glob('ports/atk_touch/drv_touch.c')
