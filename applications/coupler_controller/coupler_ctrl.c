@@ -54,6 +54,20 @@ void ctrl_air_pressure(uint8_t onoff)
     rt_thread_delay(2000);
     rt_pin_write(coupler_controller_userdata.ctrl_pin[CTRL_DO1], PIN_LOW);
 }
+static void air_test(int argc, char **argv)
+{
+    if (argc != 2)
+    {
+        rt_kprintf("Usage: airtest [onoff]\n");
+        rt_kprintf("       example : airtest 1\n");
+    }
+    else
+    {
+        uint8_t onoff = strtoul(argv[1], NULL, 10);
+        ctrl_air_pressure(onoff);
+    }
+}
+MSH_CMD_EXPORT_ALIAS(air_test, airtest, air_pressure test);
 
 void coupler_controller_ctrlinit(void)
 {
