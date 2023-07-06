@@ -123,30 +123,30 @@ void event_run(void)
         switch (event)
         {
         case EVENT_PLUG_IN_USB: /* 插上U盘 */
-            led_set(LED_STATE_USB_PLUGED_IN);
+            data_set_usb_state(USB_STATE_PLUG_IN);
             break;
         case EVENT_UNPLUG_USB: /* 拔下U盘 */
-            led_set(LED_STATE_USB_NO);
+            data_set_usb_state(USB_STATE_UNPLUG);
             break;
         case EVENT_DUMP_START_LAST: /* 开始转储最新文件 */
             play_event(EVENT_DUMP_START_LAST);
-            led_set(LED_STATE_DUMPING);
+            data_set_dump_state(DUMP_STATE_DUMPING);
             break;
         case EVENT_DUMP_START_ALL: /* 开始转储全部文件 */
             play_event(EVENT_DUMP_START_ALL);
-            led_set(LED_STATE_DUMPING);
+            data_set_dump_state(DUMP_STATE_DUMPING);
             break;
         case EVENT_DUMP_END_LAST: /* 最新文件转储结束 */
             play_event(EVENT_DUMP_END_LAST);
-            led_set(LED_STATE_DUMP_SUCCESS);
+            data_set_dump_state(DUMP_STATE_SUCCESS);
             break;
         case EVENT_DUMP_END_ALL: /* 全部文件转储结束 */
             play_event(EVENT_DUMP_END_ALL);
-            led_set(LED_STATE_DUMP_SUCCESS);
+            data_set_dump_state(DUMP_STATE_SUCCESS);
             break;
         case EVENT_DUMP_FAIL: /* 转储失败 */
             play_event(EVENT_DUMP_FAIL);
-            led_set(LED_STATE_DUMP_FAIL);
+            data_set_dump_state(DUMP_STATE_FAIL);
             break;
         case EVENT_DUMP_USB_FULL: /* U盘已满 */
             play_event(EVENT_DUMP_USB_FULL);
@@ -158,28 +158,22 @@ void event_run(void)
             if (data_get_pcm_state() != PCM_STATE_RECORDING)
             {
                 play_voice();
-                led_set(LED_STATE_PLAYING);
+                data_set_pcm_state(PCM_STATE_PLAYING);
             }
             break;
         case EVENT_PLAY_END: /* 回放结束 */
-            if (data_get_pcm_state() != PCM_STATE_RECORDING)
-            {
-                led_set(LED_STATE_RS485_NORMAL);
-            }
             break;
         case EVENT_TAX_COMM_NORMAL: /* TAX通信正常 */
-            led_set(LED_STATE_RS485_NORMAL);
+            data_set_tax_comm_state(TAX_STATE_COMM_NORMAL);
             break;
         case EVENT_TAX_COMM_ERROR: /* TAX通信失败 */
-            led_set(LED_STATE_RS485_ERROR);
+            data_set_tax_comm_state(TAX_STATE_COMM_ERROR);
             break;
         case EVENT_RECORD_START: /* 开始录音 */
-            led_set(LED_STATE_RECORDING);
-            led_set(LED_STATE_VOICE_DATA_RECORDING);
+            data_set_pcm_state(PCM_STATE_RECORDING);
             break;
         case EVENT_RECORD_END: /* 停止录音 */
-            led_set(LED_STATE_RS485_NORMAL);
-            led_set(LED_STATE_VOICE_DATA_NO);
+            data_set_pcm_state(PCM_STATE_IDLE);
             break;
         case EVENT_UPDATE_BEGIN: /* 开始升级程序 */
             play_event(EVENT_UPDATE_BEGIN);
@@ -197,16 +191,16 @@ void event_run(void)
             play_event(EVENT_FINISH_FORMAT_STORAGE);
             break;
         case EVENT_WORK_NORMAL: /* 工作正常 */
-            led_set(LED_STATE_WORK_NORMAL);
+            data_set_usb_state(SW_STATE_OK);
             break;
         case EVENT_WORK_ERROR: /* 工作故障 */
-            led_set(LED_STATE_WORK_ERROR);
+            data_set_usb_state(SW_STATE_ERROR);
             break;
         case EVENT_SYS_WORK_OK: /* 系统工作正常 */
-            led_set(LED_STATE_SYS_OK);
+            data_set_sys_state(SYS_STATE_OK);
             break;
         case EVENT_SYS_WORK_ERR: /* 系统工作错误 */
-            led_set(LED_STATE_SYS_ERROR);
+            data_set_sys_state(SYS_STATE_ERROR);
             break;
         default: /* 缺省 */
             break;

@@ -23,14 +23,14 @@
  * 数据结构
  *******************************************************/
 /* U盘状态 */
-typedef enum _USB_STATE
+typedef enum
 {
     USB_STATE_PLUG_IN, /* 插U盘状态 */
     USB_STATE_UNPLUG   /* 未插U盘状态 */
 } E_USB_STATE;
 
 /* 转储状态 */
-typedef enum _DUMP_STATE
+typedef enum
 {
     DUMP_STATE_INIT,    /* 初始化状态 */
     DUMP_STATE_DUMPING, /* 转储中 */
@@ -40,7 +40,7 @@ typedef enum _DUMP_STATE
 } E_DUMP_STATE;
 
 /* PCM设备状态 */
-typedef enum _PCM_STATE
+typedef enum
 {
     PCM_STATE_IDLE,      /* 空闲状态 */
     PCM_STATE_PLAYING,   /* 播放状态 */
@@ -49,20 +49,33 @@ typedef enum _PCM_STATE
 } E_PCM_STATE;
 
 /* TAX通信状态 */
-typedef enum _TAX_STATE
+typedef enum
 {
     TAX_STATE_COMM_NORMAL, /* tax通信正常 */
     TAX_STATE_COMM_ERROR   /* tax通信错误 */
 } E_TAX_STATE;
 
 /* 程序更新状态 */
-typedef enum _UPDATE_STATE
+typedef enum
 {
     UPDATE_STATE_INIT,     /* 初始化状态 */
     UPDATE_STATE_UPDATING, /* 更新中 */
     UPDATE_STATE_FINISH    /* 更新完成 */
 } E_UPDATE_STATE;
 
+/* 软件工作状态 */
+typedef enum
+{
+    SW_STATE_OK,    /* 工作正常 */
+    SW_STATE_ERROR, /* 工作错误 */
+} E_SW_STATE;
+
+/* 系统工作状态 */
+typedef enum
+{
+    SYS_STATE_OK,    /* 工作正常 */
+    SYS_STATE_ERROR, /* 工作错误 */
+} E_SYS_STATE;
 /* 工作状态 */
 typedef struct _work_state_t
 {
@@ -76,6 +89,10 @@ typedef struct _work_state_t
     E_TAX_STATE tax_comm_state;
     /* 初始化,升级中,升级完成 */
     E_UPDATE_STATE update_state;
+    /* 初始化,升级中,升级完成 */
+    E_SW_STATE sw_work_state;
+    /* 系统工作状态 */
+    E_SYS_STATE sys_work_state;
     /* 保护锁 */
     pthread_mutex_t mutex;
 } work_state_t;
@@ -160,6 +177,45 @@ void data_set_tax_comm_state(E_TAX_STATE state);
  *
  *******************************************************/
 E_TAX_STATE data_get_tax_comm_state(void);
+
+/*******************************************************
+ *
+ * @brief  设置软件工作状态
+ *
+ * @param  state: tax通信状态
+ * @retval none
+ *
+ *******************************************************/
+void data_set_sw_state(E_SW_STATE state);
+
+/*******************************************************
+ *
+ * @brief  获取软件工作状态
+ *
+ * @retval E_TAX_STATE tax的通信状态
+ *
+ *******************************************************/
+E_SW_STATE data_get_sw_state(void);
+
+/*******************************************************
+ *
+ * @brief  设置系统工作状态
+ *
+ * @param  state: 系统工作状态
+ * @retval none
+ *
+ *******************************************************/
+void data_set_sys_state(E_SYS_STATE state);
+
+/*******************************************************
+ *
+ * @brief  获取系统工作状态
+ *
+ * @param  none
+ * @retval state: 系统工作状态
+ *
+ *******************************************************/
+E_SYS_STATE data_get_sys_state(void);
 
 /*******************************************************
  *

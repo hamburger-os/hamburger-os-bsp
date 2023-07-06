@@ -24,6 +24,7 @@
 
 #include "config.h"
 #include "log.h"
+#include "data.h"
 
 /*******************************************************
  * 宏定义
@@ -160,6 +161,8 @@ void led_set(E_LED_State led_state)
         set_pin_state((uint16_t)LED_PIN_INDEX_2A, LedPinStateOff);
         break;
     case LED_STATE_RS485_ERROR: /* 未收到正确的485数据 */
+        led_descs[LED_PIN_INDEX_1B].old_state = led_descs[LED_PIN_INDEX_1A].old_state;
+        led_descs[LED_PIN_INDEX_2A].old_state = led_descs[LED_PIN_INDEX_1A].old_state;
         set_pin_state((uint16_t)LED_PIN_INDEX_1A, LedPinStateBlink);
         set_pin_state((uint16_t)LED_PIN_INDEX_1B, LedPinStateBlink);
         set_pin_state((uint16_t)LED_PIN_INDEX_2A, LedPinStateBlink);
@@ -211,6 +214,83 @@ void led_set(E_LED_State led_state)
         break;
     }
 }
+static void update_led_state(void)
+{
+
+    /* 更新led的状态 */
+    /* U盘相关, A1 B1 A2 B3*/
+    switch (data_get_pcm_state())
+    {
+    case PCM_STATE_RECORDING:
+        led_set(LED_STATE_RECORDING);
+        led_set(LED_STATE_VOICE_DATA_RECORDING);
+        break;
+    case PCM_STATE_PLAYING:
+        led_set(LED_STATE_PLAYING);
+        led_set(LED_STATE_VOICE_DATA_NO);
+        break;
+    case PCM_STATE_IDLE:
+    default:
+        if (data_get_tax_comm_state() == TAX_STATE_COMM_NORMAL)
+        {
+            led_set(LED_STATE_RS485_NORMAL);
+        }
+        else
+        {
+            led_set(LED_STATE_RS485_ERROR);
+        }
+        led_set(LED_STATE_VOICE_DATA_NO);
+        break;
+    }
+
+    /* U盘转储状态, A3 */
+    switch (data_get_dump_state())
+    {
+    case DUMP_STATE_DUMPING:
+        led_set(LED_STATE_DUMPING);
+        break;
+    case DUMP_STATE_SUCCESS:
+        led_set(LED_STATE_DUMP_SUCCESS);
+        break;
+    case DUMP_STATE_FAIL:
+        led_set(LED_STATE_DUMP_FAIL);
+        break;
+    default:
+        break;
+    }
+
+    /* U盘拔插状态, B4 */
+    switch (data_get_usb_state())
+    {
+    case USB_STATE_PLUG_IN:
+        led_set(LED_STATE_USB_PLUGED_IN);
+        break;
+    case USB_STATE_UNPLUG:
+        led_set(LED_STATE_USB_NO);
+        break;
+    default:
+        break;
+    }
+    /* 工作状态指示, A4 */
+    if (data_get_sw_state() == SW_STATE_OK)
+    {
+        led_set(LED_STATE_WORK_NORMAL);
+    }
+    else
+    {
+        led_set(LED_STATE_WORK_ERROR);
+    }
+
+    /* 系统状态指示, B5 */
+    if (data_get_sys_state() == SYS_STATE_OK)
+    {
+        led_set(LED_STATE_SYS_OK);
+    }
+    else
+    {
+        led_set(LED_STATE_SYS_ERROR);
+    }
+}
 /*******************************************************
  *
  * @brief  LED显示线程
@@ -224,9 +304,14 @@ static void *led_thread(const void *args)
     sint32_t i = 0;
     static bool led_pin_state_alter_blink_p = false; /* 正向闪烁状态 */
     E_LedPinState pin_stat;
+    int cnt = 0;
 
     while (true)
     {
+        /* 更新led的状态 */
+        update_led_state();
+
+        /* 显示led的状态 */
         for (i = 0; i < LED_MAX_NUM; i++)
         {
             pthread_mutex_lock(&g_led_mutex);
@@ -275,7 +360,7 @@ static void *led_thread(const void *args)
                 break;
             }
         }
-        msleep((uint32_t)200); /* 休眠200ms */
+        msleep((uint32_t)100); /* 休眠200ms */
         led_pin_state_alter_blink_p = (bool)!led_pin_state_alter_blink_p;
     }
     return NULL;

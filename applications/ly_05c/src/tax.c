@@ -28,6 +28,7 @@
 #include "file_manager.h"
 #include "log.h"
 #include "rtc.h"
+#include "event.h"
 
 /*******************************************************
  * 宏定义
@@ -336,7 +337,7 @@ static sint32_t tax_open(char *name)
     uart_dev = rt_device_find(name);
     if (uart_dev == RT_NULL)
     {
-        log_print(LOG_ERROR, "can not find %s device.\n", name);
+        log_print(LOG_ERROR, "can not find %s  device.\n", name);
         return (sint32_t)-1;
     }
 
@@ -424,8 +425,10 @@ static sint32_t tax_recv_data(void)
     if (ret != RT_EOK)
     {
         /* log_print(LOG_ERROR, "send uart message queue error. \n");*/
+        event_push_queue(EVENT_TAX_COMM_ERROR);
         return (sint32_t)-1;
     }
+    event_push_queue(EVENT_TAX_COMM_NORMAL);
 
     /* 环形缓冲区中的数据已经处理完成, 开始接受新的数据. */
     if (len == 0)
@@ -512,10 +515,10 @@ static sint32_t tax_send_tax2_back(void)
 
     if (tax_read_echo_event_list(echo_list, buf) != 0) /* 没有缓冲的应答事件通信包 */
     {
-        buf[0] = TAX_UNIT_TRACK_DETECT;
+        buf[0] = TAX_UNIT_VOICE;
         buf[1] = (TAX_RECV_SUCCESS << 4) | (TAX_INVALID << 0);
         tax_set_check_sum(buf, TAX_ACK_NO_MSG_LEN); /* 设置校验和 */
-#if 1
+#if 0
         int i = 0;
         printf("send:");
         for (i = 0; i < 3; i++)
@@ -531,7 +534,7 @@ static sint32_t tax_send_tax2_back(void)
     else /* 有缓冲的应答事件通信包 */
     {
         tax_set_check_sum(buf, TAX_ACK_MSG_LEN); /* 设置校验和 */
-#if 1
+#if 0
         int i = 0;
         printf("send:");
         for (i = 0; i < TAX_ACK_MSG_LEN; i++)
@@ -574,7 +577,6 @@ static void *tax_thread(void *args)
     while (true)
     {
         /* 接收数据 */
-        // todo, 增加超时控制.
         ret = tax_recv_data();
         if (ret < 0)
         {
@@ -598,7 +600,7 @@ static void *tax_thread(void *args)
             switch (unit_code)
             {
             case TAX_UNIT_VOICE: /* 语音录音 */
-#if 1
+#if 0
                 printf("recv:");
                 int i;
                 for (i = 0; i < TAX_BOARD1_PACKAGE_LEN + TAX_BOARD2_PACKAGE_LEN; i++)
