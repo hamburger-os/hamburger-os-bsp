@@ -2351,9 +2351,9 @@ menu "Onboard Peripheral Drivers"
             
             choice
                 prompt "Select lcd driver"
-                default BSP_USING_LCD_RGB
+                default BSP_USING_LCD_LTDC
 
-                config BSP_USING_LCD_RGB
+                config BSP_USING_LCD_LTDC
                     bool "Enable LCD LTDC"
                     select BSP_USING_LCD
                     select RT_TOUCH_PIN_IRQ
@@ -2364,7 +2364,7 @@ menu "Onboard Peripheral Drivers"
                     select BSP_USING_SRAM
             endchoice
             
-            if BSP_USING_LCD_RGB
+            if BSP_USING_LCD_LTDC
                 config LCD_HSYNC_WIDTH
                     int "Set lcd hsync width, default: 1"
                     default (1)
@@ -2401,13 +2401,9 @@ menu "Onboard Peripheral Drivers"
                 endchoice
                 
                 if LCD_BACKLIGHT_USING_GPIO
-                    config LCD_BKLT_EN_GPIO
-                        string "Set the GPIO of the BKLT EN, default: PD.3"
-                        default "PD.3"
-                        
                     config LCD_BKLT_CTL_GPIO
-                        string "Set the GPIO of the BKLT CTL, default: PA.2"
-                        default "PA.2"
+                        string "Set the GPIO of the BKLT CTL, default: PH.6"
+                        default "PH.6"
                 endif
 
                 config BSP_USING_LCD_TEST

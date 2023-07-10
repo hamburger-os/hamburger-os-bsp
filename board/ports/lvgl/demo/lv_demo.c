@@ -24,7 +24,7 @@ __WEAK void lv_user_gui_init(void)
     lv_demo_music();
 #elif defined(BSP_USING_LVGL_DEMO)
     extern void lv_demo_calendar(void);
-    lv_demo_calendar();
+//    lv_demo_calendar();
 #else
     lv_color_t *cbuf = rt_malloc(LV_CANVAS_BUF_SIZE_TRUE_COLOR(LCD_WIDTH, LCD_HEIGHT));
     extern lv_obj_t * lv_100ask_sketchpad_create(lv_obj_t * parent);

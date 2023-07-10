@@ -11,7 +11,6 @@
 #include <stdbool.h>
 #include <rtdevice.h>
 #include <board.h>
-#include <drv_fmclcd.h>
 
 lv_indev_t *touch_indev;
 
