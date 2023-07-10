@@ -44,12 +44,20 @@ menu "On-chip Peripheral Drivers"
                     bool "Select M4 core board with sram"
                     select SOC_SERIES_STM32F4
                     
+                config SOC_M4COREBOARD_SDRAM
+                    bool "Select M4 core board with sdram"
+                    select SOC_SERIES_STM32F4
+                    
                 config SOC_STM32F437IIT6
                     bool "Select MCU stm32f437iit6"
                     select SOC_SERIES_STM32F4
     
                 config SOC_H7COREBOARD_NOSRAM
                     bool "Select H7 core board with no sram"
+                    select SOC_SERIES_STM32H7
+                    
+                config SOC_H7COREBOARD_SDRAM
+                    bool "Select H7 core board with sdram"
                     select SOC_SERIES_STM32H7
     
                 config SOC_H7_STO_RECORD_BOARD
@@ -120,6 +128,11 @@ menu "On-chip Peripheral Drivers"
         string "Set the GPIO of the SYS_LED pin, default: PI.11"
         depends on BSP_USING_SYS_LED
         default "PI.11"
+        
+    config BSP_SYS_LED_DELAY
+        int "Set the led delay ms, default: 500"
+        depends on BSP_USING_SYS_LED
+        default 500
         
     menuconfig BSP_USING_GPIO_TABLE
         bool "Enable core board gpio table"

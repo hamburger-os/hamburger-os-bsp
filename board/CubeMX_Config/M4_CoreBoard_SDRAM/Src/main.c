@@ -74,7 +74,6 @@ UART_HandleTypeDef huart6;
 HCD_HandleTypeDef hhcd_USB_OTG_HS;
 
 NOR_HandleTypeDef hnor1;
-SRAM_HandleTypeDef hsram3;
 SRAM_HandleTypeDef hsram4;
 SDRAM_HandleTypeDef hsdram2;
 
@@ -1008,41 +1007,6 @@ static void MX_FMC_Init(void)
   /* ExtTiming */
 
   if (HAL_NOR_Init(&hnor1, &Timing, NULL) != HAL_OK)
-  {
-    Error_Handler( );
-  }
-
-  /** Perform the SRAM3 memory initialization sequence
-  */
-  hsram3.Instance = FMC_NORSRAM_DEVICE;
-  hsram3.Extended = FMC_NORSRAM_EXTENDED_DEVICE;
-  /* hsram3.Init */
-  hsram3.Init.NSBank = FMC_NORSRAM_BANK3;
-  hsram3.Init.DataAddressMux = FMC_DATA_ADDRESS_MUX_DISABLE;
-  hsram3.Init.MemoryType = FMC_MEMORY_TYPE_SRAM;
-  hsram3.Init.MemoryDataWidth = FMC_NORSRAM_MEM_BUS_WIDTH_16;
-  hsram3.Init.BurstAccessMode = FMC_BURST_ACCESS_MODE_DISABLE;
-  hsram3.Init.WaitSignalPolarity = FMC_WAIT_SIGNAL_POLARITY_LOW;
-  hsram3.Init.WrapMode = FMC_WRAP_MODE_DISABLE;
-  hsram3.Init.WaitSignalActive = FMC_WAIT_TIMING_BEFORE_WS;
-  hsram3.Init.WriteOperation = FMC_WRITE_OPERATION_ENABLE;
-  hsram3.Init.WaitSignal = FMC_WAIT_SIGNAL_DISABLE;
-  hsram3.Init.ExtendedMode = FMC_EXTENDED_MODE_DISABLE;
-  hsram3.Init.AsynchronousWait = FMC_ASYNCHRONOUS_WAIT_DISABLE;
-  hsram3.Init.WriteBurst = FMC_WRITE_BURST_DISABLE;
-  hsram3.Init.ContinuousClock = FMC_CONTINUOUS_CLOCK_SYNC_ONLY;
-  hsram3.Init.PageSize = FMC_PAGE_SIZE_NONE;
-  /* Timing */
-  Timing.AddressSetupTime = 4;
-  Timing.AddressHoldTime = 15;
-  Timing.DataSetupTime = 20;
-  Timing.BusTurnAroundDuration = 8;
-  Timing.CLKDivision = 16;
-  Timing.DataLatency = 17;
-  Timing.AccessMode = FMC_ACCESS_MODE_A;
-  /* ExtTiming */
-
-  if (HAL_SRAM_Init(&hsram3, &Timing, NULL) != HAL_OK)
   {
     Error_Handler( );
   }

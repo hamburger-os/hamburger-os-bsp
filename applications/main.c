@@ -39,11 +39,11 @@ int main(void)
 #ifdef BSP_USING_SYS_LED
         rt_pin_write(LED_PIN, PIN_HIGH);
 #endif
-        rt_thread_mdelay(500);
+        rt_thread_mdelay(BSP_SYS_LED_DELAY);
 #ifdef BSP_USING_SYS_LED
         rt_pin_write(LED_PIN, PIN_LOW);
 #endif
-        rt_thread_mdelay(500);
+        rt_thread_mdelay(BSP_SYS_LED_DELAY);
     }
 
     return RT_EOK;
