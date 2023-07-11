@@ -25,7 +25,7 @@
  *******************************************************/
 
 /* 文件路径的相关宏 */
-#define TARGET_DIR_NAME "/mnt/udisk/ud0p0/yysj/voice"     /* U盘中保存语音文件的路径 */
+#define TARGET_DIR_NAME "/mnt/udisk/ud0p0/SW_Voice"     /* U盘中保存语音文件的路径 */
 #define UPGRADE_FILE_NAME "/mnt/udisk/ud0p0/rtthread.rbl" /* 升级文件 */
 #define FORMAT_DIR_NAME "/mnt/udisk/ud0p0/format"         /* 格式化文件 */
 #define YUYIN_PATH_NAME "/mnt/emmc/yysj"                  /* 语音文件在板子上的存储路径 */

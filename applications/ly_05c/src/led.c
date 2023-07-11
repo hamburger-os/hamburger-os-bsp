@@ -203,6 +203,7 @@ void led_set(E_LED_State led_state)
         break;
     case LED_STATE_USB_NO: /* 拔下U盘 */
         set_pin_state((uint16_t)LED_PIN_INDEX_4B, LedPinStateOff);
+        set_pin_state((uint16_t)LED_PIN_INDEX_3A, LedPinStateOff);
         break;
     case LED_STATE_SYS_OK: /* 系统工作正常 */
         set_pin_state((uint16_t)LED_PIN_INDEX_5B, LedPinStateBlink);
