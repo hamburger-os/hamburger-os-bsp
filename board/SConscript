@@ -239,6 +239,9 @@ if GetDepend(['BSP_USING_LTC186X']):
     
 if GetDepend(['BSP_USING_GNSS']):
     src += Glob('ports/drv_gnss.c')
+    
+if GetDepend(['BSP_USING_MCP2517FD']):
+    src += Glob('ports/mcp2517/drv_mcp2517.c')
 
 group = DefineGroup('Drivers', src, depend = [''], CPPPATH = path, CPPDEFINES = CPPDEFINES)
 
