@@ -109,7 +109,7 @@ typedef struct __attribute__((packed)) /* 按照字节对齐*/
     uint32_t file_index;              /* 文件的序号 */
     uint32_t voice_index;             /* 语音序号 */
     sint32_t not_exsit;               /* 为1表示录音板中还没有生成文件 */
-    uint32_t record_datalen;          /* 录音数据长度 */
+    uint32_t record_datalen;          /* 最后一条语音数据长度 */
     sint32_t channel;                 /* 通道号, 录音通道,放音通道? */
 } current_rec_file_info_t;
 

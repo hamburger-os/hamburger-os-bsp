@@ -461,19 +461,23 @@ static void *record_handler_thread(void *arg)
                         }
                         rt_kprintf("\n");
 #endif
-
                         /* 写入VSW文件 */
                         ret = write(g_cur_rec_file_info.fd, serial_data, byte_counter);
                         if (ret > 0)
                         {
                             g_cur_rec_file_info.record_datalen += ret;
                         }
-                        /* 此处不应该调用fsync, 会降低此线程的处理速度. */
-                        /* fsync(g_cur_rec_file_info.fd); */
+                        fsync(g_cur_rec_file_info.fd);
                         /* rt_kprintf("%d ms\n", rt_tick_get_millisecond() - rt_tick); */
                         encoder_buffer_used = 0;
                     }
                 }
+            }
+
+            /* 超过5分钟, 强制停止录音 */
+            if (g_cur_rec_file_info.record_datalen >= (VOICE_VALID_LENGTH * 50) * 60 * 5)
+            {
+                break;
             }
         }
 
