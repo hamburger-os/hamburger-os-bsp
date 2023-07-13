@@ -32,12 +32,14 @@ typedef struct
     char *adc_devname;
     char *led_devname[5];
     char *ctrl_devname[4];
+    char *bat_devname[2];
 
     rt_device_t station_dev;
     rt_device_t module_dev;
     rt_adc_device_t adc_dev;
     rt_base_t led_pin[5];
     rt_base_t ctrl_pin[4];
+    rt_base_t bat_pin[2];
 
     struct rt_messagequeue *rx_station_mq;
     struct rt_messagequeue *process_station_mq;
@@ -65,10 +67,12 @@ void coupler_controller_pressureinit(void);
 void coupler_controller_ledinit(void);
 void coupler_controller_ctrlinit(void);
 void coupler_controller_moduleinit(void);
+void coupler_controller_batinit(void);
 
 void set_device_addr(uint8_t addr);
 uint8_t get_device_addr(void);
 void module_ctrl_open(uint8_t isopen);
+void ctrl_air_pressure(uint8_t onoff);
 
 void coupler_controller_led_toggle(int pin);
 

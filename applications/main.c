@@ -22,8 +22,9 @@
 
 int main(void)
 {
-    /* Lower thread priority */
+    /* High thread priority */
     uint8_t parity = RT_THREAD_PRIORITY_MAX - 2;
+//    uint8_t parity = 1;
     rt_thread_control(rt_thread_self(), RT_THREAD_CTRL_CHANGE_PRIORITY, &parity);
 
 #ifdef BSP_USING_SYS_LED
@@ -34,17 +35,20 @@ int main(void)
 #ifndef PKG_USING_QBOOT
     LOG_D("system self-test completed and started.");
 #endif
+
+#ifdef BSP_SYS_LED_DELAY
     while (1)
     {
 #ifdef BSP_USING_SYS_LED
         rt_pin_write(LED_PIN, PIN_HIGH);
 #endif
-        rt_thread_mdelay(500);
+        rt_thread_mdelay(BSP_SYS_LED_DELAY);
 #ifdef BSP_USING_SYS_LED
         rt_pin_write(LED_PIN, PIN_LOW);
 #endif
-        rt_thread_mdelay(500);
+        rt_thread_mdelay(BSP_SYS_LED_DELAY);
     }
+#endif
 
     return RT_EOK;
 }

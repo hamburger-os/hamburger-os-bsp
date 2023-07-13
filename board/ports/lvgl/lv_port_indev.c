@@ -11,7 +11,6 @@
 #include <stdbool.h>
 #include <rtdevice.h>
 #include <board.h>
-#include <drv_fmclcd.h>
 
 lv_indev_t *touch_indev;
 
@@ -29,14 +28,8 @@ static void input_read(lv_indev_drv_t *indev_drv, lv_indev_data_t *data)
 void lv_port_indev_input(rt_int16_t x, rt_int16_t y, lv_indev_state_t state)
 {
     last_state = state;
-#ifdef BSP_USING_TOUCH_CAP
-    last_x = LCD_W - y;
-    last_y = x;
-#endif /* BSP_USING_TOUCH_CAP */
-#ifdef BSP_USING_TOUCH_RES
     last_x = x;
     last_y = y;
-#endif /* BSP_USING_TOUCH_RES */
 }
 
 void lv_port_indev_init(void)

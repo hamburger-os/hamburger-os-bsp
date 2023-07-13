@@ -21,7 +21,7 @@
 #ifdef FLASHDB_PORT_USING_KVDB
 static struct fdb_kvdb kvdb;
 
-static int kvdb_init(void)
+static void kvdb_thread_entry(void* parameter)
 {
     fdb_err_t ret = FDB_NO_ERR;
 
@@ -38,7 +38,7 @@ static int kvdb_init(void)
     if (ret != FDB_NO_ERR)
     {
         LOG_E("kvdb init failed!");
-        return -RT_ERROR;
+        return;
     }
 
     struct fdb_blob blob = {0};
@@ -60,6 +60,21 @@ static int kvdb_init(void)
     /* change the "boot_count" KV's value */
     fdb_kv_set_blob(&kvdb, "boot_count", fdb_blob_make(&blob, &boot_count, sizeof(boot_count)));
     LOG_I("Welcome to the system for the %u time", boot_count);
+}
+
+static int kvdb_init(void)
+{
+    //使用独立线程初始化
+    rt_thread_t kvdb_thread = rt_thread_create( "kvdb",
+                                     kvdb_thread_entry,
+                                     NULL,
+                                     2048,
+                                     18,
+                                     10);
+    if ( kvdb_thread != RT_NULL)
+    {
+        rt_thread_startup(kvdb_thread);
+    }
 
     return RT_EOK;
 }

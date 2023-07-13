@@ -63,11 +63,23 @@ if GetDepend(['SOC_M4COREBOARD_NOSRAM']):
         src += [startup_path_prefix + '/STM32F4xx_HAL/CMSIS/Device/ST/STM32F4xx/Source/Templates/arm/startup_stm32f429xx.s']
     elif rtconfig.PLATFORM in ['iccarm']:
         src += [startup_path_prefix + '/STM32F4xx_HAL/CMSIS/Device/ST/STM32F4xx/Source/Templates/iar/startup_stm32f429xx.s']
-        
+
 if GetDepend(['SOC_M4COREBOARD_SRAM']):
     src += Glob('CubeMX_Config/M4_CoreBoard_SRAM/Src/main.c')
     src += Glob('CubeMX_Config/M4_CoreBoard_SRAM/Src/stm32f4xx_hal_msp.c')
     path += [cwd + '/CubeMX_Config/M4_CoreBoard_SRAM/Inc']
+    CPPDEFINES = ['STM32F429xx']
+    if rtconfig.PLATFORM in ['gcc']:
+        src += [startup_path_prefix + '/STM32F4xx_HAL/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc/startup_stm32f429xx.s']
+    elif rtconfig.PLATFORM in ['armcc', 'armclang']:
+        src += [startup_path_prefix + '/STM32F4xx_HAL/CMSIS/Device/ST/STM32F4xx/Source/Templates/arm/startup_stm32f429xx.s']
+    elif rtconfig.PLATFORM in ['iccarm']:
+        src += [startup_path_prefix + '/STM32F4xx_HAL/CMSIS/Device/ST/STM32F4xx/Source/Templates/iar/startup_stm32f429xx.s']
+
+if GetDepend(['SOC_M4COREBOARD_SDRAM']):
+    src += Glob('CubeMX_Config/M4_CoreBoard_SDRAM/Src/main.c')
+    src += Glob('CubeMX_Config/M4_CoreBoard_SDRAM/Src/stm32f4xx_hal_msp.c')
+    path += [cwd + '/CubeMX_Config/M4_CoreBoard_SDRAM/Inc']
     CPPDEFINES = ['STM32F429xx']
     if rtconfig.PLATFORM in ['gcc']:
         src += [startup_path_prefix + '/STM32F4xx_HAL/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc/startup_stm32f429xx.s']
@@ -93,6 +105,19 @@ if GetDepend(['SOC_H7COREBOARD_NOSRAM']):
     src += Glob('CubeMX_Config/H7_CoreBoard_NOSRAM/Src/stm32h7xx_hal_msp.c')
     src += Glob('drv_mpu.c')
     path += [cwd + '/CubeMX_Config/H7_CoreBoard_NOSRAM/Inc']
+    CPPDEFINES = ['STM32H743xx']
+    if rtconfig.PLATFORM in ['gcc']:
+        src += [startup_path_prefix + '/STM32H7xx_HAL/CMSIS/Device/ST/STM32H7xx/Source/Templates/gcc/startup_stm32h743xx.s']
+    elif rtconfig.PLATFORM in ['armcc', 'armclang']:
+        src += [startup_path_prefix + '/STM32H7xx_HAL/CMSIS/Device/ST/STM32H7xx/Source/Templates/arm/startup_stm32h743xx.s']
+    elif rtconfig.PLATFORM in ['iccarm']:
+        src += [startup_path_prefix + '/STM32H7xx_HAL/CMSIS/Device/ST/STM32H7xx/Source/Templates/iar/startup_stm32h743xx.s']
+
+if GetDepend(['SOC_H7COREBOARD_SDRAM']):
+    src += Glob('CubeMX_Config/H7_CoreBoard_SDRAM/Src/main.c')
+    src += Glob('CubeMX_Config/H7_CoreBoard_SDRAM/Src/stm32h7xx_hal_msp.c')
+    src += Glob('drv_mpu.c')
+    path += [cwd + '/CubeMX_Config/H7_CoreBoard_SDRAM/Inc']
     CPPDEFINES = ['STM32H743xx']
     if rtconfig.PLATFORM in ['gcc']:
         src += [startup_path_prefix + '/STM32H7xx_HAL/CMSIS/Device/ST/STM32H7xx/Source/Templates/gcc/startup_stm32h743xx.s']
@@ -141,15 +166,16 @@ if GetDepend(['BSP_USING_LVGL']):
     src += Glob('ports/lvgl/lv_port_disp.c')
     src += Glob('ports/lvgl/lv_port_indev.c')
     path += [cwd + '/ports/lvgl']
-    if GetDepend(['BSP_USING_LVGL_DEMO']):
-        src += Glob('ports/lvgl/demo/lv_demo.c')
-        src += Glob('ports/lvgl/demo/lv_demo_calendar.c')
+    src += Glob('ports/lvgl/demo/lv_demo.c')
+    src += Glob('ports/lvgl/demo/lv_demo_calendar.c')
+    src += Glob('ports/lvgl/demo/lv_100ask_sketchpad.c')
+    path += [cwd + '/ports/lvgl/demo']
         
 if GetDepend(['BSP_USING_TOUCH']):
-    src += Glob('ports/atk_touch/drv_touch.c')
+    src += Glob('ports/touch/drv_touch.c')
     if GetDepend(['TOUCH_USING_XPT2046']):
-        src += Glob('ports/atk_touch/xpt2046.c')
-    path += [cwd + '/ports/atk_touch']
+        src += Glob('ports/touch/xpt2046.c')
+    path += [cwd + '/ports/touch']
         
 if GetDepend(['BSP_USING_WM8978']):
     src += Glob('ports/wm8978/drv_wm8978.c')

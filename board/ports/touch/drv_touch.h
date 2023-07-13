@@ -16,13 +16,10 @@
 
 struct _rt_drv_touch
 {
-    uint16_t min_raw_x;
-    uint16_t min_raw_y;
-    uint16_t max_raw_x;
-    uint16_t max_raw_y;
-
     struct rt_touch_device dev;
     struct rt_spi_device *spidev;
+
+    rt_thread_t  touch_thread;
 };
 
 int drv_touch_bus_init(struct _rt_drv_touch *config);

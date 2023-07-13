@@ -21,9 +21,11 @@
     extern struct fal_flash_dev emmc_flash;
 #endif
 
+#ifdef BSP_USING_ROOTFS
 static const char *fal_rootfs[] = {
     "bin", "etc", "lib", "usr",
 };
+#endif
 
 static int rt_fal_init(void)
 {
@@ -79,11 +81,19 @@ static int rt_fal_init(void)
 #endif
 
 #ifdef BSP_USING_EMMC
-    if (fal_dev_mtd_nor_device_create(&emmc_flash) == NULL)
-//    if (fal_dev_blk_device_create(&emmc_flash) == NULL)
+    if (rt_strcmp(EMMC_FS, "lfs") == 0)
     {
-        LOG_E("Failed to creat nor %s!", EMMC_DEV_NAME);
-//        LOG_E("Failed to creat blk %s!", EMMC_DEV_NAME);
+        if (fal_dev_mtd_nor_device_create(&emmc_flash) == NULL)
+        {
+            LOG_E("Failed to creat nor %s!", EMMC_DEV_NAME);
+        }
+    }
+    else if (rt_strcmp(EMMC_FS, "elm") == 0 || rt_strcmp(EMMC_FS, "ext") == 0)
+    {
+        if (fal_dev_blk_device_create(&emmc_flash) == NULL)
+        {
+            LOG_E("Failed to creat blk %s!", EMMC_DEV_NAME);
+        }
     }
 #endif
 

@@ -10,8 +10,6 @@
 #include <lvgl.h>
 #include <board.h>
 
-#include "drv_fmclcd.h"
-
 #define DRV_DEBUG
 #define LOG_TAG "drv.lv"
 #include <drv_log.h>
@@ -30,6 +28,7 @@ static lv_disp_drv_t disp_drv;  /*Descriptor of a display driver*/
 static void lcd_flush_cb(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p)
 {
     /* color_p is a buffer pointer; the buffer is provided by LVGL */
+    extern void lcd_fill_array(rt_uint16_t x_start, rt_uint16_t y_start, rt_uint16_t x_end, rt_uint16_t y_end, void *pcolor);
     lcd_fill_array(area->x1, area->y1, area->x2, area->y2, color_p);
 
     /*IMPORTANT!!!
@@ -43,7 +42,7 @@ void lv_port_disp_init(void)
     lv_color_t *fbuf1, *fbuf2;
 
     lcd_device = rt_device_find("lcd");
-    if (lcd_device == 0)
+    if (lcd_device == RT_NULL)
     {
         LOG_E("find lcd error!");
         return;

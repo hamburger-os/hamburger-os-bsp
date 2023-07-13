@@ -44,12 +44,20 @@ menu "On-chip Peripheral Drivers"
                     bool "Select M4 core board with sram"
                     select SOC_SERIES_STM32F4
                     
+                config SOC_M4COREBOARD_SDRAM
+                    bool "Select M4 core board with sdram"
+                    select SOC_SERIES_STM32F4
+                    
                 config SOC_STM32F437IIT6
                     bool "Select MCU stm32f437iit6"
                     select SOC_SERIES_STM32F4
     
                 config SOC_H7COREBOARD_NOSRAM
                     bool "Select H7 core board with no sram"
+                    select SOC_SERIES_STM32H7
+                    
+                config SOC_H7COREBOARD_SDRAM
+                    bool "Select H7 core board with sdram"
                     select SOC_SERIES_STM32H7
     
                 config SOC_H7_STO_RECORD_BOARD
@@ -120,6 +128,11 @@ menu "On-chip Peripheral Drivers"
         string "Set the GPIO of the SYS_LED pin, default: PI.11"
         depends on BSP_USING_SYS_LED
         default "PI.11"
+        
+    config BSP_SYS_LED_DELAY
+        int "Set the led delay ms, default: 500"
+        depends on BSP_USING_SYS_LED
+        default 500
         
     menuconfig BSP_USING_GPIO_TABLE
         bool "Enable core board gpio table"
@@ -2351,9 +2364,9 @@ menu "Onboard Peripheral Drivers"
             
             choice
                 prompt "Select lcd driver"
-                default BSP_USING_LCD_RGB
+                default BSP_USING_LCD_LTDC
 
-                config BSP_USING_LCD_RGB
+                config BSP_USING_LCD_LTDC
                     bool "Enable LCD LTDC"
                     select BSP_USING_LCD
                     select RT_TOUCH_PIN_IRQ
@@ -2364,7 +2377,7 @@ menu "Onboard Peripheral Drivers"
                     select BSP_USING_SRAM
             endchoice
             
-            if BSP_USING_LCD_RGB
+            if BSP_USING_LCD_LTDC
                 config LCD_HSYNC_WIDTH
                     int "Set lcd hsync width, default: 1"
                     default (1)
@@ -2401,13 +2414,9 @@ menu "Onboard Peripheral Drivers"
                 endchoice
                 
                 if LCD_BACKLIGHT_USING_GPIO
-                    config LCD_BKLT_EN_GPIO
-                        string "Set the GPIO of the BKLT EN, default: PD.3"
-                        default "PD.3"
-                        
                     config LCD_BKLT_CTL_GPIO
-                        string "Set the GPIO of the BKLT CTL, default: PA.2"
-                        default "PA.2"
+                        string "Set the GPIO of the BKLT CTL, default: PH.6"
+                        default "PH.6"
                 endif
 
                 config BSP_USING_LCD_TEST
@@ -2660,8 +2669,8 @@ menu "Onboard Peripheral Drivers"
 	            default "PC.3"
             
             config BSP_FM25xx_SPI_SPEED
-	            int "Set the rate of spi, default: (25 * 1000 *1000)"
-	            default (25000000)
+	            int "Set the rate of spi, default: (40 * 1000 *1000)"
+	            default (40000000)
             
             config FM25xx_SIZE_GRANULARITY_TOTAL
 	            int "Set storage space size, default: (128 * 1024)"
@@ -2681,7 +2690,7 @@ menu "Onboard Peripheral Drivers"
         endif
         
     menuconfig BSP_USING_SPI_FLASH
-        bool "Enable SPI FLASH (sfud: W25Qxx)"
+        bool "Enable SPI FLASH (sfud: JEDEC JESD216)"
         select RT_USING_DFS
         select RT_USING_DFS_ROMFS
         select PKG_USING_LITTLEFS
@@ -2699,16 +2708,16 @@ menu "Onboard Peripheral Drivers"
                 default "PB.14"
                 
             config BSP_SPI_FLASH_SPI_SPEED
-                int "Set the rate of spi, default: (50 * 1000 *1000)"
-                default (50000000)
+                int "Set the rate of spi, default: (40 * 1000 *1000)"
+                default (40000000)
             
             config SPI_FLASH_SIZE_GRANULARITY_TOTAL
-                int "Set storage space size, default: (16 * 1024 * 1024)"
-                default (16777216)
+                int "Set storage space size, default: (64 * 1024 * 1024)"
+                default (67108864)
             
             config SPI_FLASH_BLK_SIZE
-                int "Set the memory block size, default: (4096)"
-                default (4096)
+                int "Set the memory block size, default: (262144)"
+                default (262144)
             
             config SPI_FLASH_FS
                 string "Set the file system used, default: lfs"
@@ -2720,6 +2729,7 @@ menu "Onboard Peripheral Drivers"
         select RT_USING_DFS
         select RT_USING_DFS_ROMFS
         select PKG_USING_LITTLEFS
+        select RT_USING_DFS_ELMFAT
         default n
         
         if BSP_USING_EMMC            
@@ -2743,10 +2753,19 @@ menu "Onboard Peripheral Drivers"
                 bool "Enable SDIO TX DMA"
                 depends on SOC_SERIES_STM32F4
                 default y
+                
+            config BSP_SDIO_USING_CTRL
+                bool "Enable SDIO power ctrl pin"
+                default n
+                
+            config BSP_SDIO_CTRL_PIN
+                string "Set SDIO power ctrl pin, default: PG.10"
+                depends on BSP_SDIO_USING_CTRL
+                default "PG.10"
             
             config EMMC_FS
-	            string "Set the file system used, default: lfs"
-	            default "lfs"
+	            string "Set the file system used, default: elm"
+	            default "elm"
         endif
         
     menuconfig BSP_USING_SDCARD
@@ -2785,78 +2804,78 @@ menu "Onboard Peripheral Drivers"
         default n
         
         if BSP_USING_KSZ8851
-        	config BSP_USING_KSZ8851_RX_DUMP
-		        bool "Enable KSZ8851 RX DUMP"
-		        default n
-		        
-		    config BSP_USING_KSZ8851_TX_DUMP
-		        bool "Enable KSZ8851 TX DUMP"
-		        default n
-	        
+            config BSP_USING_KSZ8851_RX_DUMP
+                bool "Enable KSZ8851 RX DUMP"
+                default n
+                
+            config BSP_USING_KSZ8851_TX_DUMP
+                bool "Enable KSZ8851 TX DUMP"
+                default n
+            
             menuconfig BSP_USE_ETH1
-		        bool "Enable ETH port 1"
-		        default n
+                bool "Enable ETH port 1"
+                default n
 	        
-	        	if BSP_USE_ETH1
-		        	config ETH1_NE
-			            hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
-			            default (0x4)
-		
-		            config ETH1_CMD
-			            hex "Set the cmd address, default: NE3 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE3 - 1)) | (1 << (A0 + 1))))"
-			            default (0x68000002)
-		            
-		            config ETH1_RST
-			            string "Set the GPIO of the reset pin, default: PG.14"
-			            default "PG.14"
-		            
-		            config ETH1_ISR
-			            string "Set the GPIO of the isr pin, default: PH.2"
-			            default "PH.2"
-	        	endif
-	        
-	          menuconfig BSP_USE_ETH2
-		        bool "Enable ETH port 2"
-		        default n
-		        
-		        if BSP_USE_ETH2
-		        	config ETH2_NE
-			            hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
-			            default (0x6)
-		
-		            config ETH2_CMD
-			            hex "Set the cmd address, default: NE4 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE4 - 1)) | (1 << (A0 + 1))))"
-			            default (0x6C000002)
-			            
-			        config ETH2_RST
-			            string "Set the GPIO of the reset pin, default: PG.14"
-			            default "PG.14"
-		            
-		            config ETH2_ISR
-			            string "Set the GPIO of the isr pin, default: PH.3"
-			            default "PH.3"
+            if BSP_USE_ETH1
+            	config ETH1_NE
+                    hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
+                    default (0x4)
+            
+                config ETH1_CMD
+                    hex "Set the cmd address, default: NE3 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE3 - 1)) | (1 << (A0 + 1))))"
+                    default (0x68000002)
+                
+                config ETH1_RST
+                    string "Set the GPIO of the reset pin, default: PG.14"
+                    default "PG.14"
+                
+                config ETH1_ISR
+                    string "Set the GPIO of the isr pin, default: PH.2"
+                    default "PH.2"
+            endif
+
+            menuconfig BSP_USE_ETH2
+                bool "Enable ETH port 2"
+                default n
+
+                if BSP_USE_ETH2
+                    config ETH2_NE
+                        hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
+                        default (0x6)
+                    
+                    config ETH2_CMD
+                        hex "Set the cmd address, default: NE4 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE4 - 1)) | (1 << (A0 + 1))))"
+                        default (0x6C000002)
+                        
+                    config ETH2_RST
+                        string "Set the GPIO of the reset pin, default: PG.14"
+                        default "PG.14"
+                    
+                    config ETH2_ISR
+                        string "Set the GPIO of the isr pin, default: PH.3"
+                        default "PH.3"
 	        	endif
           
             menuconfig BSP_USE_ETH3
-            bool "Enable ETH port 3"
-            default n
+                bool "Enable ETH port 3"
+                default n
             
             if BSP_USE_ETH3
-              config ETH3_NE
-                  hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
-                  default (0x2)
-    
-                config ETH3_CMD
-                  hex "Set the cmd address, default: NE2 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE2 - 1)) | (1 << (A0 + 1))))"
-                  default (0x64000002)
-                  
-              config ETH3_RST
-                  string "Set the GPIO of the reset pin, default: PA.0"
-                  default "PA.0"
+                config ETH3_NE
+                    hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
+                    default (0x2)
                 
+                config ETH3_CMD
+                    hex "Set the cmd address, default: NE2 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE2 - 1)) | (1 << (A0 + 1))))"
+                    default (0x64000002)
+                      
+                config ETH3_RST
+                    string "Set the GPIO of the reset pin, default: PA.0"
+                    default "PA.0"
+                    
                 config ETH3_ISR
-                  string "Set the GPIO of the isr pin, default: PA.1"
-                  default "PA.1"
+                    string "Set the GPIO of the isr pin, default: PA.1"
+                    default "PA.1"
             endif
         endif
         

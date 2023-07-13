@@ -7,13 +7,12 @@
  * Date           Author       Notes
  * 2019-01-08     zylx         first version
  */
+#include <string.h>
 
 #include <board.h>
 
 #ifdef BSP_USING_LCD
-#include <lcd_port.h>
-#include <rtdevice.h>
-#include <string.h>
+#include "lv_conf.h"
 
 #define DRV_DEBUG
 #define LOG_TAG "drv.lcd"
@@ -61,7 +60,7 @@ static rt_err_t drv_lcd_control(struct rt_device *device, int cmd, void *args)
         if (_lcd.cur_buf)
         {
             /* back_buf is being used */
-            memcpy(_lcd.front_buf, _lcd.lcd_info.framebuffer, LCD_BUF_SIZE);
+            rt_memcpy(_lcd.front_buf, _lcd.lcd_info.framebuffer, LCD_BUF_SIZE);
             /* Configure the color frame buffer start address */
             LTDC_LAYER(&LtdcHandle, 0)->CFBAR &= ~(LTDC_LxCFBAR_CFBADD);
             LTDC_LAYER(&LtdcHandle, 0)->CFBAR = (uint32_t)(_lcd.front_buf);
@@ -70,7 +69,7 @@ static rt_err_t drv_lcd_control(struct rt_device *device, int cmd, void *args)
         else
         {
             /* front_buf is being used */
-            memcpy(_lcd.back_buf, _lcd.lcd_info.framebuffer, LCD_BUF_SIZE);
+            rt_memcpy(_lcd.back_buf, _lcd.lcd_info.framebuffer, LCD_BUF_SIZE);
             /* Configure the color frame buffer start address */
             LTDC_LAYER(&LtdcHandle, 0)->CFBAR &= ~(LTDC_LxCFBAR_CFBADD);
             LTDC_LAYER(&LtdcHandle, 0)->CFBAR = (uint32_t)(_lcd.back_buf);
@@ -255,13 +254,9 @@ void turn_on_lcd_backlight(void)
 #elif defined(LCD_BACKLIGHT_USING_GPIO)
 void turn_on_lcd_backlight(void)
 {
-    rt_base_t en_pin = rt_pin_get(LCD_BKLT_EN_GPIO);
     rt_base_t ctl_pin = rt_pin_get(LCD_BKLT_CTL_GPIO);
-
-    rt_pin_mode(en_pin, PIN_MODE_OUTPUT);
     rt_pin_mode(ctl_pin, PIN_MODE_OUTPUT);
 
-    rt_pin_write(en_pin, PIN_HIGH);
     rt_pin_write(ctl_pin, PIN_HIGH);
 }
 #else
@@ -269,6 +264,22 @@ void turn_on_lcd_backlight(void)
 {
 }
 #endif
+
+void lcd_fill_array(rt_uint16_t x_start, rt_uint16_t y_start, rt_uint16_t x_end, rt_uint16_t y_end, void *pcolor)
+{
+    uint16_t *pixel = (rt_uint16_t *)pcolor;
+    struct drv_lcd_device *lcd = (struct drv_lcd_device *)rt_device_find("lcd");
+
+    for (int i = y_start; i < y_end; i++)
+    {
+        for (int j = x_start; j < x_end; j++)
+        {
+            lcd->lcd_info.framebuffer[2 * (i * lcd->lcd_info.width + j)] = (*pixel)>>8;
+            lcd->lcd_info.framebuffer[2 * (i * lcd->lcd_info.width + j) + 1] = (*pixel);
+        }
+    }
+    lcd->parent.control(&lcd->parent, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);
+}
 
 #ifdef RT_USING_DEVICE_OPS
 const static struct rt_device_ops lcd_ops =
@@ -288,16 +299,17 @@ int drv_lcd_hw_init(void)
     struct rt_device *device = &_lcd.parent;
 
     /* memset _lcd to zero */
-    memset(&_lcd, 0x00, sizeof(_lcd));
+    rt_memset(&_lcd, 0x00, sizeof(_lcd));
 
     /* init lcd_lock semaphore */
     result = rt_sem_init(&_lcd.lcd_lock, "lcd_lock", 0, RT_IPC_FLAG_FIFO);
     if (result != RT_EOK)
     {
-        LOG_E("init semaphore failed!\n");
+        LOG_E("init semaphore failed!");
         result = -RT_ENOMEM;
         goto __exit;
     }
+    turn_on_lcd_backlight();
 
     /* config LCD dev info */
     _lcd.lcd_info.height = LCD_HEIGHT;
@@ -311,15 +323,15 @@ int drv_lcd_hw_init(void)
     _lcd.front_buf = rt_malloc(LCD_BUF_SIZE);
     if (_lcd.lcd_info.framebuffer == RT_NULL || _lcd.back_buf == RT_NULL || _lcd.front_buf == RT_NULL)
     {
-        LOG_E("init frame buffer failed!\n");
+        LOG_E("init frame buffer failed!");
         result = -RT_ENOMEM;
         goto __exit;
     }
 
     /* memset buff to 0xFF */
-    memset(_lcd.lcd_info.framebuffer, 0xFF, LCD_BUF_SIZE);
-    memset(_lcd.back_buf, 0xFF, LCD_BUF_SIZE);
-    memset(_lcd.front_buf, 0xFF, LCD_BUF_SIZE);
+    rt_memset(_lcd.lcd_info.framebuffer, 0xFF, LCD_BUF_SIZE);
+    rt_memset(_lcd.back_buf, 0xFF, LCD_BUF_SIZE);
+    rt_memset(_lcd.front_buf, 0xFF, LCD_BUF_SIZE);
 
     device->type = RT_Device_Class_Graphic;
 #ifdef RT_USING_DEVICE_OPS
@@ -331,24 +343,21 @@ int drv_lcd_hw_init(void)
 #endif
 #endif
 
-    /* register lcd device */
-    rt_device_register(device, "lcd", RT_DEVICE_FLAG_RDWR);
-
     /* init stm32 LTDC */
     if (stm32_lcd_init(&_lcd) != RT_EOK)
     {
         result = -RT_ERROR;
         goto __exit;
     }
-    else
-    {
-        turn_on_lcd_backlight();
-    }
+    turn_on_lcd_backlight();
+
+    /* register lcd device */
+    rt_device_register(device, "lcd", RT_DEVICE_FLAG_RDWR | RT_DEVICE_FLAG_STANDALONE);
 
 __exit:
     if (result != RT_EOK)
     {
-        LOG_E("init lcd failed!\n");
+        LOG_E("init lcd failed!");
         rt_sem_detach(&_lcd.lcd_lock);
 
         if (_lcd.lcd_info.framebuffer)

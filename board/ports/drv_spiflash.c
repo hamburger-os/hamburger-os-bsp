@@ -9,6 +9,10 @@
  */
 #include "board.h"
 
+//#define DBG_TAG "spiflash"
+//#define DBG_LVL DBG_LOG
+//#include <rtdbg.h>
+
 #include "fal.h"
 #include "fal_cfg.h"
 #include "drv_spi.h"
@@ -61,20 +65,27 @@ static int init(void)
         return -RT_EIO;
     }
 
-    if (RT_NULL == rt_sfud_flash_probe("w25qxx", dev_name))
+    if (RT_NULL == rt_sfud_flash_probe("sfud", dev_name))
     {
         return -RT_ERROR;
     }
-    sfud_dev = rt_sfud_flash_find_by_dev_name("w25qxx");
+    sfud_dev = rt_sfud_flash_find_by_dev_name("sfud");
     if (RT_NULL == sfud_dev)
     {
-        return -1;
+        return -RT_ERROR;
     }
 
     /* update the flash chip information */
-    spiflash.blk_size = sfud_dev->chip.erase_gran;
-    spiflash.len = sfud_dev->chip.capacity;
+    if (spiflash.blk_size != sfud_dev->chip.erase_gran || spiflash.len != sfud_dev->chip.capacity)
+    {
+        LOG_W("blk_size (%d %d) or len(%d %d) set warning!"
+                , spiflash.blk_size, sfud_dev->chip.erase_gran
+                , spiflash.len, sfud_dev->chip.capacity);
+        spiflash.blk_size = sfud_dev->chip.erase_gran;
+        spiflash.len = sfud_dev->chip.capacity;
+    }
 
+    LOG_I("init succeed %d MB.", spiflash.len/1024/1024);
     return 0;
 }
 
@@ -82,8 +93,29 @@ static int read(long offset, uint8_t *buf, size_t size)
 {
     assert(sfud_dev);
     assert(sfud_dev->init_ok);
-    sfud_read(sfud_dev, spiflash.addr + offset, size, buf);
 
+    sfud_err result = SFUD_SUCCESS;
+    uint32_t addr = spiflash.addr + offset;
+    if (addr + size > spiflash.addr + spiflash.len)
+    {
+        LOG_E("read outrange flash size! addr is (0x%p)", (void*)(addr + size));
+        return -RT_EINVAL;
+    }
+    if (size < 1)
+    {
+//        LOG_W("read size %d! addr is (0x%p)", size, (void*)(addr + size));
+        return 0;
+    }
+
+    result = sfud_read(sfud_dev, addr, size, buf);
+    if (result != SFUD_SUCCESS)
+    {
+        LOG_E("read data error %d!", result);
+        return -RT_EIO;
+    }
+
+    LOG_HEX("read", 16, buf, (size > 128)?(128):(size));
+    LOG_D("read (0x%p) %d", (void*)(addr), size);
     return size;
 }
 
@@ -91,11 +123,29 @@ static int write(long offset, const uint8_t *buf, size_t size)
 {
     assert(sfud_dev);
     assert(sfud_dev->init_ok);
-    if (sfud_write(sfud_dev, spiflash.addr + offset, size, buf) != SFUD_SUCCESS)
+
+    sfud_err result = SFUD_SUCCESS;
+    uint32_t addr = spiflash.addr + offset;
+    if (addr + size > spiflash.addr + spiflash.len)
     {
-        return -1;
+        LOG_E("write outrange flash size! addr is (0x%p)", (void*)(addr + size));
+        return -RT_EINVAL;
+    }
+    if (size < 1)
+    {
+//        LOG_W("write size %d! addr is (0x%p)", size, (void*)(addr + size));
+        return 0;
     }
 
+    result = sfud_write(sfud_dev, addr, size, buf);
+    if (result != SFUD_SUCCESS)
+    {
+        LOG_E("write data error %d!", result);
+        return -RT_EIO;
+    }
+
+    LOG_HEX("write", 16, (uint8_t *)buf, (size > 128)?(128):(size));
+    LOG_D("write (0x%p) %d", (void*)(addr), size);
     return size;
 }
 
@@ -103,10 +153,27 @@ static int erase(long offset, size_t size)
 {
     assert(sfud_dev);
     assert(sfud_dev->init_ok);
-    if (sfud_erase(sfud_dev, spiflash.addr + offset, size) != SFUD_SUCCESS)
+
+    sfud_err result = SFUD_SUCCESS;
+    rt_uint32_t addr = spiflash.addr + offset;
+    if ((addr + size) > spiflash.addr + spiflash.len)
     {
-        return -1;
+        LOG_E("erase outrange flash size! addr is (0x%p)", (void*)(addr + size));
+        return -RT_EINVAL;
+    }
+    if (size < 1)
+    {
+//        LOG_W("erase size %d! addr is (0x%p)", size, (void*)(addr + size));
+        return 0;
     }
 
+    result = sfud_erase(sfud_dev, addr, size);
+    if (result != SFUD_SUCCESS)
+    {
+        LOG_E("erase data error %d!", result);
+        return -RT_EIO;
+    }
+
+    LOG_D("erase (0x%p) %d", (void*)(addr), size);
     return size;
 }

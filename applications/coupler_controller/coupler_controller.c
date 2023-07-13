@@ -27,6 +27,7 @@ CouplerCtrlUserData coupler_controller_userdata = {
     .adc_devname = "ltc186x",
     .led_devname = {BSP_GPIO_TABLE_GPIO5, BSP_GPIO_TABLE_SPI1_CS2, BSP_GPIO_TABLE_SPI1_CS1, BSP_GPIO_TABLE_SPI1_CS0, BSP_GPIO_TABLE_GPIO4},
     .ctrl_devname = {"PC.1", "PA.9", BSP_GPIO_TABLE_PWM3, BSP_GPIO_TABLE_PWM4},
+    .bat_devname = {BSP_GPIO_TABLE_GPIO3, BSP_GPIO_TABLE_GPIO8},
 
     .isThreadRun = 1,
 };
@@ -79,6 +80,13 @@ static void process_thread_entry(void *parameter)
     Hdlc7c7eFrame_type(frame, 0x2, ID_STATION_POLLING, (uint8_t *)&cmd1, sizeof(cmd1));
     rt_thread_delay(200);
 
+    TYPE_STATION_POLLING cmd2 = {
+        .hook = 0x2,
+        .reserve = 0x7c7e,
+    };
+    Hdlc7c7eFrame_type(frame, 0x2, ID_STATION_POLLING, (uint8_t *)&cmd2, sizeof(cmd2));
+    rt_thread_delay(200);
+
     TYPE_CONTROLLER_ACK ack1 = {
         .distance_h = 123456,
         .distance_l = 123,
@@ -124,6 +132,7 @@ static void process_thread_entry(void *parameter)
                     //执行摘钩
                     LOG_I("   cmd: ID_STATION_POLLING Perform unhooking");
                     module_ctrl_open(1);
+                    ctrl_air_pressure(1);
                 }
                 TYPE_CONTROLLER_ACK ack = {
                     .distance_h = puserdata->distance_h,
@@ -330,6 +339,12 @@ static int coupler_controller_init(void)
 {
     //初始化数据库
     coupler_controller_dbinit();
+    //启动指示灯
+    coupler_controller_ledinit();
+    //启动电池管理
+    coupler_controller_batinit();
+    //启动电车勾控制
+    coupler_controller_ctrlinit();
     //启动风压adc读取
     coupler_controller_pressureinit();
     //启动和图像测距模组的通信
@@ -337,8 +352,6 @@ static int coupler_controller_init(void)
     //启动和站防的485总线通信
     frame.addr = get_device_addr();     //从数据库获取总线地址
     Hdlc7c7eFrame_init(&frame);
-    //启动指示灯
-    coupler_controller_ledinit();
 
     return RT_EOK;
 }

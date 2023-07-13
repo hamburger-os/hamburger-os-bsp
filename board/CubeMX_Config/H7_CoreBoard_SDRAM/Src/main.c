@@ -76,7 +76,6 @@ UART_HandleTypeDef huart6;
 HCD_HandleTypeDef hhcd_USB_OTG_HS;
 
 NOR_HandleTypeDef hnor1;
-SRAM_HandleTypeDef hsram3;
 SRAM_HandleTypeDef hsram4;
 SDRAM_HandleTypeDef hsdram2;
 
@@ -577,7 +576,7 @@ static void MX_I2S1_Init(void)
   hi2s1.Instance = SPI1;
   hi2s1.Init.Mode = I2S_MODE_MASTER_FULLDUPLEX;
   hi2s1.Init.Standard = I2S_STANDARD_PHILIPS;
-  hi2s1.Init.DataFormat = I2S_DATAFORMAT_16B;
+  hi2s1.Init.DataFormat = I2S_DATAFORMAT_16B_EXTENDED;
   hi2s1.Init.MCLKOutput = I2S_MCLKOUTPUT_ENABLE;
   hi2s1.Init.AudioFreq = I2S_AUDIOFREQ_8K;
   hi2s1.Init.CPOL = I2S_CPOL_LOW;
@@ -851,7 +850,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi2.Init.NSS = SPI_NSS_SOFT;
-  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -899,7 +898,7 @@ static void MX_SPI3_Init(void)
   hspi3.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi3.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi3.Init.NSS = SPI_NSS_SOFT;
-  hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+  hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
   hspi3.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi3.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi3.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -1199,41 +1198,6 @@ static void MX_FMC_Init(void)
     Error_Handler( );
   }
 
-  /** Perform the SRAM3 memory initialization sequence
-  */
-  hsram3.Instance = FMC_NORSRAM_DEVICE;
-  hsram3.Extended = FMC_NORSRAM_EXTENDED_DEVICE;
-  /* hsram3.Init */
-  hsram3.Init.NSBank = FMC_NORSRAM_BANK3;
-  hsram3.Init.DataAddressMux = FMC_DATA_ADDRESS_MUX_DISABLE;
-  hsram3.Init.MemoryType = FMC_MEMORY_TYPE_SRAM;
-  hsram3.Init.MemoryDataWidth = FMC_NORSRAM_MEM_BUS_WIDTH_16;
-  hsram3.Init.BurstAccessMode = FMC_BURST_ACCESS_MODE_DISABLE;
-  hsram3.Init.WaitSignalPolarity = FMC_WAIT_SIGNAL_POLARITY_LOW;
-  hsram3.Init.WaitSignalActive = FMC_WAIT_TIMING_BEFORE_WS;
-  hsram3.Init.WriteOperation = FMC_WRITE_OPERATION_ENABLE;
-  hsram3.Init.WaitSignal = FMC_WAIT_SIGNAL_DISABLE;
-  hsram3.Init.ExtendedMode = FMC_EXTENDED_MODE_DISABLE;
-  hsram3.Init.AsynchronousWait = FMC_ASYNCHRONOUS_WAIT_DISABLE;
-  hsram3.Init.WriteBurst = FMC_WRITE_BURST_DISABLE;
-  hsram3.Init.ContinuousClock = FMC_CONTINUOUS_CLOCK_SYNC_ONLY;
-  hsram3.Init.WriteFifo = FMC_WRITE_FIFO_ENABLE;
-  hsram3.Init.PageSize = FMC_PAGE_SIZE_NONE;
-  /* Timing */
-  Timing.AddressSetupTime = 4;
-  Timing.AddressHoldTime = 15;
-  Timing.DataSetupTime = 20;
-  Timing.BusTurnAroundDuration = 8;
-  Timing.CLKDivision = 16;
-  Timing.DataLatency = 17;
-  Timing.AccessMode = FMC_ACCESS_MODE_A;
-  /* ExtTiming */
-
-  if (HAL_SRAM_Init(&hsram3, &Timing, NULL) != HAL_OK)
-  {
-    Error_Handler( );
-  }
-
   /** Perform the SRAM4 memory initialization sequence
   */
   hsram4.Instance = FMC_NORSRAM_DEVICE;
@@ -1246,7 +1210,7 @@ static void MX_FMC_Init(void)
   hsram4.Init.BurstAccessMode = FMC_BURST_ACCESS_MODE_DISABLE;
   hsram4.Init.WaitSignalPolarity = FMC_WAIT_SIGNAL_POLARITY_LOW;
   hsram4.Init.WaitSignalActive = FMC_WAIT_TIMING_BEFORE_WS;
-  hsram4.Init.WriteOperation = FMC_WRITE_OPERATION_ENABLE;
+  hsram4.Init.WriteOperation = FMC_WRITE_OPERATION_DISABLE;
   hsram4.Init.WaitSignal = FMC_WAIT_SIGNAL_DISABLE;
   hsram4.Init.ExtendedMode = FMC_EXTENDED_MODE_DISABLE;
   hsram4.Init.AsynchronousWait = FMC_ASYNCHRONOUS_WAIT_DISABLE;

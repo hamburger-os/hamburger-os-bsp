@@ -21,7 +21,7 @@ static rt_adc_device_t      adc_dev;
 static rt_size_t cpu_temp_polling_get_data(struct rt_sensor_device *sensor, struct rt_sensor_data *data)
 {
     float temperature = 0;
-    rt_int32_t temperature_x100 = 0;
+    int32_t temperature_x100 = 0;
     if (sensor->info.type == RT_SENSOR_CLASS_TEMP)
     {
         /* 使能设备 */
@@ -31,9 +31,21 @@ static rt_size_t cpu_temp_polling_get_data(struct rt_sensor_device *sensor, stru
         /* 关闭通道 */
         rt_adc_disable(adc_dev, CPUTEMP_ADC_DEV_CHANNEL);
         LOG_D("value  : %d", temperature_x100);
-        temperature = temperature_x100 * (3.3f / 4096); //电压值
+#ifdef SOC_SERIES_STM32F4
+        temperature = temperature_x100 * 3.3f / 4096; //电压值
+#endif
+#ifdef SOC_SERIES_STM32H7
+        temperature = temperature_x100 * 3.3f / 65536; //电压值
+#endif
         LOG_D("volt   : %d.%02d v", (int32_t)temperature, abs((int32_t)((temperature - (int32_t)temperature) * 100)));
+#ifdef SOC_SERIES_STM32F4
         temperature = (temperature - 0.76f) / 0.0025f + 25; //转换为温度值
+#endif
+#ifdef SOC_SERIES_STM32H7
+        uint16_t TS_CAL1 = *(__IO uint16_t *)(0x1FF1E820);
+        uint16_t TS_CAL2 = *(__IO uint16_t *)(0x1FF1E840);
+        temperature = (110.0f - 30.0f) * (temperature_x100 - TS_CAL1)/ (TS_CAL2 - TS_CAL1) + 30;//转换为温度值
+#endif
         LOG_D("temp   : %d.%02d ℃", (int32_t)temperature, abs((int32_t)((temperature - (int32_t)temperature) * 100)));
         temperature_x100 = temperature * 100;
 
