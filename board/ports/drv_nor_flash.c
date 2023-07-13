@@ -391,6 +391,7 @@ static int fal_nor_erase(long offset, size_t size)
     size_t countmax = (size%nor_flash.blk_size == 0)?(size/nor_flash.blk_size):(size/nor_flash.blk_size + 1);
     for (size_t count = 0; count < countmax; count++)
     {
+        rt_tick_t tick = rt_tick_get();
         /* Erase the NOR memory block to write on */
         if (HAL_NOR_Erase_Block(&hnor, addr - nor_flash.addr + count*nor_flash.blk_size, nor_flash.addr) != HAL_OK)
         {
@@ -398,6 +399,7 @@ static int fal_nor_erase(long offset, size_t size)
             rt_mutex_release(&hnor_mutex);
             return 0;
         }
+//        rt_thread_delay(500);
 
         //TODO: 需要优化为调度器等待
         /* Return the NOR memory status */
@@ -408,7 +410,7 @@ static int fal_nor_erase(long offset, size_t size)
             rt_thread_delay(500);
         }
 
-        LOG_D("erase blk : 0x%p %d/%d", addr + count*nor_flash.blk_size, count, countmax);
+        LOG_D("erase blk : 0x%p %d/%d used %d ms", addr + count*nor_flash.blk_size, count, countmax, rt_tick_get() - tick);
     }
 
     rt_mutex_release(&hnor_mutex);

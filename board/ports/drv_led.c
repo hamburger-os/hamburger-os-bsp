@@ -67,11 +67,14 @@ void led_error_handler(rt_base_t index)
 /* 线程的入口函数 */
 static void led_thread_entry(void *parameter)
 {
-    uint8_t i;
+    uint8_t i = 0;
+    rt_tick_t tick = rt_tick_get();
+
     LOG_I("init succeed.");
     while (1)
     {
-        rt_thread_mdelay(BSP_LED_CYCLE);
+        rt_thread_delay_until(&tick, BSP_LED_CYCLE);
+        tick = rt_tick_get();
 
         for (i = 0; i<BSP_LED_MAX; i++)
         {
@@ -111,7 +114,7 @@ static int rt_led_init()
     rt_thread_idle_sethook(led_run_hook);
 #endif
     /* 创建线程，名称是 thread，入口是 thread_entry */
-    rt_thread_t tid = rt_thread_create("ledThread",
+    rt_thread_t tid = rt_thread_create("led",
                             led_thread_entry, RT_NULL,
                             1024,
                             RT_THREAD_PRIORITY_MAX - 3, 20);

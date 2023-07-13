@@ -2669,8 +2669,8 @@ menu "Onboard Peripheral Drivers"
 	            default "PC.3"
             
             config BSP_FM25xx_SPI_SPEED
-	            int "Set the rate of spi, default: (25 * 1000 *1000)"
-	            default (25000000)
+	            int "Set the rate of spi, default: (40 * 1000 *1000)"
+	            default (40000000)
             
             config FM25xx_SIZE_GRANULARITY_TOTAL
 	            int "Set storage space size, default: (128 * 1024)"
@@ -2690,7 +2690,7 @@ menu "Onboard Peripheral Drivers"
         endif
         
     menuconfig BSP_USING_SPI_FLASH
-        bool "Enable SPI FLASH (sfud: W25Qxx)"
+        bool "Enable SPI FLASH (sfud: JEDEC JESD216)"
         select RT_USING_DFS
         select RT_USING_DFS_ROMFS
         select PKG_USING_LITTLEFS
@@ -2708,16 +2708,16 @@ menu "Onboard Peripheral Drivers"
                 default "PB.14"
                 
             config BSP_SPI_FLASH_SPI_SPEED
-                int "Set the rate of spi, default: (50 * 1000 *1000)"
-                default (50000000)
+                int "Set the rate of spi, default: (40 * 1000 *1000)"
+                default (40000000)
             
             config SPI_FLASH_SIZE_GRANULARITY_TOTAL
-                int "Set storage space size, default: (16 * 1024 * 1024)"
-                default (16777216)
+                int "Set storage space size, default: (64 * 1024 * 1024)"
+                default (67108864)
             
             config SPI_FLASH_BLK_SIZE
-                int "Set the memory block size, default: (4096)"
-                default (4096)
+                int "Set the memory block size, default: (262144)"
+                default (262144)
             
             config SPI_FLASH_FS
                 string "Set the file system used, default: lfs"
@@ -2729,6 +2729,7 @@ menu "Onboard Peripheral Drivers"
         select RT_USING_DFS
         select RT_USING_DFS_ROMFS
         select PKG_USING_LITTLEFS
+        select RT_USING_DFS_ELMFAT
         default n
         
         if BSP_USING_EMMC            
@@ -2752,10 +2753,19 @@ menu "Onboard Peripheral Drivers"
                 bool "Enable SDIO TX DMA"
                 depends on SOC_SERIES_STM32F4
                 default y
+                
+            config BSP_SDIO_USING_CTRL
+                bool "Enable SDIO power ctrl pin"
+                default n
+                
+            config BSP_SDIO_CTRL_PIN
+                string "Set SDIO power ctrl pin, default: PG.10"
+                depends on BSP_SDIO_USING_CTRL
+                default "PG.10"
             
             config EMMC_FS
-	            string "Set the file system used, default: lfs"
-	            default "lfs"
+	            string "Set the file system used, default: elm"
+	            default "elm"
         endif
         
     menuconfig BSP_USING_SDCARD

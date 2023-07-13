@@ -338,8 +338,8 @@ static int fal_fram_read(long offset, rt_uint8_t *buf, size_t size)
     }
     if (size < 1)
     {
-        LOG_W("read size %d! addr is (0x%p)", size, (void*)(addr + size));
-        return -RT_EINVAL;
+//        LOG_W("read size %d! addr is (0x%p)", size, (void*)(addr + size));
+        return 0;
     }
 
     /* 发送读命令 */
@@ -368,8 +368,8 @@ static int fal_fram_write(long offset, const rt_uint8_t *buf, size_t size)
     }
     if (size < 1)
     {
-        LOG_W("write size %d! addr is (0x%p)", size, (void*)(addr + size));
-        return -RT_EINVAL;
+//        LOG_W("write size %d! addr is (0x%p)", size, (void*)(addr + size));
+        return 0;
     }
 
     fm25xx_writeEnable();
@@ -402,8 +402,8 @@ static int fal_fram_erase(long offset, size_t size)
     }
     if (size < 1)
     {
-        LOG_W("erase size %d! addr is (0x%p)", size, (void*)(addr + size));
-        return -RT_EINVAL;
+//        LOG_W("erase size %d! addr is (0x%p)", size, (void*)(addr + size));
+        return 0;
     }
 
     LOG_D("erase (0x%p) %d", (void*)(addr), size);

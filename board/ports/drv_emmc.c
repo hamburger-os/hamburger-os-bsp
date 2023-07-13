@@ -349,8 +349,21 @@ static void emmc_thread_entry(void* parameter)
     }
 }
 
+#ifdef BSP_SDIO_USING_CTRL
+static void emmc_ctrl(uint8_t onoff)
+{
+    rt_base_t pin = rt_pin_get(BSP_SDIO_CTRL_PIN);
+    rt_pin_mode(pin, PIN_MODE_OUTPUT);
+
+    rt_pin_write(pin, onoff);
+}
+#endif
+
 static int fal_emmc_init(void)
 {
+#ifdef BSP_SDIO_USING_CTRL
+    emmc_ctrl(1);
+#endif
     MX_DMA_Init();
     MX_SDIO_MMC_Init();
 

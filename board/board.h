@@ -78,7 +78,7 @@ int rt_hw_mpu_init(void);
 
 uint32_t memory_info_size(void);
 
-//rt_kprintf("%s %s %d\n", __FILE__, __FUNCTION__, __LINE__);
+//rt_kprintf("%d: %s %s %d\n", rt_tick_get(), __FILE__, __FUNCTION__, __LINE__);
 //LOG_E("%s %s %d", __FILE__, __FUNCTION__, __LINE__);
 
 #ifdef __cplusplus
