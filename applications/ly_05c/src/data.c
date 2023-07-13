@@ -160,6 +160,74 @@ E_TAX_STATE data_get_tax_comm_state(void)
 
     return ret;
 }
+/*******************************************************
+ *
+ * @brief  设置软件工作状态
+ *
+ * @param  state: 软件工作状态
+ * @retval none
+ *
+ *******************************************************/
+
+void data_set_sw_state(E_SW_STATE state)
+{
+    pthread_mutex_lock(&g_work_state.mutex);
+    g_work_state.sw_work_state = state;
+    pthread_mutex_unlock(&g_work_state.mutex);
+}
+
+/*******************************************************
+ *
+ * @brief  获取软件工作状态
+ *
+ * @retval E_SW_STATE 软件工作状态
+ *
+ *******************************************************/
+
+E_SW_STATE data_get_sw_state(void)
+{
+    E_SW_STATE ret;
+
+    pthread_mutex_lock(&g_work_state.mutex);
+    ret = g_work_state.sw_work_state;
+    pthread_mutex_unlock(&g_work_state.mutex);
+
+    return ret;
+}
+/*******************************************************
+ *
+ * @brief  设置系统工作状态
+ *
+ * @param  state: 系统工作状态
+ * @retval none
+ *
+ *******************************************************/
+
+void data_set_sys_state(E_SYS_STATE state)
+{
+    pthread_mutex_lock(&g_work_state.mutex);
+    g_work_state.sys_work_state = state;
+    pthread_mutex_unlock(&g_work_state.mutex);
+}
+
+/*******************************************************
+ *
+ * @brief  获取系统工作状态
+ *
+ * @retval E_SYS_STATE 系统工作状态
+ *
+ *******************************************************/
+
+E_SYS_STATE data_get_sys_state(void)
+{
+    E_SYS_STATE ret;
+
+    pthread_mutex_lock(&g_work_state.mutex);
+    ret = g_work_state.sys_work_state;
+    pthread_mutex_unlock(&g_work_state.mutex);
+
+    return ret;
+}
 
 /*******************************************************
  *
@@ -172,6 +240,12 @@ E_TAX_STATE data_get_tax_comm_state(void)
 sint32_t data_init(void)
 {
     g_work_state.pcm_state = PCM_STATE_IDLE;
+    g_work_state.tax_comm_state = TAX_STATE_COMM_NORMAL;
+    g_work_state.sw_work_state = SW_STATE_OK;
+    g_work_state.sys_work_state = SYS_STATE_OK;
+    g_work_state.usb_state = USB_STATE_UNPLUG;
+    g_work_state.dump_state = DUMP_STATE_INIT;
+    
     pthread_mutex_init(&g_work_state.mutex, NULL);
     return 0;
 }

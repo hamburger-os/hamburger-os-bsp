@@ -25,7 +25,7 @@
  *******************************************************/
 
 /* 文件路径的相关宏 */
-#define TARGET_DIR_NAME "/mnt/udisk/ud0p0/yysj/voice"     /* U盘中保存语音文件的路径 */
+#define TARGET_DIR_NAME "/mnt/udisk/ud0p0/SW_Voice"     /* U盘中保存语音文件的路径 */
 #define UPGRADE_FILE_NAME "/mnt/udisk/ud0p0/rtthread.rbl" /* 升级文件 */
 #define FORMAT_DIR_NAME "/mnt/udisk/ud0p0/format"         /* 格式化文件 */
 #define YUYIN_PATH_NAME "/mnt/emmc/yysj"                  /* 语音文件在板子上的存储路径 */
@@ -109,7 +109,7 @@ typedef struct __attribute__((packed)) /* 按照字节对齐*/
     uint32_t file_index;              /* 文件的序号 */
     uint32_t voice_index;             /* 语音序号 */
     sint32_t not_exsit;               /* 为1表示录音板中还没有生成文件 */
-    uint32_t record_datalen;          /* 录音数据长度 */
+    uint32_t record_datalen;          /* 最后一条语音数据长度 */
     sint32_t channel;                 /* 通道号, 录音通道,放音通道? */
 } current_rec_file_info_t;
 

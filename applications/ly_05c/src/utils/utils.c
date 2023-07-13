@@ -46,7 +46,7 @@
 #define R_OK 4
 #define W_OK 2
 #define X_OK 1
-#define FILE_COPY_BUFF_SIZE 1024
+#define FILE_COPY_BUFF_SIZE 256
 
 /*******************************************************
  * 函数声明
@@ -559,7 +559,7 @@ int delete_file(const char *path)
                 continue;
             delete_file(file_path);
         }
-
+        closedir(dir);
         return (rmdir(path) == 0) ? 0 : -1;
     }
     return -1;
@@ -609,7 +609,7 @@ void copy_files(const char *src, const char *dest)
             {
                 continue;
             }
-            if (mkdir(dest_path, statbuf.st_mode) == -1)
+            if (mkdir(dest_path, statbuf.st_mode) < 0)
             {
                 printf("can not create directory.\n");
                 continue;
@@ -623,6 +623,7 @@ void copy_files(const char *src, const char *dest)
             if (src_file == NULL)
             {
                 printf("can not opening src file. \n");
+                fclose(src_file);
                 continue;
             }
 

@@ -69,11 +69,12 @@ static int ly_05c_init(void)
         log_print(LOG_FATAL_ERROR, "init data module error, error code: %d.\n", ret);
     }
 #if 1
+
     /* 初始化LED模块 */
     ret = led_init();
     if (ret < 0)
     {
-        log_print(LOG_ERROR, "init led module error, error code: %d.\n", ret);
+        log_print(LOG_ERROR, "init led module error, error code: %d. \n", ret);
     }
 #endif
 
@@ -153,7 +154,7 @@ static void *ly_05c_entry(void *args)
     if (ret < 0)
     {
         printf("init ly-05c device error.\n");
-        led_set(LED_STATE_WORK_ERROR);
+        data_set_sw_state(SW_STATE_ERROR);
         RT_ASSERT(false);
         return NULL;
     }
@@ -167,7 +168,7 @@ static void *ly_05c_entry(void *args)
     event_run();
 
     /* 此处不应该出现, 要不然会出现故障 */
-    led_set(LED_STATE_WORK_ERROR);
+    data_set_sw_state(SW_STATE_ERROR);
     RT_ASSERT(false);
     return NULL;
 }
