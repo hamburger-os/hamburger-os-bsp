@@ -468,7 +468,7 @@ static void MX_I2S2_Init(void)
   hi2s2.Instance = SPI2;
   hi2s2.Init.Mode = I2S_MODE_MASTER_TX;
   hi2s2.Init.Standard = I2S_STANDARD_PHILIPS;
-  hi2s2.Init.DataFormat = I2S_DATAFORMAT_16B;
+  hi2s2.Init.DataFormat = I2S_DATAFORMAT_16B_EXTENDED;
   hi2s2.Init.MCLKOutput = I2S_MCLKOUTPUT_ENABLE;
   hi2s2.Init.AudioFreq = I2S_AUDIOFREQ_8K;
   hi2s2.Init.CPOL = I2S_CPOL_LOW;
@@ -1024,7 +1024,7 @@ static void MX_FMC_Init(void)
   hsram4.Init.WaitSignalPolarity = FMC_WAIT_SIGNAL_POLARITY_LOW;
   hsram4.Init.WrapMode = FMC_WRAP_MODE_DISABLE;
   hsram4.Init.WaitSignalActive = FMC_WAIT_TIMING_BEFORE_WS;
-  hsram4.Init.WriteOperation = FMC_WRITE_OPERATION_ENABLE;
+  hsram4.Init.WriteOperation = FMC_WRITE_OPERATION_DISABLE;
   hsram4.Init.WaitSignal = FMC_WAIT_SIGNAL_DISABLE;
   hsram4.Init.ExtendedMode = FMC_EXTENDED_MODE_DISABLE;
   hsram4.Init.AsynchronousWait = FMC_ASYNCHRONOUS_WAIT_DISABLE;

@@ -41,7 +41,7 @@ static const _stm32_fdcan_NTconfig_t st_CanNTconfig[] = {
     /*baud brp sjw tseg1 tseg2*/
     {CAN1MBaud, 10, 8, 15, 4},
     {CAN800kBaud, 10, 8, 20, 4},
-    {CAN500kBaud, 15, 8, 5, 4},
+    {CAN500kBaud, 5, 8, 6, 3},
     {CAN250kBaud, 20, 8, 35, 4},
     {CAN125kBaud, 40, 8, 35, 4},
     {CAN100kBaud, 40, 8, 44, 5},

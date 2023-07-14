@@ -1630,6 +1630,8 @@ typedef struct __attribute__ ((packed))
 rt_err_t adau1761_init(struct rt_i2c_bus_device *dev);
 
 void adau1761_set_volume(uint8_t volume);
+void adau1761_set_sampling_rate(uint32_t volume);
+
 rt_err_t adau1761_player_start(void);
 rt_err_t adau1761_player_stop(void);
 

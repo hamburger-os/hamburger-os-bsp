@@ -99,10 +99,10 @@ static void MX_FMC_Init(uint32_t NSBank)
     hsram.Init.ContinuousClock = FMC_CONTINUOUS_CLOCK_SYNC_ONLY;
     hsram.Init.PageSize = FMC_PAGE_SIZE_NONE;
     /* Timing */
-    Timing.AddressSetupTime = 4;
+    Timing.AddressSetupTime = 11;
     Timing.AddressHoldTime = 15;
-    Timing.DataSetupTime = 20;
-    Timing.BusTurnAroundDuration = 8;
+    Timing.DataSetupTime = 11;
+    Timing.BusTurnAroundDuration = 0;
     Timing.CLKDivision = 16;
     Timing.DataLatency = 17;
     Timing.AccessMode = FMC_ACCESS_MODE_A;
@@ -140,10 +140,10 @@ static void MX_FMC_Init(uint32_t NSBank)
     hsram.Init.WriteFifo = FMC_WRITE_FIFO_ENABLE;
     hsram.Init.PageSize = FMC_PAGE_SIZE_NONE;
     /* Timing */
-    Timing.AddressSetupTime = 4;
+    Timing.AddressSetupTime = 11;
     Timing.AddressHoldTime = 15;
-    Timing.DataSetupTime = 20;
-    Timing.BusTurnAroundDuration = 8;
+    Timing.DataSetupTime = 11;
+    Timing.BusTurnAroundDuration = 0;
     Timing.CLKDivision = 16;
     Timing.DataLatency = 17;
     Timing.AccessMode = FMC_ACCESS_MODE_A;
@@ -151,7 +151,7 @@ static void MX_FMC_Init(uint32_t NSBank)
 
     if (HAL_SRAM_Init(&hsram, &Timing, NULL) != HAL_OK)
     {
-        Error_Handler( );
+        Error_Handler();
     }
 #endif
 }

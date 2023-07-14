@@ -155,7 +155,7 @@ static int rootfs_init(void)
 
 #ifdef ROOTFS_USING_UPDATE
     /* 创建线程 */
-    rt_thread_t thread = rt_thread_create("rootfs", rootfs_thread_entry, &rootfs_config, 3072, 28, 10);
+    rt_thread_t thread = rt_thread_create("rootfs", rootfs_thread_entry, &rootfs_config, 3072, 27, 10);
     /* 创建成功则启动线程 */
     if (thread != RT_NULL)
     {

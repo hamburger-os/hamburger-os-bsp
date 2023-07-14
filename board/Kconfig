@@ -2518,15 +2518,53 @@ menu "Onboard Peripheral Drivers"
                 default (0x38)
                 
             choice
-                prompt "Select the MCLK frequency"
-                default ADAU1761_MCLK_12288
+                prompt "Select the Clock source"
+                default ADAU1761_CLKSRC_PLL
                 
-                config ADAU1761_MCLK_12288
-                    bool "Select MCLK 12.288MHz"
-                    
-                config ADAU1761_MCLK_12
-                    bool "Select MCLK 12MHz"
+                config ADAU1761_CLKSRC_MCLK
+                    bool "direct from MCLK pin"
+                
+                config ADAU1761_CLKSRC_PLL
+                    bool "PLL clock"
             endchoice
+            
+            if ADAU1761_CLKSRC_MCLK
+                choice
+                    prompt "Select the core clock rate that generates the core clock"
+                    default ADAU1761_CLKSRC_MCLK256
+                    
+                    config ADAU1761_CLKSRC_MCLK256
+                        bool "256 × fS"
+                    
+                    config ADAU1761_CLKSRC_MCLK512
+                        bool "512 × fS"
+                        
+                    config ADAU1761_CLKSRC_MCLK768
+                        bool "768 × fS"
+                        
+                    config ADAU1761_CLKSRC_MCLK1024
+                        bool "1024 × fS"
+                endchoice
+            endif
+                
+            if ADAU1761_CLKSRC_PLL
+                choice
+                    prompt "Select the MCLK frequency"
+                    default ADAU1761_MCLK_12
+                    
+                    config ADAU1761_MCLK_8
+                        bool "Select MCLK 8MHz"
+                    
+                    config ADAU1761_MCLK_12
+                        bool "Select MCLK 12MHz"
+                        
+                    config ADAU1761_MCLK_12288
+                        bool "Select MCLK 12.288MHz"
+                        
+                    config ADAU1761_MCLK_24576
+                        bool "Select MCLK 24.576MHz"
+                endchoice
+            endif
                 
             config ADAU1761_USING_PWR_PIN
                 bool "Enable audio power pin"
@@ -2722,6 +2760,10 @@ menu "Onboard Peripheral Drivers"
             config SPI_FLASH_FS
                 string "Set the file system used, default: lfs"
                 default "lfs"
+                
+            config SPI_FLASH_ENABLE_TEST
+                bool "Enable test cmd"
+                default n
         endif
         
     menuconfig BSP_USING_EMMC

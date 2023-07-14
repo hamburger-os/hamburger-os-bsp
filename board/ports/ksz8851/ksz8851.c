@@ -1013,10 +1013,12 @@ static int32_t ks_probe(struct rt_fmc_eth_port *ps_ks)
     uint16_t data_u16;
     ks_read_config(ps_ks);
     /* simple check for a valid chip being connected to the bus */
-    if ((ks_rdreg16(ps_ks, KSZ8851_CIDER) & ~CIDER_REV_MASK) != CIDER_ID)
+    uint32_t CID = ks_rdreg16(ps_ks, KSZ8851_CIDER);
+    CID = CID & ~CIDER_REV_MASK;
+    if (CID != CIDER_ID)
     {
         err_i32 = -1;
-        LOG_E("probe id err");
+        LOG_E("probe CID: failed %X != %X", CID, CIDER_ID);
     }
     else if (ks_read_selftest(ps_ks))
     {

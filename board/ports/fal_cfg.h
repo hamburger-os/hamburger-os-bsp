@@ -43,18 +43,10 @@ extern "C" {
 #define BLK_FRAM                       "fram"
 #endif
 
-#ifdef BSP_USING_AT45DB321
-//fm25xx定义,无需修改
-#define AT45DB321_START_ADRESS          (0)
-#define AT45DB321_DEV_NAME              "at45dbxx_fram"
-extern const struct fal_flash_dev at45dbxx_fram;
-#define BLK_FRAM                        "fram"
-#endif
-
 #ifdef BSP_USING_SPI_FLASH
 //spiflash定义,无需修改
 #define SPI_FLASH_START_ADRESS          (0)
-#define SPI_FLASH_DEV_NAME              "spi_flash"
+#define SPI_FLASH_DEV_NAME              "sfud"
 #define BLK_SPI_FLASH                   "spiflash"
 #endif
 
@@ -85,7 +77,7 @@ extern const struct fal_flash_dev at45dbxx_fram;
 #ifdef BSP_USING_EMMC
 //emmc定义,无需修改
 #define EMMC_START_ADRESS               (0)
-#define EMMC_DEV_NAME                   "mmc8"
+#define EMMC_DEV_NAME                   "sdmmc"
 #define BLK_EMMC                        "emmc"
 #define EMMC_SIZE_GRANULARITY_TOTAL     (2048)
 #define EMMC_BLK_SIZE                   (512)

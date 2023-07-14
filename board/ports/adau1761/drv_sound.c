@@ -205,6 +205,7 @@ static rt_err_t  stm32_player_configure(struct rt_audio_device *audio, struct rt
                 st_audio->config.samplebits = config.samplebits;
                 st_audio->config.channels = config.channels;
 
+                adau1761_set_sampling_rate(config.samplerate);
                 I2S_Samplerate_Set(config.samplerate);
                 I2S_Samplebits_Set(config.samplebits);
                 I2S_Channels_Set(config.channels);
@@ -218,6 +219,7 @@ static rt_err_t  stm32_player_configure(struct rt_audio_device *audio, struct rt
 //            if (st_audio->config.samplerate != caps->udata.config.samplerate)
             {
                 st_audio->config.samplerate = caps->udata.config.samplerate;
+                adau1761_set_sampling_rate(caps->udata.config.samplerate);
                 I2S_Samplerate_Set(caps->udata.config.samplerate);
                 LOG_D("AUDIO_DSP_SAMPLERATE %d", caps->udata.config.samplerate);
             }
@@ -269,6 +271,7 @@ static rt_err_t  stm32_player_configure(struct rt_audio_device *audio, struct rt
                 st_audio->config.channels   = config.channels;
                 st_audio->config.samplebits = config.samplebits;
 
+                adau1761_set_sampling_rate(config.samplerate);
                 I2S_Samplerate_Set(config.samplerate);
                 I2S_Samplebits_Set(config.samplebits);
                 I2S_Channels_Set(config.channels);
@@ -282,6 +285,7 @@ static rt_err_t  stm32_player_configure(struct rt_audio_device *audio, struct rt
 //            if (st_audio->config.samplerate != caps->udata.config.samplerate)
             {
                 st_audio->config.samplerate = caps->udata.config.samplerate;
+                adau1761_set_sampling_rate(caps->udata.config.samplerate);
                 I2S_Samplerate_Set(caps->udata.config.samplerate);
                 LOG_D("AUDIO_DSP_SAMPLERATE %d", caps->udata.config.samplerate);
             }
