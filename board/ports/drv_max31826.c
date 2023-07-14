@@ -286,7 +286,7 @@ static rt_int32_t DEV_MAX31826_ReadID(rt_uint8_t  * u8p_SensorID)
 
   U_DS31820ID u_SensorID;
 
-  if(DEV_MAX31826_Reset1Wire() == RT_EOK)
+  if(DEV_MAX31826_Reset1Wire())
   {
     DEV_MAX31826_WriteBit(MAX31826_CMD_READ_ROM);
 
