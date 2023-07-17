@@ -53,6 +53,7 @@
  *******************************************************/
 typedef struct
 {
+    sint32_t index;
     sint32_t cmd;      /* 录音命令 */
     sint32_t buf_size; /*缓冲区实际数据的大小*/
     /*缓冲区*/
@@ -232,6 +233,7 @@ static void *record_thread(void *args)
     pcm_config_t *p_config = NULL;
     sint32_t rec_ctrl_msg = 0;
     rec_msg_t rec_msg_data;
+    sint32_t index = 0;
 
     /* 获取声卡配置信息 */
     p_config = pcm_get_config_instance();
@@ -280,8 +282,35 @@ static void *record_thread(void *args)
                 log_print(LOG_ERROR, "init pcm device error, error code is %d. \n", ret);
                 continue;
             }
+            index = 0;
+#if DEBUG_PCM_FILE
+            /* 如果文件存在,则删除文件 */
+            if (access(BUFFER_DIR, 0) == 0)
+            {
+                unlink(BUFFER_DIR); /* 删除文件 */
+            }
+
+            /* 创建文件 */
+            ret = create_file(BUFFER_DIR);
+            if (ret < 0)
+            {
+                log_print(LOG_ERROR, "create_dir error, error code is %d. \n", ret);
+            }
+            else
+            {
+            }
+
+            /* 打开缓存文件 */
+            sint32_t fd = open(BUFFER_DIR, O_RDWR);
+            if (fd < 0)
+            {
+                log_print(LOG_ERROR, "open error! fd=%d src='%s' \n", fd, BUFFER_DIR);
+                continue;
+            }
+#endif
             /* 继续运行录音处理线程 */
             rec_msg_data.cmd = REC_MQ_BEGIN;
+            rec_msg_data.index = index;
             rec_msg_data.buf_size = 0;
             ret = rt_mq_send(rec_mq, &rec_msg_data, sizeof(rec_msg_data));
             if (ret != RT_EOK)
@@ -311,12 +340,26 @@ static void *record_thread(void *args)
                 /* 将左通道的值变为单通道 */
                 for (i = 0; i < (ret / 2 - 1); i = i + 2)
                 {
-                    p_config->p_buffer[i + 0] = p_config->p_buffer[i * 2 + 0];
-                    p_config->p_buffer[i + 1] = p_config->p_buffer[i * 2 + 1];
+                    p_config->p_buffer[i + 0] = p_config->p_buffer[i * 2 + 2];
+                    p_config->p_buffer[i + 1] = p_config->p_buffer[i * 2 + 3];
                 }
-
+#if 0
+                for (i = 0; i < ret / 2; i++)
+                {
+                    p_config->p_buffer[i] = i;
+                }
+#endif
+#if DEBUG_PCM_FILE
+                /* 写入文件缓存文件中 */
+                ret = write(fd, p_config->p_buffer, ret / 2);
+                if (ret < 0)
+                {
+                    log_print(LOG_ERROR, "write error. \n");
+                }
+#endif
                 /* 通知录音处理线程录音结束 */
                 rec_msg_data.cmd = REC_MQ_DATA;
+                rec_msg_data.index = index;
                 /* 设置缓冲区大小 */
                 rec_msg_data.buf_size = ret / 2;
                 memset(rec_msg_data.buf, 0, p_config->size / 2);
@@ -338,20 +381,26 @@ static void *record_thread(void *args)
                     break; /* 结束录音 */
                 }
             }
+#if DEBUG_PCM_FILE
+            /* 关闭缓存文件 */
+            if (close(fd) < 0)
+            {
+                rt_kprintf("write record buffer error. \n");
+            }
+#endif
             /* 通知录音处理线程录音结束 */
             rec_msg_data.cmd = REC_MQ_END;
             rec_msg_data.buf_size = 0;
             ret = rt_mq_send(rec_mq, &rec_msg_data, sizeof(rec_msg_data));
             if (ret != RT_EOK)
             {
-                rt_kprintf("send end msg error, ret:%d. \n", ret);
+                rt_kprintf("send end msg error, ret: %d. \n", ret);
             }
-
             /* pcm设备初始化 */
             ret = pcm_exit(p_config);
             if (ret < 0)
             {
-                rt_kprintf("pcm exit error.\n", ret);
+                rt_kprintf("pcm exit error. \n", ret);
             }
         }
     }
@@ -420,9 +469,19 @@ static void *record_handler_thread(void *arg)
             if (rec_msg_data.cmd == REC_MQ_DATA) /* 接收到数据 */
             {
                 // rt_kprintf(".");
+                // rt_kprintf("recv:%d \n",rec_msg_data.index);
                 src_buf_handled_len = 0;
                 while (true)
                 {
+#if 0
+                    rt_kprintf("buf:%d | handle:% 4d | res:% 4d | encode:% 4d | resp:% 4d |\n",
+                               rec_msg_data.buf_size,
+                               src_buf_handled_len,
+                               rec_msg_data.buf_size - src_buf_handled_len,
+                               encoder_buffer_used,
+                               AMR_FRAME_SRC_DATA_MAX_LEN - encoder_buffer_used
+                               );
+#endif
                     if ((rec_msg_data.buf_size - src_buf_handled_len) <
                         (AMR_FRAME_SRC_DATA_MAX_LEN - encoder_buffer_used))
                     {
@@ -441,10 +500,22 @@ static void *record_handler_thread(void *arg)
                                AMR_FRAME_SRC_DATA_MAX_LEN - encoder_buffer_used);
                         src_buf_handled_len += AMR_FRAME_SRC_DATA_MAX_LEN - encoder_buffer_used;
 
+#if 0
+                        int i = 0;
+                        for (i = 0; i < AMR_FRAME_SRC_DATA_MAX_LEN - 1; ++i)
+                        {
+
+                            ret = encoder_buffer[i + 1] - encoder_buffer[i];
+                            if ((ret != 1) && (ret != -255))
+                            {
+                                printf("%d\n", ret);
+                            }
+                        }
+#endif
                         /* 获取满帧, 进行编码, 并存储数据 */
                         memset(serial_data, 0, AMR_FRAME_MAX_LEN);
 
-                        /* rt_tick_t rt_tick = rt_tick_get_millisecond(); */
+                        // rt_tick_t rt_tick = rt_tick_get_millisecond();
                         /* 调用AMR编码器 */
                         byte_counter = Encoder_Interface_Encode(enstate, req_mode, (short *)encoder_buffer, serial_data, 0);
 
@@ -467,8 +538,9 @@ static void *record_handler_thread(void *arg)
                         {
                             g_cur_rec_file_info.record_datalen += ret;
                         }
-                        fsync(g_cur_rec_file_info.fd);
-                        /* rt_kprintf("%d ms\n", rt_tick_get_millisecond() - rt_tick); */
+                        // rt_kprintf("%d ms ", rt_tick_get_millisecond() - rt_tick);
+                        // fsync(g_cur_rec_file_info.fd);
+                        // rt_kprintf("%d ms\n", rt_tick_get_millisecond() - rt_tick);
                         encoder_buffer_used = 0;
                     }
                 }

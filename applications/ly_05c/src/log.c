@@ -77,6 +77,7 @@ void log_print(sint32_t level, const char *format, ...)
     /* LOG_D("%s", log_buffer); */
     rt_kprintf("%s", log_buffer);
 
+
     /* 在日志文件中记录,防止日志信息丢失,每次log都及时写入文件. */
     snprintf(name, sizeof(name), "%s/LY05C_%d-%d.log",
              LOG_FILE_PATH,
@@ -84,7 +85,6 @@ void log_print(sint32_t level, const char *format, ...)
              get_locomotive_id());
 
     pthread_mutex_lock(&log_mutex);
-    // todo, 增加最大限制,做一次备份.
     /* 日志文件名发生变化时 */
     if (strcmp(name, cur_log_name) != 0)
     {

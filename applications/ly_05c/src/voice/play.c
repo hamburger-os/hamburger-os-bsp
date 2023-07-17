@@ -590,6 +590,8 @@ static void *play_thread(void *args)
             {
                 log_print(LOG_ERROR, "stop play error, ret=%d.\n", ret);
             }
+
+            log_print(LOG_INFO, "end play. \n");
             /* 通知tax箱放音结束 */
             tax_send_echo_event((uint8_t)OUT_END, &g_tax40);
 

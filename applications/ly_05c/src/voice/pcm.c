@@ -149,7 +149,7 @@ sint32_t pcm_init(pcm_config_t *config)
     /* 设置音量 */
     caps.main_type = AUDIO_TYPE_MIXER;
     caps.sub_type = AUDIO_MIXER_VOLUME;
-    caps.udata.value = 90;
+    caps.udata.value = 100;
     ret = rt_device_control(config->dev, AUDIO_CTL_CONFIGURE, (void *)&caps);
 
     return (sint32_t)ret;
