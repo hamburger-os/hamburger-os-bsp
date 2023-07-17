@@ -409,7 +409,8 @@ void MX_I2S_Init(void)
 //表格式:采样率/10,PLLI2SN,PLLI2SR,I2SDIV,ODD
 static const uint32_t I2S_PSC_TBL[][3] =
 {
-    {  I2S_AUDIOFREQ_8K, 192, 2 },      //8Khz采样率
+#ifdef BSP_I2S_USING_MCLK
+    {  I2S_AUDIOFREQ_8K, 256, 5 },      //8Khz采样率
     { I2S_AUDIOFREQ_11K, 429, 4 },      //11.025Khz采样率
     { I2S_AUDIOFREQ_16K, 213, 2 },      //16Khz采样率
     { I2S_AUDIOFREQ_22K, 429, 4 },      //22.05Khz采样率
@@ -420,6 +421,19 @@ static const uint32_t I2S_PSC_TBL[][3] =
     { I2S_AUDIOFREQ_96K, 344, 2 },      //96Khz采样率
     {            176400, 361, 2 },      //176.4Khz采样率
     {I2S_AUDIOFREQ_192K, 393, 2 },      //192Khz采样率
+#else
+    {  I2S_AUDIOFREQ_8K, 192, 3 },      //8Khz采样率
+    { I2S_AUDIOFREQ_11K, 429, 4 },      //11.025Khz采样率
+    { I2S_AUDIOFREQ_16K, 256, 2 },      //16Khz采样率
+    { I2S_AUDIOFREQ_22K, 302, 2 },      //22.05Khz采样率
+    { I2S_AUDIOFREQ_32K, 256, 5 },      //32Khz采样率
+    { I2S_AUDIOFREQ_44K, 429, 4 },      //44.1Khz采样率
+    { I2S_AUDIOFREQ_48K, 384, 5 },      //48Khz采样率3
+    {             88200, 316, 2 },      //88.2Khz采样率
+    { I2S_AUDIOFREQ_96K, 424, 3 },      //96Khz采样率
+    {            176400, 361, 2 },      //176.4Khz采样率
+    {I2S_AUDIOFREQ_192K, 258, 3 },      //192Khz采样率
+#endif
 };
 void I2S_Samplerate_Set(uint32_t freq)
 {

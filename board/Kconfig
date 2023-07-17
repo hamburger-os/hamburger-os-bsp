@@ -937,6 +937,10 @@ menu "On-chip Peripheral Drivers"
                     select BSP_I2S3_RX_USING_DMA
                     select BSP_I2S3_TX_USING_DMA
             endchoice
+            
+            config BSP_I2S_USING_MCLK
+                bool "Enable MCLK output"
+                default n
         endif
         
     menuconfig BSP_USING_USB
