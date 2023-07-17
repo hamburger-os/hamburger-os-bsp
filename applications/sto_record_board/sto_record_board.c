@@ -8,8 +8,9 @@
  * 2023-06-27     zm       the first version
  */
 #include "sto_record_board.h"
-#include "led_ctrl.h"
+#include "led.h"
 #include "eth_manage.h"
+#include "board_info.h"
 
 #include <rtthread.h>
 #include <rtdevice.h>
@@ -88,7 +89,8 @@ static void *STORecordBoardThreadEntry(void *parameter)
 {
     LedCtrlInit();
     ETHManageInit();
-//    ETHManageTestThreadInit();
+    ETHManageTestThreadInit();
+    BoardInfoThreadInit();
     while (1)
     {
         rt_thread_mdelay(500);
@@ -97,7 +99,7 @@ static void *STORecordBoardThreadEntry(void *parameter)
 static void STORecordBoardInit(void)
 {
     rt_thread_init(&record_board_main, "main thread", STORecordBoardThreadEntry,
-    RT_NULL, main_thread_stack, MAIN_THREAD_STACK_SIZE, MAIN_THREAD_PRIORITY, MAIN_THREAD_TIMESLICE);
+                    RT_NULL, main_thread_stack, MAIN_THREAD_STACK_SIZE, MAIN_THREAD_PRIORITY, MAIN_THREAD_TIMESLICE);
     /* 启动线程 */
     rt_thread_startup(&record_board_main);
 }
