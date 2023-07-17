@@ -163,12 +163,12 @@ static void fmc_eth_hard_reset(void)
         rt_pin_mode(fmc_eth_device.port[i].rst_pin, PIN_MODE_OUTPUT);
         rt_pin_write(fmc_eth_device.port[i].rst_pin, PIN_LOW);
     }
-    rt_thread_mdelay(200);
+    rt_thread_mdelay(100);
     for (int i = 0; i < sizeof(fmc_eth_port) / sizeof(struct rt_fmc_eth_port); i++)
     {
         rt_pin_write(fmc_eth_device.port[i].rst_pin, PIN_HIGH);
     }
-    rt_thread_mdelay(200);
+    rt_thread_mdelay(100);
 }
 
 static void fmc_eth_irq_callback(void *args)
