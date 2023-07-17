@@ -112,6 +112,8 @@ static void norrw_thread_entry(void* parameter)
             }
             if (rt_memcmp(write_data, read_data, ptest->len) != 0)
             {
+                LOG_HEX("wr", 16, write_data, (ptest->len > 64)?(64):(ptest->len));
+                LOG_HEX("rd", 16, read_data, (ptest->len > 64)?(64):(ptest->len));
                 LOG_E("norrw data error!");
                 device = NULL;
                 goto end;

@@ -99,10 +99,10 @@ static void MX_FMC_Init(uint32_t NSBank)
     hsram.Init.ContinuousClock = FMC_CONTINUOUS_CLOCK_SYNC_ONLY;
     hsram.Init.PageSize = FMC_PAGE_SIZE_NONE;
     /* Timing */
-    Timing.AddressSetupTime = 11;
+    Timing.AddressSetupTime = 4;
     Timing.AddressHoldTime = 15;
-    Timing.DataSetupTime = 11;
-    Timing.BusTurnAroundDuration = 0;
+    Timing.DataSetupTime = 20;
+    Timing.BusTurnAroundDuration = 8;
     Timing.CLKDivision = 16;
     Timing.DataLatency = 17;
     Timing.AccessMode = FMC_ACCESS_MODE_A;
@@ -140,10 +140,10 @@ static void MX_FMC_Init(uint32_t NSBank)
     hsram.Init.WriteFifo = FMC_WRITE_FIFO_ENABLE;
     hsram.Init.PageSize = FMC_PAGE_SIZE_NONE;
     /* Timing */
-    Timing.AddressSetupTime = 11;
+    Timing.AddressSetupTime = 4;
     Timing.AddressHoldTime = 15;
-    Timing.DataSetupTime = 11;
-    Timing.BusTurnAroundDuration = 0;
+    Timing.DataSetupTime = 20;
+    Timing.BusTurnAroundDuration = 8;
     Timing.CLKDivision = 16;
     Timing.DataLatency = 17;
     Timing.AccessMode = FMC_ACCESS_MODE_A;
@@ -163,12 +163,12 @@ static void fmc_eth_hard_reset(void)
         rt_pin_mode(fmc_eth_device.port[i].rst_pin, PIN_MODE_OUTPUT);
         rt_pin_write(fmc_eth_device.port[i].rst_pin, PIN_LOW);
     }
-    rt_thread_mdelay(100);
+    rt_thread_mdelay(200);
     for (int i = 0; i < sizeof(fmc_eth_port) / sizeof(struct rt_fmc_eth_port); i++)
     {
         rt_pin_write(fmc_eth_device.port[i].rst_pin, PIN_HIGH);
     }
-    rt_thread_mdelay(100);
+    rt_thread_mdelay(200);
 }
 
 static void fmc_eth_irq_callback(void *args)
