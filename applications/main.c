@@ -22,21 +22,22 @@
 
 int main(void)
 {
-    /* High thread priority */
-    uint8_t parity = RT_THREAD_PRIORITY_MAX - 2;
-//    uint8_t parity = 1;
-    rt_thread_control(rt_thread_self(), RT_THREAD_CTRL_CHANGE_PRIORITY, &parity);
-
 #ifdef BSP_USING_SYS_LED
     /* set LED pin mode to output */
     rt_pin_mode(LED_PIN, PIN_MODE_OUTPUT);
 #endif
 
 #ifndef PKG_USING_QBOOT
-    LOG_D("system self-test completed and started.");
+    rt_kprintf("Type 'help' to get the list of commands.\n");
+    rt_kprintf("Use UP/DOWN arrows to navigate through command history.\n");
+    rt_kprintf("Press TAB when typing command name to auto-complete.\n");
 #endif
 
 #ifdef BSP_SYS_LED_DELAY
+    /* low thread priority */
+    uint8_t parity = RT_THREAD_PRIORITY_MAX - 2;
+    rt_thread_control(rt_thread_self(), RT_THREAD_CTRL_CHANGE_PRIORITY, &parity);
+
     while (1)
     {
 #ifdef BSP_USING_SYS_LED
