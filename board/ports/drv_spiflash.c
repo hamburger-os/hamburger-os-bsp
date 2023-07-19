@@ -11,8 +11,6 @@
 
 #ifdef BSP_USING_SPI_FLASH
 
-//#define DBG_LVL DBG_LOG
-
 #include "fal.h"
 #include "fal_cfg.h"
 #include "drv_spi.h"

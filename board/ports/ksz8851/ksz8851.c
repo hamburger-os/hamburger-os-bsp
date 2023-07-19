@@ -1070,7 +1070,7 @@ int ks_init(struct rt_fmc_eth_port *ps_ks)
         return -RT_ERROR;
     }
     /* 网口芯片初始化 0(成功)、-1、-2 */
-    if (0 == ks_probe(ps_ks))
+    if (ks_probe(ps_ks) == 0)
     {
         ks_net_open(ps_ks); // 打开网络设备
         LOG_D("probe succeed.");

@@ -1024,7 +1024,7 @@ static void MX_FMC_Init(void)
   hsram4.Init.WaitSignalPolarity = FMC_WAIT_SIGNAL_POLARITY_LOW;
   hsram4.Init.WrapMode = FMC_WRAP_MODE_DISABLE;
   hsram4.Init.WaitSignalActive = FMC_WAIT_TIMING_BEFORE_WS;
-  hsram4.Init.WriteOperation = FMC_WRITE_OPERATION_DISABLE;
+  hsram4.Init.WriteOperation = FMC_WRITE_OPERATION_ENABLE;
   hsram4.Init.WaitSignal = FMC_WAIT_SIGNAL_DISABLE;
   hsram4.Init.ExtendedMode = FMC_EXTENDED_MODE_DISABLE;
   hsram4.Init.AsynchronousWait = FMC_ASYNCHRONOUS_WAIT_DISABLE;
@@ -1032,10 +1032,10 @@ static void MX_FMC_Init(void)
   hsram4.Init.ContinuousClock = FMC_CONTINUOUS_CLOCK_SYNC_ONLY;
   hsram4.Init.PageSize = FMC_PAGE_SIZE_NONE;
   /* Timing */
-  Timing.AddressSetupTime = 15;
+  Timing.AddressSetupTime = 4;
   Timing.AddressHoldTime = 15;
-  Timing.DataSetupTime = 255;
-  Timing.BusTurnAroundDuration = 15;
+  Timing.DataSetupTime = 20;
+  Timing.BusTurnAroundDuration = 8;
   Timing.CLKDivision = 16;
   Timing.DataLatency = 17;
   Timing.AccessMode = FMC_ACCESS_MODE_A;
@@ -1056,7 +1056,7 @@ static void MX_FMC_Init(void)
   hsdram2.Init.MemoryDataWidth = FMC_SDRAM_MEM_BUS_WIDTH_16;
   hsdram2.Init.InternalBankNumber = FMC_SDRAM_INTERN_BANKS_NUM_4;
   hsdram2.Init.CASLatency = FMC_SDRAM_CAS_LATENCY_1;
-  hsdram2.Init.WriteProtection = FMC_SDRAM_WRITE_PROTECTION_DISABLE;
+  hsdram2.Init.WriteProtection = FMC_SDRAM_WRITE_PROTECTION_ENABLE;
   hsdram2.Init.SDClockPeriod = FMC_SDRAM_CLOCK_DISABLE;
   hsdram2.Init.ReadBurst = FMC_SDRAM_RBURST_DISABLE;
   hsdram2.Init.ReadPipeDelay = FMC_SDRAM_RPIPE_DELAY_0;
