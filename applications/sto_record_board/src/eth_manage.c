@@ -54,7 +54,7 @@ static rt_device_t eth_dev[ETH_MANAGE_CHANNEL_MAX];
 //}
 
 
-void ETHManageTX(ETHManageCHannel channel, const void *buffer, rt_uint16_t size)
+void ETHManageTX(ETHManageChannel channel, const void *buffer, rt_uint16_t size)
 {
     rt_uint16_t r_size = 0;
 
@@ -65,7 +65,7 @@ void ETHManageTX(ETHManageCHannel channel, const void *buffer, rt_uint16_t size)
     }
 }
 
-void ETHManageSetRXCallback(ETHManageCHannel ch, rt_err_t (*rx_ind)(rt_device_t dev,rt_size_t size))
+void ETHManageSetRXCallback(ETHManageChannel ch, rt_err_t (*rx_ind)(rt_device_t dev,rt_size_t size))
 {
     if(rx_ind != NULL)
     {
@@ -73,7 +73,7 @@ void ETHManageSetRXCallback(ETHManageCHannel ch, rt_err_t (*rx_ind)(rt_device_t 
     }
 }
 
-static void ETHManageChannelInit(char *device_name, ETHManageCHannel ch)
+static void ETHManageChannelInit(char *device_name, ETHManageChannel ch)
 {
     eth_dev[ch] = rt_device_find(device_name);
     if (eth_dev[ch] == RT_NULL)

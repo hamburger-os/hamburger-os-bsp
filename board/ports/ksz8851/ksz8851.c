@@ -738,8 +738,6 @@ int32_t ks_start_xmit_link_layer(struct rt_fmc_eth_port *ps_ks, KSZ_S_LEP_BUF *p
 {
     int32_t retv_i32 = 0;
 
-    ks_disable_int(ps_ks);
-
     /* Extra space are required:
      *  4 byte for alignment, 4 for status/length, 4 for CRC
      */
@@ -751,7 +749,6 @@ int32_t ks_start_xmit_link_layer(struct rt_fmc_eth_port *ps_ks, KSZ_S_LEP_BUF *p
     {
         retv_i32 = -1;
     }
-    ks_enable_int(ps_ks);
 
     return retv_i32;
 }

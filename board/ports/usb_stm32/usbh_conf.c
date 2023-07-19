@@ -203,7 +203,6 @@ USBH_StatusTypeDef USBH_LL_Init(USBH_HandleTypeDef *phost)
     USBH_LL_SetTimer(phost, HAL_HCD_GetCurrentFrame(&hhcd_USB_OTG));
 #endif
 
-#ifndef USBH_STM32_USING_EXTERNAL_PHY
 #if defined (STM32H743xx) || defined (STM32H753xx)  || defined (STM32H750xx) || defined (STM32H742xx)  || \
     defined (STM32H745xx) || defined (STM32H745xG)  || defined (STM32H755xx) || defined (STM32H747xx)  || defined (STM32H747xG) || defined (STM32H757xx)  || \
     defined (STM32H7A3xx) || defined (STM32H7A3xxQ) || defined (STM32H7B3xx) || defined (STM32H7B3xxQ) || defined (STM32H7B0xx) || defined (STM32H7B0xxQ) || \
@@ -211,12 +210,21 @@ USBH_StatusTypeDef USBH_LL_Init(USBH_HandleTypeDef *phost)
 
     hhcd_USB_OTG.Instance = USB_OTG_HS;
     hhcd_USB_OTG.Init.Host_channels = 16;
-    hhcd_USB_OTG.Init.speed = HCD_SPEED_FULL;
     hhcd_USB_OTG.Init.dma_enable = DISABLE;
+    hhcd_USB_OTG.Init.low_power_enable = DISABLE;
+
+#ifndef USBH_STM32_USING_EXTERNAL_PHY
+    hhcd_USB_OTG.Init.speed = HCD_SPEED_FULL;
     hhcd_USB_OTG.Init.phy_itface = USB_OTG_EMBEDDED_PHY;
     hhcd_USB_OTG.Init.Sof_enable = ENABLE;
-    hhcd_USB_OTG.Init.low_power_enable = DISABLE;
     hhcd_USB_OTG.Init.use_external_vbus = DISABLE;
+#else
+    hhcd_USB_OTG.Init.speed = HCD_SPEED_HIGH;
+    hhcd_USB_OTG.Init.phy_itface = USB_OTG_ULPI_PHY;
+    hhcd_USB_OTG.Init.Sof_enable = DISABLE;
+    hhcd_USB_OTG.Init.use_external_vbus = ENABLE;
+#endif /* USBH_STM32_USING_EXTERNAL_PHY */
+
     if (HAL_HCD_Init(&hhcd_USB_OTG) != HAL_OK)
     {
         Error_Handler();
@@ -224,32 +232,6 @@ USBH_StatusTypeDef USBH_LL_Init(USBH_HandleTypeDef *phost)
 
     USBH_LL_SetTimer(phost, HAL_HCD_GetCurrentFrame(&hhcd_USB_OTG));
 #endif
-
-#else
-
-#if defined (STM32H743xx) || defined (STM32H753xx)  || defined (STM32H750xx) || defined (STM32H742xx)  || \
-    defined (STM32H745xx) || defined (STM32H745xG)  || defined (STM32H755xx) || defined (STM32H747xx)  || defined (STM32H747xG) || defined (STM32H757xx)  || \
-    defined (STM32H7A3xx) || defined (STM32H7A3xxQ) || defined (STM32H7B3xx) || defined (STM32H7B3xxQ) || defined (STM32H7B0xx) || defined (STM32H7B0xxQ) || \
-    defined (STM32H735xx) || defined (STM32H733xx)  || defined (STM32H730xx) || defined (STM32H730xxQ) || defined (STM32H725xx) || defined (STM32H723xx)
-
-    hhcd_USB_OTG.Instance = USB_OTG_HS;
-    hhcd_USB_OTG.Init.Host_channels = 16;
-    hhcd_USB_OTG.Init.speed = HCD_SPEED_HIGH;
-    hhcd_USB_OTG.Init.dma_enable = DISABLE;
-    hhcd_USB_OTG.Init.phy_itface = USB_OTG_ULPI_PHY;
-    hhcd_USB_OTG.Init.Sof_enable = DISABLE;
-    hhcd_USB_OTG.Init.low_power_enable = DISABLE;
-    hhcd_USB_OTG.Init.use_external_vbus = ENABLE;
-
-    if (HAL_HCD_Init(&hhcd_USB_OTG) != HAL_OK)
-    {
-      Error_Handler();
-    }
-
-    USBH_LL_SetTimer(phost, HAL_HCD_GetCurrentFrame(&hhcd_USB_OTG));
-#endif
-
-#endif /* USBH_STM32_USING_EXTERNAL_PHY */
   }
 
   return USBH_OK;
