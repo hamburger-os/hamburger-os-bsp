@@ -105,6 +105,22 @@ menu "Test functions and examples"
         select PKG_USING_CMSIS_5
         select PKG_CMSIS_DSP
         default n
+        
+    menuconfig BSP_USING_LINK_LAYER_COMM_TEST
+        bool "Enable link layer comm test"
+        default n
+        
+        if BSP_USING_LINK_LAYER_COMM_TEST
+            config BSP_USING_LINK_LAYER_CHANNEL_1
+                bool "link layer comm channel 1 enable"
+                default n
+            config BSP_USING_LINK_LAYER_CHANNEL_2
+                bool "link layer comm channel 2 enable"
+                default n
+            config BSP_USING_LINK_LAYER_CHANNEL_3
+                bool "link layer comm channel 3 enable"
+                default n
+        endif
 endmenu
 
 menu "Product Application and Function"

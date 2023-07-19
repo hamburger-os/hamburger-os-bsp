@@ -267,6 +267,7 @@ rt_int32_t ReadVoltReg(rt_uint8_t Channel, rt_uint16_t *pWord)
 /**************************************************************************************************************
  * 函数名:BspLtc2991ChannelRead
  * 描     述:获取LTC2991所有通道的电压值和VCC通道电压值
+ * 输     入: channel--总的获取的通道数。
  * 输     入: *p_volt--返回的9个通道量化值:单位，mv。
                       V1-V8  VCC
  * 输     出:   OK--操作成功；
@@ -275,7 +276,7 @@ rt_int32_t ReadVoltReg(rt_uint8_t Channel, rt_uint16_t *pWord)
  * 日     期:
  * 备     注:读取一个通道的值会导致芯片内部重新开始转化，所以最好全部读取出来
  *************************************************************************************************************/
-rt_uint8_t BspLtc2991ChannelRead(rt_uint16_t *p_volt)
+rt_uint8_t BspLtc2991ChannelRead(rt_uint16_t all_channel, rt_uint16_t *p_volt)
 {
 
     rt_uint16_t Tmp = 0;
@@ -295,8 +296,8 @@ rt_uint8_t BspLtc2991ChannelRead(rt_uint16_t *p_volt)
         /*并非所有通道都有有效数据，是否两次读数时间间隔太短*/
         return -RT_ERROR;
     }
-    /*读取通道V1-V2  和VCC通道电压值*/
-    for (int i = 0; i < 2; i++)
+
+    for (int i = 0; i < all_channel; i++)
     {
         if (0 == ReadVoltReg(i, &Tmp))
         {
@@ -312,7 +313,7 @@ rt_uint8_t BspLtc2991ChannelRead(rt_uint16_t *p_volt)
 
 static rt_size_t rt_ltc2991_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t size)
 {
-    return BspLtc2991ChannelRead((rt_uint16_t *)buffer);
+    return BspLtc2991ChannelRead(pos, (rt_uint16_t *)buffer);
 }
 
 /* RT-Thread Device Driver Interface */
@@ -326,11 +327,11 @@ static rt_err_t rt_ltc2991_init(rt_device_t dev)
         LOG_E("i2c bus error!");
         return -RT_EIO;
     }
-    /*使能V1 V2，使能温度和VCC*/
-    Byte = 0x18;
+    /*使能V1 - V4，使能温度和VCC*/
+    Byte = 0x38;
     ltc2991_write_byte(LTC2991_REG_STA_HIGH, Byte);
-    /*V1-V2 配置，单端电压采样，使能滤波*/
-    Byte = 0x08;
+    /*V1-V4 配置，单端电压采样，使能滤波*/
+    Byte = 0x88;
     ltc2991_write_byte(LTC2991_REG_CTRL_V1_4, Byte);
     /*V5-V8 配置，单端电压采样，使能滤波*/
     //    Byte = 0x88;

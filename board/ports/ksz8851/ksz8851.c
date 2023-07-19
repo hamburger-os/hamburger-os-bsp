@@ -725,6 +725,39 @@ int ks_start_xmit(struct rt_fmc_eth_port *ps_ks, struct pbuf *p)
     return framelength;
 }
 
+/**
+ * ks_start_xmit_link_layer - 链路层发送数据包
+ * @skb     : The buffer to transmit
+ * @netdev  : The device used to transmit the packet.
+ *
+ * Called by the network layer to transmit the @skb.
+ * spin_lock_irqsave is required because tx and rx should be mutual exclusive.
+ * So while tx is in-progress, prevent IRQ interrupt from happenning.
+ */
+int32_t ks_start_xmit_link_layer(struct rt_fmc_eth_port *ps_ks, KSZ_S_LEP_BUF *ps_lep_buf)
+{
+    int32_t retv_i32 = 0;
+
+    while(ks_tx_fifo_space(ps_ks) < ps_lep_buf->len + 12)
+    {
+        rt_thread_delay(1);
+    }
+
+    /* Extra space are required:
+     *  4 byte for alignment, 4 for status/length, 4 for CRC
+     */
+    if (ks_tx_fifo_space(ps_ks) >= ps_lep_buf->len + 12)
+    {
+        ks_write_qmu(ps_ks, ps_lep_buf->buf, ps_lep_buf->len);
+    }
+    else
+    {
+        retv_i32 = -1;
+    }
+
+    return retv_i32;
+}
+
 static unsigned long const ethernet_polynomial = 0x04c11db7U;
 static unsigned long ether_gen_crc(int length, uint8_t *data)
 {

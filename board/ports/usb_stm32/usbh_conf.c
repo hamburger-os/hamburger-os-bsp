@@ -210,12 +210,21 @@ USBH_StatusTypeDef USBH_LL_Init(USBH_HandleTypeDef *phost)
 
     hhcd_USB_OTG.Instance = USB_OTG_HS;
     hhcd_USB_OTG.Init.Host_channels = 16;
-    hhcd_USB_OTG.Init.speed = HCD_SPEED_FULL;
     hhcd_USB_OTG.Init.dma_enable = DISABLE;
+    hhcd_USB_OTG.Init.low_power_enable = DISABLE;
+
+#ifndef USBH_STM32_USING_EXTERNAL_PHY
+    hhcd_USB_OTG.Init.speed = HCD_SPEED_FULL;
     hhcd_USB_OTG.Init.phy_itface = USB_OTG_EMBEDDED_PHY;
     hhcd_USB_OTG.Init.Sof_enable = ENABLE;
-    hhcd_USB_OTG.Init.low_power_enable = DISABLE;
     hhcd_USB_OTG.Init.use_external_vbus = DISABLE;
+#else
+    hhcd_USB_OTG.Init.speed = HCD_SPEED_HIGH;
+    hhcd_USB_OTG.Init.phy_itface = USB_OTG_ULPI_PHY;
+    hhcd_USB_OTG.Init.Sof_enable = DISABLE;
+    hhcd_USB_OTG.Init.use_external_vbus = ENABLE;
+#endif /* USBH_STM32_USING_EXTERNAL_PHY */
+
     if (HAL_HCD_Init(&hhcd_USB_OTG) != HAL_OK)
     {
         Error_Handler();
