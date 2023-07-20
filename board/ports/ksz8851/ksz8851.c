@@ -19,7 +19,9 @@ static void sleepms(uint32_t utick)
  */
 static __inline uint8_t readb(volatile uint8_t *addr)
 {
-    return *(volatile uint8_t *)addr;
+    volatile uint8_t ram;           //防止被优化
+    ram = *addr;
+    return ram;
 }
 
 /**
@@ -28,7 +30,9 @@ static __inline uint8_t readb(volatile uint8_t *addr)
  */
 static __inline uint16_t readw(volatile uint16_t *addr)
 {
-    return *(volatile uint16_t *)addr;
+    volatile uint16_t ram;           //防止被优化
+    ram = *addr;
+    return ram;
 }
 
 /**
@@ -38,7 +42,8 @@ static __inline uint16_t readw(volatile uint16_t *addr)
  */
 static __inline void writew(uint16_t data, volatile uint16_t *addr)
 {
-    *(volatile uint16_t *)addr = data;
+    data = data;      //使用-O2优化的时候,必须插入的延时
+    *addr = data;
 }
 
 /**
