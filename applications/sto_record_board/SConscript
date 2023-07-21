@@ -11,6 +11,10 @@ src =  Split('''
     src/led.c
     src/eth_manage.c
     src/board_info.c
+    src/data_handle.c
+    src/Record_Board_App.c
+    src/RecordErrorCode.c
+    src/file_handle_thread.c
     '''
     )
 

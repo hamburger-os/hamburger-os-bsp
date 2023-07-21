@@ -93,8 +93,9 @@ struct rt_fmc_eth_port
     FRAME_HEAD frame_head[KSZ_MAX_RFRM_THD];
 
     KSZ_S_LEP_BUF link_layer_buf_tx;
-    void *link_layer_rx;
-    rt_uint16_t link_layer_rx_len;
+    KSZ_S_LEP_BUF link_layer_buf_rx;
+//    void *link_layer_rx;
+//    rt_uint16_t link_layer_rx_len;
 };
 
 void fmc_eth_memcpy(void *DstAddress, void *SrcAddress, uint32_t DataLength);

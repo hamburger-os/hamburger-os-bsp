@@ -224,15 +224,15 @@ static rt_size_t fmc_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_si
     struct rt_fmc_eth_port *fmc_eth = dev->user_data;
     rt_uint16_t read_size = 0;
 
-    if(size > fmc_eth->link_layer_rx_len)
+    if(size > fmc_eth->link_layer_buf_rx.len)
     {
-        read_size = fmc_eth->link_layer_rx_len;
+        read_size = fmc_eth->link_layer_buf_rx.len;
     }
     else
     {
         read_size = size;
     }
-    memcpy(buffer, fmc_eth->link_layer_rx, read_size);
+    memcpy(buffer, fmc_eth->link_layer_buf_rx.buf, read_size);
     return read_size;
 }
 
@@ -329,9 +329,12 @@ struct pbuf *fmc_eth_rx(rt_device_t dev)
     p = ks_irq(fmc_eth);
     if(dev->rx_indicate != NULL)
     {
-        fmc_eth->link_layer_rx = p->payload;
-        fmc_eth->link_layer_rx_len = p->len;
-        dev->rx_indicate(dev, p->len);
+        if(0 != p->len)
+        {
+            fmc_eth->link_layer_buf_rx.len = p->len;
+            memcpy(fmc_eth->link_layer_buf_rx.buf, p->payload, p->len);
+            dev->rx_indicate(dev, p->len);
+        }
     }
 
 #ifdef BSP_USING_KSZ8851_RX_DUMP

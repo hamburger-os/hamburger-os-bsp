@@ -1,0 +1,54 @@
+/*
+ * Copyright (c) 2006-2021, RT-Thread Development Team
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Change Logs:
+ * Date           Author       Notes
+ * 2023-07-20     zm       the first version
+ */
+#ifndef APPLICATIONS_STO_RECORD_BOARD_INC_DATA_HANDLE_H_
+#define APPLICATIONS_STO_RECORD_BOARD_INC_DATA_HANDLE_H_
+
+#include <rtthread.h>
+
+#define MAX_ETH_CAN_LEN          (1465) /*应用层负载区数据最大为1476-exp_head(8)-pack_head(3)*/
+
+/* CNA数据在ETH包中单帧格式 */
+typedef struct
+{
+    uint32_t ID;
+    uint8_t len;
+    uint8_t Data[64];
+} S_ETH_CAN_FRAME;
+
+typedef struct
+{
+    /*******************************************
+     **  11bit ID=优先级(8bit)+帧号(3bit)
+     ********************************************/
+    uint8_t priority_u8;        //优先级
+    uint8_t no_u8;              //帧号
+    uint8_t length_u8;          //长度
+    uint8_t data_u8[8];         //数据
+} CAN_FRAME;
+
+/* CAN业务层数据在ETH中格式 */
+typedef struct
+{
+    uint32_t frameAllNum; /* 从上电开始到目前发送的总包数 */
+    uint8_t frameNum; /* 总帧数 */
+    uint16_t datalen;
+    uint8_t data[MAX_ETH_CAN_LEN];
+} S_APP_INETH_PACK;
+
+typedef struct
+{
+    rt_mq_t can_data_mq;  /* 存放以太网转换为CAN格式的消息队列 */
+} S_DATA_HANDLE;
+
+rt_err_t DataHandleInit(S_DATA_HANDLE *p_data_handle);
+void ETHToCanDataHandle(S_DATA_HANDLE *p_data_handle, uint8_t *pbuf, uint16_t data_len);
+rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle);
+
+#endif /* APPLICATIONS_STO_RECORD_BOARD_INC_DATA_HANDLE_H_ */
