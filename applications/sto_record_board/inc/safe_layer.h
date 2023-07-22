@@ -48,6 +48,7 @@
 #define SAFE_LAYER_PLOADLEN  (1480) /*安全层负载数据区最大为1480*/
 
 /*安全层帧头解析结构*/
+#pragma pack(1)
 typedef struct eth_rx_safe_layer
 {
     uint8_t des_adr;/*目的地址*/
@@ -59,7 +60,7 @@ typedef struct eth_rx_safe_layer
     uint16_t lenth;
 /*安全层解析到此处即可，不用全部解析，*/
 } r_safe_layer;
-
+#pragma pack()
 rt_err_t rx_safe_layer_check(S_DATA_HANDLE * data_handle, uint8_t *pBuf, uint8_t from_chl);
 
 #endif /* APPLICATIONS_STO_RECORD_BOARD_INC_SAFE_LAYER_H_ */

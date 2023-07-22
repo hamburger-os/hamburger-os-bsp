@@ -37,7 +37,7 @@ rt_err_t rx_safe_layer_check(S_DATA_HANDLE * data_handle, uint8_t *pBuf, uint8_t
     if (pBuf != NULL)
     {
         pSafe_layer = (r_safe_layer *) &pBuf[0];
-
+//LOG_I("sizeof(r_safe_layer) = %d", sizeof(r_safe_layer));16
         if ((pSafe_layer->src_adr == Safe_ZK_I_ADR) || (pSafe_layer->src_adr == Safe_ZK_II_ADR)) /* 主控插件发送的数据 */
         {
             /*判断安全层数据长度合法  1480负载最大长度+4CRC32+4CRC32+安全层头*/

@@ -22,7 +22,7 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-#define FILE_THREAD_PRIORITY         19
+#define FILE_THREAD_PRIORITY         15//19
 #define FILE_THREAD_STACK_SIZE       2048
 #define FILE_THREAD_TIMESLICE        5
 

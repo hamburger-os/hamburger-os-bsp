@@ -54,6 +54,7 @@
 
 /*********************应用层**************************/
 /*应用层报文做为安全层的负载区传输*/
+#pragma pack(1)
 typedef struct eth_rx_app_layer
 {
     uint8_t msg_type; /*报文类型*/
@@ -67,7 +68,7 @@ typedef struct exp_chanl_head {
         uint32_t time_print;   /*时间戳*/
         uint16_t data_len;     /*数据长度*/
   } h_exp_chanl;
-
+#pragma pack()
 //rt_err_t app_layer_check(uint8_t *pBuf, uint8_t *p_safe_layer);
 rt_err_t app_layer_check(S_DATA_HANDLE * data_handle, uint8_t *pBuf, uint8_t *p_safe_layer);
 

@@ -19,6 +19,7 @@
 #define MAX_ETH_CAN_LEN          (1465) /*应用层负载区数据最大为1476-exp_head(8)-pack_head(3)*/
 
 
+#pragma pack(push, 1)
 /* 链路层通信的数据头 */
 typedef struct _eth_frame
 {
@@ -26,7 +27,10 @@ typedef struct _eth_frame
     uint8_t from_addr[6];
     uint16_t type;
 } eth_frame_t;
+#pragma pack(pop)
 
+/******************************** 按字节对齐 ********************************/
+#pragma pack (1)
 /* CNA数据在ETH包中单帧格式 */
 typedef struct
 {
@@ -34,17 +38,6 @@ typedef struct
     uint8_t len;
     uint8_t Data[64];
 } S_ETH_CAN_FRAME;
-
-typedef struct
-{
-    /*******************************************
-     **  11bit ID=优先级(8bit)+帧号(3bit)
-     ********************************************/
-    uint8_t priority_u8;        //优先级
-    uint8_t no_u8;              //帧号
-    uint8_t length_u8;          //长度
-    uint8_t data_u8[8];         //数据
-} CAN_FRAME;
 
 /* CAN业务层数据在ETH中格式 */
 typedef struct
@@ -54,6 +47,21 @@ typedef struct
     uint16_t datalen;
     uint8_t data[MAX_ETH_CAN_LEN];
 } S_APP_INETH_PACK;
+
+#pragma pack ()
+/******************************** 按字节对齐 ********************************/
+
+typedef struct
+{
+    /*******************************************
+     **  11bit ID=优先级(8bit)+帧号(3bit)
+     ********************************************/
+    uint8_t priority_u8;        //优先级
+    uint8_t no_u8;              //帧号
+    uint8_t length_u8;          //长度
+    uint8_t data_u8[64];         //数据
+} CAN_FRAME;
+
 
 typedef struct
 {

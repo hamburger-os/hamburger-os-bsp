@@ -320,6 +320,7 @@ uint8_t CAN_OutTime( uint32_t time, uint32_t ms )
 	} /* end if...else */
 }
 
+#endif
 
 /*******************************************************************************************
  ** @brief: Common_BeTimeOutMN
@@ -332,7 +333,7 @@ uint8_t Common_BeTimeOutMN( uint32_t *time, uint32_t ms )
 	uint8_t  tmp = 0u;
 	uint32_t curtv;
 	
-	curtv = GetTicks();
+	curtv = rt_tick_get();
 	if ( ( curtv - *time ) >=ms )
 	{
 		*time = curtv;
@@ -345,7 +346,6 @@ uint8_t Common_BeTimeOutMN( uint32_t *time, uint32_t ms )
 	
 	return tmp;
 }
-#endif
 #if 0   //TODO(mingzhao)
 /*----------------------------------------------------------------------------
 * ??:arraylist_init()

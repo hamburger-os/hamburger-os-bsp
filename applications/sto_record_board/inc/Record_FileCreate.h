@@ -476,22 +476,24 @@ typedef struct{
 } FLASH_STATE;
 
 /* 文件目录结构体 */
+//typedef struct
 typedef struct
-{
-  char ch_checi[4];            /* 车次 */
-  char ch_checikuochong[4];    /* 车次扩充 */
-  char ch_siji [4];            /* 司机号 */
-  char ch_date[4];             /* 日期 */
-  char ch_time[4];             /* 时间 */
-  uint32_t u32_page_count;     /* 页个数 */
-  uint32_t u32_sector_count;   /* 扇区个数 */
-  uint32_t u32_start_addr;     /* 第一个页的首地址 */
-  uint32_t u32_over_flag;      /* 结束标志 */
-  uint32_t u32_file_size;      /* 文件实际大小 */
-  char ch_file_name[24];       /* 文件名 */
-	char ch_benbuzhuangtai[1];      /* 本补状态 */
-  char ch_reserve[3];     /* 预留 */
-} SFile_Directory;
+    __attribute__((packed)) /* 按照字节对齐*/ //TODO(mingzhao)
+    {
+        char ch_checi[4]; /* 车次 */
+        char ch_checikuochong[4]; /* 车次扩充 */
+        char ch_siji[4]; /* 司机号 */
+        char ch_date[4]; /* 日期 */
+        char ch_time[4]; /* 时间 */
+        uint32_t u32_page_count; /* 页个数 */
+        uint32_t u32_sector_count; /* 扇区个数 */
+        uint32_t u32_start_addr; /* 第一个页的首地址 */
+        uint32_t u32_over_flag; /* 结束标志 */
+        uint32_t u32_file_size; /* 文件实际大小 */
+        char ch_file_name[24]; /* 文件名 */
+        char ch_benbuzhuangtai[1]; /* 本补状态 */
+        char ch_reserve[3]; /* 预留 */
+    } SFile_Directory;
 
 
 /* 包头信息 */
@@ -607,7 +609,7 @@ extern uint8_t SoftWare_Cycle_Flag;
 extern uint8_t u8_Gonggongxinxi_Flag;
 
 /* public function declaration ----------------------------------------------------------------- */
-extern void RecordBoard_FileCreate(void);
+void RecordBoard_FileCreate(void);
 extern void	Init_FlashState(void);
 
 /* 12-June-2018, by Liang Zhen. */

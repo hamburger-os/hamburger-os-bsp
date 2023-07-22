@@ -126,10 +126,24 @@ static void *ETHThreadEntry(void *parameter)
             LOG_I(" %d ",
                     eth0_thread.rx_buf[60]);
 #endif
+#if 0
+            LOG_I("rx size %d", eth0_thread.rx_szie);
+            LOG_I("des mac %x %x %x %x %x %x ",
+                    eth0_thread.rx_buf[0], eth0_thread.rx_buf[1], eth0_thread.rx_buf[2], eth0_thread.rx_buf[3], eth0_thread.rx_buf[4], eth0_thread.rx_buf[5]);
+            LOG_I("src mac %x %x %x %x %x %x ",
+                    eth0_thread.rx_buf[6], eth0_thread.rx_buf[7], eth0_thread.rx_buf[8], eth0_thread.rx_buf[9], eth0_thread.rx_buf[10], eth0_thread.rx_buf[11]);
+            LOG_I(" safe %x %x %x %x %x %x %x %x %x %x",
+                    eth0_thread.rx_buf[15], eth0_thread.rx_buf[16], eth0_thread.rx_buf[17], eth0_thread.rx_buf[18], eth0_thread.rx_buf[19],
+                    eth0_thread.rx_buf[20], eth0_thread.rx_buf[21], eth0_thread.rx_buf[22], eth0_thread.rx_buf[23], eth0_thread.rx_buf[24]);
+            LOG_I(" app %x %x %x %x %x %x %x %x %x %x",
+                    eth0_thread.rx_buf[15 + sizeof(r_safe_layer)], eth0_thread.rx_buf[16 + sizeof(r_safe_layer)], eth0_thread.rx_buf[17 + sizeof(r_safe_layer)], eth0_thread.rx_buf[18 + sizeof(r_safe_layer)], eth0_thread.rx_buf[19 + sizeof(r_safe_layer)],
+                    eth0_thread.rx_buf[20 + sizeof(r_safe_layer)], eth0_thread.rx_buf[21 + sizeof(r_safe_layer)], eth0_thread.rx_buf[22 + sizeof(r_safe_layer)], eth0_thread.rx_buf[23 + sizeof(r_safe_layer)], eth0_thread.rx_buf[24 + sizeof(r_safe_layer)]);
+#endif
             rx_safe_layer_check(&eth_can_data_handle, eth0_thread.rx_buf + 14, IN_ETH_DEV);  //14 = sizeof(eth_frame_t)
         }
 #endif
-        rt_thread_mdelay(10);
+//        rt_thread_mdelay(10);
+        rt_thread_mdelay(5);
     }
 }
 
