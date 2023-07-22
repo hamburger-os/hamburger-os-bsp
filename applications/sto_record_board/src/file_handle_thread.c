@@ -33,26 +33,25 @@ static void *FileThreadEntry(void *parameter)
     while(1)
     {
         CanDataHandle(&eth_can_data_handle);
-        LOG_I("FileThreadEntry");
-        rt_thread_mdelay(10);
+        rt_thread_mdelay(1);
     }
 }
 
 int FileThreadInit(void)
 {
-//    rt_thread_t tid;
-//
-//    tid = rt_thread_create("file_thread",
-//                            FileThreadEntry, RT_NULL,
-//                            FILE_THREAD_STACK_SIZE,
-//                            FILE_THREAD_PRIORITY, FILE_THREAD_TIMESLICE);
-//
-//    if(tid != NULL)
-//    {
-//        rt_thread_startup(tid);
-//        return RT_EOK;
-//    }
-//    return -RT_ERROR;
+    rt_thread_t tid;
+
+    tid = rt_thread_create("file_thread",
+                            FileThreadEntry, RT_NULL,
+                            FILE_THREAD_STACK_SIZE,
+                            FILE_THREAD_PRIORITY, FILE_THREAD_TIMESLICE);
+
+    if(tid != NULL)
+    {
+        rt_thread_startup(tid);
+        return RT_EOK;
+    }
+    return -RT_ERROR;
 }
 
 

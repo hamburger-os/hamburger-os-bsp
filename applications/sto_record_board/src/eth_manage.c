@@ -56,7 +56,7 @@ static void ETHManageChannelInit(char *device_name, ETHManageChannel ch)
 }
 
 #define ETH_MANAGE_THREAD_STACK_SIZE       2048
-#define ETH_MANAGE_THREAD_PRIORITY         18
+#define ETH_MANAGE_THREAD_PRIORITY         20
 #define ETH_MANAGE_THREAD_TIMESLICE        5
 
 static uint8_t Eth1_Rxbuf[1500];
@@ -105,7 +105,8 @@ static void ETHManageTestThreadEntry(void *arg)
         {
             Eth2_Txbuf[60] = 0;
         }
-        rt_thread_mdelay(10);
+//        rt_thread_mdelay(10);
+        rt_thread_mdelay(1000);
     }
 }
 

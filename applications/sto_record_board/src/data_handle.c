@@ -30,7 +30,7 @@ rt_err_t DataHandleInit(S_DATA_HANDLE *p_data_handle)
     }
     memset(p_data_handle, 0, sizeof(S_DATA_HANDLE));
 
-    p_data_handle->can_data_mq = rt_mq_create("can data queue", sizeof(S_ETH_CAN_FRAME), 256, RT_IPC_FLAG_FIFO);
+    p_data_handle->can_data_mq = rt_mq_create("can data queue", sizeof(S_ETH_CAN_FRAME), 1024, RT_IPC_FLAG_FIFO);
     if(RT_NULL == p_data_handle->can_data_mq)
     {
         LOG_E("rt_mq_create failed");
@@ -75,6 +75,8 @@ void ETHToCanDataHandle(S_DATA_HANDLE *p_data_handle, uint8_t *pbuf, uint16_t da
     LOG_I("src mac %x %x %x %x %x %x ",
             ((uint8_t *)pbuf)[6], ((uint8_t *)pbuf)[7], ((uint8_t *)pbuf)[8], ((uint8_t *)pbuf)[9], ((uint8_t *)pbuf)[10], ((uint8_t *)pbuf)[11]);
 #endif
+
+#if 1
     /* 2.转换CAN数据 */
     while (send_len < p_can_PACK->datalen)
     {
@@ -93,7 +95,7 @@ void ETHToCanDataHandle(S_DATA_HANDLE *p_data_handle, uint8_t *pbuf, uint16_t da
         ret = rt_mq_send(p_data_handle->can_data_mq, (const void *)s_can_frame, sizeof(S_ETH_CAN_FRAME));
         if(ret != RT_EOK)
         {
-            LOG_E("can data mq send error %d\r\n", ret);
+//            LOG_E("can data mq send error %d\r\n", ret);
         }
         else
         {
@@ -101,8 +103,9 @@ void ETHToCanDataHandle(S_DATA_HANDLE *p_data_handle, uint8_t *pbuf, uint16_t da
             //            send_ok_num++;
 //            LOG_I("id %x, len %d, data = %d", s_can_frame->ID, s_can_frame->len, s_can_frame->Data[0]);
         }
-        rt_thread_mdelay(10);
     }
+    rt_thread_mdelay(10);
+#endif
 }
 
 /* 解析CAN数据 */
@@ -117,6 +120,7 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
 
     CAN_FRAME  can_tmp;
     S_ETH_CAN_FRAME s_can_frame;
+
 
     ret = rt_mq_recv(p_data_handle->can_data_mq, (void *)&s_can_frame, sizeof(S_ETH_CAN_FRAME), 0);
     if(ret != RT_EOK)

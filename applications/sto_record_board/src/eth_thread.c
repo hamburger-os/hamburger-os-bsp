@@ -15,12 +15,13 @@
 #include <string.h>
 
 #include "data_handle.h"
+#include "safe_layer.h"
 
 #define DBG_TAG "EthThread"
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-#define ETH_THREAD_PRIORITY         18
+#define ETH_THREAD_PRIORITY         10//18
 #define ETH_THREAD_STACK_SIZE       2048
 #define ETH_THREAD_TIMESLICE        5
 
@@ -36,7 +37,7 @@ typedef struct {
 static S_ETH_THREAD eth0_thread;
 S_DATA_HANDLE eth_can_data_handle;
 
-#define ETH_READ_IN_Callback 1
+#define ETH_READ_IN_Callback 0
 
 static rt_err_t ETHRXChannel1Callback(rt_device_t dev, rt_size_t size)
 {
@@ -116,7 +117,7 @@ static void *ETHThreadEntry(void *parameter)
         if(RT_EOK == ret)
         {
             rt_device_read(eth0_thread.dev, 0, (void *)eth0_thread.rx_buf, eth0_thread.rx_szie);
-#if 1
+#if 0
             LOG_I("rx size %d", eth0_thread.rx_szie);
             LOG_I("des mac %x %x %x %x %x %x ",
                     eth0_thread.rx_buf[0], eth0_thread.rx_buf[1], eth0_thread.rx_buf[2], eth0_thread.rx_buf[3], eth0_thread.rx_buf[4], eth0_thread.rx_buf[5]);
@@ -125,7 +126,7 @@ static void *ETHThreadEntry(void *parameter)
             LOG_I(" %d ",
                     eth0_thread.rx_buf[60]);
 #endif
-//            ETHToCanDataHandle(&eth_can_data_handle, eth0_thread.rx_buf, (uint16_t)eth0_thread.rx_szie);
+            rx_safe_layer_check(&eth_can_data_handle, eth0_thread.rx_buf + 14, IN_ETH_DEV);  //14 = sizeof(eth_frame_t)
         }
 #endif
         rt_thread_mdelay(10);

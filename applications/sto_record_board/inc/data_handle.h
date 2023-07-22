@@ -12,7 +12,20 @@
 
 #include <rtthread.h>
 
+/* 定义通道编号 */
+/*对系内通道*/
+#define IN_ETH_DEV              (0x01)              /* 内网 */
+
 #define MAX_ETH_CAN_LEN          (1465) /*应用层负载区数据最大为1476-exp_head(8)-pack_head(3)*/
+
+
+/* 链路层通信的数据头 */
+typedef struct _eth_frame
+{
+    uint8_t to_addr[6];
+    uint8_t from_addr[6];
+    uint16_t type;
+} eth_frame_t;
 
 /* CNA数据在ETH包中单帧格式 */
 typedef struct

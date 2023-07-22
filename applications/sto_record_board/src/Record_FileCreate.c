@@ -16,6 +16,10 @@
 //#include "s25fl256s.h"      //TODO(mingzhao)
 #include <rtthread.h>
 
+#define DBG_TAG "FileCreeat"
+#define DBG_LVL DBG_LOG
+#include <rtdbg.h>
+
 /* private macro definition -------------------------------------------------------------------- */
 /* 写文件头标志 */
 uint8_t u8_FileHead_Flag = 0u;
@@ -715,7 +719,7 @@ static uint8_t Record_Condition_Judge(void)
   /* 文件大小大于20MB */
   if( MAX_FILE_SIZE <= s_File_Directory.u32_file_size )
   {
-    printf("\r\n 文件大于20MB！\r\n");
+    LOG_W("\r\n 文件大于20MB！\r\n");
     judge_resault |= 1u<<0u;
   }
   
@@ -724,7 +728,7 @@ static uint8_t Record_Condition_Judge(void)
 		|| memcmp( s_File_Directory.ch_checikuochong, &CHECIKUOCHONG, 4u )) 
 		&& memcmp( nulldata, &CHECI, 3u ))
   {
-    printf("\r\n 车次号发生变化！\r\n");
+      LOG_W("\r\n 车次号发生变化！\r\n");
     judge_resault |= 1u<<1u;
   }
   
@@ -732,7 +736,7 @@ static uint8_t Record_Condition_Judge(void)
   if( memcmp( s_File_Directory.ch_siji, &SIJI1, 3u ) 
 		&& memcmp( nulldata, &SIJI1, 3u ))
   {
-    printf("\r\n 司机号发生变化！\r\n");
+      LOG_W("\r\n 司机号发生变化！\r\n");
     judge_resault |= 1u<<2u;
   }   
   
@@ -763,12 +767,12 @@ static void Init_FileDirectory( void )
 //    printf("车次标志1计数：%d\r\n",CheCi_Count1);
 		if ( CheCi_Count1 >= 3u )
 		{
-      printf("\r\n 生成新文件！\r\n");
+      LOG_I("\r\n 生成新文件！\r\n");
 			/* 生成新文件之前，判断上一个文件是否记录完整 */
 #if 1
       if ( write_buf.pos > 40u )
 			{
-        printf("\r\n 上一个文件记录尚不完整！\r\n");  
+          LOG_W("\r\n 上一个文件记录尚不完整！\r\n");
         /* 对数据包进行CRC校验 */
         RecordEventPkt_CRC32 = CRC32CCITT(write_buf.buf + 3U, write_buf.pos - 3U, 0xFFFFFFFF );     //一包最大255字节，记录事项内容最大249字节(除去CRC324字节，最大245字节)
         /* 将校验值填入buf */
@@ -844,7 +848,7 @@ static void Init_FileDirectory( void )
 	/* 开始生成新的文件目录 */
 	if ( Create_Flag == 1u )
 	{
-		printf( "start create new file directory\r\n" );
+		LOG_I( "start create new file directory\r\n" );
 		Create_Flag = 0u;
     
 		/* 更新FLASH状态, 计数方式采用先加1后用的方式，避免数据丢失 */

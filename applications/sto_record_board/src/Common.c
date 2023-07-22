@@ -147,7 +147,7 @@ uint16_t ERROR_FLAG = 0u;
 //
 //sArrayList *i_can0_recv_list = NULL, *i_can1_recv_list = NULL;
 
-
+#if 0
 /*******************************************************************************************
  ** @brief: 
  ** @param:
@@ -187,7 +187,7 @@ static const uint16_t crctab16[] =\
 	0xf78fU, 0xe606U, 0xd49dU, 0xc514U, 0xb1abU, 0xa022U, 0x92b9U, 0x8330U,
 	0x7bc7U, 0x6a4eU, 0x58d5U, 0x495cU, 0x3de3U, 0x2c6aU, 0x1ef1U, 0x0f78U,
 };
-
+#endif
 /* 06-July-2020, by DuYanPo. */
 static const uint32_t Crc32Table[ 256 ] =
 {
@@ -235,7 +235,7 @@ static const uint32_t Crc32Table[ 256 ] =
 ,0x933EB0BB,0x97FFAD0C,0xAFB010B1,0xAB710D06,0xA6322BDF,0xA2F33668
 ,0xBCB4666D,0xB8757BDA,0xB5365D03,0xB1F740B4 };
 
-
+#if 0
 /*******************************************************************************************
  ** @brief: Common_CRC16
  ** @param: pData: the data for CRC
@@ -267,6 +267,7 @@ uint16_t Common_CRC16(uint8_t* pData, uint32_t nLength)
   
 	return ( ~crc );
 }
+#endif
 
 /* 06-July-2020, by DuYanPo. */
 /*******************************************************************************
@@ -301,6 +302,7 @@ uint32_t CRC32CCITT(uint8_t *pData, uint32_t len, uint32_t u32_nReg)
   return u32_nReg;
 }
 
+#if 0   //TODO(mingzhao)
 /*******************************************************************************************
  ** @brief: CAN_OutTime
  ** @param: time: variable for count
@@ -343,7 +345,7 @@ uint8_t Common_BeTimeOutMN( uint32_t *time, uint32_t ms )
 	
 	return tmp;
 }
-
+#endif
 #if 0   //TODO(mingzhao)
 /*----------------------------------------------------------------------------
 * ??:arraylist_init()
