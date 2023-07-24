@@ -30,7 +30,8 @@ rt_err_t DataHandleInit(S_DATA_HANDLE *p_data_handle)
     }
     memset(p_data_handle, 0, sizeof(S_DATA_HANDLE));
 
-    p_data_handle->can_data_mq = rt_mq_create("can data queue", sizeof(S_ETH_CAN_FRAME), MAX_ETH_CAN_LEN, RT_IPC_FLAG_FIFO);
+//    p_data_handle->can_data_mq = rt_mq_create("can data queue", sizeof(S_ETH_CAN_FRAME), MAX_ETH_CAN_LEN, RT_IPC_FLAG_FIFO);
+    p_data_handle->can_data_mq = rt_mq_create("can data queue", sizeof(CAN_FRAME), MAX_ETH_CAN_LEN, RT_IPC_FLAG_FIFO);
     if(RT_NULL == p_data_handle->can_data_mq)
     {
         LOG_E("rt_mq_create failed");
@@ -92,19 +93,25 @@ void ETHToCanDataHandle(S_DATA_HANDLE *p_data_handle, uint8_t *pbuf, uint16_t da
         }
 
         /* 放入队列 */
-        ret = rt_mq_send(p_data_handle->can_data_mq, (const void *)s_can_frame, sizeof(S_ETH_CAN_FRAME));
+        CAN_FRAME can_tmp;
+        memset(&can_tmp, 0, sizeof(CAN_FRAME));
+
+        can_tmp.priority_u8 = (uint8_t)(s_can_frame->ID >> 3u);
+        can_tmp.no_u8 = (uint8_t)(s_can_frame->ID & 0x07);
+
+        can_tmp.length_u8 = s_can_frame->len;
+        memcpy(can_tmp.data_u8, s_can_frame->Data, s_can_frame->len);
+
+        ret = rt_mq_send(p_data_handle->can_data_mq, (const void *)&can_tmp, sizeof(CAN_FRAME));
         if(ret != RT_EOK)
         {
             LOG_E("can data mq send error %d\r\n", ret);
         }
         else
         {
-//            LOG_I("can data mq send ok\r\n");
-            //            send_ok_num++;
-//            LOG_I("id %x, len %d, data = %d", s_can_frame->ID, s_can_frame->len, s_can_frame->Data[0]); //打开这个会导致lwip里宕机
+//            LOG_I("ttt--- pr = %x, no = %x data = %x", can_tmp.priority_u8, can_tmp.no_u8, can_tmp.data_u8[0]);  //打开这个会导致上面队列发送出错 返回值为-3   过一会导致lwip里宕机
         }
     }
-    rt_thread_mdelay(10);
 #endif
 }
 
@@ -119,24 +126,21 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
     }
 
     CAN_FRAME  can_tmp;
-    S_ETH_CAN_FRAME s_can_frame;
 
-
-    ret = rt_mq_recv(p_data_handle->can_data_mq, (void *)&s_can_frame, sizeof(S_ETH_CAN_FRAME), 0);
+    ret = rt_mq_recv(p_data_handle->can_data_mq, (void *)&can_tmp, sizeof(CAN_FRAME), 0);
     if(ret != RT_EOK)
     {
 //        LOG_W("recv msg error");
         return -RT_EEMPTY;
     }
+#if 0
+    can_tmp.priority_u8 = (uint8_t)((uint8_t)s_can_frame.ID>>3U);
+    can_tmp.no_u8 = (uint8_t)(s_can_frame.ID & 0x07);
 
-//    can_tmp.priority_u8 = (uint8_t)s_can_frame.ID;   //取出低8位
-//    can_tmp.no_u8 = (uint8_t)((s_can_frame.ID >> 8) & 0x07);  //取出第8-10位
-    can_tmp.priority_u8 = (uint8_t)(s_can_frame.ID >> 3);   //取出低3-10位
-    can_tmp.no_u8 = ((uint8_t)(s_can_frame.ID)) & 0x07;  //取出第0-2位
     can_tmp.length_u8 = s_can_frame.len;
-    memcpy(can_tmp.data_u8, s_can_frame.Data, 8);
-
-//    LOG_I("id %x, len %x, pr = %x, no = %x", s_can_frame.ID, s_can_frame.len, can_tmp.priority_u8, can_tmp.no_u8);  //打开这个会导致上面队列发送出错 返回值为-3   过一会导致lwip里宕机
+    memcpy(can_tmp.data_u8, s_can_frame.Data, s_can_frame.len);
+#endif
+    LOG_I(" pr = %x, no = %x data = %x", can_tmp.priority_u8, can_tmp.no_u8, can_tmp.data_u8[0]);  //打开这个会导致上面队列发送出错 返回值为-3   过一会导致lwip里宕机
 
     switch (can_tmp.priority_u8)
     {

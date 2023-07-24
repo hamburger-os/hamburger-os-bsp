@@ -142,7 +142,6 @@ static void *ETHThreadEntry(void *parameter)
             rx_safe_layer_check(&eth_can_data_handle, eth0_thread.rx_buf + 14, IN_ETH_DEV);  //14 = sizeof(eth_frame_t)
         }
 #endif
-//        rt_thread_mdelay(10);
         rt_thread_mdelay(5);
     }
 }

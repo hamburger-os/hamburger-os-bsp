@@ -21,6 +21,7 @@ src =  Split('''
     src/safe_layer.c
     src/crc.c
     src/app_layer.c
+    src/file_manager.c
     '''
     )
 

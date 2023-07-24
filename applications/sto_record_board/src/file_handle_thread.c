@@ -17,6 +17,7 @@
 
 #include "data_handle.h"
 #include "eth_thread.h"
+#include "Record_FileCreate.h"
 
 #define DBG_TAG "FileThread"
 #define DBG_LVL DBG_LOG
@@ -33,6 +34,7 @@ static void *FileThreadEntry(void *parameter)
     while(1)
     {
         CanDataHandle(&eth_can_data_handle);
+//        RecordBoard_FileCreate();
         rt_thread_mdelay(1);
     }
 }

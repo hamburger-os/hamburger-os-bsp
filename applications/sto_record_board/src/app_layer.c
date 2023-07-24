@@ -124,7 +124,6 @@ static void mainctl_2_export(S_DATA_HANDLE * data_handle, uint8_t *pbuf, uint8_t
         for (i = 0; i < chl_num; i++)
         {
             chnal_index = pbuf[step_pos];
-            //printf("mainctl_2_export chnal_index  = %x !\r\n" , chnal_index);
             /* 判断通道编号 */
             switch (chnal_index)
             {
@@ -138,6 +137,7 @@ static void mainctl_2_export(S_DATA_HANDLE * data_handle, uint8_t *pbuf, uint8_t
                 case DATA_CHANNEL_TX2CAN4:
                 case DATA_CHANNEL_TX1CAN5:
                 case DATA_CHANNEL_TX2CAN5:
+//                    LOG_I("mainctl_2_export chnal_index  = %x !\r\n" , chnal_index);
                     pthis = (h_exp_chanl *) &pbuf[step_pos];
                     step_pos = step_pos + sizeof(h_exp_chanl);
                     tx_data_to_export(data_handle, chnal_index, &pbuf[step_pos], pthis->data_len);

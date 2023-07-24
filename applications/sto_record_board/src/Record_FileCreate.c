@@ -510,7 +510,6 @@ static void RecordingCommunicatWithECUMessage(void);
 
 #endif
 
-
 /********************************************************************************************
 ** @brief: RecordBoard_DataProc
 ** @param: null
@@ -621,74 +620,159 @@ void RecordBoard_FileCreate(void)
 ** @brief: Get_FlashState
 ** @param: null
 ********************************************************************************************/
-extern void Init_FlashState( void )
-{
-  /* 读取FRAM的0地址数据放入Flash_State; */
-	FLASH_STATE flash_state = { 0u }, flash_state_old = { 0u };
-  
-	while ( 1u )
-	{
-		FM25V05_Manage_ReadData( 0u, ( uint8_t * )&flash_state, sizeof( FLASH_STATE ) );   
-    
-		printf( "init %x %x %x\r\n",\
-            flash_state.u32_init_flag,\
-            flash_state.u32_file_count,\
-            flash_state.u32_sector_count );
-    
-		if ( memcmp( &flash_state_old, &flash_state, sizeof( FLASH_STATE ) ) )
-		{
-			memcpy( &flash_state_old, &flash_state, sizeof( FLASH_STATE ) );
-		}
-		else
-		{
-			memcpy( &Flash_State, &flash_state, sizeof( FLASH_STATE ) );
-			break;
-		} /* end if...else */
-		
-		Wait( 1u );
-	} /* end while */
-	
-	/* 判断FLASH是否初始化 */
-  if ( Flash_State.u32_init_flag != 0x05555559u )
-//  if ( Flash_State.u32_init_flag != 0x05555552u )
-	{
-		printf( "init the flash\r\n" );
-    S25FL256S_EraseChip();
-    
-		Flash_State.u32_init_flag        = 0x05555559u;
-		Flash_State.u32_sector_count     = 0u;
-		Flash_State.u32_file_count       = 0u;
-		Flash_State.u32_fram_start_addr  = FRAM_BASE_ADDR;
-		Flash_State.u32_fram_write_addr  = FRAM_BASE_ADDR  - sizeof( SFile_Directory );
-		Flash_State.u32_flash_start_addr = FLASH_RecordFile_BASE_ADDR;
-		Flash_State.u32_flash_write_addr = FLASH_RecordFile_BASE_ADDR - SECTOR_SIZE;
-		
-		/* 更新FLASH状态到FRAM的0地址 */
-		FM25V05_Manage_WriteEnable();
-	  FM25V05_Manage_WriteData( 0u, ( uint8_t * )&Flash_State, sizeof( FLASH_STATE ) );
-    
-		/* 初始化写buf */
-		memset( &write_buf, 0u, sizeof( WRITE_BUF ) );
-		FM25V05_Manage_WriteEnable();
-		FM25V05_Manage_WriteData( FRAM_FlashBuffer_BASE_ADDR, ( uint8_t * )&write_buf, sizeof( WRITE_BUF ) );
+#if 1
 
-		uint8_t  dat_buff[1024] = {0};
-    uint32_t i = 0;
-		/* 初始化文件目录 */
-    for(i=0;i<62;i++)
+
+
+void Init_FlashState(void)
+{
+    /* 读取FRAM的0地址数据放入Flash_State; */
+    FLASH_STATE flash_state = { 0u }, flash_state_old = { 0u };
+
+    while (1u)
     {
-		  FM25V05_Manage_WriteEnable();
-		  FM25V05_Manage_WriteData( FRAM_FileDirectory_BASE_ADDR+i*1024, dat_buff, 1024 );      
+        FM25V05_Manage_ReadData(0u, (uint8_t *) &flash_state, sizeof(FLASH_STATE));
+
+        printf("init %x %x %x\r\n", flash_state.u32_init_flag, flash_state.u32_file_count,
+                flash_state.u32_sector_count);
+
+        if (memcmp(&flash_state_old, &flash_state, sizeof(FLASH_STATE)))
+        {
+            memcpy(&flash_state_old, &flash_state, sizeof(FLASH_STATE));
+        }
+        else
+        {
+            memcpy(&Flash_State, &flash_state, sizeof(FLASH_STATE));
+            break;
+        } /* end if...else */
+
+        Wait(1u);
+    } /* end while */
+
+    /* 判断FLASH是否初始化 */
+    if (Flash_State.u32_init_flag != 0x05555559u)
+//  if ( Flash_State.u32_init_flag != 0x05555552u )
+    {
+        printf("init the flash\r\n");
+        S25FL256S_EraseChip();
+
+        Flash_State.u32_init_flag = 0x05555559u;
+        Flash_State.u32_sector_count = 0u;
+        Flash_State.u32_file_count = 0u;
+        Flash_State.u32_fram_start_addr = FRAM_BASE_ADDR;
+        Flash_State.u32_fram_write_addr = FRAM_BASE_ADDR - sizeof(SFile_Directory);
+        Flash_State.u32_flash_start_addr = FLASH_RecordFile_BASE_ADDR;
+        Flash_State.u32_flash_write_addr = FLASH_RecordFile_BASE_ADDR - SECTOR_SIZE;
+
+        /* 更新FLASH状态到FRAM的0地址 */
+        FM25V05_Manage_WriteEnable();
+        FM25V05_Manage_WriteData(0u, (uint8_t *) &Flash_State, sizeof(FLASH_STATE));
+
+        /* 初始化写buf */
+        memset(&write_buf, 0u, sizeof(WRITE_BUF));
+        FM25V05_Manage_WriteEnable();
+        FM25V05_Manage_WriteData( FRAM_FlashBuffer_BASE_ADDR, (uint8_t *) &write_buf, sizeof(WRITE_BUF));
+
+        uint8_t dat_buff[1024] = { 0 };
+        uint32_t i = 0;
+        /* 初始化文件目录 */
+        for (i = 0; i < 62; i++)
+        {
+            FM25V05_Manage_WriteEnable();
+            FM25V05_Manage_WriteData( FRAM_FileDirectory_BASE_ADDR + i * 1024, dat_buff, 1024);
+        }
     }
-	}
-	else 
-	{
-		if ( Flash_State.u32_file_count != 0u )
-		{
-		  /* 得到最后记录的车次信息 */
-			FM25V05_Manage_ReadData( Flash_State.u32_fram_write_addr,\
-                               ( uint8_t * )&s_File_Directory,\
-                               sizeof( SFile_Directory ) );
+    else
+    {
+        if (Flash_State.u32_file_count != 0u)
+        {
+            /* 得到最后记录的车次信息 */
+            FM25V05_Manage_ReadData(Flash_State.u32_fram_write_addr, (uint8_t *) &s_File_Directory,
+                    sizeof(SFile_Directory));
+//          printf("最后记录司机:%d\r\n",(uint16_t)s_File_Directory.ch_siji[0]
+//                                  + ((uint16_t)s_File_Directory.ch_siji[1]<<8)
+//                                  + ((uint16_t)s_File_Directory.ch_siji[2]<<16)
+//                                  + ((uint16_t)s_File_Directory.ch_siji[3]<<24));
+//          printf("最后记录车次:%d\r\n",(uint16_t)s_File_Directory.ch_checi[0]
+//                                  + ((uint16_t)s_File_Directory.ch_checi[1]<<8)
+//                                  + ((uint16_t)s_File_Directory.ch_checi[2]<<16)
+//                                  + ((uint16_t)s_File_Directory.ch_checi[3]<<24));
+//          printf("最后本补状态：%x\r\n",s_File_Directory.ch_benbuzhuangtai[0]);
+
+            Flash_Addr = s_File_Directory.u32_start_addr + s_File_Directory.u32_page_count * PAGE_SIZE;
+            printf("Flash_Addr is 0x%08x\r\n", Flash_Addr);
+            /* 得到上次丢失的数据 */
+            FM25V05_Manage_ReadData( FRAM_FlashBuffer_BASE_ADDR, (uint8_t *) &write_buf, sizeof(WRITE_BUF));
+            printf("得到上次丢失的位置： 0x%08x\r\n", write_buf.pos);
+        } /* end if */
+    } /* end if...else */
+}
+#else
+void Init_FlashState(void)
+{
+    /* 读取FRAM的0地址数据放入Flash_State; */
+    FLASH_STATE flash_state = { 0u }, flash_state_old = { 0u };
+
+    while (1u)
+    {
+        FM25V05_Manage_ReadData(0u, (uint8_t *) &flash_state, sizeof(FLASH_STATE));
+
+        printf("init %x %x %x\r\n", flash_state.u32_init_flag, flash_state.u32_file_count,
+                flash_state.u32_sector_count);
+
+        if (memcmp(&flash_state_old, &flash_state, sizeof(FLASH_STATE)))
+        {
+            memcpy(&flash_state_old, &flash_state, sizeof(FLASH_STATE));
+        }
+        else
+        {
+            memcpy(&Flash_State, &flash_state, sizeof(FLASH_STATE));
+            break;
+        } /* end if...else */
+
+        Wait(1u);
+    } /* end while */
+
+    /* 判断FLASH是否初始化 */
+    if (Flash_State.u32_init_flag != 0x05555559u)
+//  if ( Flash_State.u32_init_flag != 0x05555552u )
+    {
+        printf("init the flash\r\n");
+        S25FL256S_EraseChip();
+
+        Flash_State.u32_init_flag = 0x05555559u;
+        Flash_State.u32_sector_count = 0u;
+        Flash_State.u32_file_count = 0u;
+        Flash_State.u32_fram_start_addr = FRAM_BASE_ADDR;
+        Flash_State.u32_fram_write_addr = FRAM_BASE_ADDR - sizeof(SFile_Directory);
+        Flash_State.u32_flash_start_addr = FLASH_RecordFile_BASE_ADDR;
+        Flash_State.u32_flash_write_addr = FLASH_RecordFile_BASE_ADDR - SECTOR_SIZE;
+
+        /* 更新FLASH状态到FRAM的0地址 */
+        FM25V05_Manage_WriteEnable();
+        FM25V05_Manage_WriteData(0u, (uint8_t *) &Flash_State, sizeof(FLASH_STATE));
+
+        /* 初始化写buf */
+        memset(&write_buf, 0u, sizeof(WRITE_BUF));
+        FM25V05_Manage_WriteEnable();
+        FM25V05_Manage_WriteData( FRAM_FlashBuffer_BASE_ADDR, (uint8_t *) &write_buf, sizeof(WRITE_BUF));
+
+        uint8_t dat_buff[1024] = { 0 };
+        uint32_t i = 0;
+        /* 初始化文件目录 */
+        for (i = 0; i < 62; i++)
+        {
+            FM25V05_Manage_WriteEnable();
+            FM25V05_Manage_WriteData( FRAM_FileDirectory_BASE_ADDR + i * 1024, dat_buff, 1024);
+        }
+    }
+    else
+    {
+        if (Flash_State.u32_file_count != 0u)
+        {
+            /* 得到最后记录的车次信息 */
+            FM25V05_Manage_ReadData(Flash_State.u32_fram_write_addr, (uint8_t *) &s_File_Directory,
+                    sizeof(SFile_Directory));
 //			printf("最后记录司机:%d\r\n",(uint16_t)s_File_Directory.ch_siji[0] 
 //			                        + ((uint16_t)s_File_Directory.ch_siji[1]<<8) 
 //			                        + ((uint16_t)s_File_Directory.ch_siji[2]<<16) 
@@ -698,15 +782,16 @@ extern void Init_FlashState( void )
 //			                        + ((uint16_t)s_File_Directory.ch_checi[2]<<16) 
 //			                        + ((uint16_t)s_File_Directory.ch_checi[3]<<24));
 //			printf("最后本补状态：%x\r\n",s_File_Directory.ch_benbuzhuangtai[0]);
-			
-			Flash_Addr = s_File_Directory.u32_start_addr + s_File_Directory.u32_page_count * PAGE_SIZE;
-			printf( "Flash_Addr is 0x%08x\r\n", Flash_Addr );
-			/* 得到上次丢失的数据 */
-			FM25V05_Manage_ReadData( FRAM_FlashBuffer_BASE_ADDR, ( uint8_t * )&write_buf, sizeof( WRITE_BUF ) );
-			printf( "得到上次丢失的位置： 0x%08x\r\n", write_buf.pos );
-		} /* end if */
-	} /* end if...else */
+
+            Flash_Addr = s_File_Directory.u32_start_addr + s_File_Directory.u32_page_count * PAGE_SIZE;
+            printf("Flash_Addr is 0x%08x\r\n", Flash_Addr);
+            /* 得到上次丢失的数据 */
+            FM25V05_Manage_ReadData( FRAM_FlashBuffer_BASE_ADDR, (uint8_t *) &write_buf, sizeof(WRITE_BUF));
+            printf("得到上次丢失的位置： 0x%08x\r\n", write_buf.pos);
+        } /* end if */
+    } /* end if...else */
 }
+#endif
 
 /**************************************************************************************************
 功能：判断是否生成记录文件

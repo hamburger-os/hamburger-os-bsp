@@ -458,8 +458,18 @@ extern uint8_t g_ECU_DevCode;
 #define RUANJIANBANBENBUYIZHI    ( WENBENTISHI & 0x01 )
 
 /* public type definition ---------------------------------------------------------------------- */
+#if 0
+
+/* 最新目录文件信息 */
+typedef struct __attribute__((packed)) {
+    uint32_t u32_file_count;/* 目录个数 */
+    char file_name[];  /* 最新的目录文件名 */
+} S_LATEST_DIR_FILE_INFO;
+
+#else
+
 /* Flash使用状态 */
-typedef struct{
+typedef struct {
 	uint32_t u32_init_flag;
   /* 目录个数 */
 	uint32_t u32_file_count;
@@ -474,6 +484,7 @@ typedef struct{
   /* 本次写入的扇区的首地址 */
 	uint32_t u32_flash_write_addr;
 } FLASH_STATE;
+#endif
 
 /* 文件目录结构体 */
 //typedef struct
@@ -610,7 +621,7 @@ extern uint8_t u8_Gonggongxinxi_Flag;
 
 /* public function declaration ----------------------------------------------------------------- */
 void RecordBoard_FileCreate(void);
-extern void	Init_FlashState(void);
+void Init_FlashState(void);
 
 /* 12-June-2018, by Liang Zhen. */
 void Update_ABV_ControllingMessage( uint8_t msg[] );

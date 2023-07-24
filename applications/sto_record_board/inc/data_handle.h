@@ -17,6 +17,7 @@
 #define IN_ETH_DEV              (0x01)              /* 内网 */
 
 #define MAX_ETH_CAN_LEN          (1465) /*应用层负载区数据最大为1476-exp_head(8)-pack_head(3)*/
+#define CAN_DATA_MQ_MAX_NUM     (MAX_ETH_CAN_LEN + 100)
 
 
 #pragma pack(push, 1)
@@ -48,7 +49,7 @@ typedef struct
     uint8_t data[MAX_ETH_CAN_LEN];
 } S_APP_INETH_PACK;
 
-#pragma pack ()
+
 /******************************** 按字节对齐 ********************************/
 
 typedef struct
@@ -67,6 +68,8 @@ typedef struct
 {
     rt_mq_t can_data_mq;  /* 存放以太网转换为CAN格式的消息队列 */
 } S_DATA_HANDLE;
+
+#pragma pack ()
 
 rt_err_t DataHandleInit(S_DATA_HANDLE *p_data_handle);
 void ETHToCanDataHandle(S_DATA_HANDLE *p_data_handle, uint8_t *pbuf, uint16_t data_len);
