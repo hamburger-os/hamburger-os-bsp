@@ -416,4 +416,36 @@ static int rt_fmc_eth_init(void)
 }
 INIT_DEVICE_EXPORT(rt_fmc_eth_init);
 
+#include <netdev.h>       /* 当需要网卡操作是，需要包含这两个头文件 */
+
+static int netdev_set_default_test(int argc, char **argv)
+{
+    struct netdev *netdev = RT_NULL;
+
+    if (argc != 2)
+    {
+        LOG_E("netdev_set_default [netdev_name]   --set default network interface device.");
+        return -1;
+    }
+
+    /* 通过网卡名称获取网卡对象，名称可以通过 ifconfig 命令查看 */
+    netdev = netdev_get_by_name(argv[1]);
+    if (netdev == RT_NULL)
+    {
+        LOG_E("not find network interface device name(%s).", argv[1]);
+        return -1;
+    }
+
+    /* 设置默认网卡对象 */
+    netdev_set_default(netdev);
+
+    LOG_I("set default network interface device(%s) success.", argv[1]);
+    return 0;
+}
+#ifdef FINSH_USING_MSH
+#include <finsh.h>
+/* 导出命令到 FinSH 控制台 */
+MSH_CMD_EXPORT_ALIAS(netdev_set_default_test, netdev_set_default, set default network interface device);
+#endif /* FINSH_USING_MSH */
+
 #endif

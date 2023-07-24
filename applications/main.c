@@ -59,6 +59,7 @@ int main(void)
  * \return void
  *
  */
+#ifdef BSP_USING_SYS_LED
 static void change_sys_led(int argc, char *argv[])
 {
     if (argc != 2)
@@ -74,4 +75,5 @@ static void change_sys_led(int argc, char *argv[])
 #ifdef RT_USING_FINSH
 #include <finsh.h>
 MSH_CMD_EXPORT_ALIAS(change_sys_led, change_sys_led, change sys led delay.);
+#endif
 #endif

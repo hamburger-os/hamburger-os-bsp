@@ -33,9 +33,9 @@ static void pressure_thread_entry(void *parameter)
 
     while(puserdata->isThreadRun)
     {
-        rt_thread_delay(10);
+        rt_thread_delay(100);
         puserdata->adc[0] = rt_adc_voltage(puserdata->adc_dev, 0);
-        puserdata->adc[0] = 981 * (3 * (uint32_t)puserdata->adc[0] - 10000) / 4 / 10000;//转化单位：千帕
+        puserdata->adc[0] = 981 * (3 * (uint32_t)puserdata->adc[0] - 10000) / 4.0f / 10000;//转化单位：千帕
         puserdata->adc[1] = rt_adc_voltage(puserdata->adc_dev, 1);
     }
 
