@@ -2861,6 +2861,18 @@ menu "Onboard Peripheral Drivers"
             config BSP_USING_KSZ8851_TX_DUMP
                 bool "Enable KSZ8851 TX DUMP"
                 default n
+                
+            config BSP_USING_KSZ8851_ADDRESSSETUPTIME
+                int "Set the AddressSetupTime, default: 4"
+                default (4)
+                
+            config BSP_USING_KSZ8851_DATASETUPTIME
+                int "Set the DataSetupTime, default: 20"
+                default (20)
+                
+            config BSP_USING_KSZ8851_BUSTURNAROUNDDURATION
+                int "Set the BusTurnAroundDuration, default: 8"
+                default (8)
             
             menuconfig BSP_USE_ETH1
                 bool "Enable ETH port 1"

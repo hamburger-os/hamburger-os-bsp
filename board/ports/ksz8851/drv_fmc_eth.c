@@ -101,10 +101,10 @@ static void MX_FMC_Init(uint32_t NSBank)
     hsram.Init.ContinuousClock = FMC_CONTINUOUS_CLOCK_SYNC_ONLY;
     hsram.Init.PageSize = FMC_PAGE_SIZE_NONE;
     /* Timing */
-    Timing.AddressSetupTime = 4;
+    Timing.AddressSetupTime = BSP_USING_KSZ8851_ADDRESSSETUPTIME;
     Timing.AddressHoldTime = 15;
-    Timing.DataSetupTime = 20;
-    Timing.BusTurnAroundDuration = 8;
+    Timing.DataSetupTime = BSP_USING_KSZ8851_DATASETUPTIME;
+    Timing.BusTurnAroundDuration = BSP_USING_KSZ8851_BUSTURNAROUNDDURATION;
     Timing.CLKDivision = 16;
     Timing.DataLatency = 17;
     Timing.AccessMode = FMC_ACCESS_MODE_A;
@@ -142,10 +142,10 @@ static void MX_FMC_Init(uint32_t NSBank)
     hsram.Init.WriteFifo = FMC_WRITE_FIFO_ENABLE;
     hsram.Init.PageSize = FMC_PAGE_SIZE_NONE;
     /* Timing */
-    Timing.AddressSetupTime = 4;
+    Timing.AddressSetupTime = BSP_USING_KSZ8851_ADDRESSSETUPTIME;
     Timing.AddressHoldTime = 15;
-    Timing.DataSetupTime = 20;
-    Timing.BusTurnAroundDuration = 8;
+    Timing.DataSetupTime = BSP_USING_KSZ8851_DATASETUPTIME;
+    Timing.BusTurnAroundDuration = BSP_USING_KSZ8851_BUSTURNAROUNDDURATION;
     Timing.CLKDivision = 16;
     Timing.DataLatency = 17;
     Timing.AccessMode = FMC_ACCESS_MODE_A;

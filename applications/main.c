@@ -18,6 +18,7 @@
 #ifdef BSP_USING_SYS_LED
 /* defined the LED pin */
 #define LED_PIN    rt_pin_get(BSP_SYS_LED_GPIO)
+static uint16_t sys_led_delay = BSP_SYS_LED_DELAY;
 #endif
 
 int main(void)
@@ -43,13 +44,34 @@ int main(void)
 #ifdef BSP_USING_SYS_LED
         rt_pin_write(LED_PIN, PIN_HIGH);
 #endif
-        rt_thread_mdelay(BSP_SYS_LED_DELAY);
+        rt_thread_mdelay(sys_led_delay);
 #ifdef BSP_USING_SYS_LED
         rt_pin_write(LED_PIN, PIN_LOW);
 #endif
-        rt_thread_mdelay(BSP_SYS_LED_DELAY);
+        rt_thread_mdelay(sys_led_delay);
     }
 #endif
 
     return RT_EOK;
 }
+
+/** \brief change sys led delay
+ * \return void
+ *
+ */
+static void change_sys_led(int argc, char *argv[])
+{
+    if (argc != 2)
+    {
+        rt_kprintf("Usage: change_sys_led [ms]\n");
+    }
+    else
+    {
+        sys_led_delay = strtoul(argv[1], NULL, 10);
+    }
+}
+
+#ifdef RT_USING_FINSH
+#include <finsh.h>
+MSH_CMD_EXPORT_ALIAS(change_sys_led, change_sys_led, change sys led delay.);
+#endif
