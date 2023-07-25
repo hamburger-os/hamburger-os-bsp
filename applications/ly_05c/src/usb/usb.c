@@ -297,7 +297,7 @@ static sint32_t copy_file(const char *from, const char *to)
     from_fd = open(from, O_RDONLY);
     if (from_fd < 0)
     {
-        log_print(LOG_ERROR, "can not open file %s\n", from);
+        log_print(LOG_ERROR, "can not open file %s. \n", from);
         ret = -1;
         return ret;
     }
@@ -438,7 +438,12 @@ static sint32_t store_file(const char *src, const char *target, sint32_t mode)
                         break; /* 缓冲区溢出, 字符串被截断了.*/
                     }
 
-                    log_print(LOG_INFO, "备份文件%32s到%s\n", p->filename, bakname);
+                    log_print(LOG_INFO, "备份文件 '%32s' 到 '%s'. \n", p->filename, bakname);
+                    /* 如果备份文件存在, 那么 */
+                    if (access(bakname, F_OK) == 0)
+                    {
+                        delete_file(bakname);
+                    }
                     if (rename(p->filename, bakname))
                     {
                         error = -2;
@@ -501,7 +506,7 @@ void usb_copy_log(void)
         copy_file(log_src, log_dest);
     }
     log_print(LOG_INFO, "copy log file successfully. \n");
-    return 0;
+
 }
 /*******************************************************
  *

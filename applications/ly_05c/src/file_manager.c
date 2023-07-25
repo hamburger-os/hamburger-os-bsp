@@ -140,7 +140,7 @@ sint32_t free_space(void)
             p = p->next;
         }
     }
-    log_print(LOG_INFO, "free space: %d K\n", disk_free_space);
+    log_print(LOG_INFO, "free space: %d KB. \n", disk_free_space);
     free_link(p_file_list_head);
     return 0;
 }
@@ -472,12 +472,12 @@ static sint32_t fm_check_dup_file_name(char *filename)
         }
         else
         {
-            log_print(LOG_ERROR, "发现重名文件:%s\n", bak_full_path);
+            log_print(LOG_ERROR, "发现重名文件:%s. \n", bak_full_path);
         }
     }
     else
     {
-        log_print(LOG_ERROR, "发现重名文件:%s\n", full_path);
+        log_print(LOG_ERROR, "发现重名文件:%s. \n", full_path);
     }
 
     i = 1;
@@ -508,12 +508,12 @@ static sint32_t fm_check_dup_file_name(char *filename)
             }
             else
             {
-                log_print(LOG_ERROR, "发现重名文件:%s\n", bak_full_path);
+                log_print(LOG_ERROR, "发现重名文件:%s.\n", bak_full_path);
             }
         }
         else
         {
-            log_print(LOG_ERROR, "发现重名文件:%s\n", full_path);
+            log_print(LOG_ERROR, "发现重名文件:%s. \n", full_path);
         }
         i++;
     }
@@ -960,7 +960,7 @@ sint32_t fm_write_name(char *name)
     fd = open(full_path, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
     if (fd < 0)
     {
-        log_print(LOG_ERROR, "不能修改文件:%s\n", full_path);
+        log_print(LOG_ERROR, "不能修改文件:%s.\n", full_path);
         return (sint32_t)-1;
     }
     ret = write(fd, name, strlen(name));

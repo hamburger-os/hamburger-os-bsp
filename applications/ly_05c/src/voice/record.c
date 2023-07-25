@@ -48,8 +48,11 @@
 #define REC_MQ_END 2
 #define REC_MQ_DATA 3
 
+/* 电平触发还是引脚触发, 1:代表电平触发的方式, 0:代表边沿触发. */
+#define PIN_LEVEL_TRIGGER 1
+
 /*******************************************************
- * 全局变量
+ * 数据结构
  *******************************************************/
 typedef struct
 {
@@ -68,6 +71,8 @@ typedef struct
 static rt_mq_t rec_mq = RT_NULL;
 /* 录音控制消息队列, 用于按键操作录音线程的启动/结束 */
 static rt_mq_t rec_ctrl_mq = RT_NULL;
+/* 录音控制消息队列, 用于按键操作录音线程的启动/结束 */
+static bool is_recording = false;
 
 /*******************************************************
  * 函数声明
@@ -109,14 +114,14 @@ static void record_beginrec(void)
         ret = create_file(full_path);
         if (ret < 0)
         {
-            log_print(LOG_ERROR, "create file error, ret=%d\n", ret);
+            log_print(LOG_ERROR, "create file error, ret=%d. \n", ret);
         }
 
         /* 打开文件 */
         g_cur_rec_file_info.fd = open(full_path, (int)((uint32_t)O_CREAT | (uint32_t)O_RDWR | (uint32_t)O_TRUNC), (uint32_t)F_MODE);
         if (g_cur_rec_file_info.fd < 0)
         {
-            log_print(LOG_ERROR, "open file error, ret=%d\n", g_cur_rec_file_info.fd);
+            log_print(LOG_ERROR, "open file error, ret=%d. \n", g_cur_rec_file_info.fd);
         }
 
         if (g_cur_rec_file_info.fd > 0)
@@ -231,7 +236,9 @@ static void *record_thread(void *args)
     rt_err_t ret = 0;
     sint32_t i = 0;
     pcm_config_t *p_config = NULL;
+#if !PIN_LEVEL_TRIGGER
     sint32_t rec_ctrl_msg = 0;
+#endif
     rec_msg_t rec_msg_data;
     sint32_t index = 0;
 
@@ -246,6 +253,7 @@ static void *record_thread(void *args)
     log_print(LOG_INFO, "record thread start ok. \n");
     while (true)
     {
+#if !PIN_LEVEL_TRIGGER
         /* 接收录音控制消息 */
         ret = rt_mq_recv(rec_ctrl_mq,
                          (void *)&rec_ctrl_msg,
@@ -257,6 +265,13 @@ static void *record_thread(void *args)
         }
 
         if (rec_ctrl_msg == REC_CTRL_MSG_START)
+#else
+        if (is_recording == false)
+        {
+            msleep((uint32_t)30);
+        }
+        else
+#endif
         {
             /* 立即结束掉放音动作 */
             while (data_get_pcm_state() != PCM_STATE_IDLE)
@@ -369,6 +384,7 @@ static void *record_thread(void *args)
                 {
                     // rt_kprintf("*");
                 }
+#if 0
                 /* 接收录音控制消息, 采用非阻塞方式. */
                 ret = rt_mq_recv(rec_ctrl_mq, (void *)&rec_ctrl_msg, sizeof(sint32_t), (rt_int32_t)RT_WAITING_NO);
                 if (ret != RT_EOK)
@@ -379,6 +395,12 @@ static void *record_thread(void *args)
                 {
                     break; /* 结束录音 */
                 }
+#else
+                if (is_recording == false)
+                {
+                    break; /* 结束录音 */
+                }
+#endif
             }
 #if DEBUG_PCM_FILE
             /* 关闭缓存文件 */
@@ -452,6 +474,7 @@ static void *record_handler_thread(void *arg)
         enstate = Encoder_Interface_init(dtx);
         while (true)
         {
+
             /* 增加1s超时, 防止录音线程卡死, 不发送结束命令 */
             ret = rt_mq_recv(rec_mq, (void *)&rec_msg_data,
                              sizeof(rec_msg_data), (rt_int32_t)1000);
@@ -554,21 +577,30 @@ static void *record_handler_thread(void *arg)
 
 sint32_t record_start_record(void)
 {
+
+#if !PIN_LEVEL_TRIGGER
     rt_err_t ret;
     sint32_t msg = REC_CTRL_MSG_START;
+#endif
 
     if (data_get_pcm_state() == PCM_STATE_RECORDING)
     {
         return (sint32_t)-1;
     }
 
+#if PIN_LEVEL_TRIGGER
+    is_recording = true;
+#else
     ret = rt_mq_send(rec_ctrl_mq, &msg, sizeof(sint32_t));
     if (ret != RT_EOK)
     {
         log_print(LOG_ERROR, "send record start mq error. \n");
     }
+#endif
     return 0;
 }
+
+
 /*******************************************************
  *
  * @brief  停止录制语音
@@ -578,18 +610,26 @@ sint32_t record_start_record(void)
  *******************************************************/
 sint32_t record_stop_record(void)
 {
+#if PIN_LEVEL_TRIGGER
+#else
     rt_err_t ret;
     sint32_t msg = REC_CTRL_MSG_STOP;
+#endif
 
     if (data_get_pcm_state() != PCM_STATE_RECORDING)
     {
         return (sint32_t)-1;
     }
+
+#if PIN_LEVEL_TRIGGER
+    is_recording = false;
+#else
     ret = rt_mq_send(rec_ctrl_mq, &msg, sizeof(sint32_t));
     if (ret != RT_EOK)
     {
         log_print(LOG_ERROR, "send record stop mq error. \n");
     }
+#endif
     return 0;
 }
 
@@ -614,12 +654,16 @@ sint32_t record_init(void)
     {
         return (sint32_t)-1;
     }
+
+#if PIN_LEVEL_TRIGGER
+    is_recording = false;
+#else
     rec_ctrl_mq = rt_mq_create("rec_ctrl_mq", sizeof(uint32_t), 8, RT_IPC_FLAG_FIFO);
     if (rec_ctrl_mq == RT_NULL)
     {
-
         return (sint32_t)-2;
     }
+#endif
 
     /* 初始化录音线程 */
     pthread_attr_init(&pthread_attr_data);
@@ -629,7 +673,7 @@ sint32_t record_init(void)
     pthread_attr_destroy(&pthread_attr_data);
     if (ret < 0)
     {
-        log_print(LOG_ERROR, "pthread_create error\n ");
+        log_print(LOG_ERROR, "create record thread error. \n ");
         return (sint32_t)-3;
     }
 
@@ -641,7 +685,7 @@ sint32_t record_init(void)
     pthread_attr_destroy(&pthread_attr_data);
     if (ret < 0)
     {
-        log_print(LOG_ERROR, "pthread_create error\n ");
+        log_print(LOG_ERROR, "create record handle thread error. \n ");
         return (sint32_t)-4;
     }
 

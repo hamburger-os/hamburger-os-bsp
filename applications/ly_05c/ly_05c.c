@@ -58,6 +58,7 @@ static int ly_05c_init(void)
         log_print(LOG_ERROR, "init log module error, error code: %d.\n", ret);
     }
 
+    log_print(LOG_INFO, "\n\n\n");
     log_print(LOG_INFO, "==========================\n");
     log_print(LOG_INFO, " hello, LY-05C! \n");
     log_print(LOG_INFO, "==========================\n");

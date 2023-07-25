@@ -353,8 +353,8 @@ void MX_I2S_Init(void)
 #else
     i2s_config.hi2s.Init.Mode = I2S_MODE_MASTER_TX;
     i2s_config.hi2s.Init.Standard = I2S_STANDARD_PHILIPS;
-    i2s_config.hi2s.Init.DataFormat = I2S_DATAFORMAT_16B;
-    i2s_config.hi2s.Init.MCLKOutput = I2S_MCLKOUTPUT_ENABLE;
+    i2s_config.hi2s.Init.DataFormat = I2S_DATAFORMAT_16B_EXTENDED;
+    i2s_config.hi2s.Init.MCLKOutput = I2S_MCLKOUTPUT_DISABLE;
     i2s_config.hi2s.Init.AudioFreq = I2S_AUDIOFREQ_8K;
     i2s_config.hi2s.Init.CPOL = I2S_CPOL_LOW;
     i2s_config.hi2s.Init.ClockSource = I2S_CLOCK_PLL;
@@ -372,7 +372,7 @@ void MX_I2S_Init(void)
      */
     PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_I2S;
     PeriphClkInitStruct.PLLI2S.PLLI2SN = 192;
-    PeriphClkInitStruct.PLLI2S.PLLI2SR = 2;
+    PeriphClkInitStruct.PLLI2S.PLLI2SR = 3;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
         Error_Handler();
@@ -409,7 +409,7 @@ void MX_I2S_Init(void)
 //表格式:采样率/10,PLLI2SN,PLLI2SR,I2SDIV,ODD
 static const uint32_t I2S_PSC_TBL[][3] =
 {
-    {  I2S_AUDIOFREQ_8K, 192, 2 },      //8Khz采样率
+    {  I2S_AUDIOFREQ_8K, 192, 3 },      //8Khz采样率
     { I2S_AUDIOFREQ_11K, 429, 4 },      //11.025Khz采样率
     { I2S_AUDIOFREQ_16K, 213, 2 },      //16Khz采样率
     { I2S_AUDIOFREQ_22K, 429, 4 },      //22.05Khz采样率

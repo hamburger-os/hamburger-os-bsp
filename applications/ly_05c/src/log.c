@@ -64,10 +64,14 @@ void log_print(sint32_t level, const char *format, ...)
     {
         return; /* 低于日志记录等级, 不记录.*/
     }
-    /* 获取时间*/
-    t = time(NULL);
-    timeinfo = localtime(&t);
-    strftime(log_buffer, sizeof(log_buffer), "[%Y-%m-%d %H:%M:%S] ", timeinfo);
+    memset(log_buffer, 0, sizeof(log_buffer));
+    /* 获取时间 */
+    if (rtc_get_valid())
+    {
+        t = time(NULL);
+        timeinfo = localtime(&t);
+        strftime(log_buffer, sizeof(log_buffer), "[%Y-%m-%d %H:%M:%S] ", timeinfo);
+    }
 
     /* 格式化文件信息 */
     va_start(args, format);
@@ -114,7 +118,7 @@ void log_print(sint32_t level, const char *format, ...)
         if (close(fd) >= 0)
         {
             fd = -1;
-            // 如果文件大于512KB, 则备份文件
+            /* 如果文件大于512KB, 则备份文件 */
             if (file_size(cur_log_name) > LOG_FILE_MAX_SIZE * 1024)
             {
                 snprintf(cur_logbak_name,
@@ -122,12 +126,12 @@ void log_print(sint32_t level, const char *format, ...)
                          "%s.bak",
                          cur_log_name);
 
-                // 检查文件是否存在, 如果存在, 则删除.
+                /* 检查文件是否存在, 如果存在, 则删除. */
                 if (access(cur_logbak_name, F_OK) == 0)
                 {
                     delete_file(cur_logbak_name);
                 }
-                // 重新命名文件
+                /* 重新命名文件 */
                 if (rename(cur_log_name, cur_logbak_name) < 0)
                 {
                     rt_kprintf("bakup file error. \n");
