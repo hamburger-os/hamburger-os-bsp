@@ -34,8 +34,9 @@ typedef struct {
     uint32_t rx_szie;
 } S_ETH_THREAD;
 
+extern S_DATA_HANDLE eth_can_data_handle;
+
 static S_ETH_THREAD eth0_thread;
-S_DATA_HANDLE eth_can_data_handle;
 
 #define ETH_READ_IN_Callback 0
 
@@ -95,8 +96,6 @@ static void ETHChannelInit(S_ETH_THREAD *p_thread, char *device_name)
 static void *ETHThreadEntry(void *parameter)
 {
     rt_err_t ret = RT_EOK;
-
-    DataHandleInit(&eth_can_data_handle);
 
     ETHChannelInit(&eth0_thread, "e0");
     ETHChannelSetRXCallback(&eth0_thread, ETHRXChannel1Callback);

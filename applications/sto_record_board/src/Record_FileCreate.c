@@ -624,7 +624,7 @@ void RecordBoard_FileCreate(void)
 
 
 
-void Init_FlashState(void)
+void Init_FlashState(void)  //使用FMInitLatestFile替代 TODO(mingzhao)
 {
     /* 读取FRAM的0地址数据放入Flash_State; */
     FLASH_STATE flash_state = { 0u }, flash_state_old = { 0u };
@@ -803,30 +803,28 @@ static uint8_t Record_Condition_Judge(void)
 {  
 	uint8_t judge_resault = 0u;
 
-  /* 文件大小大于20MB */
-  if( MAX_FILE_SIZE <= s_File_Directory.u32_file_size )
-  {
-    LOG_W("\r\n 文件大于20MB！\r\n");
-    judge_resault |= 1u<<0u;
-  }
-  
-  /* 车次号或车次扩充发生变化 */
-  if(( memcmp( s_File_Directory.ch_checi, &CHECI, 3u ) 
-		|| memcmp( s_File_Directory.ch_checikuochong, &CHECIKUOCHONG, 4u )) 
-		&& memcmp( nulldata, &CHECI, 3u ))
-  {
-      LOG_W("\r\n 车次号发生变化！\r\n");
-    judge_resault |= 1u<<1u;
-  }
-  
-  /* 司机号发生变化 */
-  if( memcmp( s_File_Directory.ch_siji, &SIJI1, 3u ) 
-		&& memcmp( nulldata, &SIJI1, 3u ))
-  {
-      LOG_W("\r\n 司机号发生变化！\r\n");
-    judge_resault |= 1u<<2u;
-  }   
-  
+    /* 文件大小大于20MB */
+    if ( MAX_FILE_SIZE <= s_File_Directory.u32_file_size)
+    {
+        LOG_W("\r\n 文件大于20MB！\r\n");
+        judge_resault |= 1u << 0u;
+    }
+
+    /* 车次号或车次扩充发生变化 */
+    if ((memcmp(s_File_Directory.ch_checi, &CHECI, 3u) || memcmp(s_File_Directory.ch_checikuochong, &CHECIKUOCHONG, 4u))
+            && memcmp(nulldata, &CHECI, 3u))
+    {
+        LOG_W("\r\n 车次号发生变化！\r\n");
+        judge_resault |= 1u << 1u;
+    }
+
+    /* 司机号发生变化 */
+    if (memcmp(s_File_Directory.ch_siji, &SIJI1, 3u) && memcmp(nulldata, &SIJI1, 3u))
+    {
+        LOG_W("\r\n 司机号发生变化！\r\n");
+        judge_resault |= 1u << 2u;
+    }
+
 //  /* 本补状态发生变化 */
 //  if( memcmp( s_File_Directory.ch_benbuzhuangtai, &LIECHESHUXING, 1u ) 
 //		&& memcmp( nulldata, &LIECHESHUXING, 1u )	)
@@ -834,7 +832,7 @@ static uint8_t Record_Condition_Judge(void)
 //    printf("\r\n 本补状态发生变化！\r\n");
 //    judge_resault |= 1u<<3u;
 //  }
-  return judge_resault;
+    return judge_resault;
 }
 
 /********************************************************************************************
@@ -1002,9 +1000,133 @@ static void Init_FileDirectory(void)
 
 /**************************************************************************************************
 功能：更新文件头信息到FRAM缓存区
+将文件头信息写入文件
 参数：无
 返回：无
 ***************************************************************************************************/
+#if 1
+
+static void Update_FileHead(void)
+{
+    /* 获取文件头 */
+    s_file_head.ch_head_flag[0] = 0xb1;
+    s_file_head.ch_head_flag[1] = 0xf1;
+
+    memcpy(s_file_head.ch_jilugeshibanbenhao, &JILUGESHIBANBEN, 4u);
+    /* 设置外设类型值 */
+    s_file_head.ch_waisheleixing[0] |= (LKJCHANGJIA << 0u);
+    s_file_head.ch_waisheleixing[0] |= (TCMSCHANGJIA << 3u);
+    s_file_head.ch_waisheleixing[0] |= ((ZHIDONGJICHANGJIA & 0x01) << 7u);
+    s_file_head.ch_waisheleixing[1] |= ((ZHIDONGJICHANGJIA & 0x0E) << 8u);
+    s_file_head.ch_waisheleixing[1] |= (LIEWEICHANGJIA << 11u);
+//    printf("外设类型：%x %x\r\n",s_file_head.ch_waisheleixing[0],s_file_head.ch_waisheleixing[1]);
+
+    memcpy(s_file_head.ch_create_time, &TIME_NYR, 3u);
+    memcpy(&s_file_head.ch_create_time[3], &TIME_SFM, 3u);
+    s_file_head.ch_yunxingjiaoluhao[0] = (SHUJUJIAOLU & 0x1f);
+    memcpy(&s_file_head.ch_yunxingjiaoluhao[2], &JIANKONGJIAOLU, 1u);
+    s_file_head.ch_LKJfachefangxiang[0] = LKJFACHEFANGXIANG;
+    s_file_head.ch_LKJfachefangxiang[1] = (SHUJUJIAOLU & 0x60) >> 5u;
+    memcpy(s_file_head.ch_chezhan, &CHEZHANMING, 12u );
+    memcpy(s_file_head.ch_jichexinghao, &JICHEXINGHAO, 2u);
+
+#if 0
+    switch(JICHELEIXING)
+    {
+        case 0:
+        s_file_head.ch_jicheleixing[0] = 0x01;
+        break;
+        case 1:
+        s_file_head.ch_jicheleixing[0] = 0x02;
+        break;
+        default:
+        s_file_head.ch_jicheleixing[0] = 0xFF;
+        break;
+    }
+#else
+    s_file_head.ch_jicheleixing[0] = 0x02;
+#endif
+
+    memcpy(s_file_head.ch_jichehao, &JICHEHAO, 2u);
+    memcpy(s_file_head.ch_juduanhao, &JUDUANHAO, 2u );
+    memcpy(s_file_head.ch_chezhongbiaoshi, &CHEZHONGBIAOSHI, 4u);
+    memcpy(s_file_head.ch_checihao, &CHECIHAO, 3u);
+
+    s_file_head.ch_liecheshuxing[0] |= (( LIECHESHUXING ^ 1u) & 0x01) << 1u;
+    if (LIANGSHU < 5u)
+        s_file_head.ch_liecheshuxing[0] |= 0x01;
+    else
+        s_file_head.ch_liecheshuxing[0] &= 0xFE;
+    memcpy(s_file_head.ch_siji1, &SIJIHAO1, 3u);
+    memcpy(s_file_head.ch_siji2, &SIJIHAO2, 3u);
+    memcpy(s_file_head.ch_zongzhong, &ZONGZHONG, 2u);
+    memcpy(s_file_head.ch_jichang, &JICHANG, 2u);
+    memcpy(s_file_head.ch_liangshu, &LIANGSHU, 1u);
+    /* 填写设备状态值 */
+    if (Get_CPU_Type() == CPU_A)
+    {
+        s_file_head.ch_shebeizhuangtai[0] |= 0x80;
+
+        if ((0x01 == BENXIZHUANGTAI) || (0x03 == BENXIZHUANGTAI))
+            s_file_head.ch_shebeizhuangtai[0] |= 0x01;
+    }
+    else
+    {
+        s_file_head.ch_shebeizhuangtai[0] &= 0x7F;
+
+        if ((0x01 == BENXIZHUANGTAI) || (0x03 == BENXIZHUANGTAI))
+            s_file_head.ch_shebeizhuangtai[0] |= 0x02;
+    }
+    s_file_head.ch_shebeizhuangtai[0] |= 0x04;
+//      printf("获取文件头设备状态：%x\r\n",s_file_head.ch_shebeizhuangtai[0]);
+    switch (GONGZUOZHUANGTAI)
+    {
+    case 0x00:  //人工驾驶
+        s_file_head.ch_gongzuozhuangtai[0] = 0x01;
+        break;
+    case 0x01:  //指导驾驶
+        s_file_head.ch_gongzuozhuangtai[0] = 0x02;
+        break;
+    case 0x02:  //辅助预置驾驶
+        s_file_head.ch_gongzuozhuangtai[0] = 0x03;
+        break;
+    case 0x03:  //辅助驾驶
+        s_file_head.ch_gongzuozhuangtai[0] = 0x04;
+        break;
+    case 0x04:  //退出辅助驾驶
+        s_file_head.ch_gongzuozhuangtai[0] = 0x05;
+        break;
+    default:
+        break;
+    }
+    memcpy(s_file_head.ch_Ajikongzhiruanjianbanben, &AJIKONGZHIRUANJIANBANBEN, 4u);
+    memcpy(s_file_head.ch_Bjikongzhiruanjianbanben, &BJIKONGZHIRUANJIANBANBEN, 4u);
+    memcpy(s_file_head.ch_AjiSTOjichushujubanben, &AJISTOJICHUSHUJUBANBENRIQI, 2u);
+    memcpy(&s_file_head.ch_AjiSTOjichushujubanben[2], &AJISTOJICHUSHUJUBIANYIRIQI, 2u);
+    memcpy(s_file_head.ch_BjiSTOjichushujubanben, &BJISTOJICHUSHUJUBANBENRIQI, 2u);
+    memcpy(&s_file_head.ch_BjiSTOjichushujubanben[2], &BJISTOJICHUSHUJUBIANYIRIQI, 2u);
+    memcpy(s_file_head.ch_AjiSTOkongzhicanshu, &AJISTOKONGZHICANSHUBANBENRIQI, 2u);
+    memcpy(&s_file_head.ch_AjiSTOkongzhicanshu[2], &AJISTOKONGZHICANSHUBIANYIRIQI, 2u);
+    memcpy(s_file_head.ch_BjiSTOkongzhicanshu, &BJISTOKONGZHICANSHUBANBENRIQI, 2u);
+    memcpy(&s_file_head.ch_BjiSTOkongzhicanshu[2], &BJISTOKONGZHICANSHUBIANYIRIQI, 2u);
+    memcpy(s_file_head.ch_AjiLKJshujubanben, &AJILKJSHUJUBANBEN, 4u );
+    memcpy(s_file_head.ch_BjiLKJshujubanben, &BJILKJSHUJUBANBEN, 4u );
+    memcpy(s_file_head.ch_AjiLKJshujushijian, &AJILKJSHUJUSHIJIAN, 4u );
+    memcpy(s_file_head.ch_BjiLKJshujushijian, &BJILKJSHUJUSHIJIAN, 4u );
+
+    memcpy(s_file_head.ch_wenjianneirongCRC, &FileContent_CRC32, 4u);
+    /* CRC校验 */
+    s_file_head.u32_CRC32 = CRC32CCITT((uint8_t *) &s_file_head, sizeof(SFile_Head) - 2u, 0xFFFFFFFF);
+
+#if 0   //TODO(mingzhao)  文件头在记录文件中存储  原来为什么要存在fm
+    /* 将文件头内容缓存到FRAM */
+    FM25V05_Manage_WriteEnable();
+    FM25V05_Manage_WriteData( FRAM_FileHead_BASE_ADDR, (uint8_t *) &s_file_head, sizeof(SFile_Head));
+#endif
+}
+
+#else
+
 static void Update_FileHead(void)
 {
     /* 获取文件头 */
@@ -1121,7 +1243,7 @@ static void Update_FileHead(void)
     FM25V05_Manage_WriteEnable();
     FM25V05_Manage_WriteData( FRAM_FileHead_BASE_ADDR, (uint8_t *) &s_file_head, sizeof(SFile_Head));
 }
-
+#endif
 /**************************************************************************************************
 功能：创建文件文件头信息
 参数：无
@@ -1431,39 +1553,39 @@ static void Get_Gonggongxinxi( void )
 ******************************************************************************************/
 static void Update_gongyoucanshu( void )
 {
-  /* 更新记录事项中共有参数 */
-  memcpy( C_Lkjxiansu, &XIANSU, 2u );
-	memcpy( C_Lkjsudu, &LKJSUDU, 2u );
-	
-	switch(GONGZUOZHUANGTAI)
-	{
-		case 0x00:  //人工驾驶
-			C_gongzuozhuangtai = 0x01;		
-			break;
-		case 0x01:  //指导驾驶
-			C_gongzuozhuangtai = 0x02;
-			break;
-		case 0x02:  //辅助预置驾驶
-			C_gongzuozhuangtai = 0x03;
-			break;
-		case 0x03:  //辅助驾驶
-			C_gongzuozhuangtai = 0x04;
-			break;
-		case 0x04:  //退出辅助驾驶
-			C_gongzuozhuangtai = 0x05;
-			break;
-    default:
-			break;
-	}
-	C_gongzuomoshi = GONGZUOMOSHI;
+    /* 更新记录事项中共有参数 */
+    memcpy(C_Lkjxiansu, &XIANSU, 2u);
+    memcpy(C_Lkjsudu, &LKJSUDU, 2u);
 
-	C_liecheguanyali[0] = (*(&LIECHEGUANYALI + 1));
-	C_liecheguanyali[1] = LIECHEGUANYALI;
-	C_zhidonggangyali[0] = (*(&ZHIDONGGANGYALI + 1));
-  C_zhidonggangyali[1] = ZHIDONGGANGYALI;
-	C_jungangyali[0] = (*(&JUNFENGGANGYALI + 1));
-	C_jungangyali[1] = JUNFENGGANGYALI;	
-	memcpy( C_jichexinhao, &JICHEXINHAO, 2u );
+    switch (GONGZUOZHUANGTAI)
+    {
+        case 0x00:  //人工驾驶
+            C_gongzuozhuangtai = 0x01;
+            break;
+        case 0x01:  //指导驾驶
+            C_gongzuozhuangtai = 0x02;
+            break;
+        case 0x02:  //辅助预置驾驶
+            C_gongzuozhuangtai = 0x03;
+            break;
+        case 0x03:  //辅助驾驶
+            C_gongzuozhuangtai = 0x04;
+            break;
+        case 0x04:  //退出辅助驾驶
+            C_gongzuozhuangtai = 0x05;
+            break;
+        default:
+            break;
+    }
+    C_gongzuomoshi = GONGZUOMOSHI;
+
+    C_liecheguanyali[0] = (*(&LIECHEGUANYALI + 1));
+    C_liecheguanyali[1] = LIECHEGUANYALI;
+    C_zhidonggangyali[0] = (*(&ZHIDONGGANGYALI + 1));
+    C_zhidonggangyali[1] = ZHIDONGGANGYALI;
+    C_jungangyali[0] = (*(&JUNFENGGANGYALI + 1));
+    C_jungangyali[1] = JUNFENGGANGYALI;
+    memcpy(C_jichexinhao, &JICHEXINHAO, 2u);
 }
 /*****************************************************************************************
 功能：组织公共信息包并写入buf
@@ -1471,11 +1593,11 @@ static void Update_gongyoucanshu( void )
 返回：无
 ******************************************************************************************/
 static void WriteGonggongxinxiPkt( void )
-{ 
-  /* 获取公共信息 */
-  Get_Gonggongxinxi(); 
-   
-	/* 填包头标识 */
+{
+    /* 获取公共信息 */
+    Get_Gonggongxinxi();
+
+    /* 填包头标识 */
     write_buf.buf[0] = 0xFF;
     write_buf.buf[1] = 0xFE;
     /* 填包长 */
@@ -1484,12 +1606,12 @@ static void WriteGonggongxinxiPkt( void )
     write_buf.buf[3] = 0xD0;
     write_buf.buf[4] = 0x01;   //公共信息类别
     write_buf.buf[5] = 0x22;   //公共信息事项包长度
-  
-    memcpy( write_buf.buf + 6, &s_file_public, sizeof(SFile_Public) );
+
+    memcpy(write_buf.buf + 6, &s_file_public, sizeof(SFile_Public));
 //    printf("\r\n 写公共信息位置：%d\r\n",write_buf.pos);
 #if 0
-    if(write_buf.pos == 0)	
-      write_buf.pos += 40U;
+    if(write_buf.pos == 0)
+    write_buf.pos += 40U;
 #endif		
 }
 
@@ -1536,98 +1658,99 @@ static uint8_t Init_GonggongxinxiState( void )
 ***********************************************************************************************/
 static void WriteFileContantPkt( uint8_t num1, uint8_t num2, uint8_t device_code, uint8_t *contant, uint8_t lenth )
 {
-  static uint32_t rest_size = 255u;	
-  uint8_t contant_size = 0u;
-  char file_contant[ 204u ];
-	
-	file_contant[ 0u ] = num1;
-	file_contant[ 1u ] = num2;
-	file_contant[ 2u ] = lenth; 
-	file_contant[ 3u ] = device_code;   
-  
-//	printf("\r\n 记录事项代码：%x %x\r\n",num1,num2);
-	memcpy( file_contant + 4U, contant, lenth );
-  
-	/* 放入缓冲区 */
-	rest_size = 255U - 2 - 4 - write_buf.pos - 1;    //256字节减去包尾标识2字节、CRC32校验值4字节及公共信息包长度40字节
-  
-	contant_size = lenth + 4u;
-	
-	while ( 1u )
-	{
-		if ( rest_size >= contant_size )
-		{
-			memcpy( &( write_buf.buf[ write_buf.pos ] ), &file_contant[ lenth + 4U - contant_size ], contant_size );
-//      printf("\r\n 写记录事项位置：%d\r\n",write_buf.pos);
-			write_buf.pos += contant_size;
-			rest_size     -= contant_size;
-//      printf("\r\n 写记录事项222位置：%d   剩余空间：%d   内容长度：%d\r\n",write_buf.pos,rest_size,contant_size);      
-			/* buf写入铁电，以免系统掉电丢失数据 */
-		  FM25V05_Manage_WriteEnable();
-		  FM25V05_Manage_WriteData( FRAM_FlashBuffer_BASE_ADDR,( uint8_t * )&write_buf, sizeof( WRITE_BUF ) );			
-			break;
-		}
-		else    /* 缓存区存满 */
-		{
-              Update_gongyoucanshu( );
-			        /* 添加数据包头及公共信息 */		
-		          WriteGonggongxinxiPkt();
-							/* 对数据包进行CRC校验 */
-							RecordEventPkt_CRC32 = CRC32CCITT(write_buf.buf + 3U, write_buf.pos - 3U, 0xFFFFFFFF );     //一包最大255字节，记录事项内容最大249字节(除去CRC324字节，最大245字节)
-							/* 将校验值填入buf */
-							memcpy( &( write_buf.buf[ write_buf.pos ] ),&RecordEventPkt_CRC32, 4U );
-				//      printf( "编码前数据长度： %d\r\n", write_buf.pos+4 );
-							/* 对数据包内容进行FF-FE编码转换 */
-							u16_FFFE_Encode_length = FFFEEncode(write_buf.buf + 3U, write_buf.pos + 4U - 3U, u8_FFFE_Encode_buf);
-										
-							/* 将编码后的数据填入buf */
-							memcpy( ( write_buf.buf + 3U ),u8_FFFE_Encode_buf, u16_FFFE_Encode_length );      
-							/* 更新buf包长度 */
-							write_buf.buf[ 2U ] = (uint8_t)(u16_FFFE_Encode_length + 5U);    //不能包含包头、包尾，否则长度等于256时，u8的长度为0   5 = bao tou 2 + chang du + 1 + bao wei 2
-							write_buf.buf[ u16_FFFE_Encode_length + 3U ] = 0xFF;
-							write_buf.buf[ u16_FFFE_Encode_length + 4U ] = 0xFD; 
-//            printf( "FFFE_Encode_length： %d\r\n", u16_FFFE_Encode_length );   
-							/* 写入FLASH */
-      				s_File_Directory.u32_file_size += (u16_FFFE_Encode_length + 5U);
-							Check_FlashState();
-							/* 向flash中跨扇区写数据 */      
-             S25FL256S_AnyByteWrite( write_buf.buf, (u16_FFFE_Encode_length + 5U), Flash_Addr );
+    static uint32_t rest_size = 255u;
+    uint8_t contant_size = 0u;
+    char file_contant[204u];
 
-				#if 0
-						uint8_t ddd[256] = {0U};
-						uint32_t i;
-						
-						for(i=0;i<5000;i++)
-						{}
-						S25FL256S_Read((uint32_t *)ddd,256,Flash_Addr);
-						printf("\r\n 存储区满一页数据长度：%d------地址：%d\r\n",(u16_FFFE_Encode_length + 5U),Flash_Addr);
-						printf("\r\n =================================================\r\n");
-					  for( i = 0; i<256; i++)
-					  {
-						  printf("%x  ",ddd[i]);
-						  if((i+1)%10 == 0)
-							  printf("\r\n");
-					  }		
-						printf("\r\n =================================================\r\n");			
-				#endif
-							/* 计算写入内容的CRC值 用于更新文件头内文件内容CRC值*/
-							FileContent_CRC32 = CRC32CCITT((uint8_t *)write_buf.buf, u16_FFFE_Encode_length + 5U, FileContent_CRC32 );
+    file_contant[0u] = num1;
+    file_contant[1u] = num2;
+    file_contant[2u] = lenth;
+    file_contant[3u] = device_code;
+
+//	printf("\r\n 记录事项代码：%x %x\r\n",num1,num2);
+    memcpy(file_contant + 4U, contant, lenth);
+
+    /* 放入缓冲区 */
+    rest_size = 255U - 2 - 4 - write_buf.pos - 1;    //256字节减去包尾标识2字节、CRC32校验值4字节及公共信息包长度40字节
+
+    contant_size = lenth + 4u;
+
+    while (1u)
+    {
+        if (rest_size >= contant_size)
+        {
+            memcpy(&(write_buf.buf[write_buf.pos]), &file_contant[lenth + 4U - contant_size], contant_size);
+//      printf("\r\n 写记录事项位置：%d\r\n",write_buf.pos);
+            write_buf.pos += contant_size;
+            rest_size -= contant_size;
+//      printf("\r\n 写记录事项222位置：%d   剩余空间：%d   内容长度：%d\r\n",write_buf.pos,rest_size,contant_size);      
+            /* buf写入铁电，以免系统掉电丢失数据 */
+            FM25V05_Manage_WriteEnable();
+            FM25V05_Manage_WriteData( FRAM_FlashBuffer_BASE_ADDR, (uint8_t *) &write_buf, sizeof(WRITE_BUF));
+            break;
+        }
+        else /* 缓存区存满 */
+        {
+            Update_gongyoucanshu();
+            /* 添加数据包头及公共信息 */
+            WriteGonggongxinxiPkt();
+            /* 对数据包进行CRC校验 */
+            RecordEventPkt_CRC32 = CRC32CCITT(write_buf.buf + 3U, write_buf.pos - 3U, 0xFFFFFFFF); //一包最大255字节，记录事项内容最大249字节(除去CRC324字节，最大245字节)
+            /* 将校验值填入buf */
+            memcpy(&(write_buf.buf[write_buf.pos]), &RecordEventPkt_CRC32, 4U);
+            //      printf( "编码前数据长度： %d\r\n", write_buf.pos+4 );
+            /* 对数据包内容进行FF-FE编码转换 */
+            u16_FFFE_Encode_length = FFFEEncode(write_buf.buf + 3U, write_buf.pos + 4U - 3U, u8_FFFE_Encode_buf);
+
+            /* 将编码后的数据填入buf */
+            memcpy((write_buf.buf + 3U), u8_FFFE_Encode_buf, u16_FFFE_Encode_length);
+            /* 更新buf包长度 */
+            write_buf.buf[2U] = (uint8_t) (u16_FFFE_Encode_length + 5U); //不能包含包头、包尾，否则长度等于256时，u8的长度为0   5 = bao tou 2 + chang du + 1 + bao wei 2
+            write_buf.buf[u16_FFFE_Encode_length + 3U] = 0xFF;
+            write_buf.buf[u16_FFFE_Encode_length + 4U] = 0xFD;
+//            printf( "FFFE_Encode_length： %d\r\n", u16_FFFE_Encode_length );   
+            /* 写入FLASH */
+            s_File_Directory.u32_file_size += (u16_FFFE_Encode_length + 5U);
+            Check_FlashState();
+            /* 向flash中跨扇区写数据 */
+            S25FL256S_AnyByteWrite(write_buf.buf, (u16_FFFE_Encode_length + 5U), Flash_Addr);
+
+#if 0
+            uint8_t ddd[256] =
+            {   0U};
+            uint32_t i;
+
+            for(i=0;i<5000;i++)
+            {}
+            S25FL256S_Read((uint32_t *)ddd,256,Flash_Addr);
+            printf("\r\n 存储区满一页数据长度：%d------地址：%d\r\n",(u16_FFFE_Encode_length + 5U),Flash_Addr);
+            printf("\r\n =================================================\r\n");
+            for( i = 0; i<256; i++)
+            {
+                printf("%x  ",ddd[i]);
+                if((i+1)%10 == 0)
+                printf("\r\n");
+            }
+            printf("\r\n =================================================\r\n");
+#endif
+            /* 计算写入内容的CRC值 用于更新文件头内文件内容CRC值*/
+            FileContent_CRC32 = CRC32CCITT((uint8_t *) write_buf.buf, u16_FFFE_Encode_length + 5U, FileContent_CRC32);
 //							printf( "write contant to FLASH %x\r\n", Flash_Addr );
-              Flash_Addr += (u16_FFFE_Encode_length + 5U);
-							
-							memset( &write_buf, 0u, sizeof( WRITE_BUF ) );
-							memset( u8_FFFE_Encode_buf, 0u, sizeof( u8_FFFE_Encode_buf ) );      
-							/* buf写入铁电，以免系统掉电丢失数据 */
-							FM25V05_Manage_WriteEnable();
-							FM25V05_Manage_WriteData( FRAM_FlashBuffer_BASE_ADDR,( uint8_t * )&write_buf, sizeof( WRITE_BUF ) );
-							
-							/*write_buf.pos=0;*/
-							rest_size     = 255U - 2 - 4 - 40 - 1;
-							write_buf.pos = 40U;
-							/* 置位写公共信息包标志 */
-							u8_Gonggongxinxi_Flag = 1U;
-		} /* end if...else */
-  } /* end while */
+            Flash_Addr += (u16_FFFE_Encode_length + 5U);
+
+            memset(&write_buf, 0u, sizeof(WRITE_BUF));
+            memset(u8_FFFE_Encode_buf, 0u, sizeof(u8_FFFE_Encode_buf));
+            /* buf写入铁电，以免系统掉电丢失数据 */
+            FM25V05_Manage_WriteEnable();
+            FM25V05_Manage_WriteData( FRAM_FlashBuffer_BASE_ADDR, (uint8_t *) &write_buf, sizeof(WRITE_BUF));
+
+            /*write_buf.pos=0;*/
+            rest_size = 255U - 2 - 4 - 40 - 1;
+            write_buf.pos = 40U;
+            /* 置位写公共信息包标志 */
+            u8_Gonggongxinxi_Flag = 1U;
+        } /* end if...else */
+    } /* end while */
 }
 
 /**********************************************************************************************
@@ -1637,69 +1760,69 @@ static void WriteFileContantPkt( uint8_t num1, uint8_t num2, uint8_t device_code
 ***********************************************************************************************/
 static void Get_FileContant( void )
 {
-  if ( u8_Contant_Flag )
-	{   
-		static uint32_t time_count = 0u; 	
+    if (u8_Contant_Flag)
+    {
+        static uint32_t time_count = 0u;
 
 #if 0		
-    /* 组织公共信息包并写入FRAM */    
-    if( u8_Gonggongxinxi_Flag )
-    {
-      WriteGonggongxinxiPkt();   
-      u8_Gonggongxinxi_Flag = 0U;      
-    }
+        /* 组织公共信息包并写入FRAM */
+        if( u8_Gonggongxinxi_Flag )
+        {
+            WriteGonggongxinxiPkt();
+            u8_Gonggongxinxi_Flag = 0U;
+        }
 #else
-    if(write_buf.pos == 0)	
-      write_buf.pos += 40U;
+        if (write_buf.pos == 0)
+            write_buf.pos += 40U;
 #endif    
-    
-		/* clear check flag */
-		if ( u8_Clear_Flag )
-		{
-			printf( "clear check flag\r\n" );
-			
-      /* 版本信息 */
-      RecordingVersionMessage();
-      
-      /* 插件自检信息 */
-      RecordingSelfCheckMessage();
-      
-      u8_Clear_Flag = 0U;
-		} /* end if */
-    /* 司机操作信息*/
-    RecordingDriverOperationMessage();
 
-    /* STO行程规划信息 */
-    RecordingFormPlanningMessage();
+        /* clear check flag */
+        if (u8_Clear_Flag)
+        {
+            LOG_I("clear check flag\r\n");
 
-    /* 获取STO控车信息 */
-    RecordingTrainControlMessage();
+            /* 版本信息 */
+            RecordingVersionMessage();
 
-    /* 获取机车制动系统信息 */
-    RecordingLocoBrakeMessage();
+            /* 插件自检信息 */
+            RecordingSelfCheckMessage();
 
-    /* 获取机车牵引系统信息 */
-    RecordingLocoDrawnMessage();
+            u8_Clear_Flag = 0U;
+        } /* end if */
+        /* 司机操作信息*/
+        RecordingDriverOperationMessage();
 
-    /* 获取LKJ系统信息 */
-    RecordingLKJSystemMessage();
+        /* STO行程规划信息 */
+        RecordingFormPlanningMessage();
 
-    /* 列车运行信息 */
-    RecordingTrainOperationMessage();
+        /* 获取STO控车信息 */
+        RecordingTrainControlMessage();
 
-    /* 开关机时间 */
-    RecordingSwitchTimeMessage();		
+        /* 获取机车制动系统信息 */
+        RecordingLocoBrakeMessage();
 
-		/* 以下信息1S检测一次 */
-	  if ( Common_BeTimeOutMN( &time_count, 1000u ) )
-	  {		
-			/* 版本信息 */
-			RecordingVersionMessage();
-			/* 插件自检信息 */
-			RecordingSelfCheckMessage();
-	  } /* end if */
+        /* 获取机车牵引系统信息 */
+        RecordingLocoDrawnMessage();
 
-	} /* end if */
+        /* 获取LKJ系统信息 */
+        RecordingLKJSystemMessage();
+
+        /* 列车运行信息 */
+        RecordingTrainOperationMessage();
+
+        /* 开关机时间 */
+        RecordingSwitchTimeMessage();
+
+        /* 以下信息1S检测一次 */
+        if (Common_BeTimeOutMN(&time_count, 1000u))
+        {
+            /* 版本信息 */
+            RecordingVersionMessage();
+            /* 插件自检信息 */
+            RecordingSelfCheckMessage();
+        } /* end if */
+
+    } /* end if */
 }
 
 
@@ -1708,6 +1831,13 @@ static void Get_FileContant( void )
 参数：无
 返回：无
 ********************************************************************************/
+#if 1
+static void Check_FlashState( void )
+{
+#error "Check_FlashState"
+}
+#else
+
 static void Check_FlashState( void )
 {                                     
 //	printf("检测flash状态：%d---%d\r\n",Flash_State.u32_flash_write_addr,Flash_State.u32_sector_count);
@@ -1766,7 +1896,15 @@ static void Check_FlashState( void )
 	} 
 }
 
+#endif
 
+#if 1
+
+static void File_Erase( uint32_t addr )
+{
+#error "File_Erase"
+}
+#else
 /********************************************************************************************
  ** @brief: File_Erase
  ** @param: null
@@ -1806,6 +1944,7 @@ static void File_Erase( uint32_t addr )
 	FM25V05_Manage_WriteData( 0u, ( uint8_t * )&Flash_State, sizeof( FLASH_STATE ) );
 	printf( "erase a file for %d sectors\r\n", directory.u32_sector_count );
 }
+#endif
 
 /**********************************************
 功能：获取文件名
@@ -1814,180 +1953,181 @@ static void File_Erase( uint32_t addr )
 ***********************************************/
 static void Get_FileName(SFile_Directory *directory )
 {
-	uint32_t i = 0u, j = 0u;
-  uint32_t num, divisor = 0u;
-  uint32_t u32_lastfile_framwrite_addr = 0u;
-  uint8_t u8_lastfilename_num = 0u;
-  
-  SFile_Directory s_lastfile_directory = { 0U };
-	
-  /* 车次扩充 */
-	for ( i = 0u; i < 4u; i++ )
-	{
-		if ( directory->ch_checikuochong[i] != 0x20u\
-      && directory->ch_checikuochong[i] != 0x00u )
-		{
-		  directory->ch_file_name[j] = directory->ch_checikuochong[i];
-			j++;
-		} /* end if */
-	} /* end for */
-	
-	/* 车次号 */
-	memcpy( &num, directory->ch_checi, 4u );
-  
-	if ( num >= 100000u )
-	{
-		num = 99999u;
-	} /* end if */
-	
-	if ( num >= 10000u )
-	{
-		i = 5u;
-		divisor = 10000u;
-	}
-	else if ( num >= 1000u )
-	{
-		i = 4u;
-		divisor = 1000u;
-	}
-	else if ( num >= 100u )
-	{
-		i = 3u;
-		divisor = 100u;
-	}
-	else if( num >= 10u )
-	{
-		i = 2u;
-		divisor = 10u;
-	}
-	else
-	{
-		i = 1u;
-		divisor = 1u;
-	} /* end if...else if......else */
-	
-	for ( ; i > 0u; i-- )
-	{
-		directory->ch_file_name[ j ] = num / divisor + 48u;    //将十进制数字转换为ASCII码字符
-		num = num % divisor;
-		j++;
-		divisor = divisor / 10u;
-	} /* end for */
-	
-  /* 司机号 */
-	memcpy( &num, directory->ch_siji, 4u );
-  
-	if ( num >= 10000000u )
-	{
-		num = 9999999u;
-	} /* end if */
+    uint32_t i = 0u, j = 0u;
+    uint32_t num, divisor = 0u;
+    uint32_t u32_lastfile_framwrite_addr = 0u;
+    uint8_t u8_lastfilename_num = 0u;
 
-	if ( num >= 1000000u )
-	{
-		i = 7u;
-		divisor = 1000000u;
-	}
-	else if ( num >= 100000u )
-	{
-		i = 6u;
-		divisor = 100000u;
-	}
-	else if ( num >= 10000u )
-	{
-		i = 5u;
-		divisor = 10000u;
-	}
-	else if ( num >= 1000u )
-	{
-		i = 4u;
-		divisor = 1000u;
-	}
-	else if ( num >= 100u )
-	{
-		i = 3u;
-		divisor = 100u;
-	}
-	else if( num >= 10u )
-	{
-		i = 2u;
-		divisor = 10u;
-	}
-	else
-	{
-		i = 1u;
-		divisor = 1u;
-	} /* end if...else if......else */
-	
-	for ( ; i > 0u; i-- )
-	{
-		directory->ch_file_name[ j ] = num / divisor + 48u;    //将十进制数字转换为ASCII码字符
-		num = num % divisor;
-		j++;
-		divisor = divisor / 10u;
-	} /* end for */  
+    SFile_Directory s_lastfile_directory = { 0U };
 
-	/* 本补状态占用本字节高7位 */
-	#if 0
-	directory->ch_file_name[ j ] = LIECHESHUXING << 1U;
-	#else
-	directory->ch_file_name[ j ] = (directory->ch_benbuzhuangtai[0] & 0x03) << 1U;
-	#endif
-  /* 文件序号 */
-  /* 从FRAM中读取上一个文件的文件大小 */
-  u32_lastfile_framwrite_addr = Flash_State.u32_fram_write_addr - sizeof( SFile_Directory );
-  if ( u32_lastfile_framwrite_addr <= FRAM_FileDirectory_BASE_ADDR )
-  {
-    u32_lastfile_framwrite_addr = FRAM_FileDirectory_MAX_ADDR - sizeof( SFile_Directory );
-  } /* end if */   
-
-	FM25V05_Manage_ReadData( u32_lastfile_framwrite_addr,( uint8_t * )&s_lastfile_directory, sizeof( SFile_Directory ) );
-
-  for( i = 0u; i < 24u; i++)
-  {
-    if('.' == s_lastfile_directory.ch_file_name[i])
+    /* 车次扩充 */
+    for (i = 0u; i < 4u; i++)
     {
-      u8_lastfilename_num = (( s_lastfile_directory.ch_file_name[i-3] - 48u ) & 0x01)*100 + ( s_lastfile_directory.ch_file_name[i-2] - 48u )*10 + ( s_lastfile_directory.ch_file_name[i-1] - 48u )*1;
-      break;      
+        if (directory->ch_checikuochong[i] != 0x20u\
+ && directory->ch_checikuochong[i] != 0x00u)
+        {
+            directory->ch_file_name[j] = directory->ch_checikuochong[i];
+            j++;
+        } /* end if */
+    } /* end for */
+
+    /* 车次号 */
+    memcpy(&num, directory->ch_checi, 4u);
+
+    if (num >= 100000u)
+    {
+        num = 99999u;
+    } /* end if */
+
+    if (num >= 10000u)
+    {
+        i = 5u;
+        divisor = 10000u;
     }
-  }
+    else if (num >= 1000u)
+    {
+        i = 4u;
+        divisor = 1000u;
+    }
+    else if (num >= 100u)
+    {
+        i = 3u;
+        divisor = 100u;
+    }
+    else if (num >= 10u)
+    {
+        i = 2u;
+        divisor = 10u;
+    }
+    else
+    {
+        i = 1u;
+        divisor = 1u;
+    } /* end if...else if......else */
 
-  /* 如果上个文件大于等于20MB，则读取上一个文件的文件名，在上个文件名基础上序号加1 */  
-  if( s_lastfile_directory.u32_file_size >= MAX_FILE_SIZE )
-  {
-    u8_lastfilename_num += 1u;
-    /* 文件序号 */
-    directory->ch_file_name[ j ] = directory->ch_file_name[ j ] | (u8_lastfilename_num / 100) + 48u;
-		j++;
-    directory->ch_file_name[ j++ ] = ( u8_lastfilename_num % 100 ) / 10 + 48u;
-    directory->ch_file_name[ j++ ] = ( u8_lastfilename_num % 10 ) / 1 + 48u;   
-  }
-  else
-  {
-    /* 文件序号 */
-    directory->ch_file_name[ j ] = directory->ch_file_name[ j ] | 0u + 48u;
-		j++;
-    directory->ch_file_name[ j++ ] = 0u + 48u;
-    directory->ch_file_name[ j++ ] = 1u + 48u;  
-  } 
+    for (; i > 0u; i--)
+    {
+        directory->ch_file_name[j] = num / divisor + 48u;    //将十进制数字转换为ASCII码字符
+        num = num % divisor;
+        j++;
+        divisor = divisor / 10u;
+    } /* end for */
 
-  /* 后缀符号‘.’ */
-  directory->ch_file_name[ j++ ] = '.';
-	/* 日期 */
+    /* 司机号 */
+    memcpy(&num, directory->ch_siji, 4u);
+
+    if (num >= 10000000u)
+    {
+        num = 9999999u;
+    } /* end if */
+
+    if (num >= 1000000u)
+    {
+        i = 7u;
+        divisor = 1000000u;
+    }
+    else if (num >= 100000u)
+    {
+        i = 6u;
+        divisor = 100000u;
+    }
+    else if (num >= 10000u)
+    {
+        i = 5u;
+        divisor = 10000u;
+    }
+    else if (num >= 1000u)
+    {
+        i = 4u;
+        divisor = 1000u;
+    }
+    else if (num >= 100u)
+    {
+        i = 3u;
+        divisor = 100u;
+    }
+    else if (num >= 10u)
+    {
+        i = 2u;
+        divisor = 10u;
+    }
+    else
+    {
+        i = 1u;
+        divisor = 1u;
+    } /* end if...else if......else */
+
+    for (; i > 0u; i--)
+    {
+        directory->ch_file_name[j] = num / divisor + 48u;    //将十进制数字转换为ASCII码字符
+        num = num % divisor;
+        j++;
+        divisor = divisor / 10u;
+    } /* end for */
+
+    /* 本补状态占用本字节高7位 */
+#if 0
+    directory->ch_file_name[ j ] = LIECHESHUXING << 1U;
+#else
+    directory->ch_file_name[j] = (directory->ch_benbuzhuangtai[0] & 0x03) << 1U;
+#endif
+    /* 文件序号 */
+    /* 从FRAM中读取上一个文件的文件大小 */
+    u32_lastfile_framwrite_addr = Flash_State.u32_fram_write_addr - sizeof(SFile_Directory);
+    if (u32_lastfile_framwrite_addr <= FRAM_FileDirectory_BASE_ADDR)
+    {
+        u32_lastfile_framwrite_addr = FRAM_FileDirectory_MAX_ADDR - sizeof(SFile_Directory);
+    } /* end if */
+
+    FM25V05_Manage_ReadData(u32_lastfile_framwrite_addr, (uint8_t *) &s_lastfile_directory, sizeof(SFile_Directory));
+
+    for (i = 0u; i < 24u; i++)
+    {
+        if ('.' == s_lastfile_directory.ch_file_name[i])
+        {
+            u8_lastfilename_num = ((s_lastfile_directory.ch_file_name[i - 3] - 48u) & 0x01) * 100
+                    + (s_lastfile_directory.ch_file_name[i - 2] - 48u) * 10
+                    + (s_lastfile_directory.ch_file_name[i - 1] - 48u) * 1;
+            break;
+        }
+    }
+
+    /* 如果上个文件大于等于20MB，则读取上一个文件的文件名，在上个文件名基础上序号加1 */
+    if (s_lastfile_directory.u32_file_size >= MAX_FILE_SIZE)
+    {
+        u8_lastfilename_num += 1u;
+        /* 文件序号 */
+        directory->ch_file_name[j] = directory->ch_file_name[j] | (u8_lastfilename_num / 100) + 48u;
+        j++;
+        directory->ch_file_name[j++] = (u8_lastfilename_num % 100) / 10 + 48u;
+        directory->ch_file_name[j++] = (u8_lastfilename_num % 10) / 1 + 48u;
+    }
+    else
+    {
+        /* 文件序号 */
+        directory->ch_file_name[j] = directory->ch_file_name[j] | 0u + 48u;
+        j++;
+        directory->ch_file_name[j++] = 0u + 48u;
+        directory->ch_file_name[j++] = 1u + 48u;
+    }
+
+    /* 后缀符号‘.’ */
+    directory->ch_file_name[j++] = '.';
+    /* 日期 */
 //  directory->ch_file_name[ j++ ] = directory->ch_date[ 0u ] / 10u + 48u;
 //	directory->ch_file_name[ j++ ] = directory->ch_date[ 0u ] % 10u + 48u;
-	directory->ch_file_name[ j++ ] = directory->ch_date[ 1u ] / 10u + 48u;
-	directory->ch_file_name[ j++ ] = directory->ch_date[ 1u ] % 10u + 48u;
-	directory->ch_file_name[ j++ ] = directory->ch_date[ 2u ] / 10u + 48u;
-	directory->ch_file_name[ j++ ] = directory->ch_date[ 2u ] % 10u + 48u;
-  
+    directory->ch_file_name[j++] = directory->ch_date[1u] / 10u + 48u;
+    directory->ch_file_name[j++] = directory->ch_date[1u] % 10u + 48u;
+    directory->ch_file_name[j++] = directory->ch_date[2u] / 10u + 48u;
+    directory->ch_file_name[j++] = directory->ch_date[2u] % 10u + 48u;
 
-	if ( j < 24u )
-	{
-	  for( i = j; i < 24u; i++ )
-		{
-		  directory->ch_file_name[ i ] = 0u;
-		} /*  end for */
-	}	/* end if */
+    if (j < 24u)
+    {
+        for (i = j; i < 24u; i++)
+        {
+            directory->ch_file_name[i] = 0u;
+        } /*  end for */
+    } /* end if */
 }
 
 
@@ -2023,35 +2163,35 @@ static void RecordingDriverOperationMessage( void )
 ***********************************************/
 static void RecordingDMIOperationMessage( void )
 {
-  static uint8_t C_contant_datI[5] = {0};
-  static uint8_t C_contant_datII[5] = {0};
+    static uint8_t C_contant_datI[5] = { 0 };
+    static uint8_t C_contant_datII[5] = { 0 };
 
-	if(1u == ((JINGGAOBIAOZHI & 0xC0) >> 6u))   //I端有权
-	{ 
-		if( MINGLINGHAOI && (0x01 != MINGLINGHAOI))
-		{
+    if (1u == ((JINGGAOBIAOZHI & 0xC0) >> 6u))   //I端有权
+    {
+        if ( MINGLINGHAOI && (0x01 != MINGLINGHAOI))
+        {
 //			printf("。。。I端显示器命令号变化\r\n");
-			C_contant_datI[0] = MINGLINGHAOI;
-			memcpy( &C_contant_datI[1], &MINGLINGNEIRONGI, 4U);
-			WriteFileContantPkt( 0xA0, 0x01, 0x21, C_contant_datI, 5 );
-      MINGLINGHAOI = 0u;			
-		}			
-	}
-	else if(2u == ((JINGGAOBIAOZHI & 0xC0) >> 6u))   //II端有权
-	{
-		if( MINGLINGHAOII && (0x01 != MINGLINGHAOII))
-		{
+            C_contant_datI[0] = MINGLINGHAOI;
+            memcpy(&C_contant_datI[1], &MINGLINGNEIRONGI, 4U);
+            WriteFileContantPkt(0xA0, 0x01, 0x21, C_contant_datI, 5);
+            MINGLINGHAOI = 0u;
+        }
+    }
+    else if (2u == ((JINGGAOBIAOZHI & 0xC0) >> 6u))   //II端有权
+    {
+        if ( MINGLINGHAOII && (0x01 != MINGLINGHAOII))
+        {
 //			printf("。。。II端显示器命令号变化：%x\r\n",MINGLINGHAOII);
-			C_contant_datII[0] = MINGLINGHAOII;
-			memcpy( &C_contant_datII[1], &MINGLINGNEIRONGII, 4U);
-			WriteFileContantPkt( 0xA0, 0x01, 0x22, C_contant_datII, 5 );
-      MINGLINGHAOII = 0u;			
-		}
-	}
-	else
-	{
-		//do nothing
-	}	   
+            C_contant_datII[0] = MINGLINGHAOII;
+            memcpy(&C_contant_datII[1], &MINGLINGNEIRONGII, 4U);
+            WriteFileContantPkt(0xA0, 0x01, 0x22, C_contant_datII, 5);
+            MINGLINGHAOII = 0u;
+        }
+    }
+    else
+    {
+        //do nothing
+    }
 } /* end function RecordingDMIOperationMessage */
 
 /**********************************************
@@ -2348,45 +2488,45 @@ static void RecordingOptimizeUncontrAreaMessage( void )
 ***********************************************/
 static void RecordingSoonerAndLaterMessage( void )
 {
-  static uint8_t C_zaowandian[4]  = { 0x00,0x00U,0x00U,0x00U };
-	static uint8_t guozhanzhongxinzhi = 0u;
-	uint8_t zaowandianbiaozhizhi = 0x00;
-  uint32_t biaozhunshijian = 0u, yujishijian = 0u, zaowandianshijian = 0u;
-	
-	memcpy( &biaozhunshijian, &DAOZHANBIAOZHUNSHIJIAN, 3U);
-	memcpy( &yujishijian, &YUJIDAOZHANSHIJIAN, 3U);	
+    static uint8_t C_zaowandian[4] = { 0x00, 0x00U, 0x00U, 0x00U };
+    static uint8_t guozhanzhongxinzhi = 0u;
+    uint8_t zaowandianbiaozhizhi = 0x00;
+    uint32_t biaozhunshijian = 0u, yujishijian = 0u, zaowandianshijian = 0u;
 
-	if(yujishijian >= biaozhunshijian)
-		zaowandianshijian = (yujishijian - biaozhunshijian);
-	else
-		zaowandianshijian = (biaozhunshijian - yujishijian);
-  
-  #if 0	
-	switch(ZAOWANDIANBIAOZHI & 0x03)
-	{
-		case 0x00:  //晚点
-			zaowandianbiaozhizhi = 0x02;
-			break;
-		case 0x01:  //正点
-			zaowandianbiaozhizhi = 0x00;
-			break;
-		default:
-			break;
-	}
-	#else
-	zaowandianbiaozhizhi = (ZAOWANDIANBIAOZHI & 0x03);
-	#endif
+    memcpy(&biaozhunshijian, &DAOZHANBIAOZHUNSHIJIAN, 3U);
+    memcpy(&yujishijian, &YUJIDAOZHANSHIJIAN, 3U);
+
+    if (yujishijian >= biaozhunshijian)
+        zaowandianshijian = (yujishijian - biaozhunshijian);
+    else
+        zaowandianshijian = (biaozhunshijian - yujishijian);
+
+#if 0
+    switch(ZAOWANDIANBIAOZHI & 0x03)
+    {
+        case 0x00:  //晚点
+        zaowandianbiaozhizhi = 0x02;
+        break;
+        case 0x01://正点
+        zaowandianbiaozhizhi = 0x00;
+        break;
+        default:
+        break;
+    }
+#else
+    zaowandianbiaozhizhi = (ZAOWANDIANBIAOZHI & 0x03);
+#endif
 //	printf("早晚点时间：%d - %d = %d\r\n",yujishijian,biaozhunshijian,zaowandianshijian);
-	if( ( 0x00 == guozhanzhongxinzhi ) && GUOZHANZHONGXIN  && ( 0x80 == LKJGONGZUOMOSHI) )
-	{
+    if ((0x00 == guozhanzhongxinzhi) && GUOZHANZHONGXIN && (0x80 == LKJGONGZUOMOSHI))
+    {
 //		printf("。。。生成早晚点事项。。。\r\n");
-		C_zaowandian[0] = zaowandianbiaozhizhi;
-		C_zaowandian[1] = zaowandianshijian & 0xff;
-		C_zaowandian[2] = (zaowandianshijian >> 8) & 0xff;
-		
-		WriteFileContantPkt( 0xA1, 0x08, g_ZK_DevCode, C_zaowandian, 3u );		
-	} /* end if */
-	guozhanzhongxinzhi = GUOZHANZHONGXIN;
+        C_zaowandian[0] = zaowandianbiaozhizhi;
+        C_zaowandian[1] = zaowandianshijian & 0xff;
+        C_zaowandian[2] = (zaowandianshijian >> 8) & 0xff;
+
+        WriteFileContantPkt(0xA1, 0x08, g_ZK_DevCode, C_zaowandian, 3u);
+    } /* end if */
+    guozhanzhongxinzhi = GUOZHANZHONGXIN;
 } /* end function RecordingSoonerAndLaterMessage */
 
 
@@ -5401,13 +5541,13 @@ void RecordingPowerOffMessage(void)
 ***********************************************/
 static void RecordingDateChangeMessage(void)
 {
-	static uint8_t C_riqi[3] = { 0x0u };
+    static uint8_t C_riqi[3] = { 0x0u };
 
-	if ( memcmp( C_riqi, &TIME_NYR, 3U ) ) 
-  {
-		memcpy( C_riqi, &TIME_NYR, 3U);
-		WriteFileContantPkt( 0xA7, 0x03, g_ZK_DevCode, C_riqi, 3u );
-	}
+    if (memcmp(C_riqi, &TIME_NYR, 3U))
+    {
+        memcpy(C_riqi, &TIME_NYR, 3U);
+        WriteFileContantPkt(0xA7, 0x03, g_ZK_DevCode, C_riqi, 3u);
+    }
 } /* end function RecordingDateChangeMessage */
 
 /**********************************************

@@ -12,8 +12,6 @@
 
 #include "data_handle.h"
 
-extern S_DATA_HANDLE eth_can_data_handle;
-
 int ETHThreadInit(void);
 
 #endif /* APPLICATIONS_STO_RECORD_BOARD_INC_ETH_THREAD_H_ */

@@ -15,8 +15,8 @@
 
 #include <string.h>
 
+#include "sto_record_board.h"
 #include "data_handle.h"
-#include "eth_thread.h"
 #include "Record_FileCreate.h"
 
 #define DBG_TAG "FileThread"

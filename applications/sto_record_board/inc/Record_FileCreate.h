@@ -458,15 +458,7 @@ extern uint8_t g_ECU_DevCode;
 #define RUANJIANBANBENBUYIZHI    ( WENBENTISHI & 0x01 )
 
 /* public type definition ---------------------------------------------------------------------- */
-#if 0
-
-/* 最新目录文件信息 */
-typedef struct __attribute__((packed)) {
-    uint32_t u32_file_count;/* 目录个数 */
-    char file_name[];  /* 最新的目录文件名 */
-} S_LATEST_DIR_FILE_INFO;
-
-#else
+#if 1
 
 /* Flash使用状态 */
 typedef struct {
@@ -504,6 +496,8 @@ typedef struct
         char ch_file_name[24]; /* 文件名 */
         char ch_benbuzhuangtai[1]; /* 本补状态 */
         char ch_reserve[3]; /* 预留 */
+        uint8_t file_id;   /* 文件ID */  //TODO(mingzhao) 对接到文件链表中使用
+        uint8_t is_save;     /* 是否转存过  1：转存 0：未转存 */
     } SFile_Directory;
 
 
