@@ -25,8 +25,8 @@
 
 /* 日志最大缓存, 单位:byte. */
 #define LOG_BUFFER_LEN (512)
-/* 单个日志文件最大大小.单位: kbyte.  */
-#define LOG_FILE_MAX_SIZE (512)
+/* 单个日志文件最大大小.单位: KB.  */
+#define LOG_FILE_MAX_SIZE (1024)
 
 /*******************************************************
  * 全局变量
@@ -52,9 +52,10 @@ void log_print(sint32_t level, const char *format, ...)
 {
     va_list args;
     char name[PATH_NAME_MAX_LEN];
-    char log_buffer[LOG_BUFFER_LEN];             /* 为保证线程安全, 采用局部变量. */
-    static sint32_t fd = -1;                     /* 日志文件句柄 */
-    static char cur_log_name[PATH_NAME_MAX_LEN]; /* 当前日志文件的文件名 */
+    char log_buffer[LOG_BUFFER_LEN];                /* 为保证线程安全, 采用局部变量. */
+    static sint32_t fd = -1;                        /* 日志文件句柄 */
+    static char cur_log_name[PATH_NAME_MAX_LEN];    /* 当前日志文件的文件名 */
+    static char cur_logbak_name[PATH_NAME_MAX_LEN]; /* 当前日志文件的文件名 */
     time_t t;
     struct tm *timeinfo = NULL;
 
@@ -76,7 +77,6 @@ void log_print(sint32_t level, const char *format, ...)
     /* 在ulog中记录, LOG_E为线程安全函数. */
     /* LOG_D("%s", log_buffer); */
     rt_kprintf("%s", log_buffer);
-
 
     /* 在日志文件中记录,防止日志信息丢失,每次log都及时写入文件. */
     snprintf(name, sizeof(name), "%s/LY05C_%d-%d.log",
@@ -114,6 +114,25 @@ void log_print(sint32_t level, const char *format, ...)
         if (close(fd) >= 0)
         {
             fd = -1;
+            // 如果文件大于512KB, 则备份文件
+            if (file_size(cur_log_name) > LOG_FILE_MAX_SIZE * 1024)
+            {
+                snprintf(cur_logbak_name,
+                         sizeof(cur_logbak_name),
+                         "%s.bak",
+                         cur_log_name);
+
+                // 检查文件是否存在, 如果存在, 则删除.
+                if (access(cur_logbak_name, F_OK) == 0)
+                {
+                    delete_file(cur_logbak_name);
+                }
+                // 重新命名文件
+                if (rename(cur_log_name, cur_logbak_name) < 0)
+                {
+                    rt_kprintf("bakup file error. \n");
+                }
+            }
         }
     }
     pthread_mutex_unlock(&log_mutex);

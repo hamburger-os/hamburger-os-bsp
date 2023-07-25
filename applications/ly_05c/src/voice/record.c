@@ -237,14 +237,13 @@ static void *record_thread(void *args)
 
     /* 获取声卡配置信息 */
     p_config = pcm_get_config_instance();
-
     if ((rec_mq == RT_NULL) || (rec_ctrl_mq == RT_NULL))
     {
         log_print(LOG_INFO, "record thread start error.\n");
         return NULL;
     }
 
-    log_print(LOG_INFO, "record thread start ok\n");
+    log_print(LOG_INFO, "record thread start ok. \n");
     while (true)
     {
         /* 接收录音控制消息 */
@@ -469,19 +468,9 @@ static void *record_handler_thread(void *arg)
             if (rec_msg_data.cmd == REC_MQ_DATA) /* 接收到数据 */
             {
                 // rt_kprintf(".");
-                // rt_kprintf("recv:%d \n",rec_msg_data.index);
                 src_buf_handled_len = 0;
                 while (true)
                 {
-#if 0
-                    rt_kprintf("buf:%d | handle:% 4d | res:% 4d | encode:% 4d | resp:% 4d |\n",
-                               rec_msg_data.buf_size,
-                               src_buf_handled_len,
-                               rec_msg_data.buf_size - src_buf_handled_len,
-                               encoder_buffer_used,
-                               AMR_FRAME_SRC_DATA_MAX_LEN - encoder_buffer_used
-                               );
-#endif
                     if ((rec_msg_data.buf_size - src_buf_handled_len) <
                         (AMR_FRAME_SRC_DATA_MAX_LEN - encoder_buffer_used))
                     {
@@ -500,18 +489,6 @@ static void *record_handler_thread(void *arg)
                                AMR_FRAME_SRC_DATA_MAX_LEN - encoder_buffer_used);
                         src_buf_handled_len += AMR_FRAME_SRC_DATA_MAX_LEN - encoder_buffer_used;
 
-#if 0
-                        int i = 0;
-                        for (i = 0; i < AMR_FRAME_SRC_DATA_MAX_LEN - 1; ++i)
-                        {
-
-                            ret = encoder_buffer[i + 1] - encoder_buffer[i];
-                            if ((ret != 1) && (ret != -255))
-                            {
-                                printf("%d\n", ret);
-                            }
-                        }
-#endif
                         /* 获取满帧, 进行编码, 并存储数据 */
                         memset(serial_data, 0, AMR_FRAME_MAX_LEN);
 
@@ -539,14 +516,14 @@ static void *record_handler_thread(void *arg)
                             g_cur_rec_file_info.record_datalen += ret;
                         }
                         // rt_kprintf("%d ms ", rt_tick_get_millisecond() - rt_tick);
-                        // fsync(g_cur_rec_file_info.fd);
+                        fsync(g_cur_rec_file_info.fd);
                         // rt_kprintf("%d ms\n", rt_tick_get_millisecond() - rt_tick);
                         encoder_buffer_used = 0;
                     }
                 }
             }
 
-            /* 超过5分钟, 强制停止录音 */
+            /* 超过5分钟 强制停止录音,注意:这个数字不准确, 有些语音帧可能小于VOICE_VALID_LENGTH */
             if (g_cur_rec_file_info.record_datalen >= (VOICE_VALID_LENGTH * 50) * 60 * 5)
             {
                 break;

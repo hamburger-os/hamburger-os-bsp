@@ -370,7 +370,6 @@ static sint32_t copy_file(const char *from, const char *to)
  * @retval 0:成功 非0:失败
  *
  *******************************************************/
-// todo, 增加文件列表大小限制.
 static sint32_t store_file(const char *src, const char *target, sint32_t mode)
 {
     char *name = NULL;
@@ -455,7 +454,55 @@ static sint32_t store_file(const char *src, const char *target, sint32_t mode)
 
     return error;
 }
+/*******************************************************
+ *
+ * @brief  将日志文件(包含日志备份文件)自动转储到U盘中.
+ *
+ * @param  void 无
+ * @retval none 无
+ *
+ *******************************************************/
+void usb_copy_log(void)
+{
+    char log_src[PATH_NAME_MAX_LEN] = {0};
+    char log_dest[PATH_NAME_MAX_LEN] = {0};
 
+    /* 拷贝日志文件 */
+    snprintf(log_src, sizeof(log_src),
+             "%s/LY05C_%d-%d.log",
+             LOG_FILE_PATH,
+             g_locomotive_type,
+             g_locomotive_id);
+    snprintf(log_dest, sizeof(log_dest),
+             "%s/LY05C_%d-%d.log",
+             UDISK_LOG_DIR_NAME,
+             g_locomotive_type,
+             g_locomotive_id);
+    if (access(log_src, F_OK) == 0)
+    {
+        log_print(LOG_INFO, "copy log file '%s' to udisk.\n", log_src);
+        copy_file(log_src, log_dest);
+    }
+
+    /* 拷贝日志备份文件 */
+    snprintf(log_src, sizeof(log_src),
+             "%s/LY05C_%d-%d.log.bak",
+             LOG_FILE_PATH,
+             g_locomotive_type,
+             g_locomotive_id);
+    snprintf(log_dest, sizeof(log_dest),
+             "%s/LY05C_%d-%d.log.bak",
+             UDISK_LOG_DIR_NAME,
+             g_locomotive_type,
+             g_locomotive_id);
+    if (access(log_src, F_OK) == 0)
+    {
+        log_print(LOG_INFO, "copy log bak file '%s' to udisk.\n", log_src);
+        copy_file(log_src, log_dest);
+    }
+    log_print(LOG_INFO, "copy log file successfully. \n");
+    return 0;
+}
 /*******************************************************
  *
  * @brief  将语音文件自动转储到U盘中
@@ -468,8 +515,6 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
 {
     sint32_t udisk_free_space;
     sint32_t voice_size;
-    struct stat stat_l;
-    char logname[PATH_NAME_MAX_LEN];
 
     /* 获取最新语音文件名.*/
     fm_get_file_name(latest_filename, SRC_FILE);
@@ -477,7 +522,7 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
     create_dir(TARGET_DIR_NAME);     /* 在U盘目录中建立语音文件目录 */
     create_dir(YUYIN_BAK_PATH_NAME); /* 建立语音文件的备份的目录 */
 
-    /* step1: 查看所有文件的大小 */
+    /* 查看所有文件的大小 */
     /* U盘的剩余空间大小 */
     udisk_free_space = get_disk_free_space(YUYIN_PATH_NAME);
     /* 所有文件的大小 */
@@ -506,7 +551,7 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
         return (sint32_t)-1;
     }
 
-    /* step2: 转储语音文件 */
+    /* 转储语音文件 */
     if (mode == COPYMODE_ALL) /* 开始转储全部文件 */
     {
         log_print(LOG_INFO, "转储全部语音文件到U盘 ...\n");
@@ -528,7 +573,7 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
         event_push_queue(EVENT_DUMP_START_LAST);
     }
 
-    /* step3:转储日志文件 */
+    /* 转储语音文件 */
     /* 搜索"yysj/目录"下面的所有文件, 把语音文件分别复制到U盘, 并把文件移动到bak子目录中 */
     log_print(LOG_INFO, "开始转储、移动yysj/目录下的文件. \n");
     if (store_file(YUYIN_PATH_NAME, TARGET_DIR_NAME, BACKUP))
@@ -538,19 +583,10 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
         return (sint32_t)-1;
     }
 
-    /* step4:转储日志文件 */
-    /* 增加转储日志文件的功能, 如果发现有日志文件, 则复制到U盘 */
-    snprintf(logname, sizeof(logname),
-             "%s/LY05C_%d-%d.log",
-             LOG_FILE_PATH,
-             g_locomotive_type,
-             g_locomotive_id);
-    if (stat(logname, &stat_l) == 0)
-    {
-        log_print(LOG_ERROR, "转储日志.\n");
-        copy_file(logname, logname);
-    }
+    /* 转储日志文件 */
+    usb_copy_log();
 
+    /* 上报事件 */
     if (mode == COPYMODE_ALL)
     {
         /* 播放语音提示, 转储全部文件完成. */
@@ -561,7 +597,6 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
         /* 播放语音提示,转储最新文件完成 */
         event_push_queue(EVENT_DUMP_END_LAST);
     }
-    log_print(LOG_INFO, "转储完成. \n");
 
     return 0;
 }
