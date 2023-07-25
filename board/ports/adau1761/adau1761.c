@@ -69,10 +69,10 @@ static void adau1761_program(uint16_t addr, uint8_t *data, uint16_t len_u16)
 //    rt_snprintf(addr_str, sizeof(addr_str), "0x%x ->", addr);
 //    LOG_HEX(addr_str, 16, data, len_u16);
 
-    uint8_t i = 0, max = 2;
+    uint8_t i = 0, max = 4;
     for (i = 0; i < max; i++)
     {
-        adau1761_delay_ms(1);
+        adau1761_delay_us(10);
         adau1761_read_reg(addr, cmp, len_u16);
         if (rt_memcmp(data, cmp, len_u16) != 0)
         {
