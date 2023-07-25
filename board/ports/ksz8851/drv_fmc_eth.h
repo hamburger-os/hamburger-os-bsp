@@ -32,6 +32,17 @@ extern "C" {
 #define ETH_ALEN (6)           /** 以太网MAC地址字节数 */
 #define KSZ_MAX_RFRM_THD (255) /** 接收帧最大缓冲数阈值 */
 
+#define LEP_MAC_PKT_MAX_LEN      (1516U)//(1536U)
+
+/** 链路层发送数据结构 */
+typedef struct   /* 接收缓冲区 */
+{
+    struct tagLEP_BUF *pnext;   /* 下一个 */
+    rt_uint16_t          len;       /* 长度 */
+    rt_uint16_t          flag;      /* 收发标志位 */
+    rt_uint8_t           buf[LEP_MAC_PKT_MAX_LEN];
+} KSZ_S_LEP_BUF;
+
 /** 数据包头控制信息结构 */
 typedef struct tagFRAME_HEAD
 {
@@ -80,6 +91,10 @@ struct rt_fmc_eth_port
 
     uint8_t frm_cnt_u8; /** QMU接收缓冲区中接收到的帧数 */
     FRAME_HEAD frame_head[KSZ_MAX_RFRM_THD];
+
+    KSZ_S_LEP_BUF link_layer_buf_tx;
+    void *link_layer_rx;
+    rt_uint16_t link_layer_rx_len;
 };
 
 void fmc_eth_memcpy(void *DstAddress, void *SrcAddress, uint32_t DataLength);

@@ -19,7 +19,9 @@ static void sleepms(uint32_t utick)
  */
 static __inline uint8_t readb(volatile uint8_t *addr)
 {
-    return *(volatile uint8_t *)addr;
+    volatile uint8_t ram;           //防止被优化
+    ram = *addr;
+    return ram;
 }
 
 /**
@@ -28,7 +30,11 @@ static __inline uint8_t readb(volatile uint8_t *addr)
  */
 static __inline uint16_t readw(volatile uint16_t *addr)
 {
-    return *(volatile uint16_t *)addr;
+    volatile uint16_t ram;           //防止被优化
+    ram = *addr;
+    ram = ram;
+    ram = ram;
+    return ram;
 }
 
 /**
@@ -38,7 +44,8 @@ static __inline uint16_t readw(volatile uint16_t *addr)
  */
 static __inline void writew(uint16_t data, volatile uint16_t *addr)
 {
-    *(volatile uint16_t *)addr = data;
+    data = data;      //使用-O2优化的时候,必须插入的延时
+    *addr = data;
 }
 
 /**
@@ -725,6 +732,39 @@ int ks_start_xmit(struct rt_fmc_eth_port *ps_ks, struct pbuf *p)
     return framelength;
 }
 
+/**
+ * ks_start_xmit_link_layer - 链路层发送数据包
+ * @skb     : The buffer to transmit
+ * @netdev  : The device used to transmit the packet.
+ *
+ * Called by the network layer to transmit the @skb.
+ * spin_lock_irqsave is required because tx and rx should be mutual exclusive.
+ * So while tx is in-progress, prevent IRQ interrupt from happenning.
+ */
+int32_t ks_start_xmit_link_layer(struct rt_fmc_eth_port *ps_ks, KSZ_S_LEP_BUF *ps_lep_buf)
+{
+    int32_t retv_i32 = 0;
+
+    while(ks_tx_fifo_space(ps_ks) < ps_lep_buf->len + 12)
+    {
+        rt_thread_delay(1);
+    }
+
+    /* Extra space are required:
+     *  4 byte for alignment, 4 for status/length, 4 for CRC
+     */
+    if (ks_tx_fifo_space(ps_ks) >= ps_lep_buf->len + 12)
+    {
+        ks_write_qmu(ps_ks, ps_lep_buf->buf, ps_lep_buf->len);
+    }
+    else
+    {
+        retv_i32 = -1;
+    }
+
+    return retv_i32;
+}
+
 static unsigned long const ethernet_polynomial = 0x04c11db7U;
 static unsigned long ether_gen_crc(int length, uint8_t *data)
 {
@@ -1013,10 +1053,12 @@ static int32_t ks_probe(struct rt_fmc_eth_port *ps_ks)
     uint16_t data_u16;
     ks_read_config(ps_ks);
     /* simple check for a valid chip being connected to the bus */
-    if ((ks_rdreg16(ps_ks, KSZ8851_CIDER) & ~CIDER_REV_MASK) != CIDER_ID)
+    uint32_t CID = ks_rdreg16(ps_ks, KSZ8851_CIDER);
+    CID = CID & ~CIDER_REV_MASK;
+    if (CID != CIDER_ID)
     {
         err_i32 = -1;
-        LOG_E("probe id err");
+        LOG_E("probe CID: failed %X != %X", CID, CIDER_ID);
     }
     else if (ks_read_selftest(ps_ks))
     {
@@ -1068,7 +1110,7 @@ int ks_init(struct rt_fmc_eth_port *ps_ks)
         return -RT_ERROR;
     }
     /* 网口芯片初始化 0(成功)、-1、-2 */
-    if (0 == ks_probe(ps_ks))
+    if (ks_probe(ps_ks) == 0)
     {
         ks_net_open(ps_ks); // 打开网络设备
         LOG_D("probe succeed.");

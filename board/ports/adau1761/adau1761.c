@@ -93,7 +93,7 @@ static void adau1761_program(uint16_t addr, uint8_t *data, uint16_t len_u16)
 }
 
 /*
- * @brief 设置DSP音量.
+ * @brief 设置输出音量.
  * @param volume - 音量值
  * 经过音频设备驱动转换,音量值为0~100
  */
@@ -116,6 +116,72 @@ void adau1761_set_volume(uint8_t volume)
         .ROUTVOL = vol,
     };
     adau1761_program(ADDR_R32_0x4026_Line_output_right_vol, (uint8_t *)&r32, sizeof(R32_0x4026_Line_output_right_vol));
+}
+
+/*
+ * @brief 设置端口采样率
+ * @param rate - 采样率
+ * 48000 8000 12000 16000 24000 32000 96000
+ */
+void adau1761_set_sampling_rate(uint32_t rate)
+{
+    R17_0x4017_Converter_0 r17 = {
+        .CONVSR = 0b001,
+        .ADOSR = 0,
+        .DAOSR = 0,
+        .DAPAIR = 0,
+    };
+    R57_0x40EB_DSP_sampling_rate_setting r57 = {
+        .DSPSR = 0b0110,
+    };
+    R64_0x40F8_Serial_port_sampling_rate r64 = {
+        .SPSR = 0b001,
+    };
+    if (rate == 8000)
+    {
+        r17.CONVSR = 0b001;
+        r57.DSPSR = 0b0110;
+        r64.SPSR = 0b001;
+    }
+    else if (rate == 12000)
+    {
+        r17.CONVSR = 0b010;
+        r57.DSPSR = 0b0101;
+        r64.SPSR = 0b010;
+    }
+    else if (rate == 16000)
+    {
+        r17.CONVSR = 0b011;
+        r57.DSPSR = 0b0100;
+        r64.SPSR = 0b011;
+    }
+    else if (rate == 24000)
+    {
+        r17.CONVSR = 0b100;
+        r57.DSPSR = 0b0011;
+        r64.SPSR = 0b100;
+    }
+    else if (rate == 32000)
+    {
+        r17.CONVSR = 0b101;
+        r57.DSPSR = 0b0010;
+        r64.SPSR = 0b101;
+    }
+    else if (rate == 48000)
+    {
+        r17.CONVSR = 0b000;
+        r57.DSPSR = 0b0001;
+        r64.SPSR = 0b000;
+    }
+    else if (rate == 96000)
+    {
+        r17.CONVSR = 0b110;
+        r57.DSPSR = 0b0000;
+        r64.SPSR = 0b110;
+    }
+    adau1761_program(ADDR_R17_0x4017_Converter_0, (uint8_t *)&r17, sizeof(R17_0x4017_Converter_0));
+    adau1761_program(ADDR_R57_0x40EB_DSP_sampling_rate_setting, (uint8_t *)&r57, sizeof(R57_0x40EB_DSP_sampling_rate_setting));
+    adau1761_program(ADDR_R64_0x40F8_Serial_port_sampling_rate, (uint8_t *)&r64, sizeof(R64_0x40F8_Serial_port_sampling_rate));
 }
 
 rt_err_t adau1761_player_start()
@@ -161,27 +227,76 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
 
     R0_0x4000_Clock_control r0 = {
         .COREN = 1,
+#ifdef ADAU1761_CLKSRC_MCLK256
+        .INFREQ = 0b00,
+#endif
+#ifdef ADAU1761_CLKSRC_MCLK512
+        .INFREQ = 0b01,
+#endif
+#ifdef ADAU1761_CLKSRC_MCLK768
+        .INFREQ = 0b10,
+#endif
+#ifdef ADAU1761_CLKSRC_MCLK1024
         .INFREQ = 0b11,
+#endif
+#ifdef ADAU1761_CLKSRC_PLL
+        .INFREQ = 0b11,
+#endif
+
+#ifdef ADAU1761_CLKSRC_MCLK
+        .CLKSRC = 0,
+#endif
+#ifdef ADAU1761_CLKSRC_PLL
         .CLKSRC = 1,
+#endif
     };
     adau1761_program(ADDR_R0_0x4000_Clock_control, (uint8_t *)&r0, sizeof(R0_0x4000_Clock_control));
 
     R1_0x4002_PLL_control r1 = {
-#ifdef ADAU1761_MCLK_12288
-        .M = __SWP16(1),
-        .N = __SWP16(0),
-        .X = 0b00,
-        .R = 0b0100,
+#ifdef ADAU1761_MCLK_8
+        .M = __SWP16(125),
+        .N = __SWP16(18),
+        .X = 0b00,//1
+        .R = 0b0110,//6
+        .Type = 1,
 #endif
 #ifdef ADAU1761_MCLK_12
         .M = __SWP16(125),
         .N = __SWP16(12),
-        .X = 0b00,
-        .R = 0b0100,
-#endif
+        .X = 0b00,//1
+        .R = 0b0100,//4
         .Type = 1,
+#endif
+#ifdef ADAU1761_MCLK_12288
+        .M = __SWP16(0),
+        .N = __SWP16(0),
+        .X = 0b00,//1
+        .R = 0b0100,//4
+        .Type = 0,
+#endif
+#ifdef ADAU1761_MCLK_24576
+        .M = __SWP16(0),
+        .N = __SWP16(0),
+        .X = 0b00,//1
+        .R = 0b0010,//2
+        .Type = 0,
+#endif
+#ifdef ADAU1761_CLKSRC_MCLK
+        .M = __SWP16(253),
+        .N = __SWP16(12),
+        .X = 0b00,//1
+        .R = 0b0010,//2
+        .Type = 0,
+#endif
+
+#ifdef ADAU1761_CLKSRC_MCLK
+        .PLLEN = 0,
+        .Lock = 0,
+#endif
+#ifdef ADAU1761_CLKSRC_PLL
         .PLLEN = 1,
         .Lock = 1,
+#endif
     };
     adau1761_program(ADDR_R1_0x4002_PLL_control, (uint8_t *)&r1, sizeof(R1_0x4002_PLL_control));
 
@@ -230,14 +345,14 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
     R8_0x400E_Left_diff_input_vol r8 = {
         .LDEN = 1,
         .LDMUTE = 1,
-        .LDVOL = 0b010100,
+        .LDVOL = 0b110100,
     };
     adau1761_program(ADDR_R8_0x400E_Left_diff_input_vol, (uint8_t *)&r8, sizeof(R8_0x400E_Left_diff_input_vol));
 
     R9_0x400F_Right_diff_input_vol r9 = {
         .RDEN = 1,
         .RDMUTE = 1,
-        .RDVOL = 0b010100,
+        .RDVOL = 0b110100,
     };
     adau1761_program(ADDR_R9_0x400F_Right_diff_input_vol, (uint8_t *)&r9, sizeof(R9_0x400F_Right_diff_input_vol));
 
@@ -249,7 +364,7 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
     adau1761_program(ADDR_R10_0x4010_Record_mic_bias, (uint8_t *)&r10, sizeof(R10_0x4010_Record_mic_bias));
 
     R11_0x4011_ALC_0 r11 = {
-        .ALCSEL = 0b000,
+        .ALCSEL = 0b000,//ALC开关：000 off ;011 Stereo
         .ALCMAX = 0b010,
         .PGASLEW = 0b00,
     };
@@ -269,7 +384,7 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
 
     R14_0x4014_ALC_3 r14 = {
         .NGTHR = 0b10000,
-        .NGEN = 1,
+        .NGEN = 1,//噪声门开关
         .NGTYP = 0b11,
     };
     adau1761_program(ADDR_R14_0x4014_ALC_3, (uint8_t *)&r14, sizeof(R14_0x4014_ALC_3));
@@ -375,15 +490,15 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
     adau1761_program(ADDR_R28_0x4022_Play_L_R_mixer_mono, (uint8_t *)&r28, sizeof(R28_0x4022_Play_L_R_mixer_mono));
 
     R29_0x4023_Play_HP_left_vol r29 = {
-        .HPEN = 0,
-        .LHPM = 0,
+        .HPEN = 1,
+        .LHPM = 1,
         .LHPVOL = 0b111111,
     };
     adau1761_program(ADDR_R29_0x4023_Play_HP_left_vol, (uint8_t *)&r29, sizeof(R29_0x4023_Play_HP_left_vol));
 
     R30_0x4024_Play_HP_right_vol r30 = {
-        .HPMODE = 0,
-        .RHPM = 0,
+        .HPMODE = 1,
+        .RHPM = 1,
         .RHPVOL = 0b111111,
     };
     adau1761_program(ADDR_R30_0x4024_Play_HP_right_vol, (uint8_t *)&r30, sizeof(R30_0x4024_Play_HP_right_vol));
@@ -501,7 +616,7 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
     adau1761_program(ADDR_R51_0x40C9_GPIO3_pin_control, (uint8_t *)&r51, sizeof(R51_0x40C9_GPIO3_pin_control));
 
     R52_0x40D0_Watchdog_enable r52 = {
-        .DOGEN = 0,
+        .DOGEN = 1,
     };
     adau1761_program(ADDR_R52_0x40D0_Watchdog_enable, (uint8_t *)&r52, sizeof(R52_0x40D0_Watchdog_enable));
 

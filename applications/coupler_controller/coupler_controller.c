@@ -87,6 +87,13 @@ static void process_thread_entry(void *parameter)
     Hdlc7c7eFrame_type(frame, 0x2, ID_STATION_POLLING, (uint8_t *)&cmd2, sizeof(cmd2));
     rt_thread_delay(200);
 
+    TYPE_STATION_POLLING cmd3 = {
+        .hook = 0x0,
+        .reserve = 0x7c7e,
+    };
+    Hdlc7c7eFrame_type(frame, 0x2, ID_STATION_POLLING, (uint8_t *)&cmd3, sizeof(cmd3));
+    rt_thread_delay(200);
+
     TYPE_CONTROLLER_ACK ack1 = {
         .distance_h = 123456,
         .distance_l = 123,

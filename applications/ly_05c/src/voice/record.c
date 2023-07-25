@@ -49,7 +49,7 @@
 #define REC_MQ_DATA 3
 
 /* 电平触发还是引脚触发, 1:代表电平触发的方式, 0:代表边沿触发. */
-#define PIN_LEVEL_TRIGGER 1
+#define PIN_LEVEL_TRIGGER 0
 
 /*******************************************************
  * 数据结构
@@ -244,7 +244,7 @@ static void *record_thread(void *args)
 
     /* 获取声卡配置信息 */
     p_config = pcm_get_config_instance();
-    if ((rec_mq == RT_NULL) || (rec_ctrl_mq == RT_NULL))
+    if ((rec_mq == RT_NULL) /*|| (rec_ctrl_mq == RT_NULL)*/)
     {
         log_print(LOG_INFO, "record thread start error.\n");
         return NULL;
@@ -384,7 +384,7 @@ static void *record_thread(void *args)
                 {
                     // rt_kprintf("*");
                 }
-#if 0
+#if !PIN_LEVEL_TRIGGER
                 /* 接收录音控制消息, 采用非阻塞方式. */
                 ret = rt_mq_recv(rec_ctrl_mq, (void *)&rec_ctrl_msg, sizeof(sint32_t), (rt_int32_t)RT_WAITING_NO);
                 if (ret != RT_EOK)

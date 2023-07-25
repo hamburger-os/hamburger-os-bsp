@@ -170,6 +170,7 @@ static void norflash_hard_reset(void)
     rt_pin_write(pin, PIN_LOW);
     rt_thread_delay(10);
     rt_pin_write(pin, PIN_HIGH);
+    rt_thread_delay(10);
 }
 
 static int fal_nor_init(void)
@@ -193,13 +194,16 @@ static int fal_nor_init(void)
                 && pNOR_ID.Device_Code2 == NORFLASH_DEVICE_CODE2
                 && pNOR_ID.Device_Code3 == NORFLASH_DEVICE_CODE3)
         {
-            LOG_I("init succeed, Code : %x %x %x %x len %d MB"
+            LOG_I("init succeed, Code : 0x%04x %04x %04x %04x len %d MB"
                     , pNOR_ID.Manufacturer_Code, pNOR_ID.Device_Code1, pNOR_ID.Device_Code2, pNOR_ID.Device_Code3, nor_flash.len/1024/1024);
         }
         else
         {
-            LOG_W("init warning, Code : %x %x %x %x len %d MB"
-                    , pNOR_ID.Manufacturer_Code, pNOR_ID.Device_Code1, pNOR_ID.Device_Code2, pNOR_ID.Device_Code3, nor_flash.len/1024/1024);
+            LOG_W("init warning, Code : 0x%04x(%04x) %04x(%04x) %04x(%04x) %04x(%04x) len %d MB"
+                    , pNOR_ID.Manufacturer_Code, NORFLASH_MANUFACTURER_CODE
+                    , pNOR_ID.Device_Code1, NORFLASH_DEVICE_CODE1
+                    , pNOR_ID.Device_Code2, NORFLASH_DEVICE_CODE2
+                    , pNOR_ID.Device_Code3, NORFLASH_DEVICE_CODE3, nor_flash.len/1024/1024);
         }
     }
 
@@ -399,7 +403,6 @@ static int fal_nor_erase(long offset, size_t size)
             rt_mutex_release(&hnor_mutex);
             return 0;
         }
-//        rt_thread_delay(500);
 
         //TODO: 需要优化为调度器等待
         /* Return the NOR memory status */

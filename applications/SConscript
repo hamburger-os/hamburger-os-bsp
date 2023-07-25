@@ -73,6 +73,9 @@ if GetDepend('BSP_USING_UDP_SERVER'):
     
 if GetDepend('BSP_USING_DSP_EXAMPLE'):
     src += Glob('dsp_test.c')
+    
+if GetDepend('BSP_USING_LINK_LAYER_COMM_TEST'):
+    src += Glob('linklayer_test.c')
         
 group = DefineGroup('Applications', src, depend = [''], CPPPATH = CPPPATH)
 

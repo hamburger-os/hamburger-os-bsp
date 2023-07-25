@@ -5,9 +5,9 @@
  *
  * Change Logs:
  * Date           Author       Notes
- * 2023-06-24     MingZhao       the first version
+ * 2023-06-24     zm       the first version
  */
-#include "led_ctrl.h"
+#include "led.h"
 
 #include <rtthread.h>
 #include <rtdevice.h>

@@ -15,6 +15,8 @@
 #include <netif/ethernetif.h>
 #include "ksz8851.h"
 
+#include <string.h>
+
 #define DBG_TAG "drv.eth"
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
@@ -99,10 +101,10 @@ static void MX_FMC_Init(uint32_t NSBank)
     hsram.Init.ContinuousClock = FMC_CONTINUOUS_CLOCK_SYNC_ONLY;
     hsram.Init.PageSize = FMC_PAGE_SIZE_NONE;
     /* Timing */
-    Timing.AddressSetupTime = 4;
+    Timing.AddressSetupTime = BSP_USING_KSZ8851_ADDRESSSETUPTIME;
     Timing.AddressHoldTime = 15;
-    Timing.DataSetupTime = 20;
-    Timing.BusTurnAroundDuration = 8;
+    Timing.DataSetupTime = BSP_USING_KSZ8851_DATASETUPTIME;
+    Timing.BusTurnAroundDuration = BSP_USING_KSZ8851_BUSTURNAROUNDDURATION;
     Timing.CLKDivision = 16;
     Timing.DataLatency = 17;
     Timing.AccessMode = FMC_ACCESS_MODE_A;
@@ -140,10 +142,10 @@ static void MX_FMC_Init(uint32_t NSBank)
     hsram.Init.WriteFifo = FMC_WRITE_FIFO_ENABLE;
     hsram.Init.PageSize = FMC_PAGE_SIZE_NONE;
     /* Timing */
-    Timing.AddressSetupTime = 4;
+    Timing.AddressSetupTime = BSP_USING_KSZ8851_ADDRESSSETUPTIME;
     Timing.AddressHoldTime = 15;
-    Timing.DataSetupTime = 20;
-    Timing.BusTurnAroundDuration = 8;
+    Timing.DataSetupTime = BSP_USING_KSZ8851_DATASETUPTIME;
+    Timing.BusTurnAroundDuration = BSP_USING_KSZ8851_BUSTURNAROUNDDURATION;
     Timing.CLKDivision = 16;
     Timing.DataLatency = 17;
     Timing.AccessMode = FMC_ACCESS_MODE_A;
@@ -151,7 +153,7 @@ static void MX_FMC_Init(uint32_t NSBank)
 
     if (HAL_SRAM_Init(&hsram, &Timing, NULL) != HAL_OK)
     {
-        Error_Handler( );
+        Error_Handler();
     }
 #endif
 }
@@ -219,14 +221,45 @@ static rt_err_t fmc_eth_close(rt_device_t dev)
 
 static rt_size_t fmc_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t size)
 {
-    rt_set_errno(-RT_ENOSYS);
-    return 0;
+    struct rt_fmc_eth_port *fmc_eth = dev->user_data;
+    rt_uint16_t read_size = 0;
+
+    if(size > fmc_eth->link_layer_rx_len)
+    {
+        read_size = fmc_eth->link_layer_rx_len;
+    }
+    else
+    {
+        read_size = size;
+    }
+    memcpy(buffer, fmc_eth->link_layer_rx, read_size);
+    return read_size;
 }
 
 static rt_size_t fmc_eth_write(rt_device_t dev, rt_off_t pos, const void *buffer, rt_size_t size)
 {
-    rt_set_errno(-RT_ENOSYS);
-    return 0;
+    struct rt_fmc_eth_port *fmc_eth = dev->user_data;
+    rt_uint16_t tx_size = 0;
+
+    memset(&fmc_eth->link_layer_buf_tx, 0, sizeof(KSZ_S_LEP_BUF));
+    if(size > LEP_MAC_PKT_MAX_LEN)
+    {
+        tx_size = LEP_MAC_PKT_MAX_LEN;
+    }
+    else
+    {
+        tx_size = size;
+    }
+    memcpy(fmc_eth->link_layer_buf_tx.buf, buffer, tx_size);
+    fmc_eth->link_layer_buf_tx.len = tx_size;
+
+    if (ks_start_xmit_link_layer(fmc_eth, &fmc_eth->link_layer_buf_tx) != 0)
+    {
+        LOG_D("link layer write error");
+        return 0;
+    }
+
+    return tx_size;
 }
 
 static rt_err_t fmc_eth_control(rt_device_t dev, int cmd, void *args)
@@ -294,6 +327,12 @@ struct pbuf *fmc_eth_rx(rt_device_t dev)
     rt_mutex_take(&fmc_eth->eth_mux, RT_WAITING_FOREVER);
 
     p = ks_irq(fmc_eth);
+    if(dev->rx_indicate != NULL)
+    {
+        fmc_eth->link_layer_rx = p->payload;
+        fmc_eth->link_layer_rx_len = p->len;
+        dev->rx_indicate(dev, p->len);
+    }
 
 #ifdef BSP_USING_KSZ8851_RX_DUMP
     if (p != NULL)
@@ -376,5 +415,37 @@ static int rt_fmc_eth_init(void)
     return state;
 }
 INIT_DEVICE_EXPORT(rt_fmc_eth_init);
+
+#include <netdev.h>       /* 当需要网卡操作是，需要包含这两个头文件 */
+
+static int netdev_set_default_test(int argc, char **argv)
+{
+    struct netdev *netdev = RT_NULL;
+
+    if (argc != 2)
+    {
+        LOG_E("netdev_set_default [netdev_name]   --set default network interface device.");
+        return -1;
+    }
+
+    /* 通过网卡名称获取网卡对象，名称可以通过 ifconfig 命令查看 */
+    netdev = netdev_get_by_name(argv[1]);
+    if (netdev == RT_NULL)
+    {
+        LOG_E("not find network interface device name(%s).", argv[1]);
+        return -1;
+    }
+
+    /* 设置默认网卡对象 */
+    netdev_set_default(netdev);
+
+    LOG_I("set default network interface device(%s) success.", argv[1]);
+    return 0;
+}
+#ifdef FINSH_USING_MSH
+#include <finsh.h>
+/* 导出命令到 FinSH 控制台 */
+MSH_CMD_EXPORT_ALIAS(netdev_set_default_test, netdev_set_default, set default network interface device);
+#endif /* FINSH_USING_MSH */
 
 #endif

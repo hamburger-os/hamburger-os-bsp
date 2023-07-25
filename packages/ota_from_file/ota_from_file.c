@@ -356,7 +356,7 @@ static void ota_thread_entry(void* parameter)
 
     while(1)
     {
-        rt_thread_delay(500);
+        rt_thread_delay(1000);
 
         ops->dev = rt_device_find(ops->devname);
         if (ops->devsta == 0 && ops->dev != NULL)
@@ -364,7 +364,7 @@ static void ota_thread_entry(void* parameter)
             LOG_D("dev in.");
             ops->devsta = 1;
             ops->updatesta = ReadyToUpdate;
-            rt_thread_delay(200);//确保文件系统挂载
+            rt_thread_delay(500);//确保文件系统挂载
         }
         if (ops->devsta == 1 && ops->dev == NULL)
         {
@@ -450,7 +450,7 @@ static int ota_from_file_init(void)
         LOG_E("cmprs_buf malloc error!");
     }
     /* 创建线程 */
-    rt_thread_t thread = rt_thread_create("ota_file", ota_thread_entry, &ota_from_file, 3072, 27, 10);
+    rt_thread_t thread = rt_thread_create("ota_file", ota_thread_entry, &ota_from_file, 3072, 28, 10);
     /* 创建成功则启动线程 */
     if (thread != RT_NULL)
     {
@@ -459,7 +459,7 @@ static int ota_from_file_init(void)
 
     return RT_EOK;
 }
-INIT_ENV_EXPORT(ota_from_file_init);
+INIT_APP_EXPORT(ota_from_file_init);
 
 RT_WEAK void ota_from_file_handle(OtaHandleTypeDef type)
 {

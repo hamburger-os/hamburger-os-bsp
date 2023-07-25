@@ -195,6 +195,7 @@ static rt_err_t fm25xx_readDeviceID(struct FM25xxDeviceIDDef *id)
     }
     else
     {
+        LOG_HEX("id", 16, (uint8_t *)id, sizeof(struct FM25xxDeviceIDDef));
         LOG_E("init failed! read id 0x%lx%lx != 0x%lx%lx"
                 , (uint32_t)(id->ManufacturerID >> 32), (uint32_t)id->ManufacturerID
                 , (uint32_t)(FM25xx_ManufacturerID >> 32), (uint32_t)FM25xx_ManufacturerID);
@@ -281,12 +282,10 @@ static rt_err_t fm25xx_writeStatus(union FM25xxStatusDef status)
     return ret;
 }
 
-static int fal_fram_init(void)
+static char dev_name[RT_NAME_MAX];
+static int fram_spi_device_init(void)
 {
-    rt_err_t ret = RT_EOK;
-
     rt_uint8_t dev_num = 0;
-    char dev_name[RT_NAME_MAX];
     do
     {
         rt_snprintf(dev_name, RT_NAME_MAX, "%s%d", BSP_FM25xx_SPI_BUS, dev_num++);
@@ -308,12 +307,19 @@ static int fal_fram_init(void)
     cfg.data_width = 8;
     cfg.mode = RT_SPI_MASTER | RT_SPI_MODE_0 | RT_SPI_MSB;
     cfg.max_hz = BSP_FM25xx_SPI_SPEED;
-    ret = rt_spi_configure(fm25xx_spidev, &cfg);
-    if (ret != RT_EOK)
+    if (rt_spi_configure(fm25xx_spidev, &cfg) != RT_EOK)
     {
-        LOG_E("device %s configure error %d!", dev_name, ret);
+        LOG_E("device %s configure error!", dev_name);
         return -RT_EIO;
     }
+
+    return RT_EOK;
+}
+INIT_PREV_EXPORT(fram_spi_device_init);
+
+static int fal_fram_init(void)
+{
+    rt_err_t ret = RT_EOK;
 
     struct FM25xxDeviceIDDef id = {0};
     ret = fm25xx_readDeviceID(&id);

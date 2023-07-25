@@ -69,6 +69,8 @@ void Error_Handler(void);
 #define PHY_RST_GPIO_Port GPIOH
 #define FLASH_RST_Pin GPIO_PIN_7
 #define FLASH_RST_GPIO_Port GPIOC
+#define EMMC_CTRL_Pin GPIO_PIN_10
+#define EMMC_CTRL_GPIO_Port GPIOG
 
 /* USER CODE BEGIN Private defines */
 

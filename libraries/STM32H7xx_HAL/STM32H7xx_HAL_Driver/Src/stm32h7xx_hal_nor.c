@@ -1048,6 +1048,7 @@ HAL_StatusTypeDef HAL_NOR_Erase_Block(NOR_HandleTypeDef *hnor, uint32_t BlockAdd
     return HAL_ERROR;
   }
 
+  HAL_Delay(550);
   return status;
 
 }

@@ -468,7 +468,7 @@ static void MX_I2S2_Init(void)
   hi2s2.Instance = SPI2;
   hi2s2.Init.Mode = I2S_MODE_MASTER_TX;
   hi2s2.Init.Standard = I2S_STANDARD_PHILIPS;
-  hi2s2.Init.DataFormat = I2S_DATAFORMAT_16B;
+  hi2s2.Init.DataFormat = I2S_DATAFORMAT_16B_EXTENDED;
   hi2s2.Init.MCLKOutput = I2S_MCLKOUTPUT_ENABLE;
   hi2s2.Init.AudioFreq = I2S_AUDIOFREQ_8K;
   hi2s2.Init.CPOL = I2S_CPOL_LOW;
@@ -1032,10 +1032,10 @@ static void MX_FMC_Init(void)
   hsram4.Init.ContinuousClock = FMC_CONTINUOUS_CLOCK_SYNC_ONLY;
   hsram4.Init.PageSize = FMC_PAGE_SIZE_NONE;
   /* Timing */
-  Timing.AddressSetupTime = 15;
+  Timing.AddressSetupTime = 4;
   Timing.AddressHoldTime = 15;
-  Timing.DataSetupTime = 255;
-  Timing.BusTurnAroundDuration = 15;
+  Timing.DataSetupTime = 20;
+  Timing.BusTurnAroundDuration = 8;
   Timing.CLKDivision = 16;
   Timing.DataLatency = 17;
   Timing.AccessMode = FMC_ACCESS_MODE_A;
@@ -1056,7 +1056,7 @@ static void MX_FMC_Init(void)
   hsdram2.Init.MemoryDataWidth = FMC_SDRAM_MEM_BUS_WIDTH_16;
   hsdram2.Init.InternalBankNumber = FMC_SDRAM_INTERN_BANKS_NUM_4;
   hsdram2.Init.CASLatency = FMC_SDRAM_CAS_LATENCY_1;
-  hsdram2.Init.WriteProtection = FMC_SDRAM_WRITE_PROTECTION_DISABLE;
+  hsdram2.Init.WriteProtection = FMC_SDRAM_WRITE_PROTECTION_ENABLE;
   hsdram2.Init.SDClockPeriod = FMC_SDRAM_CLOCK_DISABLE;
   hsdram2.Init.ReadBurst = FMC_SDRAM_RBURST_DISABLE;
   hsdram2.Init.ReadPipeDelay = FMC_SDRAM_RPIPE_DELAY_0;

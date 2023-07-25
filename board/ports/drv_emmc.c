@@ -13,6 +13,7 @@
 
 #ifdef BSP_USING_EMMC
 #include "fal_cfg.h"
+#include "drv_fal.h"
 
 #define DBG_TAG "drv.emmc"
 #define DBG_LVL DBG_INFO
@@ -274,7 +275,7 @@ static void MX_SDIO_MMC_Init(void)
     emmc_obj.hmmc.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_DISABLE;
     emmc_obj.hmmc.Init.BusWide = SDMMC_BUS_WIDE_1B;
     emmc_obj.hmmc.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_DISABLE;
-    emmc_obj.hmmc.Init.ClockDiv = 3;
+    emmc_obj.hmmc.Init.ClockDiv = 2;
     if (HAL_MMC_Init(&emmc_obj.hmmc) != HAL_OK)
     {
         Error_Handler();
@@ -321,12 +322,12 @@ static int Wait_MMCCARD_Ready(void)
 }
 
 static int fal_emmc_init(void);
-static int fal_emmc_read(long offset, rt_uint8_t *buf, size_t size);
-static int fal_emmc_write(long offset, const rt_uint8_t *buf, size_t size);
-static int fal_emmc_erase(long offset, size_t size);
+static uint32_t fal_emmc_read(uint64_t offset, uint8_t *buf, uint32_t size);
+static uint32_t fal_emmc_write(uint64_t offset, const uint8_t *buf, uint32_t size);
+static uint32_t fal_emmc_erase(uint64_t offset, uint32_t size);
 
 /* ===================== Flash device Configuration ========================= */
-struct fal_flash_dev emmc_flash =
+struct fal_flash64_dev emmc_flash =
 {
     .name = EMMC_DEV_NAME,
     .addr = EMMC_START_ADRESS,
@@ -378,11 +379,7 @@ static int fal_emmc_init(void)
         Error_Handler();
     }
     emmc_flash.blk_size = CardInfo.LogBlockSize;
-    //最大支持到4GB
-    if (CardInfo.LogBlockNbr > 0xffffffff/CardInfo.LogBlockSize)
-        emmc_flash.len = 0xffffffff;
-    else
-        emmc_flash.len = CardInfo.LogBlockNbr * CardInfo.LogBlockSize;
+    emmc_flash.len = (uint64_t)CardInfo.LogBlockNbr * CardInfo.LogBlockSize;
 
     //触发心跳读取(当数据引脚有上拉时，不再需要心跳读取即可保持总线正确)
     rt_thread_t emmc_thread = rt_thread_create( "emmc",
@@ -396,35 +393,33 @@ static int fal_emmc_init(void)
         rt_thread_startup(emmc_thread);
     }
 
-    LOG_I("init succeed %d MB [ %d block ] --> %d MB [ %d block ]"
-        , CardInfo.LogBlockNbr / 1024 * CardInfo.LogBlockSize / 1024
-        , CardInfo.LogBlockSize
-        , emmc_flash.len / 1024 / 1024
+    LOG_I("init succeed %d MB [ %d block ]"
+        , (uint32_t)(emmc_flash.len / 1024 / 1024)
         , emmc_flash.blk_size);
 
     return RT_EOK;
 }
 
-static int fal_emmc_read(long offset, rt_uint8_t *buffer, size_t size)
+static uint32_t fal_emmc_read(uint64_t offset, uint8_t *buffer, uint32_t size)
 {
     rt_mutex_take(&emmc_obj.hmmc_mutex, RT_WAITING_FOREVER);
     HAL_StatusTypeDef ret = HAL_OK;
-    uint32_t addr = emmc_flash.addr + offset;
+    uint64_t addr = emmc_flash.addr + offset;
     if (addr + size > emmc_flash.addr + emmc_flash.len)
     {
-        LOG_E("read outrange flash size! addr is (0x%p)", (void*)(addr + size));
+        LOG_E("read outrange flash size! addr is (0x%x %x)", (uint32_t)((addr + size) >> 32), (uint32_t)(addr + size));
         rt_mutex_release(&emmc_obj.hmmc_mutex);
         return -RT_EINVAL;
     }
     if (size < emmc_flash.blk_size)
     {
-        LOG_W("read size %d! addr is (0x%p)", size, (void*)(addr + size));
+        LOG_W("read size %d! addr is (0x%x %x)", size, (uint32_t)((addr + size) >> 32), (uint32_t)(addr + size));
         rt_mutex_release(&emmc_obj.hmmc_mutex);
         return 0;
     }
-    LOG_D("read (0x%p) %d", (void*)(addr), size);
+    LOG_D("read (0x%x %x) %d", (uint32_t)(addr) >> 32, (uint32_t)(addr), size);
 
-    uint32_t blk_addr = addr/emmc_flash.blk_size;
+    uint64_t blk_addr = addr/emmc_flash.blk_size;
     uint32_t blk_size = size/emmc_flash.blk_size;
 
 #if defined(BSP_SDIO_RX_USING_DMA) || defined(SOC_SERIES_STM32H7)
@@ -484,26 +479,26 @@ static int fal_emmc_read(long offset, rt_uint8_t *buffer, size_t size)
     return size;
 }
 
-static int fal_emmc_write(long offset, const rt_uint8_t *buffer, size_t size)
+static uint32_t fal_emmc_write(uint64_t offset, const rt_uint8_t *buffer, uint32_t size)
 {
     rt_mutex_take(&emmc_obj.hmmc_mutex, RT_WAITING_FOREVER);
     HAL_StatusTypeDef ret = HAL_OK;
-    uint32_t addr = emmc_flash.addr + offset;
+    uint64_t addr = emmc_flash.addr + offset;
     if (addr + size > emmc_flash.addr + emmc_flash.len)
     {
-        LOG_E("write outrange flash size! addr is (0x%p)", (void*)(addr + size));
+        LOG_E("write outrange flash size! addr is (0x%x %x)", (uint32_t)((addr + size) >> 32), (uint32_t)(addr + size));
         rt_mutex_release(&emmc_obj.hmmc_mutex);
         return -RT_EINVAL;
     }
     if (size < emmc_flash.blk_size)
     {
-        LOG_W("write size %d! addr is (0x%p)", size, (void*)(addr + size));
+        LOG_W("write size %d! addr is (0x%x %x)", size, (uint32_t)((addr + size) >> 32), (uint32_t)(addr + size));
         rt_mutex_release(&emmc_obj.hmmc_mutex);
         return 0;
     }
-    LOG_D("write (0x%p) %d", (void*)(addr), size);
+    LOG_D("write (0x%x %x) %d", (uint32_t)(addr) >> 32, (uint32_t)(addr), size);
 
-    uint32_t blk_addr = addr/emmc_flash.blk_size;
+    uint64_t blk_addr = addr/emmc_flash.blk_size;
     uint32_t blk_size = size/emmc_flash.blk_size;
 
 #if defined(BSP_SDIO_TX_USING_DMA) || defined(SOC_SERIES_STM32H7)
@@ -562,23 +557,23 @@ static int fal_emmc_write(long offset, const rt_uint8_t *buffer, size_t size)
     return size;
 }
 
-static int fal_emmc_erase(long offset, size_t size)
+static uint32_t fal_emmc_erase(uint64_t offset, uint32_t size)
 {
     rt_mutex_take(&emmc_obj.hmmc_mutex, RT_WAITING_FOREVER);
-    rt_uint32_t addr = emmc_flash.addr + offset;
+    uint64_t addr = emmc_flash.addr + offset;
     if ((addr + size) > emmc_flash.addr + emmc_flash.len)
     {
-        LOG_E("erase outrange flash size! addr is (0x%p)", (void*)(addr + size));
+        LOG_E("erase outrange flash size! addr is (0x%x %x)", (uint32_t)((addr + size) >> 32), (uint32_t)(addr + size));
         rt_mutex_release(&emmc_obj.hmmc_mutex);
         return -RT_EINVAL;
     }
     if (size < emmc_flash.blk_size)
     {
-        LOG_W("erase size %d! addr is (0x%p)", size, (void*)(addr + size));
+        LOG_W("erase size %d! addr is (0x%x %x)", size, (uint32_t)((addr + size) >> 32), (uint32_t)(addr + size));
         rt_mutex_release(&emmc_obj.hmmc_mutex);
         return 0;
     }
-    LOG_D("erase (0x%p) %d", (void*)(addr), size);
+    LOG_D("erase (0x%x %x) %d", (uint32_t)(addr) >> 32, (uint32_t)(addr), size);
 
     rt_mutex_release(&emmc_obj.hmmc_mutex);
     return size;

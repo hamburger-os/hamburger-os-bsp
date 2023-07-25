@@ -186,6 +186,7 @@ sint32_t ly_05c_main(void)
     sint32_t ret = 0;
     pthread_t main_tid;
     pthread_attr_t pthread_attr_data;
+    return 0;
 
     /* 创建主线程 */
     pthread_attr_init(&pthread_attr_data);
