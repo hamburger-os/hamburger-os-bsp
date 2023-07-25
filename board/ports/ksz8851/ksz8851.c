@@ -32,6 +32,8 @@ static __inline uint16_t readw(volatile uint16_t *addr)
 {
     volatile uint16_t ram;           //防止被优化
     ram = *addr;
+    ram = ram;
+    ram = ram;
     return ram;
 }
 

@@ -366,39 +366,39 @@ void MX_I2S_Init(void)
         Error_Handler();
     }
 
-#ifdef SOC_SERIES_STM32H7
-    RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
-
-    /** Initializes the peripherals clock
-    */
-    PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SPI3|RCC_PERIPHCLK_SPI2
-                              |RCC_PERIPHCLK_SPI1|RCC_PERIPHCLK_CKPER;
-    PeriphClkInitStruct.PLL2.PLL2M = 25;
-    PeriphClkInitStruct.PLL2.PLL2N = 192;
-    PeriphClkInitStruct.PLL2.PLL2P = 3;
-    PeriphClkInitStruct.PLL2.PLL2Q = 1;
-    PeriphClkInitStruct.PLL2.PLL2R = 1;
-    PeriphClkInitStruct.PLL2.PLL2RGE = RCC_PLL2VCIRANGE_0;
-    PeriphClkInitStruct.PLL2.PLL2VCOSEL = RCC_PLL2VCOWIDE;
-    PeriphClkInitStruct.PLL2.PLL2FRACN = 0;
-    PeriphClkInitStruct.CkperClockSelection = RCC_CLKPSOURCE_HSE;
-    PeriphClkInitStruct.Spi123ClockSelection = RCC_SPI123CLKSOURCE_PLL2;
-    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
-    {
-        Error_Handler();
-    }
-#else
-    RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = { 0 };
-    /** Initializes the peripherals clock
-     */
-    PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_I2S;
-    PeriphClkInitStruct.PLLI2S.PLLI2SN = 192;
-    PeriphClkInitStruct.PLLI2S.PLLI2SR = 3;
-    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
-    {
-        Error_Handler();
-    }
-#endif
+//#ifdef SOC_SERIES_STM32H7
+//    RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
+//
+//    /** Initializes the peripherals clock
+//    */
+//    PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SPI3|RCC_PERIPHCLK_SPI2
+//                              |RCC_PERIPHCLK_SPI1|RCC_PERIPHCLK_CKPER;
+//    PeriphClkInitStruct.PLL2.PLL2M = 25;
+//    PeriphClkInitStruct.PLL2.PLL2N = 192;
+//    PeriphClkInitStruct.PLL2.PLL2P = 3;
+//    PeriphClkInitStruct.PLL2.PLL2Q = 1;
+//    PeriphClkInitStruct.PLL2.PLL2R = 1;
+//    PeriphClkInitStruct.PLL2.PLL2RGE = RCC_PLL2VCIRANGE_0;
+//    PeriphClkInitStruct.PLL2.PLL2VCOSEL = RCC_PLL2VCOWIDE;
+//    PeriphClkInitStruct.PLL2.PLL2FRACN = 0;
+//    PeriphClkInitStruct.CkperClockSelection = RCC_CLKPSOURCE_HSE;
+//    PeriphClkInitStruct.Spi123ClockSelection = RCC_SPI123CLKSOURCE_PLL2;
+//    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+//    {
+//        Error_Handler();
+//    }
+//#else
+//    RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = { 0 };
+//    /** Initializes the peripherals clock
+//     */
+//    PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_I2S;
+//    PeriphClkInitStruct.PLLI2S.PLLI2SN = 192;
+//    PeriphClkInitStruct.PLLI2S.PLLI2SR = 3;
+//    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+//    {
+//        Error_Handler();
+//    }
+//#endif
 
     /* I2S interrupt Init */
 #ifdef BSP_USING_I2S1
