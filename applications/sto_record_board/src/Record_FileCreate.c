@@ -16,9 +16,20 @@
 //#include "s25fl256s.h"      //TODO(mingzhao)
 #include <rtthread.h>
 
+#include <stdio.h>
+#include <string.h>
+#include <pthread.h>
+#include <sys/stat.h>
+#include <sys/fcntl.h>
+
+#include "utils.h"
+
+#include "sto_record_board.h"
+
 #define DBG_TAG "FileCreat"
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
+
 
 /* private macro definition -------------------------------------------------------------------- */
 /* 写文件头标志 */
@@ -336,16 +347,18 @@ static RecordingMessage  msgRecording =\
 #if 1
 /* private function declaration ---------------------------------------------------------------- */
 static uint8_t Record_Condition_Judge(void);
-static void Creat_FileHead(void);
+static rt_err_t Creat_FileHead(S_CURRENT_FILE_INFO *current_file_info);
 static void Get_Gonggongxinxi( void );
 static void WriteFileContantPkt( uint8_t num1, uint8_t num2, uint8_t device_code, uint8_t *contant, uint8_t lenth );
 static void WriteGonggongxinxiPkt( void );
 static void Get_FileName(SFile_Directory *directory );
 static void Check_FlashState( void );
 static void Get_FileContant( void );
-static void Init_FileDirectory( void );
+static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info);
 static uint8_t Init_GonggongxinxiState( void );
 static void Update_FileHead(void);
+static sint32_t fm_write_record_file_head(S_CURRENT_FILE_INFO *current_file_info);
+static sint32_t fm_modify_record_file_head(S_CURRENT_FILE_INFO *current_file_info);
 static void File_Erase( uint32_t addr );
 static void Update_gongyoucanshu( void );
 
@@ -514,27 +527,34 @@ static void RecordingCommunicatWithECUMessage(void);
 ** @brief: RecordBoard_DataProc
 ** @param: null
 ********************************************************************************************/
+S_CURRENT_FILE_INFO s_current_file_info;
 void RecordBoard_FileCreate(void)
 {
+    S_CURRENT_FILE_INFO *current_file_info = &s_current_file_info;
+    current_file_info->file_dir = &s_File_Directory;
+    char full_path[PATH_NAME_MAX_LEN] = {0};
+
     /* 1000ms循环检测 */
     static uint32_t Directory_time = 0u;
-    uint32_t File_time = 0u;
+//    uint32_t File_time = 0u;
+    static uint32_t File_time = 0u;
 
     if (Common_BeTimeOutMN(&Directory_time, 1000u))
     {
-        Init_FileDirectory();
+        Init_FileDirectory(current_file_info);
     } /* end if */
 
     /* 100ms循环检测 */
     if (Common_BeTimeOutMN(&File_time, 100u))
     {
-        Creat_FileHead();
+        Creat_FileHead(current_file_info);
         Get_FileContant();
     } /* end if */
 
     /* 公共信息发生变化或者周期标志到，将已有记录事件封包存入flash */
     if ((Init_GonggongxinxiState() || SoftWare_Cycle_Flag) && (write_buf.pos > 40U))
     {
+        LOG_I("Init_GonggongxinxiState");
         Update_gongyoucanshu();
         /* 添加数据包头及公共信息 */
         WriteGonggongxinxiPkt();
@@ -554,62 +574,23 @@ void RecordBoard_FileCreate(void)
         write_buf.buf[u16_FFFE_Encode_length + 3U] = 0xFF;
         write_buf.buf[u16_FFFE_Encode_length + 4U] = 0xFD;
 
-        /* 写入FLASH */
+        /* 文件大小 */
         s_File_Directory.u32_file_size += (u16_FFFE_Encode_length + 5U);
 
-        /*change by duyanpo 20201129*/
-        if ((Flash_Addr + u16_FFFE_Encode_length + 5U) < FLASH_RecordFile_MAX_ADDR)
+        /* 写入文件 */
+        snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, s_File_Directory.ch_file_name);
+        if(FMAppendWrite(full_path, (const void *)write_buf.buf, (u16_FFFE_Encode_length + 5U)) < 0)
         {
-            Check_FlashState();
-            S25FL256S_AnyByteWrite(write_buf.buf, (u16_FFFE_Encode_length + 5U), Flash_Addr);
-
-            /* 计算写入内容的CRC值 用于更新文件头内文件内容CRC值*/
-            FileContent_CRC32 = CRC32CCITT((uint8_t *) write_buf.buf, u16_FFFE_Encode_length + 5U, FileContent_CRC32);
-            Flash_Addr += (u16_FFFE_Encode_length + 5U);
+            LOG_E("%s append len %d error", full_path, (u16_FFFE_Encode_length + 5U));
         }
-        else
-        {
-            uint32_t Flash_rest_size = 0;
-            Flash_rest_size = FLASH_RecordFile_MAX_ADDR - Flash_Addr;
 
-            /* 先写入flash剩余空间长度数据 */
-            S25FL256S_AnyByteWrite(write_buf.buf, Flash_rest_size, Flash_Addr);
+        /* 计算写入内容的CRC值 用于更新文件头内文件内容CRC值*/
+        FileContent_CRC32 = CRC32CCITT((uint8_t *) write_buf.buf, u16_FFFE_Encode_length + 5U, FileContent_CRC32);
+        current_file_info->new_record_write_offset += (u16_FFFE_Encode_length + 5U);
 
-            /* 更新flash状态 */
-            Flash_State.u32_sector_count += 1u;
-
-            /*如果FLASH用完，清除最早的文件 */
-            if (Flash_State.u32_sector_count > MAX_SECTOR_AMOUNT)
-            {
-                File_Erase(Flash_State.u32_fram_start_addr);
-            } /* end if */
-
-            Flash_State.u32_flash_write_addr = FLASH_RecordFile_BASE_ADDR;
-            Flash_Addr = FLASH_RecordFile_BASE_ADDR;
-
-            FM25V05_Manage_WriteEnable();
-            FM25V05_Manage_WriteData(0u, (uint8_t *) &Flash_State, sizeof(FLASH_STATE));
-
-            /* 更新目录，文件块数量改变 */
-            s_File_Directory.u32_sector_count += 1u;
-            s_File_Directory.u32_page_count += 1u;
-
-            FM25V05_Manage_WriteEnable();
-            FM25V05_Manage_WriteData(Flash_State.u32_fram_write_addr, (uint8_t *) &s_File_Directory,
-                    sizeof(SFile_Directory));
-
-            /* 向flash写入本次剩余长度数据 */
-            S25FL256S_AnyByteWrite(write_buf.buf + Flash_rest_size, (u16_FFFE_Encode_length + 5U - Flash_rest_size),
-                    Flash_Addr);
-
-            FileContent_CRC32 = CRC32CCITT((uint8_t *) write_buf.buf, u16_FFFE_Encode_length + 5U, FileContent_CRC32);
-            Flash_Addr += (u16_FFFE_Encode_length + 5U - Flash_rest_size);
-        }
         memset(&write_buf, 0u, sizeof(WRITE_BUF));
         memset(u8_FFFE_Encode_buf, 0u, sizeof(u8_FFFE_Encode_buf));
-        /* buf写入铁电，以免系统掉电丢失数据 */
-        FM25V05_Manage_WriteEnable();
-        FM25V05_Manage_WriteData( FRAM_FlashBuffer_BASE_ADDR, (uint8_t *) &write_buf, sizeof(WRITE_BUF));
+
         /* 置位写公共信息包标志 */
         u8_Gonggongxinxi_Flag = 1U;
     }
@@ -620,8 +601,7 @@ void RecordBoard_FileCreate(void)
 ** @brief: Get_FlashState
 ** @param: null
 ********************************************************************************************/
-#if 1
-
+#if 0 //TODO(mingzhoa)
 
 
 void Init_FlashState(void)  //使用FMInitLatestFile替代 TODO(mingzhao)
@@ -699,7 +679,7 @@ void Init_FlashState(void)  //使用FMInitLatestFile替代 TODO(mingzhao)
 //                                  + ((uint16_t)s_File_Directory.ch_checi[3]<<24));
 //          printf("最后本补状态：%x\r\n",s_File_Directory.ch_benbuzhuangtai[0]);
 
-            Flash_Addr = s_File_Directory.u32_start_addr + s_File_Directory.u32_page_count * PAGE_SIZE;
+//            Flash_Addr = s_File_Directory.u32_start_addr + s_File_Directory.u32_page_count * PAGE_SIZE; //TODO(mingzhoa)
             printf("Flash_Addr is 0x%08x\r\n", Flash_Addr);
             /* 得到上次丢失的数据 */
             FM25V05_Manage_ReadData( FRAM_FlashBuffer_BASE_ADDR, (uint8_t *) &write_buf, sizeof(WRITE_BUF));
@@ -707,90 +687,7 @@ void Init_FlashState(void)  //使用FMInitLatestFile替代 TODO(mingzhao)
         } /* end if */
     } /* end if...else */
 }
-#else
-void Init_FlashState(void)
-{
-    /* 读取FRAM的0地址数据放入Flash_State; */
-    FLASH_STATE flash_state = { 0u }, flash_state_old = { 0u };
 
-    while (1u)
-    {
-        FM25V05_Manage_ReadData(0u, (uint8_t *) &flash_state, sizeof(FLASH_STATE));
-
-        printf("init %x %x %x\r\n", flash_state.u32_init_flag, flash_state.u32_file_count,
-                flash_state.u32_sector_count);
-
-        if (memcmp(&flash_state_old, &flash_state, sizeof(FLASH_STATE)))
-        {
-            memcpy(&flash_state_old, &flash_state, sizeof(FLASH_STATE));
-        }
-        else
-        {
-            memcpy(&Flash_State, &flash_state, sizeof(FLASH_STATE));
-            break;
-        } /* end if...else */
-
-        Wait(1u);
-    } /* end while */
-
-    /* 判断FLASH是否初始化 */
-    if (Flash_State.u32_init_flag != 0x05555559u)
-//  if ( Flash_State.u32_init_flag != 0x05555552u )
-    {
-        printf("init the flash\r\n");
-        S25FL256S_EraseChip();
-
-        Flash_State.u32_init_flag = 0x05555559u;
-        Flash_State.u32_sector_count = 0u;
-        Flash_State.u32_file_count = 0u;
-        Flash_State.u32_fram_start_addr = FRAM_BASE_ADDR;
-        Flash_State.u32_fram_write_addr = FRAM_BASE_ADDR - sizeof(SFile_Directory);
-        Flash_State.u32_flash_start_addr = FLASH_RecordFile_BASE_ADDR;
-        Flash_State.u32_flash_write_addr = FLASH_RecordFile_BASE_ADDR - SECTOR_SIZE;
-
-        /* 更新FLASH状态到FRAM的0地址 */
-        FM25V05_Manage_WriteEnable();
-        FM25V05_Manage_WriteData(0u, (uint8_t *) &Flash_State, sizeof(FLASH_STATE));
-
-        /* 初始化写buf */
-        memset(&write_buf, 0u, sizeof(WRITE_BUF));
-        FM25V05_Manage_WriteEnable();
-        FM25V05_Manage_WriteData( FRAM_FlashBuffer_BASE_ADDR, (uint8_t *) &write_buf, sizeof(WRITE_BUF));
-
-        uint8_t dat_buff[1024] = { 0 };
-        uint32_t i = 0;
-        /* 初始化文件目录 */
-        for (i = 0; i < 62; i++)
-        {
-            FM25V05_Manage_WriteEnable();
-            FM25V05_Manage_WriteData( FRAM_FileDirectory_BASE_ADDR + i * 1024, dat_buff, 1024);
-        }
-    }
-    else
-    {
-        if (Flash_State.u32_file_count != 0u)
-        {
-            /* 得到最后记录的车次信息 */
-            FM25V05_Manage_ReadData(Flash_State.u32_fram_write_addr, (uint8_t *) &s_File_Directory,
-                    sizeof(SFile_Directory));
-//			printf("最后记录司机:%d\r\n",(uint16_t)s_File_Directory.ch_siji[0] 
-//			                        + ((uint16_t)s_File_Directory.ch_siji[1]<<8) 
-//			                        + ((uint16_t)s_File_Directory.ch_siji[2]<<16) 
-//			                        + ((uint16_t)s_File_Directory.ch_siji[3]<<24));
-//			printf("最后记录车次:%d\r\n",(uint16_t)s_File_Directory.ch_checi[0] 
-//			                        + ((uint16_t)s_File_Directory.ch_checi[1]<<8) 
-//			                        + ((uint16_t)s_File_Directory.ch_checi[2]<<16) 
-//			                        + ((uint16_t)s_File_Directory.ch_checi[3]<<24));
-//			printf("最后本补状态：%x\r\n",s_File_Directory.ch_benbuzhuangtai[0]);
-
-            Flash_Addr = s_File_Directory.u32_start_addr + s_File_Directory.u32_page_count * PAGE_SIZE;
-            printf("Flash_Addr is 0x%08x\r\n", Flash_Addr);
-            /* 得到上次丢失的数据 */
-            FM25V05_Manage_ReadData( FRAM_FlashBuffer_BASE_ADDR, (uint8_t *) &write_buf, sizeof(WRITE_BUF));
-            printf("得到上次丢失的位置： 0x%08x\r\n", write_buf.pos);
-        } /* end if */
-    } /* end if...else */
-}
 #endif
 
 /**************************************************************************************************
@@ -839,9 +736,16 @@ static uint8_t Record_Condition_Judge(void)
 ** @brief: Init_FileDirectory
 ** @param: null
 ********************************************************************************************/
-static void Init_FileDirectory(void)
+static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
 {
+    if(NULL == current_file_info || NULL == current_file_info->file_dir)
+    {
+        return -RT_EEMPTY;
+    }
+
     static uint8_t CheCi_Count1 = 0u, CheCi_Count2 = 0u, Create_Flag = 0u;
+    char full_path[PATH_NAME_MAX_LEN] = {0};
+    sint32_t ret = 0;
 
     /* 确认新文件生成标记，置位开始记录文件标志 */
     if (Record_Condition_Judge())
@@ -875,31 +779,46 @@ static void Init_FileDirectory(void)
                 s_File_Directory.u32_over_flag = 1u;
                 s_File_Directory.u32_file_size += (u16_FFFE_Encode_length + 5U);
 
-                /* 写入FLASH */
-                Check_FlashState();
-                S25FL256S_AnyByteWrite(write_buf.buf, (u16_FFFE_Encode_length + 5U), Flash_Addr);
+                snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, s_File_Directory.ch_file_name);
+                if(FMAppendWrite(full_path, (const void *)write_buf.buf, (u16_FFFE_Encode_length + 5U)) < 0)
+                {
+                    LOG_E("%s write pkt len %d error", full_path, (u16_FFFE_Encode_length + 5U));
+                }
 
                 /* 计算写入内容的CRC值 用于更新文件头内文件内容CRC值*/
                 FileContent_CRC32 = CRC32CCITT((uint8_t *) write_buf.buf, write_buf.pos, FileContent_CRC32);
-                Flash_Addr += (u16_FFFE_Encode_length + 5U);
 
                 memset(&write_buf, 0u, sizeof(WRITE_BUF));
                 memset(u8_FFFE_Encode_buf, 0u, sizeof(u8_FFFE_Encode_buf));
-                /* buf写入铁电，以免系统掉电丢失数据 */
-                FM25V05_Manage_WriteEnable();
-                FM25V05_Manage_WriteData( FRAM_FlashBuffer_BASE_ADDR, (uint8_t *) &write_buf, sizeof(WRITE_BUF));
+
+                Update_FileHead();
+
+                /* 需要更新文件头内容*/
+                snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, current_file_info->file_dir->ch_file_name);
+
+                current_file_info->fd = open(full_path, O_RDWR);
+                if(current_file_info->fd < 0)
+                {
+                    LOG_E("open %s error, fd=%d", full_path, current_file_info->fd);
+                    return -RT_ERROR;
+                }
+
+                ret = fm_modify_record_file_head(current_file_info);
+                if(ret < 0)
+                {
+                    LOG_E("fm_modify_record_file_head error");
+                    return -RT_ERROR;
+                }
+//                current_file_info->new_record_head_offset = lseek(current_file_info->fd, (off_t)0, SEEK_CUR);
+                close(current_file_info->fd);
+
                 /* 置位写公共信息包标志 */
                 u8_Gonggongxinxi_Flag = 1U;
 
-                /* 需要更新文件头内容，并写入flash当前文件的文件头位置 */
-                Update_FileHead();
-//        S25FL256S_Write( ( uint32_t * )&s_file_head, sizeof( SFile_Head ), Flash_Addr - s_File_Directory.u32_file_size - 128U, 0u );
             } /* end if */
 #endif 
             /* 初始化write buf */
             memset(&write_buf, 0u, sizeof(WRITE_BUF));
-            FM25V05_Manage_WriteEnable();
-            FM25V05_Manage_WriteData( FRAM_FlashBuffer_BASE_ADDR, (uint8_t *) &write_buf, sizeof(WRITE_BUF));
 
             Create_Flag = 1u;
             CheCi_Count1 = 0u;
@@ -933,63 +852,78 @@ static void Init_FileDirectory(void)
     /* 开始生成新的文件目录 */
     if (Create_Flag == 1u)
     {
-        LOG_I("start create new file directory\r\n");
+        LOG_I("start create new file directory");
         Create_Flag = 0u;
 
-        /* 更新FLASH状态, 计数方式采用先加1后用的方式，避免数据丢失 */
-        Flash_State.u32_file_count += 1u;
-        if (Flash_State.u32_file_count > 128u)    //目录个数
+        file_manager.latest_dir_file_info.dir_num += 1u;
+        if (file_manager.latest_dir_file_info.dir_num > 128u)    //目录个数
         {
-            File_Erase(Flash_State.u32_fram_start_addr);
+            if(fm_free_space() < 0)
+            {
+                LOG_E("fm_free_space error");
+            }
         } /* end if */
-
-        Flash_State.u32_sector_count += 1u;
-
-        if (Flash_State.u32_sector_count > MAX_SECTOR_AMOUNT)
-        {
-            File_Erase(Flash_State.u32_fram_start_addr);   //？？？？？？？？
-        } /* end if */
-
-        Flash_State.u32_fram_write_addr += sizeof(SFile_Directory);
-        LOG_I("文件目录写入地址：%x\r\n", Flash_State.u32_fram_write_addr);
-        if (Flash_State.u32_fram_write_addr >= FRAM_FileDirectory_MAX_ADDR)
-        {
-            Flash_State.u32_fram_write_addr = FRAM_FileDirectory_BASE_ADDR;
-        } /* end if */
-
-        Flash_State.u32_flash_write_addr += SECTOR_SIZE;
-        if (Flash_State.u32_flash_write_addr >= FLASH_RecordFile_MAX_ADDR)
-        {
-            Flash_State.u32_flash_write_addr = FLASH_RecordFile_BASE_ADDR;
-        } /* end if */
-
-        /* 更新FLASH状态到FRAM的0地址 */
-        FM25V05_Manage_WriteEnable();
-        FM25V05_Manage_WriteData(0u, (uint8_t *) &Flash_State, sizeof(FLASH_STATE));
 
         /* 生成新目录 */
         memcpy(s_File_Directory.ch_date, &TIME_NYR, 3u);
         memcpy(s_File_Directory.ch_time, &TIME_SFM, 3u);
 
         /* 计数方式采用先加1后用的方式，避免数据丢失 */
-        s_File_Directory.u32_page_count = 1u;
-        s_File_Directory.u32_sector_count = 1u;
-        s_File_Directory.u32_start_addr = Flash_State.u32_flash_write_addr;
         s_File_Directory.u32_over_flag = 0u;
         s_File_Directory.u32_file_size = sizeof(SFile_Head);
 
         Get_FileName(&s_File_Directory);
-        LOG_I("\r\n生成文件名：%s \r\n", s_File_Directory.ch_file_name);
 
-        /* 添加目录信息到FRAM的Flash_State.fram_write_addr */
-        FM25V05_Manage_WriteEnable();
-        FM25V05_Manage_WriteData(Flash_State.u32_fram_write_addr, (uint8_t *) &s_File_Directory,
-                sizeof(SFile_Directory));
+        char full_path[PATH_NAME_MAX_LEN];/* 生成新的记录文件 */
+        snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, s_File_Directory.ch_file_name);
+        ret = create_file(full_path);
+        if (ret < 0)
+        {
+            LOG_E("create %s error, ret=%d", s_File_Directory.ch_file_name, ret);
+        }
+
+        snprintf(file_manager.latest_dir_file_info.file_name, sizeof(file_manager.latest_dir_file_info.file_name), "%s_dir_%d", s_File_Directory.ch_file_name, s_File_Directory.file_id);
+
+        LOG_I("file：%s dir: %s", s_File_Directory.ch_file_name, file_manager.latest_dir_file_info.file_name);
+
+        /* 生成新的目录文件 */
+        snprintf(full_path, sizeof(full_path), "%s/%s", DIR_FILE_PATH_NAME, file_manager.latest_dir_file_info.file_name);
+        ret = create_file(full_path);
+        if (ret < 0)
+        {
+            LOG_E("create %s error, ret=%d", file_manager.latest_dir_file_info.file_name, ret);
+        }
+
+        /* 打开目录文件 */
+        sint32_t fd = 0;
+        fd = open(full_path, (int)((uint32_t)O_CREAT | (uint32_t)O_RDWR | (uint32_t)O_TRUNC), (uint32_t)F_MODE);
+        if (fd < 0)
+        {
+            LOG_E("open %s error, ret=%d", full_path, fd);
+            return -RT_ERROR;
+        }
+
+        /* 写入目录信息 */
+        ret = write(fd, (char *)&s_File_Directory, sizeof(SFile_Directory));
+        fsync(fd);
+        close(fd);
+        if(ret < 0)
+        {
+            return -RT_ERROR;
+        }
+
+        /* 写入最新的目录文件 */
+        ret = FMWriteLatestInfo(file_manager.latest_dir_file_info);
+        if(ret < 0)
+        {
+            return -RT_ERROR;
+        }
 
         /* 更新下一次写入FLASH地址 */
         Flash_Addr = Flash_State.u32_flash_write_addr;
         LOG_I("更新下一次写入FLASH地址：%x\r\n", Flash_Addr);
         u8_FileHead_Flag = 1u;
+        return RT_EOK;
     }
     else
     {
@@ -1000,12 +934,9 @@ static void Init_FileDirectory(void)
 
 /**************************************************************************************************
 功能：更新文件头信息到FRAM缓存区
-将文件头信息写入文件
 参数：无
 返回：无
 ***************************************************************************************************/
-#if 1
-
 static void Update_FileHead(void)
 {
     /* 获取文件头 */
@@ -1118,158 +1049,75 @@ static void Update_FileHead(void)
     /* CRC校验 */
     s_file_head.u32_CRC32 = CRC32CCITT((uint8_t *) &s_file_head, sizeof(SFile_Head) - 2u, 0xFFFFFFFF);
 
-#if 0   //TODO(mingzhao)  文件头在记录文件中存储  原来为什么要存在fm
+#if 0  //TODO(mingzhao)  文件头在记录文件中存储  原来为什么要存在fm
     /* 将文件头内容缓存到FRAM */
     FM25V05_Manage_WriteEnable();
     FM25V05_Manage_WriteData( FRAM_FileHead_BASE_ADDR, (uint8_t *) &s_file_head, sizeof(SFile_Head));
 #endif
 }
 
-#else
 
-static void Update_FileHead(void)
-{
-    /* 获取文件头 */
-    s_file_head.ch_head_flag[0] = 0xb1;
-    s_file_head.ch_head_flag[1] = 0xf1;
-
-    memcpy(s_file_head.ch_jilugeshibanbenhao, &JILUGESHIBANBEN, 4u);
-    /* 设置外设类型值 */
-    s_file_head.ch_waisheleixing[0] |= (LKJCHANGJIA << 0u);
-    s_file_head.ch_waisheleixing[0] |= (TCMSCHANGJIA << 3u);
-    s_file_head.ch_waisheleixing[0] |= ((ZHIDONGJICHANGJIA & 0x01) << 7u);
-    s_file_head.ch_waisheleixing[1] |= ((ZHIDONGJICHANGJIA & 0x0E) << 8u);
-    s_file_head.ch_waisheleixing[1] |= (LIEWEICHANGJIA << 11u);
-//	  printf("外设类型：%x %x\r\n",s_file_head.ch_waisheleixing[0],s_file_head.ch_waisheleixing[1]);           
-
-    memcpy(s_file_head.ch_create_time, &TIME_NYR, 3u);
-    memcpy(&s_file_head.ch_create_time[3], &TIME_SFM, 3u);
-    s_file_head.ch_yunxingjiaoluhao[0] = (SHUJUJIAOLU & 0x1f);
-    memcpy(&s_file_head.ch_yunxingjiaoluhao[2], &JIANKONGJIAOLU, 1u);
-    s_file_head.ch_LKJfachefangxiang[0] = LKJFACHEFANGXIANG;
-    s_file_head.ch_LKJfachefangxiang[1] = (SHUJUJIAOLU & 0x60) >> 5u;
-    memcpy(s_file_head.ch_chezhan, &CHEZHANMING, 12u );
-    memcpy(s_file_head.ch_jichexinghao, &JICHEXINGHAO, 2u);
-
-#if 0
-    switch(JICHELEIXING)
-    {
-        case 0:
-        s_file_head.ch_jicheleixing[0] = 0x01;
-        break;
-        case 1:
-        s_file_head.ch_jicheleixing[0] = 0x02;
-        break;
-        default:
-        s_file_head.ch_jicheleixing[0] = 0xFF;
-        break;
-    }
-#else
-    s_file_head.ch_jicheleixing[0] = 0x02;
-#endif
-
-    memcpy(s_file_head.ch_jichehao, &JICHEHAO, 2u);
-    memcpy(s_file_head.ch_juduanhao, &JUDUANHAO, 2u );
-    memcpy(s_file_head.ch_chezhongbiaoshi, &CHEZHONGBIAOSHI, 4u);
-    memcpy(s_file_head.ch_checihao, &CHECIHAO, 3u);
-
-    s_file_head.ch_liecheshuxing[0] |= (( LIECHESHUXING ^ 1u) & 0x01) << 1u;
-    if (LIANGSHU < 5u)
-        s_file_head.ch_liecheshuxing[0] |= 0x01;
-    else
-        s_file_head.ch_liecheshuxing[0] &= 0xFE;
-    memcpy(s_file_head.ch_siji1, &SIJIHAO1, 3u);
-    memcpy(s_file_head.ch_siji2, &SIJIHAO2, 3u);
-    memcpy(s_file_head.ch_zongzhong, &ZONGZHONG, 2u);
-    memcpy(s_file_head.ch_jichang, &JICHANG, 2u);
-    memcpy(s_file_head.ch_liangshu, &LIANGSHU, 1u);
-    /* 填写设备状态值 */
-    if (Get_CPU_Type() == CPU_A)
-    {
-        s_file_head.ch_shebeizhuangtai[0] |= 0x80;
-
-        if ((0x01 == BENXIZHUANGTAI) || (0x03 == BENXIZHUANGTAI))
-            s_file_head.ch_shebeizhuangtai[0] |= 0x01;
-    }
-    else
-    {
-        s_file_head.ch_shebeizhuangtai[0] &= 0x7F;
-
-        if ((0x01 == BENXIZHUANGTAI) || (0x03 == BENXIZHUANGTAI))
-            s_file_head.ch_shebeizhuangtai[0] |= 0x02;
-    }
-    s_file_head.ch_shebeizhuangtai[0] |= 0x04;
-//		printf("获取文件头设备状态：%x\r\n",s_file_head.ch_shebeizhuangtai[0]);
-    switch (GONGZUOZHUANGTAI)
-    {
-    case 0x00:  //人工驾驶
-        s_file_head.ch_gongzuozhuangtai[0] = 0x01;
-        break;
-    case 0x01:  //指导驾驶
-        s_file_head.ch_gongzuozhuangtai[0] = 0x02;
-        break;
-    case 0x02:  //辅助预置驾驶
-        s_file_head.ch_gongzuozhuangtai[0] = 0x03;
-        break;
-    case 0x03:  //辅助驾驶
-        s_file_head.ch_gongzuozhuangtai[0] = 0x04;
-        break;
-    case 0x04:  //退出辅助驾驶
-        s_file_head.ch_gongzuozhuangtai[0] = 0x05;
-        break;
-    default:
-        break;
-    }
-    memcpy(s_file_head.ch_Ajikongzhiruanjianbanben, &AJIKONGZHIRUANJIANBANBEN, 4u);
-    memcpy(s_file_head.ch_Bjikongzhiruanjianbanben, &BJIKONGZHIRUANJIANBANBEN, 4u);
-    memcpy(s_file_head.ch_AjiSTOjichushujubanben, &AJISTOJICHUSHUJUBANBENRIQI, 2u);
-    memcpy(&s_file_head.ch_AjiSTOjichushujubanben[2], &AJISTOJICHUSHUJUBIANYIRIQI, 2u);
-    memcpy(s_file_head.ch_BjiSTOjichushujubanben, &BJISTOJICHUSHUJUBANBENRIQI, 2u);
-    memcpy(&s_file_head.ch_BjiSTOjichushujubanben[2], &BJISTOJICHUSHUJUBIANYIRIQI, 2u);
-    memcpy(s_file_head.ch_AjiSTOkongzhicanshu, &AJISTOKONGZHICANSHUBANBENRIQI, 2u);
-    memcpy(&s_file_head.ch_AjiSTOkongzhicanshu[2], &AJISTOKONGZHICANSHUBIANYIRIQI, 2u);
-    memcpy(s_file_head.ch_BjiSTOkongzhicanshu, &BJISTOKONGZHICANSHUBANBENRIQI, 2u);
-    memcpy(&s_file_head.ch_BjiSTOkongzhicanshu[2], &BJISTOKONGZHICANSHUBIANYIRIQI, 2u);
-    memcpy(s_file_head.ch_AjiLKJshujubanben, &AJILKJSHUJUBANBEN, 4u );
-    memcpy(s_file_head.ch_BjiLKJshujubanben, &BJILKJSHUJUBANBEN, 4u );
-    memcpy(s_file_head.ch_AjiLKJshujushijian, &AJILKJSHUJUSHIJIAN, 4u );
-    memcpy(s_file_head.ch_BjiLKJshujushijian, &BJILKJSHUJUSHIJIAN, 4u );
-
-    memcpy(s_file_head.ch_wenjianneirongCRC, &FileContent_CRC32, 4u);
-    /* CRC校验 */
-    s_file_head.u32_CRC32 = CRC32CCITT((uint8_t *) &s_file_head, sizeof(SFile_Head) - 2u, 0xFFFFFFFF);
-
-    /* 将文件头内容缓存到FRAM */
-    FM25V05_Manage_WriteEnable();
-    FM25V05_Manage_WriteData( FRAM_FileHead_BASE_ADDR, (uint8_t *) &s_file_head, sizeof(SFile_Head));
-}
-#endif
 /**************************************************************************************************
 功能：创建文件文件头信息
 参数：无
 返回：无
 ***************************************************************************************************/
-static void Creat_FileHead(void)
+static rt_err_t Creat_FileHead(S_CURRENT_FILE_INFO *current_file_info)
 {
+    if(NULL == current_file_info || NULL == current_file_info->file_dir)
+    {
+        return -RT_EEMPTY;
+    }
+
+    char full_path[PATH_NAME_MAX_LEN] = {0};
+    sint32_t ret = -1;
+
     if (u8_FileHead_Flag)
     {
         LOG_I("create file head\r\n");
         u8_FileHead_Flag = 0u;
+#if 1  //TODO(mingzhoa)
 
+        /* 生成新的记录文件 */
+        snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, current_file_info->file_dir->ch_file_name);
+        ret = create_file(full_path);
+        if (ret < 0)
+        {
+            LOG_E("create %s error, ret=%d", full_path, ret);
+            return -RT_ERROR;
+        }
+
+        current_file_info->fd = open(full_path, (int)((uint32_t)O_CREAT | (uint32_t)O_RDWR | (uint32_t)O_TRUNC), (uint32_t)F_MODE);
+        if(current_file_info->fd < 0)
+        {
+            LOG_E("open %s error, fd=%d", full_path, current_file_info->fd);
+            return -RT_ERROR;
+        }
+
+        ret = fm_write_record_file_head(current_file_info);
+        if(ret < 0)
+        {
+            LOG_E("fm_write_file_head error");
+            return -RT_ERROR;
+        }
+
+        current_file_info->new_record_head_offset = lseek(current_file_info->fd, (off_t)0, SEEK_CUR);
+        close(current_file_info->fd);
+        current_file_info->new_record_write_offset += PAGE_SIZE;
+
+#else
         Update_FileHead();
-
         /* 更新文件头写入位置，每个文件占用整数个block */
         if (Flash_Addr % SECTOR_SIZE)
         {
             Flash_Addr += (SECTOR_SIZE - (Flash_Addr % SECTOR_SIZE));
         }
-
         /* 写入一个文件的文件头 */
         S25FL256S_Write((uint32_t *) &s_file_head, sizeof(SFile_Head), Flash_Addr, 0u);
         LOG_I("write file head：%x %d\r\n", Flash_Addr, sizeof(SFile_Head));
-
         /* 更新文件体写入位置 */
         Flash_Addr += PAGE_SIZE;   //文件头单独占一个扇区
+#endif
         /* 置位文件体记录标志 */
         u8_Contant_Flag = 1u;
         u8_Gonggongxinxi_Flag = 1u;
@@ -1661,6 +1509,7 @@ static void WriteFileContantPkt( uint8_t num1, uint8_t num2, uint8_t device_code
     static uint32_t rest_size = 255u;
     uint8_t contant_size = 0u;
     char file_contant[204u];
+    char full_path[PATH_NAME_MAX_LEN] = {0};
 
     file_contant[0u] = num1;
     file_contant[1u] = num2;
@@ -1683,10 +1532,7 @@ static void WriteFileContantPkt( uint8_t num1, uint8_t num2, uint8_t device_code
 //      printf("\r\n 写记录事项位置：%d\r\n",write_buf.pos);
             write_buf.pos += contant_size;
             rest_size -= contant_size;
-//      printf("\r\n 写记录事项222位置：%d   剩余空间：%d   内容长度：%d\r\n",write_buf.pos,rest_size,contant_size);      
-            /* buf写入铁电，以免系统掉电丢失数据 */
-            FM25V05_Manage_WriteEnable();
-            FM25V05_Manage_WriteData( FRAM_FlashBuffer_BASE_ADDR, (uint8_t *) &write_buf, sizeof(WRITE_BUF));
+//      printf("\r\n 写记录事项222位置：%d   剩余空间：%d   内容长度：%d\r\n",write_buf.pos,rest_size,contant_size);
             break;
         }
         else /* 缓存区存满 */
@@ -1711,28 +1557,13 @@ static void WriteFileContantPkt( uint8_t num1, uint8_t num2, uint8_t device_code
 //            printf( "FFFE_Encode_length： %d\r\n", u16_FFFE_Encode_length );   
             /* 写入FLASH */
             s_File_Directory.u32_file_size += (u16_FFFE_Encode_length + 5U);
-            Check_FlashState();
-            /* 向flash中跨扇区写数据 */
-            S25FL256S_AnyByteWrite(write_buf.buf, (u16_FFFE_Encode_length + 5U), Flash_Addr);
 
-#if 0
-            uint8_t ddd[256] =
-            {   0U};
-            uint32_t i;
-
-            for(i=0;i<5000;i++)
-            {}
-            S25FL256S_Read((uint32_t *)ddd,256,Flash_Addr);
-            printf("\r\n 存储区满一页数据长度：%d------地址：%d\r\n",(u16_FFFE_Encode_length + 5U),Flash_Addr);
-            printf("\r\n =================================================\r\n");
-            for( i = 0; i<256; i++)
+            snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, s_File_Directory.ch_file_name);
+            if(FMAppendWrite(full_path, (const void *)write_buf.buf, (u16_FFFE_Encode_length + 5U)) < 0)
             {
-                printf("%x  ",ddd[i]);
-                if((i+1)%10 == 0)
-                printf("\r\n");
+                LOG_E("%s write pkt len %d error", full_path, (u16_FFFE_Encode_length + 5U));
             }
-            printf("\r\n =================================================\r\n");
-#endif
+
             /* 计算写入内容的CRC值 用于更新文件头内文件内容CRC值*/
             FileContent_CRC32 = CRC32CCITT((uint8_t *) write_buf.buf, u16_FFFE_Encode_length + 5U, FileContent_CRC32);
 //							printf( "write contant to FLASH %x\r\n", Flash_Addr );
@@ -1740,9 +1571,6 @@ static void WriteFileContantPkt( uint8_t num1, uint8_t num2, uint8_t device_code
 
             memset(&write_buf, 0u, sizeof(WRITE_BUF));
             memset(u8_FFFE_Encode_buf, 0u, sizeof(u8_FFFE_Encode_buf));
-            /* buf写入铁电，以免系统掉电丢失数据 */
-            FM25V05_Manage_WriteEnable();
-            FM25V05_Manage_WriteData( FRAM_FlashBuffer_BASE_ADDR, (uint8_t *) &write_buf, sizeof(WRITE_BUF));
 
             /*write_buf.pos=0;*/
             rest_size = 255U - 2 - 4 - 40 - 1;
@@ -1825,126 +1653,6 @@ static void Get_FileContant( void )
     } /* end if */
 }
 
-
-/*******************************************************************************
-功能：检测Flash状态
-参数：无
-返回：无
-********************************************************************************/
-#if 1
-static void Check_FlashState( void )
-{
-#error "Check_FlashState"
-}
-#else
-
-static void Check_FlashState( void )
-{                                     
-//	printf("检测flash状态：%d---%d\r\n",Flash_State.u32_flash_write_addr,Flash_State.u32_sector_count);
-	
-	/*change by duyanpo 20201118*/
-  #if 0 	
-	if(Flash_Addr >= (Flash_State.u32_flash_write_addr-(s_File_Directory.u32_sector_count - 1u)*SECTOR_SIZE + PAGE_SIZE * s_File_Directory.u32_page_count))
-  #else
-	if(Flash_Addr >= (s_File_Directory.u32_start_addr + PAGE_SIZE * s_File_Directory.u32_page_count))
-	#endif
-	{  
-		printf( "write a full page:%d \r\n",Flash_Addr );
-		
-			/*change by duyanpo 20201118*/
-			#if 0
-			if ( Flash_Addr >= (FLASH_RecordFile_BASE_ADDR + SECTOR_SIZE * Flash_State.u32_sector_count) )
-			#else
-			if ( Flash_Addr >= (s_File_Directory.u32_start_addr + SECTOR_SIZE * s_File_Directory.u32_sector_count) )
-			#endif
-			{
-				printf( "write a full sector:%d \r\n",Flash_Addr );
-				
-				/* 更新flash状态 */
-				Flash_State.u32_sector_count += 1u;
-				
-				/*如果FLASH用完，清除最早的文件 */
-				if ( Flash_State.u32_sector_count > MAX_SECTOR_AMOUNT )
-				{
-					printf( "flash用完，清除最早的文件。。。目录地址：%x\r\n",Flash_State.u32_fram_start_addr );
-					File_Erase( Flash_State.u32_fram_start_addr );
-				} /* end if */
-				
-				/* 如果当前写入的地址是最后一块扇区，下次写入地址为1M位置 */
-				Flash_State.u32_flash_write_addr += SECTOR_SIZE;
-				
-				if ( Flash_State.u32_flash_write_addr >= FLASH_RecordFile_MAX_ADDR )
-				{
-					Flash_State.u32_flash_write_addr = FLASH_RecordFile_BASE_ADDR;
-					Flash_Addr = FLASH_RecordFile_BASE_ADDR;
-				} /* end if */
-				
-				printf( "flash %x %x\r\n", Flash_State.u32_init_flag, Flash_State.u32_file_count );
-			
-				FM25V05_Manage_WriteEnable();
-				FM25V05_Manage_WriteData( 0u, ( uint8_t * )&Flash_State, sizeof( FLASH_STATE ) );
-
-				/* 更新目录，文件块数量改变 */
-				s_File_Directory.u32_sector_count += 1u;		
-			} /* end if */
-
-		/* 更新目录 */
-		s_File_Directory.u32_page_count += 1u;
-	 
-		FM25V05_Manage_WriteEnable();
-		FM25V05_Manage_WriteData( Flash_State.u32_fram_write_addr, ( uint8_t * )&s_File_Directory, sizeof( SFile_Directory ) );		
-	} 
-}
-
-#endif
-
-#if 1
-
-static void File_Erase( uint32_t addr )
-{
-#error "File_Erase"
-}
-#else
-/********************************************************************************************
- ** @brief: File_Erase
- ** @param: null
- ********************************************************************************************/
-static void File_Erase( uint32_t addr )
-{
-	uint32_t i,erase_addr;
-	SFile_Directory directory;
-	
-  FM25V05_Manage_ReadData( addr, ( uint8_t * )&directory, sizeof( s_File_Directory ) );
-  
-	erase_addr = directory.u32_start_addr;
-  
-  printf( "擦除地址:%d-----%d\r\n",erase_addr,directory.u32_sector_count );
-	for ( i = 0u; i < directory.u32_sector_count; i++ )
-	{
-    S25FL256S_Erase64KBlock( erase_addr );
-    
-		erase_addr += SECTOR_SIZE;
-		if ( erase_addr >= FLASH_RecordFile_MAX_ADDR )
-		{
-			erase_addr = FLASH_RecordFile_BASE_ADDR;
-		} /* end if */
-		Flash_State.u32_sector_count -= 1u;
-	} /* end for */
-	
-	Flash_State.u32_file_count -= 1u;		
-	Flash_State.u32_fram_start_addr += sizeof( SFile_Directory );
-	if ( Flash_State.u32_fram_start_addr >= FRAM_MAX_ADDR )
-	{
-		Flash_State.u32_fram_start_addr = FRAM_BASE_ADDR;
-	} /* end if */
-	
-	Flash_State.u32_flash_start_addr  = erase_addr;
-	/* 更新状态 */
-	FM25V05_Manage_WriteEnable();
-	FM25V05_Manage_WriteData( 0u, ( uint8_t * )&Flash_State, sizeof( FLASH_STATE ) );
-	printf( "erase a file for %d sectors\r\n", directory.u32_sector_count );
-}
-#endif
 
 /**********************************************
 功能：获取文件名
@@ -2079,7 +1787,11 @@ static void Get_FileName(SFile_Directory *directory )
         u32_lastfile_framwrite_addr = FRAM_FileDirectory_MAX_ADDR - sizeof(SFile_Directory);
     } /* end if */
 
-    FM25V05_Manage_ReadData(u32_lastfile_framwrite_addr, (uint8_t *) &s_lastfile_directory, sizeof(SFile_Directory));
+
+    if(FMReadDirFile(file_manager.latest_dir_file_info.file_name, &s_lastfile_directory) < 0)
+    {
+        return;
+    }
 
     for (i = 0u; i < 24u; i++)
     {
@@ -2097,6 +1809,7 @@ static void Get_FileName(SFile_Directory *directory )
     {
         u8_lastfilename_num += 1u;
         /* 文件序号 */
+        directory->file_id = u8_lastfilename_num;
         directory->ch_file_name[j] = directory->ch_file_name[j] | (u8_lastfilename_num / 100) + 48u;
         j++;
         directory->ch_file_name[j++] = (u8_lastfilename_num % 100) / 10 + 48u;
@@ -5388,44 +5101,44 @@ static void RecordingCommunicatWithBCUMessage(void)
 ***********************************************/
 static void RecordingCommunicatWithCIRMessage(void)
 {
-  static uint8_t C_cir2zj = 0u;
-	uint8_t cir2zjzhi = 0u;	
-  
-  /* 判断通信间隔 标志 */
-  if ( C_cir2zj != CIR_COMMUNICATION ) 
-  {
-		C_cir2zj = CIR_COMMUNICATION;
-    
-    /* 判断通信状态为异常、中断或恢复 */
-    if( 0u == CIR_COMMUNICATION )
+    static uint8_t C_cir2zj = 0u;
+    uint8_t cir2zjzhi = 0u;
+
+    /* 判断通信间隔 标志 */
+    if (C_cir2zj != CIR_COMMUNICATION)
     {
+        C_cir2zj = CIR_COMMUNICATION;
+
+        /* 判断通信状态为异常、中断或恢复 */
+        if (0u == CIR_COMMUNICATION)
+        {
 //			printf("。。。CIR通信恢复。。。\r\n");
-			if ( Get_CPU_Type() == CPU_A )
-			{
-        cir2zjzhi = 0x01;
-		    WriteFileContantPkt( 0xA6, 0x34, g_ZK_DevCode, &cir2zjzhi, 1u );			
-			}
-			else
-			{
-        cir2zjzhi = 0x02;
-		    WriteFileContantPkt( 0xA6, 0x34, g_ZK_DevCode, &cir2zjzhi, 1u );				
-			}       
-    }
-    else
-    {
+            if (Get_CPU_Type() == CPU_A)
+            {
+                cir2zjzhi = 0x01;
+                WriteFileContantPkt(0xA6, 0x34, g_ZK_DevCode, &cir2zjzhi, 1u);
+            }
+            else
+            {
+                cir2zjzhi = 0x02;
+                WriteFileContantPkt(0xA6, 0x34, g_ZK_DevCode, &cir2zjzhi, 1u);
+            }
+        }
+        else
+        {
 //			printf("。。。CIR通信中断。。。\r\n");
-			if ( Get_CPU_Type() == CPU_A )
-			{
-        cir2zjzhi = 0x01;
-		    WriteFileContantPkt( 0xA6, 0x28, g_ZK_DevCode, &cir2zjzhi, 1u );			
-			}
-			else
-			{
-        cir2zjzhi = 0x02;
-		    WriteFileContantPkt( 0xA6, 0x28, g_ZK_DevCode, &cir2zjzhi, 1u );				
-			}              
-    }
-	} /* end if */
+            if (Get_CPU_Type() == CPU_A)
+            {
+                cir2zjzhi = 0x01;
+                WriteFileContantPkt(0xA6, 0x28, g_ZK_DevCode, &cir2zjzhi, 1u);
+            }
+            else
+            {
+                cir2zjzhi = 0x02;
+                WriteFileContantPkt(0xA6, 0x28, g_ZK_DevCode, &cir2zjzhi, 1u);
+            }
+        }
+    } /* end if */
 } /* end function RecordingCommunicatWithCIRMessage */
 
 /**********************************************
@@ -5887,119 +5600,35 @@ uint16_t FFFEEncode(uint8_t *u8p_SrcData, uint16_t u16_SrcLen, uint8_t *u8p_DstD
   return u16_DstP;
 }
 
-/**********************************************************************************************
-功能：对flash进行任意字节的写操作
-参数：*u8_pBuffer,     ：写入数据
-       u32_NumByteToWrite       ：写入字节数
-       u32_WriteAddr    ：写入地址
-返回：0 写成功
-      1 写失败
-***********************************************************************************************/
-uint32_t S25FL256S_AnyByteWrite( uint8_t *u8_pBuffer, uint32_t u32_NumByteToWrite, uint32_t u32_WriteAddr )
+
+//写文件头
+static sint32_t fm_write_record_file_head(S_CURRENT_FILE_INFO *current_file_info)
 {
-  uint32_t u32_sector_addr = 0u;
-  uint32_t u32_offset_length = 0U;
-  uint32_t u32_totle_length = 0U;
-  uint32_t u32_NumberOfSectorWrites = 0U;
-  uint32_t u32_i = 0U;
-  uint32_t rec = 0U;
-  
-  u32_offset_length = u32_WriteAddr % PAGE_SIZE;
-  u32_sector_addr = u32_WriteAddr - u32_offset_length;
-  u32_totle_length = u32_offset_length + u32_NumByteToWrite;
-  u32_NumberOfSectorWrites = u32_totle_length / PAGE_SIZE;
+    sint32_t ret;
 
-  if( u32_NumberOfSectorWrites == 0 )    //写在当前扇区
-  {
-    /* 将当前扇区数据读取出来放入缓存FLASH_SectorWrite_Buff */
-    S25FL256S_Read((uint32_t *)FLASH_SectorWriteRead_Buff, 256u, u32_sector_addr);    
-    /* 将要写入数据拷贝进FLASH_SectorWrite_Buff */
-    memcpy(FLASH_SectorWriteRead_Buff + u32_offset_length, u8_pBuffer, u32_NumByteToWrite);
-    /* 将缓存中数据写回flash当前扇区 */
-    S25FL256S_Write( ( uint32_t * )FLASH_SectorWriteRead_Buff, u32_totle_length, u32_sector_addr, 0u );
-
-				#if 0
-						uint8_t ddd[256] = {0U};
-						uint32_t i;
-						
-						for(i=0;i<5000;i++)
-						{}
-						S25FL256S_Read((uint32_t *)ddd,256,u32_sector_addr);
-						printf("\r\n ================写在当前扇区：%d========================\r\n",u32_sector_addr);
-					for( i = 0; i<256; i++)
-					{
-						printf("%x  ",ddd[i]);
-						if((i+1)%10 == 0)
-							printf("\r\n");
-					}		
-						printf("\r\n =================================================\r\n");			
-				#endif    
-  }
-  else   //跨扇区写
-  { 
-    /* 写第一个扇区 */
-    S25FL256S_Read((uint32_t *)FLASH_SectorWriteRead_Buff, 256u, u32_sector_addr);    
-    memcpy(FLASH_SectorWriteRead_Buff + u32_offset_length, u8_pBuffer, PAGE_SIZE - u32_offset_length);
-    S25FL256S_Write( ( uint32_t * )FLASH_SectorWriteRead_Buff, 256u, u32_sector_addr, 0u );
-
-				#if 0
-						uint8_t ddd[256] = {0U};
-						uint32_t i;
-						
-						for(i=0;i<5000;i++)
-						{}
-						S25FL256S_Read((uint32_t *)ddd,256,u32_sector_addr);
-						printf("\r\n ================跨扇区写第一扇区地址：%d=============================\r\n",u32_sector_addr);
-					for( i = 0; i<256; i++)
-					{
-						printf("%x  ",ddd[i]);
-						if((i+1)%10 == 0)
-							printf("\r\n");
-					}		
-						printf("\r\n =================================================\r\n");			
-				#endif  		
-		
-    u32_sector_addr += 256u;
-    u8_pBuffer += ( 256u - u32_offset_length );
-
-    /* 写第二至倒数第二个扇区 */
-    for ( u32_i=0; u32_i< u32_NumberOfSectorWrites - 1; u32_i++ )
-    { 
-      memcpy(FLASH_SectorWriteRead_Buff, u8_pBuffer, PAGE_SIZE);      
-      S25FL256S_Write( ( uint32_t * )u8_pBuffer, 256u, u32_sector_addr, 0u );
-
-      u32_sector_addr += 256u;
-      u8_pBuffer += PAGE_SIZE;      
-    }
- 
-    /* 处理最后一个扇区 */  
-    if ( u32_totle_length % PAGE_SIZE )
-    {
-			S25FL256S_Read((uint32_t *)FLASH_SectorWriteRead_Buff, 256u, u32_sector_addr); 
-			memcpy(FLASH_SectorWriteRead_Buff, u8_pBuffer, u32_NumByteToWrite - ( 256u - u32_offset_length ) );
-      S25FL256S_Write( ( uint32_t * )FLASH_SectorWriteRead_Buff, u32_NumByteToWrite - ( 256u - u32_offset_length ), u32_sector_addr, 0u );
-			
-					#if 0
-						uint8_t ddd[256] = {0U};
-						uint32_t i;
-						
-						for(i=0;i<5000;i++)
-						{}
-						S25FL256S_Read((uint32_t *)ddd,256,u32_sector_addr);
-						printf("\r\n ================跨扇区写最后一扇区地址：%d=============================\r\n",u32_sector_addr);
-					for( i = 0; i<256; i++)
-					{
-						printf("%x  ",ddd[i]);
-						if((i+1)%10 == 0)
-							printf("\r\n");
-					}		
-						printf("\r\n =================================================\r\n");			
-				#endif
-    }
-  }
-  return rec;  
+    Update_FileHead();
+    ret = write(current_file_info->fd, (char *)&s_file_head, sizeof(SFile_Head));
+    fsync(current_file_info->fd);
+    return ret;
 }
 
+/*******************************************************
+ *
+ * @brief  修正文件头. 其中要更改:
+ *         1.文件长度 (file_len, 单位页page)
+ *         2.语音总条数 (total_voice_number, 单位页page)
+ *
+ * @param  fd: 文件的句柄
+ * @retval 0:成功 -1:失败
+ *
+ *******************************************************/
+static sint32_t fm_modify_record_file_head(S_CURRENT_FILE_INFO *current_file_info)
+{
+    Update_FileHead();
 
+    lseek(current_file_info->fd, 0, SEEK_SET);
+    write(current_file_info->fd, (char *)&s_file_head, sizeof(SFile_Head));
 
+    return 0;
+}
 

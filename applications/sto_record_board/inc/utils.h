@@ -12,6 +12,7 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
+#include <rtthread.h>
 #include "type.h"
 
 /*******************************************************
@@ -41,11 +42,12 @@
 typedef struct file_info_t
 {
     uint32_t file_id;                 /* 文件序号 */
-    sint32_t file_size;               /* 文件大小 */
-    struct file_info_t *next;         /* 下一文件 */
+    sint32_t dir_file_size;               /* 目录文件大小 */
+    sint32_t record_file_size;               /* 记录文件大小 */
     char dir_name[PATH_NAME_MAX_LEN]; /* 目录文件名 */
     char record_name[PATH_NAME_MAX_LEN]; /* 记录文件名 */
     uint8_t is_save;/* 是否转存过  1：转存 0：未转存 */
+    struct file_info_t *next;         /* 下一文件 */
 } file_info_t;
 #if 0
 /*******************************************************
@@ -145,7 +147,6 @@ void free_link(file_info_t *list_head);
  *******************************************************/
 sint32_t create_dir(const char *path);
 
-#if 0
 /*******************************************************
  *
  * @brief  递归创建制定目录下的文件
@@ -156,6 +157,7 @@ sint32_t create_dir(const char *path);
  *******************************************************/
 sint32_t create_file(const char *path);
 
+#if 0
 /*******************************************************
  *
  * @brief  获取文件的大小,单位:byte.

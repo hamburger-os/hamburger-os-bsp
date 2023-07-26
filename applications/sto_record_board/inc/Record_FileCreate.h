@@ -11,6 +11,7 @@
 
 #include "common.h"
 #include "CAN_CommonDef.h"
+#include "type.h"
 
 
 extern CAN_FRAME  Record_CanBuffer[150];
@@ -488,9 +489,6 @@ typedef struct
         char ch_siji[4]; /* 司机号 */
         char ch_date[4]; /* 日期 */
         char ch_time[4]; /* 时间 */
-        uint32_t u32_page_count; /* 页个数 */
-        uint32_t u32_sector_count; /* 扇区个数 */
-        uint32_t u32_start_addr; /* 第一个页的首地址 */
         uint32_t u32_over_flag; /* 结束标志 */
         uint32_t u32_file_size; /* 文件实际大小 */
         char ch_file_name[24]; /* 文件名 */
@@ -538,44 +536,44 @@ typedef struct
 
 /* 文件头结构体 */
 typedef struct
-{  
-  char ch_head_flag[2];
-  char ch_yuliu1[2];
-  char ch_jilugeshibanbenhao[4];
-  char ch_waisheleixing[2];
-  char ch_create_time[6];
-  char ch_yunxingjiaoluhao[4];
-  char ch_LKJfachefangxiang[4];
-  char ch_chezhan[12];
-  char ch_jichexinghao[2];
-  char ch_jicheleixing[1];
-  char ch_yuliu2[1];
-  char ch_jichehao[4];
-  char ch_juduanhao[2];
-  char ch_chezhongbiaoshi[4];
-  char ch_checihao[4];
-  char ch_liecheshuxing[1];
-  char ch_yuliu3[1];
-  char ch_siji1[4];
-  char ch_siji2[4];
-	char ch_zongzhong[2];
-	char ch_jichang[2];
-	char ch_liangshu[1];
-  char ch_yuliu4[9];
-  char ch_shebeizhuangtai[1];
-  char ch_gongzuozhuangtai[1];
-  char ch_Ajikongzhiruanjianbanben[4];
-  char ch_Bjikongzhiruanjianbanben[4];
-  char ch_AjiSTOjichushujubanben[4];
-  char ch_BjiSTOjichushujubanben[4];
-  char ch_AjiSTOkongzhicanshu[4];
-  char ch_BjiSTOkongzhicanshu [4];
-  char ch_AjiLKJshujubanben[4];
-  char ch_BjiLKJshujubanben[4];
-  char ch_AjiLKJshujushijian[4];
-  char ch_BjiLKJshujushijian[4];
-  char ch_wenjianneirongCRC[4];
-  uint32_t u32_CRC32;
+{
+    char ch_head_flag[2];
+    char ch_yuliu1[2];
+    char ch_jilugeshibanbenhao[4];
+    char ch_waisheleixing[2];
+    char ch_create_time[6];
+    char ch_yunxingjiaoluhao[4];
+    char ch_LKJfachefangxiang[4];
+    char ch_chezhan[12];
+    char ch_jichexinghao[2];
+    char ch_jicheleixing[1];
+    char ch_yuliu2[1];
+    char ch_jichehao[4];
+    char ch_juduanhao[2];
+    char ch_chezhongbiaoshi[4];
+    char ch_checihao[4];
+    char ch_liecheshuxing[1];
+    char ch_yuliu3[1];
+    char ch_siji1[4];
+    char ch_siji2[4];
+    char ch_zongzhong[2];
+    char ch_jichang[2];
+    char ch_liangshu[1];
+    char ch_yuliu4[9];
+    char ch_shebeizhuangtai[1];
+    char ch_gongzuozhuangtai[1];
+    char ch_Ajikongzhiruanjianbanben[4];
+    char ch_Bjikongzhiruanjianbanben[4];
+    char ch_AjiSTOjichushujubanben[4];
+    char ch_BjiSTOjichushujubanben[4];
+    char ch_AjiSTOkongzhicanshu[4];
+    char ch_BjiSTOkongzhicanshu[4];
+    char ch_AjiLKJshujubanben[4];
+    char ch_BjiLKJshujubanben[4];
+    char ch_AjiLKJshujushijian[4];
+    char ch_BjiLKJshujushijian[4];
+    char ch_wenjianneirongCRC[4];
+    uint32_t u32_CRC32;
 } SFile_Head;
 
 /* 文件体 */
@@ -608,14 +606,23 @@ typedef enum
 //  ABNORMAL
 } ECommunicetion_State;
 
+typedef struct __attribute__((packed)) /* 按照字节对齐*/
+{
+    SFile_Directory *file_dir;
+    sint32_t fd;
+    off_t new_record_head_offset;      /* 最新记录文件的文件头偏移量 */
+    off_t new_record_write_offset;    /* 文件当前写入位置 */
+} S_CURRENT_FILE_INFO;
+
 extern WRITE_BUF write_buf;
 extern FLASH_STATE Flash_State;
 extern uint8_t SoftWare_Cycle_Flag;
 extern uint8_t u8_Gonggongxinxi_Flag;
 
 /* public function declaration ----------------------------------------------------------------- */
+//void RecordBoard_FileCreate(void);
+//void Init_FlashState(void);
 void RecordBoard_FileCreate(void);
-void Init_FlashState(void);
 
 /* 12-June-2018, by Liang Zhen. */
 void Update_ABV_ControllingMessage( uint8_t msg[] );

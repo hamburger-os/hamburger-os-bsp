@@ -17,10 +17,66 @@
 #include <sys/fcntl.h>
 
 #include "utils.h"
+#include "Record_FileCreate.h"
 
 #define DBG_TAG "FileManager"
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
+
+sint32_t FMReadDirFile(const char * dirname, void *dir_file)
+{
+    sint32_t fd = 0;
+    char full_path[PATH_NAME_MAX_LEN] = { 0 };
+    sint32_t bytes_read;
+
+    snprintf(full_path, sizeof(full_path), "%s/%s", DIR_FILE_PATH_NAME, dirname);
+    fd = open(full_path, O_RDONLY);
+    if (fd > 0)
+    {
+        bytes_read = read(fd, (void *) dir_file, (size_t) sizeof(SFile_Directory));
+        close(fd);
+        if (bytes_read == sizeof(SFile_Directory))
+        {
+            return 0;
+        }
+        else
+        {
+            LOG_E("read dir %s size =  %%", full_path, bytes_read);
+            return -1;
+        }
+    }
+    else
+    {
+        LOG_E("read dir %s error", full_path);
+        return -1;
+    }
+}
+
+sint32_t FMAppendWrite(const char *filename, const void *buffer, size_t count)
+{
+    sint32_t fd = 0;
+    sint32_t ret = -1;
+
+    fd = open(filename, O_RDWR);
+    if(fd < 0)
+    {
+        LOG_E("open %s error", filename);
+        return -1;
+    }
+
+    /* 定位文件指针到文件末尾 */
+    lseek(fd, 0, SEEK_END);
+    /* 追加内容 */
+    ret = write(fd, buffer, count);
+    fsync(fd);
+    close(fd);
+    if (ret < 0)
+    {
+        LOG_E("%s write error", filename);
+        return (sint32_t)-1;
+    }
+    return 0;
+}
 
 /*******************************************************
  *
@@ -125,12 +181,12 @@ sint32_t fm_free_space(void)
  * @retval 0:成功 -1:失败
  *
  *******************************************************/
-static sint32_t FMWriteLatestInfo(const S_LATEST_DIR_FILE_INFO *info)
+sint32_t FMWriteLatestInfo(const S_LATEST_DIR_FILE_INFO *info)
 {
     char full_path[PATH_NAME_MAX_LEN] = {0};
     sint32_t fd = 0, ret = 0;
 
-    snprintf(full_path, sizeof(full_path), "%s/%s", DIR_FILE_PATH_NAME, NEW_DIR_FILE_NAME_CONF);
+    snprintf(full_path, sizeof(full_path), "%s/%s", LATEST_DIR_NAME_FILE_PATH_NAME, NEW_DIR_FILE_NAME_CONF);
     fd = open(full_path, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
     if (fd < 0)
     {
@@ -138,14 +194,13 @@ static sint32_t FMWriteLatestInfo(const S_LATEST_DIR_FILE_INFO *info)
         return (sint32_t)-1;
     }
     ret = write(fd, (const void *)info, sizeof(S_LATEST_DIR_FILE_INFO));
+    fsync(fd);
+    close(fd);
     if (ret < 0)
     {
         LOG_E("%s write error", full_path);
         return (sint32_t)-1;
     }
-
-    fsync(fd);
-    close(fd);
 
     return 0;
 }
@@ -161,7 +216,7 @@ static sint32_t FMGetLatestFileInfo(const char *filename, void *data)
     snprintf(full_path,
              sizeof(full_path),
              "%s/%s",
-             DIR_FILE_PATH_NAME,
+             LATEST_DIR_NAME_FILE_PATH_NAME,
              filename);
     ret = stat(full_path, &stat_l);
     if (ret < 0)
@@ -275,6 +330,12 @@ sint32_t FMInit(S_FILE_MANAGER *fm)
         LOG_E("create_dir %s", DIR_FILE_PATH_NAME);
     }
 
+    ret = create_dir(RECORD_TEMP_FILE_PATH_NAME);
+    if (ret < 0)
+    {
+        LOG_E("create_dir %s", RECORD_TEMP_FILE_PATH_NAME);
+    }
+
     /* 初始化最新的文件, 读出最新的目录文件信息  */
     ret = FMInitLatestFile(&fm->latest_dir_file_info);
     if (ret < 0)
@@ -283,57 +344,13 @@ sint32_t FMInit(S_FILE_MANAGER *fm)
         return (sint32_t)-1;
     }
     /* 打印相关信息 */
-    LOG_I("current rec file info: \n");
-    LOG_I("-----------------------------------------------\n");
-    LOG_I("| filename:                 %s\n", fm->latest_dir_file_info.file_name);
-    LOG_I("| head_flag:                %x\n", fm->latest_dir_file_info.head_flag);
-    LOG_I("| dir_num:                  %d\n", fm->latest_dir_file_info.dir_num);
-    LOG_I("| not_exsit:                %d\n", fm->latest_dir_file_info.not_exsit);
-    LOG_I("-----------------------------------------------\n");
+    LOG_I("current rec file info:");
+    LOG_I("-----------------------------------------------");
+    LOG_I("| filename:                 %s", fm->latest_dir_file_info.file_name);
+    LOG_I("| head_flag:                %x", fm->latest_dir_file_info.head_flag);
+    LOG_I("| dir_num:                  %d", fm->latest_dir_file_info.dir_num);
+    LOG_I("| not_exsit:                %d", fm->latest_dir_file_info.not_exsit);
+    LOG_I("-----------------------------------------------");
     return (sint32_t)0;
-}
-
-void FM25V05_Manage_WriteEnable( void )
-{
-
-}
-
-/*******************************************************************************************
- ** @brief: FM25V05_Manage_WriteData
- ** @param: add   dat  len
- *******************************************************************************************/
-void FM25V05_Manage_WriteData( uint16_t add, uint8_t *dat, uint32_t len )
-{
-
-}
-
-/*******************************************************************************************
- ** @brief: FM25V05_Manage_ReadData
- ** @param: add   dat  len
- *******************************************************************************************/
-void FM25V05_Manage_ReadData( uint16_t add, uint8_t *dat, uint32_t len )
-{
-
-}
-
-/**
- * \brief Writes data at the specified address on the serial firmware dataflash.
- * The page(s) to program must have been erased prior to writing. This function
- * handles page boundary crossing automatically.
- *
- * \param pS25fl1  Pointer to an S25FL1 driver instance.
- * \param pData  Data buffer.
- * \param size  Number of bytes in buffer.
- * \param address  Write address.
- *
- * \return 0 if successful; otherwise, returns ERROR_PROGRAM is there has
- * been an error during the data programming.
- */
-unsigned char S25FL256S_Write( uint32_t *pData,\
-                                   uint32_t size,\
-                                   uint32_t address,\
-                                   uint8_t  Secure )
-{
-
 }
 

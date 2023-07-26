@@ -34,9 +34,9 @@
 #include <sys/vfs.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
 #include "file_manager.h"
+#include "Record_FileCreate.h"
 
 #define DBG_TAG "utils"
 #define DBG_LVL DBG_LOG
@@ -52,7 +52,6 @@
 #define X_OK 1
 #define FILE_COPY_BUFF_SIZE 256
 
-#if 0
 /*******************************************************
  * 函数声明
  *******************************************************/
@@ -146,7 +145,7 @@ sint32_t get_disk_free_space(const char *path)
     ret = statfs(path, &disk_info);
     if (ret != 0)
     {
-        log_print(LOG_ERROR, "can not get mount dir %s. \n", path);
+        LOG_E("can not get mount dir %s", path);
         return ret;
     }
     /* 获取块数 */
@@ -181,7 +180,6 @@ uint32_t file_size(char *name)
     return stat_buf.st_size;
 }
 
-#endif
 /*******************************************************
  *
  * @brief  获取指定目录已使用的空间, 单位:字节
@@ -239,7 +237,7 @@ sint32_t dir_size(const char *dir_path)
     }
     return total_size;
 }
-#if 0
+
 /*******************************************************
  *
  * @brief  排序文件列表
@@ -332,10 +330,13 @@ void show_link(file_info_t *list_head)
     while (list_head != NULL)
     {
         /* d_type＝8表示正常的文件 */
-        log_print(LOG_ERROR, "NUM:%d name:%s size:%d \n",
+        LOG_I("id:%d dir name:%s dir size:%d record name:%s record size %d save %d",
                   list_head->file_id,
-                  list_head->filename,
-                  list_head->file_size);
+                  list_head->dir_name,
+                  list_head->dir_file_size,
+                  list_head->record_name,
+                  list_head->record_file_size,
+                  list_head->is_save);
         list_head = list_head->next;
     }
 }
@@ -412,8 +413,8 @@ file_info_t *get_org_file_info(const char *path)
                     close(fd);
                     if (bytes_read == PAGE_SIZE)
                     {
-                        if ((strcmp((const char *)(((file_head_t *)buffer)->file_head_flag), (const char *)FILE_HEAD_FLAG)) == 0)
-                        {
+//                        if ((strcmp((const char *)(((file_head_t *)buffer)->file_head_flag), (const char *)FILE_HEAD_FLAG)) == 0)
+//                        {
                             p_tmp_file_list = (file_info_t *)malloc(sizeof(file_info_t));
                             if (p_tmp_file_list != NULL)
                             {
@@ -427,11 +428,14 @@ file_info_t *get_org_file_info(const char *path)
                                 }
                                 p_cur_file_list = p_tmp_file_list;
                                 p_cur_file_list->next = NULL;
-                                strcpy(p_cur_file_list->filename, full_path);
-                                p_cur_file_list->file_id = ((file_head_t *)buffer)->file_index;
-                                p_cur_file_list->file_size = stat_l.st_size;
+                                p_cur_file_list->file_id = ((SFile_Directory *)buffer)->file_id;
+                                p_cur_file_list->dir_file_size = stat_l.st_size;
+                                p_cur_file_list->record_file_size = ((SFile_Directory *)buffer)->u32_file_size;
+                                strcpy(p_cur_file_list->dir_name, full_path);
+                                strcpy(p_cur_file_list->record_name, ((SFile_Directory *)buffer)->ch_file_name);
+                                p_cur_file_list->is_save = ((SFile_Directory *)buffer)->is_save;
                             }
-                        }
+//                        }
                     }
                 }
             }
@@ -441,8 +445,6 @@ file_info_t *get_org_file_info(const char *path)
     closedir(p_dir);
     return p_list_head;
 }
-
-#endif
 
 /*******************************************************
  *
@@ -485,7 +487,7 @@ sint32_t create_dir(const char *path)
     return 0;
 }
 
-#if 0
+
 /*******************************************************
  *
  * @brief  递归创建制定目录下的文件
@@ -523,7 +525,7 @@ sint32_t create_file(const char *path)
             /* 创建文件 */
             if ((fd = creat(file_path, 0766)) < 0)
             {
-                log_print(LOG_ERROR, "can not create file %s. \n", file_path);
+                LOG_E("can not create file %s", file_path);
                 return (sint32_t)-2;
             }
             else
@@ -659,5 +661,3 @@ void copy_files(const char *src, const char *dest)
 
     closedir(dir);
 }
-
-#endif

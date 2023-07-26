@@ -24,8 +24,14 @@
 #define SORT_UP 0x01   /* 升序 */
 #define SORT_DOWN 0x10 /* 降序 */
 
+#define F_MODE (S_IRUSR | S_IWUSR)                   /* 目录 */
+
 #define RECORD_FILE_PATH_NAME "/mnt/emmc/record"
 #define DIR_FILE_PATH_NAME    "/mnt/emmc/dir"
+#define LATEST_DIR_NAME_FILE_PATH_NAME    "/mnt/emmc"
+
+#define RECORD_TEMP_FILE_PATH_NAME "/mnt/fram/record" //记录临时内容的文件路径  只记录几包很少的数据
+#define RECORD_TEMP_FILE_NAME      "temp.dat"
 
 #define NEW_DIR_FILE_NAME_CONF "latest_dirname.conf"         /* 存放最新文件名的配置文件名称 */
 
@@ -43,6 +49,8 @@ typedef struct __attribute__((packed)) {
 } S_FILE_MANAGER;
 
 
+sint32_t FMReadDirFile(const char * dirname, void *dir_file);
+sint32_t FMAppendWrite(const char *filename, const void *buffer, size_t count);
 sint32_t FMInit(S_FILE_MANAGER *fm);
 
 #endif /* APPLICATIONS_STO_RECORD_BOARD_INC_FILE_MANAGER_H_ */
