@@ -140,7 +140,7 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
     can_tmp.length_u8 = s_can_frame.len;
     memcpy(can_tmp.data_u8, s_can_frame.Data, s_can_frame.len);
 #endif
-    LOG_I(" pr = %x, no = %x data = %x", can_tmp.priority_u8, can_tmp.no_u8, can_tmp.data_u8[0]);  //打开这个会导致上面队列发送出错 返回值为-3   过一会导致lwip里宕机
+//    LOG_I("pr = %x, no = %x data = %x", can_tmp.priority_u8, can_tmp.no_u8, can_tmp.data_u8[0]);  //打开这个会导致上面队列发送出错 返回值为-3   过一会导致lwip里宕机
 
     switch (can_tmp.priority_u8)
     {
@@ -157,6 +157,9 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
             else
                 g_ZK_DevCode = 0x11;
 
+//            LOG_I("no %d data %d %d %d %d %d %d %d %d", can_tmp.no_u8,
+//                    can_tmp.data_u8[0], can_tmp.data_u8[1], can_tmp.data_u8[2], can_tmp.data_u8[3],
+//                    can_tmp.data_u8[4], can_tmp.data_u8[5], can_tmp.data_u8[6], can_tmp.data_u8[7]);
             /* 14-June-2018, by Liang Zhen. */
             Processing_HMB_HLRT_Message(can_tmp.no_u8, can_tmp.data_u8);
             /* 28-September-2018, by Liang Zhen. */

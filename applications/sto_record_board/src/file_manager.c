@@ -190,7 +190,7 @@ sint32_t FMWriteLatestInfo(const S_LATEST_DIR_FILE_INFO *info)
     fd = open(full_path, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
     if (fd < 0)
     {
-        LOG_E("不能修改文件:%s", full_path);
+        LOG_E("can not modify file:%s", full_path);
         return (sint32_t)-1;
     }
     ret = write(fd, (const void *)info, sizeof(S_LATEST_DIR_FILE_INFO));
@@ -286,7 +286,7 @@ sint32_t FMInitLatestFile(S_LATEST_DIR_FILE_INFO *latest_info)
          * 目录文件名
          * 车次-车次扩充-司机号-日期-时间-序号  可以通过Get_FileName去计算目录文件铭
      * */
-    strcpy(latest_info->file_name, "xxxx-xxxx-xxxx-xxxx-000");
+    strcpy(latest_info->file_name, FIRST_LATEST_DIR_NAME_NULL);
     latest_info->head_flag = LATEST_DIR_FILE_HEAD_FLAG;
     latest_info->dir_num = 0;
     latest_info->not_exsit = 1;

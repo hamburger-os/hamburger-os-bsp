@@ -12,7 +12,7 @@
 #include "common.h"
 #include "CAN_CommonDef.h"
 #include "type.h"
-
+#include "file_manager.h"
 
 extern CAN_FRAME  Record_CanBuffer[150];
 
@@ -491,7 +491,7 @@ typedef struct
         char ch_time[4]; /* 时间 */
         uint32_t u32_over_flag; /* 结束标志 */
         uint32_t u32_file_size; /* 文件实际大小 */
-        char ch_file_name[24]; /* 文件名 */
+        char ch_file_name[FILE_NAME_MAX_NUM];//        char ch_file_name[24]; /* 文件名 */
         char ch_benbuzhuangtai[1]; /* 本补状态 */
         char ch_reserve[3]; /* 预留 */
         uint8_t file_id;   /* 文件ID */  //TODO(mingzhao) 对接到文件链表中使用
@@ -608,10 +608,10 @@ typedef enum
 
 typedef struct __attribute__((packed)) /* 按照字节对齐*/
 {
+    int32_t fd;
     SFile_Directory *file_dir;
-    sint32_t fd;
+    SFile_Head      *file_head;
     off_t new_record_head_offset;      /* 最新记录文件的文件头偏移量 */
-    off_t new_record_write_offset;    /* 文件当前写入位置 */
 } S_CURRENT_FILE_INFO;
 
 extern WRITE_BUF write_buf;

@@ -144,7 +144,7 @@ static void mainctl_2_export(S_DATA_HANDLE * data_handle, uint8_t *pbuf, uint8_t
                     step_pos = step_pos + pthis->data_len;
                     break;
                 default:
-                    LOG_W("mainctl_2_export chnal_index  = %x err !\r\n", chnal_index);
+//                    LOG_W("mainctl_2_export chnal_index  = %x err !\r\n", chnal_index);
                     break;
             }
         }

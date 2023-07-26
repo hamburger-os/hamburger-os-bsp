@@ -24,7 +24,7 @@
 #include <rtdbg.h>
 
 #define FILE_THREAD_PRIORITY         15//19
-#define FILE_THREAD_STACK_SIZE       2048
+#define FILE_THREAD_STACK_SIZE       (2048 * 2)
 #define FILE_THREAD_TIMESLICE        5
 
 static void *FileThreadEntry(void *parameter)
@@ -34,7 +34,7 @@ static void *FileThreadEntry(void *parameter)
     while(1)
     {
         CanDataHandle(&eth_can_data_handle);
-//        RecordBoard_FileCreate();
+        RecordBoard_FileCreate();
         rt_thread_mdelay(1);
     }
 }

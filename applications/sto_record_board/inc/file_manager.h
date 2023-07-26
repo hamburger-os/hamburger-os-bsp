@@ -13,13 +13,14 @@
 #include <rtthread.h>
 #include "type.h"
 
-#define FILE_NAME_MAX_NUM   (20U)
+#define FILE_NAME_MAX_NUM   (40)//(24U)
 #define LATEST_DIR_FILE_HEAD_FLAG (0xa5a5a5a5)
 
 #define RECORD_BOARD_EMMC_MAX_SIZE (3600 * 1024 * 1024) //板子EMMC最大空间 单位KB  实际大小为3656M 预留了56M
 #define RECORD_FILE_MAN_SIZE (20 * 1024 * 1024)         //单个记录文件大小 单位 KB  20M
 #define RESERVE_SIZE         (1024 * 1024)
 
+#define FIRST_LATEST_DIR_NAME_NULL "NULL"
 
 #define SORT_UP 0x01   /* 升序 */
 #define SORT_DOWN 0x10 /* 降序 */
