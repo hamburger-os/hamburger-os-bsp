@@ -32,9 +32,10 @@
  * 宏定义
  *******************************************************/
 
-#define CREC0_KEY "PC.4" /* 声控+电控, 低电平有效 */
-#define CREC1_KEY "PA.9" /* 电控信号,低电平有效 */
-#define PLAY_KEY "PH.7"  /* 播放控制引脚,低电平有效 */
+
+#define CREC0_KEY BSP_GPIO_TABLE_SPI2_CS1 /* 声控+电控, 低电平有效 */
+#define CREC1_KEY BSP_GPIO_TABLE_GPIO8 /* 电控信号,低电平有效 */
+#define PLAY_KEY BSP_GPIO_TABLE_GPIO5  /* 播放控制引脚,低电平有效 */
 
 /* 按键队列消息 */
 #define KEY_CREC0_MSG 0 /* 声控+电控按键消息 */

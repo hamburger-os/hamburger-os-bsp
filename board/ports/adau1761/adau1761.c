@@ -345,14 +345,14 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
     R8_0x400E_Left_diff_input_vol r8 = {
         .LDEN = 1,
         .LDMUTE = 1,
-        .LDVOL = 0b110100,
+        .LDVOL = 0b101100,
     };
     adau1761_program(ADDR_R8_0x400E_Left_diff_input_vol, (uint8_t *)&r8, sizeof(R8_0x400E_Left_diff_input_vol));
 
     R9_0x400F_Right_diff_input_vol r9 = {
         .RDEN = 1,
         .RDMUTE = 1,
-        .RDVOL = 0b110100,
+        .RDVOL = 0b101100,
     };
     adau1761_program(ADDR_R9_0x400F_Right_diff_input_vol, (uint8_t *)&r9, sizeof(R9_0x400F_Right_diff_input_vol));
 
@@ -383,7 +383,7 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
     adau1761_program(ADDR_R13_0x4013_ALC_2, (uint8_t *)&r13, sizeof(R13_0x4013_ALC_2));
 
     R14_0x4014_ALC_3 r14 = {
-        .NGTHR = 0b10000,
+        .NGTHR = 0b11000,
         .NGEN = 1,//噪声门开关
         .NGTYP = 0b11,
     };

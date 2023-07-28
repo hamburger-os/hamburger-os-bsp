@@ -38,7 +38,7 @@
  *******************************************************/
 
 /* 转储最新,全部语音文件按钮 */
-#define NEW_ALL_PIN "PF.11"
+#define NEW_ALL_PIN BSP_GPIO_TABLE_GPIO3
 /* size大,转储速度快 */
 #define BUFFER_SIZE 4096
 

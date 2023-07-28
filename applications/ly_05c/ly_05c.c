@@ -154,7 +154,7 @@ static void *ly_05c_entry(void *args)
     ret = ly_05c_init();
     if (ret < 0)
     {
-        printf("init ly-05c device error.\n");
+        printf("init ly-05c device error. \n");
         data_set_sw_state(SW_STATE_ERROR);
         RT_ASSERT(false);
         return NULL;
@@ -186,7 +186,7 @@ sint32_t ly_05c_main(void)
     sint32_t ret = 0;
     pthread_t main_tid;
     pthread_attr_t pthread_attr_data;
-    return 0;
+
 
     /* 创建主线程 */
     pthread_attr_init(&pthread_attr_data);

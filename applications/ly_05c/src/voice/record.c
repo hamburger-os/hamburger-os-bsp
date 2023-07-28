@@ -49,7 +49,7 @@
 #define REC_MQ_DATA 3
 
 /* 电平触发还是引脚触发, 1:代表电平触发的方式, 0:代表边沿触发. */
-#define PIN_LEVEL_TRIGGER 0
+#define PIN_LEVEL_TRIGGER 1
 
 /*******************************************************
  * 数据结构
