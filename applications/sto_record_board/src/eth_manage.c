@@ -98,7 +98,7 @@ void ETHManageInit(void)
 
 
 #define ETH_MANAGE_THREAD_STACK_SIZE       2048
-#define ETH_MANAGE_THREAD_PRIORITY         24
+#define ETH_MANAGE_THREAD_PRIORITY         19
 #define ETH_MANAGE_THREAD_TIMESLICE        5
 
 static uint8_t Eth1_Txbuf[1500];
@@ -163,15 +163,15 @@ static void ETHManageTestThreadEntry(void *arg)
     memcpy(&Eth1_Txbuf[6],RecordBoard_ETHMAC1,sizeof(RecordBoard_ETHMAC1));      //源地址
     memset(&Eth1_Txbuf[12],0xcc,80);
 
-    memcpy(Eth2_Txbuf,RecordBoard_ETHMAC1,sizeof(RecordBoard_ETHMAC2));
-    memcpy(&Eth2_Txbuf[6],RecordBoard_ETHMAC2,sizeof(RecordBoard_ETHMAC1));
+    memcpy(Eth2_Txbuf,RecordBoard_ETHMAC1,sizeof(RecordBoard_ETHMAC1));
+    memcpy(&Eth2_Txbuf[6],RecordBoard_ETHMAC2,sizeof(RecordBoard_ETHMAC2));
     memset(&Eth2_Txbuf[12],0xaa,80);
 
     while(1)
     {
         LOG_I("eth send");
-        ETHManageTX(ETHManageChannel1, (const void *)Eth1_Txbuf, 80);
-        ETHManageTX(ETHManageChannel2, (const void *)Eth2_Txbuf, 80);
+        ETHManageTX(ETHManageChannel1, (const void *)Eth1_Txbuf, 50);
+        ETHManageTX(ETHManageChannel2, (const void *)Eth2_Txbuf, 50);
         rt_thread_mdelay(100);
     }
 }

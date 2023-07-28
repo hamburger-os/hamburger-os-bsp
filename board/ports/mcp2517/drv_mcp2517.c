@@ -18,6 +18,11 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
+// Transmit Channels
+#define APP_TX_FIFO CAN_FIFO_CH2
+// Receive Channels
+#define APP_RX_FIFO CAN_FIFO_CH1
+
 typedef enum {
 #ifdef BSP_USE_MCP2517FD_CAN1
     MCP2517_CH_1,
@@ -97,6 +102,42 @@ static MCP2517_Dev mcp2517_can_port[] =
          .channel = MCP2517_CH_4,
     },
 #endif  /* BSP_USE_MCP2517FD_CAN4 */
+};
+
+//! Look-up table for CRC calculation
+const uint16_t crc16_table[256] = {
+  0x0000, 0x8005, 0x800F, 0x000A, 0x801B, 0x001E, 0x0014, 0x8011,
+  0x8033, 0x0036, 0x003C, 0x8039, 0x0028, 0x802D, 0x8027, 0x0022,
+  0x8063, 0x0066, 0x006C, 0x8069, 0x0078, 0x807D, 0x8077, 0x0072,
+  0x0050, 0x8055, 0x805F, 0x005A, 0x804B, 0x004E, 0x0044, 0x8041,
+  0x80C3, 0x00C6, 0x00CC, 0x80C9, 0x00D8, 0x80DD, 0x80D7, 0x00D2,
+  0x00F0, 0x80F5, 0x80FF, 0x00FA, 0x80EB, 0x00EE, 0x00E4, 0x80E1,
+  0x00A0, 0x80A5, 0x80AF, 0x00AA, 0x80BB, 0x00BE, 0x00B4, 0x80B1,
+  0x8093, 0x0096, 0x009C, 0x8099, 0x0088, 0x808D, 0x8087, 0x0082,
+  0x8183, 0x0186, 0x018C, 0x8189, 0x0198, 0x819D, 0x8197, 0x0192,
+  0x01B0, 0x81B5, 0x81BF, 0x01BA, 0x81AB, 0x01AE, 0x01A4, 0x81A1,
+  0x01E0, 0x81E5, 0x81EF, 0x01EA, 0x81FB, 0x01FE, 0x01F4, 0x81F1,
+  0x81D3, 0x01D6, 0x01DC, 0x81D9, 0x01C8, 0x81CD, 0x81C7, 0x01C2,
+  0x0140, 0x8145, 0x814F, 0x014A, 0x815B, 0x015E, 0x0154, 0x8151,
+  0x8173, 0x0176, 0x017C, 0x8179, 0x0168, 0x816D, 0x8167, 0x0162,
+  0x8123, 0x0126, 0x012C, 0x8129, 0x0138, 0x813D, 0x8137, 0x0132,
+  0x0110, 0x8115, 0x811F, 0x011A, 0x810B, 0x010E, 0x0104, 0x8101,
+  0x8303, 0x0306, 0x030C, 0x8309, 0x0318, 0x831D, 0x8317, 0x0312,
+  0x0330, 0x8335, 0x833F, 0x033A, 0x832B, 0x032E, 0x0324, 0x8321,
+  0x0360, 0x8365, 0x836F, 0x036A, 0x837B, 0x037E, 0x0374, 0x8371,
+  0x8353, 0x0356, 0x035C, 0x8359, 0x0348, 0x834D, 0x8347, 0x0342,
+  0x03C0, 0x83C5, 0x83CF, 0x03CA, 0x83DB, 0x03DE, 0x03D4, 0x83D1,
+  0x83F3, 0x03F6, 0x03FC, 0x83F9, 0x03E8, 0x83ED, 0x83E7, 0x03E2,
+  0x83A3, 0x03A6, 0x03AC, 0x83A9, 0x03B8, 0x83BD, 0x83B7, 0x03B2,
+  0x0390, 0x8395, 0x839F, 0x039A, 0x838B, 0x038E, 0x0384, 0x8381,
+  0x0280, 0x8285, 0x828F, 0x028A, 0x829B, 0x029E, 0x0294, 0x8291,
+  0x82B3, 0x02B6, 0x02BC, 0x82B9, 0x02A8, 0x82AD, 0x82A7, 0x02A2,
+  0x82E3, 0x02E6, 0x02EC, 0x82E9, 0x02F8, 0x82FD, 0x82F7, 0x02F2,
+  0x02D0, 0x82D5, 0x82DF, 0x02DA, 0x82CB, 0x02CE, 0x02C4, 0x82C1,
+  0x8243, 0x0246, 0x024C, 0x8249, 0x0258, 0x825D, 0x8257, 0x0252,
+  0x0270, 0x8275, 0x827F, 0x027A, 0x826B, 0x026E, 0x0264, 0x8261,
+  0x0220, 0x8225, 0x822F, 0x022A, 0x823B, 0x023E, 0x0234, 0x8231,
+  0x8213, 0x0216, 0x021C, 0x8219, 0x0208, 0x820D, 0x8207, 0x0202
 };
 
 static rt_err_t can_spi_read_byte(MCP2517_Dev *mcp2517_dev, uint16_t address, uint8_t *rxd)
@@ -1491,6 +1532,705 @@ static rt_err_t can_spi_ram_init(MCP2517_Dev *mcp2517_dev, uint8_t d)
     return ret;
 }
 
+//DRV_CANFDSPI_BitTimeConfigureNominal40MHz
+static rt_err_t can_spi_bit_time_configure_nominal_40mhz(MCP2517_Dev *mcp2517_dev, CAN_BITTIME_SETUP bitTime)
+{
+    rt_err_t ret = -RT_ERROR;
+    REG_CiNBTCFG ciNbtcfg;
+
+    if(NULL == mcp2517_dev)
+    {
+        return -RT_EINVAL;
+    }
+
+    ciNbtcfg.word = canControlResetValues[cREGADDR_CiNBTCFG / 4];
+
+    // Arbitration Bit rate
+    switch (bitTime)
+    {
+        // All 500K
+        case CAN_500K_1M:
+        case CAN_500K_2M:
+        case CAN_500K_3M:
+        case CAN_500K_4M:
+        case CAN_500K_5M:
+        case CAN_500K_6M7:
+        case CAN_500K_8M:
+        case CAN_500K_10M:
+            ciNbtcfg.bF.BRP = 0;
+            ciNbtcfg.bF.TSEG1 = 62;
+            ciNbtcfg.bF.TSEG2 = 15;
+            ciNbtcfg.bF.SJW = 15;
+            break;
+
+        // All 250K
+        case CAN_250K_500K:
+        case CAN_250K_833K:
+        case CAN_250K_1M:
+        case CAN_250K_1M5:
+        case CAN_250K_2M:
+        case CAN_250K_3M:
+        case CAN_250K_4M:
+            ciNbtcfg.bF.BRP = 0;
+            ciNbtcfg.bF.TSEG1 = 126;
+            ciNbtcfg.bF.TSEG2 = 31;
+            ciNbtcfg.bF.SJW = 31;
+            break;
+
+        case CAN_1000K_4M:
+        case CAN_1000K_8M:
+            ciNbtcfg.bF.BRP = 0;
+            ciNbtcfg.bF.TSEG1 = 30;
+            ciNbtcfg.bF.TSEG2 = 7;
+            ciNbtcfg.bF.SJW = 7;
+            break;
+
+        case CAN_125K_500K:
+            ciNbtcfg.bF.BRP = 0;
+            ciNbtcfg.bF.TSEG1 = 254;
+            ciNbtcfg.bF.TSEG2 = 63;
+            ciNbtcfg.bF.SJW = 63;
+            break;
+
+        default:
+            return -1;
+            break;
+    }
+
+    // Write Bit time registers
+    ret = can_spi_write_word(mcp2517_dev, cREGADDR_CiNBTCFG, ciNbtcfg.word);
+
+    return ret;
+}
+
+//DRV_CANFDSPI_BitTimeConfigureData40MHz
+static rt_err_t can_spi_bit_time_configure_data_40mhz(MCP2517_Dev *mcp2517_dev, CAN_BITTIME_SETUP bitTime, CAN_SSP_MODE sspMode)
+{
+    rt_err_t ret = -RT_ERROR;
+    REG_CiDBTCFG ciDbtcfg;
+    REG_CiTDC ciTdc;
+
+    if(NULL == mcp2517_dev)
+    {
+        return -RT_EINVAL;
+    }
+
+    //    sspMode;
+
+    ciDbtcfg.word = canControlResetValues[cREGADDR_CiDBTCFG / 4];
+    ciTdc.word = 0;
+
+    // Configure Bit time and sample point
+    ciTdc.bF.TDCMode = CAN_SSP_MODE_AUTO;
+    uint32_t tdcValue = 0;
+
+    // Data Bit rate and SSP
+    switch (bitTime)
+    {
+        case CAN_500K_1M:
+            ciDbtcfg.bF.BRP = 0;
+            ciDbtcfg.bF.TSEG1 = 30;
+            ciDbtcfg.bF.TSEG2 = 7;
+            ciDbtcfg.bF.SJW = 7;
+            // SSP
+            ciTdc.bF.TDCOffset = 31;
+            ciTdc.bF.TDCValue = tdcValue;
+            break;
+        case CAN_500K_2M:
+            // Data BR
+            ciDbtcfg.bF.BRP = 0;
+            ciDbtcfg.bF.TSEG1 = 14;
+            ciDbtcfg.bF.TSEG2 = 3;
+            ciDbtcfg.bF.SJW = 3;
+            // SSP
+            ciTdc.bF.TDCOffset = 15;
+            ciTdc.bF.TDCValue = tdcValue;
+            break;
+        case CAN_500K_3M:
+            // Data BR
+            ciDbtcfg.bF.BRP = 0;
+            ciDbtcfg.bF.TSEG1 = 8;
+            ciDbtcfg.bF.TSEG2 = 2;
+            ciDbtcfg.bF.SJW = 2;
+            // SSP
+            ciTdc.bF.TDCOffset = 9;
+            ciTdc.bF.TDCValue = tdcValue;
+            break;
+        case CAN_500K_4M:
+        case CAN_1000K_4M:
+            // Data BR
+            ciDbtcfg.bF.BRP = 0;
+            ciDbtcfg.bF.TSEG1 = 6;
+            ciDbtcfg.bF.TSEG2 = 1;
+            ciDbtcfg.bF.SJW = 1;
+            // SSP
+            ciTdc.bF.TDCOffset = 7;
+            ciTdc.bF.TDCValue = tdcValue;
+            break;
+        case CAN_500K_5M:
+            // Data BR
+            ciDbtcfg.bF.BRP = 0;
+            ciDbtcfg.bF.TSEG1 = 4;
+            ciDbtcfg.bF.TSEG2 = 1;
+            ciDbtcfg.bF.SJW = 1;
+            // SSP
+            ciTdc.bF.TDCOffset = 5;
+            ciTdc.bF.TDCValue = tdcValue;
+            break;
+        case CAN_500K_6M7:
+            // Data BR
+            ciDbtcfg.bF.BRP = 0;
+            ciDbtcfg.bF.TSEG1 = 3;
+            ciDbtcfg.bF.TSEG2 = 0;
+            ciDbtcfg.bF.SJW = 0;
+            // SSP
+            ciTdc.bF.TDCOffset = 4;
+            ciTdc.bF.TDCValue = tdcValue;
+            break;
+        case CAN_500K_8M:
+        case CAN_1000K_8M:
+            // Data BR
+            ciDbtcfg.bF.BRP = 0;
+            ciDbtcfg.bF.TSEG1 = 2;
+            ciDbtcfg.bF.TSEG2 = 0;
+            ciDbtcfg.bF.SJW = 0;
+            // SSP
+            ciTdc.bF.TDCOffset = 3;
+            ciTdc.bF.TDCValue = 1;
+            break;
+        case CAN_500K_10M:
+            // Data BR
+            ciDbtcfg.bF.BRP = 0;
+            ciDbtcfg.bF.TSEG1 = 1;
+            ciDbtcfg.bF.TSEG2 = 0;
+            ciDbtcfg.bF.SJW = 0;
+            // SSP
+            ciTdc.bF.TDCOffset = 2;
+            ciTdc.bF.TDCValue = 0;
+            break;
+
+        case CAN_250K_500K:
+        case CAN_125K_500K:
+            ciDbtcfg.bF.BRP = 1;
+            ciDbtcfg.bF.TSEG1 = 30;
+            ciDbtcfg.bF.TSEG2 = 7;
+            ciDbtcfg.bF.SJW = 7;
+            // SSP
+            ciTdc.bF.TDCOffset = 31;
+            ciTdc.bF.TDCValue = tdcValue;
+            ciTdc.bF.TDCMode = CAN_SSP_MODE_OFF;
+            break;
+        case CAN_250K_833K:
+            ciDbtcfg.bF.BRP = 1;
+            ciDbtcfg.bF.TSEG1 = 17;
+            ciDbtcfg.bF.TSEG2 = 4;
+            ciDbtcfg.bF.SJW = 4;
+            // SSP
+            ciTdc.bF.TDCOffset = 18;
+            ciTdc.bF.TDCValue = tdcValue;
+            ciTdc.bF.TDCMode = CAN_SSP_MODE_OFF;
+            break;
+        case CAN_250K_1M:
+            ciDbtcfg.bF.BRP = 0;
+            ciDbtcfg.bF.TSEG1 = 30;
+            ciDbtcfg.bF.TSEG2 = 7;
+            ciDbtcfg.bF.SJW = 7;
+            // SSP
+            ciTdc.bF.TDCOffset = 31;
+            ciTdc.bF.TDCValue = tdcValue;
+            break;
+        case CAN_250K_1M5:
+            ciDbtcfg.bF.BRP = 0;
+            ciDbtcfg.bF.TSEG1 = 18;
+            ciDbtcfg.bF.TSEG2 = 5;
+            ciDbtcfg.bF.SJW = 5;
+            // SSP
+            ciTdc.bF.TDCOffset = 19;
+            ciTdc.bF.TDCValue = tdcValue;
+            break;
+        case CAN_250K_2M:
+            ciDbtcfg.bF.BRP = 0;
+            ciDbtcfg.bF.TSEG1 = 14;
+            ciDbtcfg.bF.TSEG2 = 3;
+            ciDbtcfg.bF.SJW = 3;
+            // SSP
+            ciTdc.bF.TDCOffset = 15;
+            ciTdc.bF.TDCValue = tdcValue;
+            break;
+        case CAN_250K_3M:
+            ciDbtcfg.bF.BRP = 0;
+            ciDbtcfg.bF.TSEG1 = 8;
+            ciDbtcfg.bF.TSEG2 = 2;
+            ciDbtcfg.bF.SJW = 2;
+            // SSP
+            ciTdc.bF.TDCOffset = 9;
+            ciTdc.bF.TDCValue = tdcValue;
+            break;
+        case CAN_250K_4M:
+            // Data BR
+            ciDbtcfg.bF.BRP = 0;
+            ciDbtcfg.bF.TSEG1 = 6;
+            ciDbtcfg.bF.TSEG2 = 1;
+            ciDbtcfg.bF.SJW = 1;
+            // SSP
+            ciTdc.bF.TDCOffset = 7;
+            ciTdc.bF.TDCValue = tdcValue;
+            break;
+
+        default:
+            return ret;
+        break;
+    }
+
+    // Write Bit time registers
+    ret = can_spi_write_word(mcp2517_dev, cREGADDR_CiDBTCFG, ciDbtcfg.word);
+    if (ret != RT_EOK) {
+        return ret;
+    }
+
+// Write Transmitter Delay Compensation
+#ifdef REV_A
+    ciTdc.bF.TDCOffset = 0;
+    ciTdc.bF.TDCValue = 0;
+#endif
+
+    ret = can_spi_write_word(mcp2517_dev, cREGADDR_CiTDC, ciTdc.word);
+    if (ret != RT_EOK) {
+        return ret;
+    }
+
+    return ret;
+}
+
+//DRV_CANFDSPI_BitTimeConfigureNominal20MHz
+static rt_err_t can_spi_bit_time_configure_nominal_20mhz (MCP2517_Dev *mcp2517_dev, CAN_BITTIME_SETUP bitTime)
+{
+    REG_CiNBTCFG ciNbtcfg;
+    rt_err_t ret = -RT_ERROR;
+
+    if(NULL == mcp2517_dev)
+    {
+        return -RT_EINVAL;
+    }
+
+    ciNbtcfg.word = canControlResetValues[cREGADDR_CiNBTCFG / 4];
+
+    // Arbitration Bit rate
+    switch (bitTime) {
+    // All 500K
+    case CAN_500K_1M:
+    case CAN_500K_2M:
+    case CAN_500K_4M:
+    case CAN_500K_5M:
+    case CAN_500K_6M7:
+    case CAN_500K_8M:
+    case CAN_500K_10M:
+        ciNbtcfg.bF.BRP = 0;
+        ciNbtcfg.bF.TSEG1 = 30;
+        ciNbtcfg.bF.TSEG2 = 7;
+        ciNbtcfg.bF.SJW = 7;
+        break;
+
+    // All 250K
+    case CAN_250K_500K:
+    case CAN_250K_833K:
+    case CAN_250K_1M:
+    case CAN_250K_1M5:
+    case CAN_250K_2M:
+    case CAN_250K_3M:
+    case CAN_250K_4M:
+        ciNbtcfg.bF.BRP = 0;
+        ciNbtcfg.bF.TSEG1 = 62;
+        ciNbtcfg.bF.TSEG2 = 15;
+        ciNbtcfg.bF.SJW = 15;
+        break;
+
+    case CAN_1000K_4M:
+    case CAN_1000K_8M:
+        ciNbtcfg.bF.BRP = 0;
+        ciNbtcfg.bF.TSEG1 = 14;
+        ciNbtcfg.bF.TSEG2 = 3;
+        ciNbtcfg.bF.SJW = 3;
+        break;
+
+    case CAN_125K_500K:
+        ciNbtcfg.bF.BRP = 0;
+        ciNbtcfg.bF.TSEG1 = 126;
+        ciNbtcfg.bF.TSEG2 = 31;
+        ciNbtcfg.bF.SJW = 31;
+        break;
+
+    default:
+        return -1;
+        break;
+    }
+
+    // Write Bit time registers
+    ret = can_spi_write_word(mcp2517_dev, cREGADDR_CiNBTCFG, ciNbtcfg.word);
+    if (ret != RT_EOK) {
+        return ret;
+    }
+
+    return ret;
+}
+
+//DRV_CANFDSPI_BitTimeConfigureData20MHz
+static rt_err_t can_spi_bit_time_configure_data_20mhz(MCP2517_Dev *mcp2517_dev, CAN_BITTIME_SETUP bitTime, CAN_SSP_MODE sspMode)
+{
+    REG_CiDBTCFG ciDbtcfg;
+    REG_CiTDC ciTdc;
+
+    rt_err_t ret = -RT_ERROR;
+
+    if(NULL == mcp2517_dev)
+    {
+        return -RT_EINVAL;
+    }
+
+    //    sspMode;
+    ciDbtcfg.word = canControlResetValues[cREGADDR_CiDBTCFG / 4];
+    ciTdc.word = 0;
+
+    // Configure Bit time and sample point
+    ciTdc.bF.TDCMode = CAN_SSP_MODE_AUTO;
+    uint32_t tdcValue = 0;
+
+    // Data Bit rate and SSP
+    switch (bitTime) {
+    case CAN_500K_1M:
+        ciDbtcfg.bF.BRP = 0;
+        ciDbtcfg.bF.TSEG1 = 14;
+        ciDbtcfg.bF.TSEG2 = 3;
+        ciDbtcfg.bF.SJW = 3;
+        // SSP
+        ciTdc.bF.TDCOffset = 15;
+        ciTdc.bF.TDCValue = tdcValue;
+        break;
+    case CAN_500K_2M:
+        // Data BR
+        ciDbtcfg.bF.BRP = 0;
+        ciDbtcfg.bF.TSEG1 = 6;
+        ciDbtcfg.bF.TSEG2 = 1;
+        ciDbtcfg.bF.SJW = 1;
+        // SSP
+        ciTdc.bF.TDCOffset = 7;
+        ciTdc.bF.TDCValue = tdcValue;
+        break;
+    case CAN_500K_4M:
+    case CAN_1000K_4M:
+        // Data BR
+        ciDbtcfg.bF.BRP = 0;
+        ciDbtcfg.bF.TSEG1 = 2;
+        ciDbtcfg.bF.TSEG2 = 0;
+        ciDbtcfg.bF.SJW = 0;
+        // SSP
+        ciTdc.bF.TDCOffset = 3;
+        ciTdc.bF.TDCValue = tdcValue;
+        break;
+    case CAN_500K_5M:
+        // Data BR
+        ciDbtcfg.bF.BRP = 0;
+        ciDbtcfg.bF.TSEG1 = 1;
+        ciDbtcfg.bF.TSEG2 = 0;
+        ciDbtcfg.bF.SJW = 0;
+        // SSP
+        ciTdc.bF.TDCOffset = 2;
+        ciTdc.bF.TDCValue = tdcValue;
+        break;
+    case CAN_500K_6M7:
+    case CAN_500K_8M:
+    case CAN_500K_10M:
+    case CAN_1000K_8M:
+        //qDebug("Data Bitrate not feasible with this clock!");
+        return ret;
+        break;
+
+    case CAN_250K_500K:
+    case CAN_125K_500K:
+        ciDbtcfg.bF.BRP = 0;
+        ciDbtcfg.bF.TSEG1 = 30;
+        ciDbtcfg.bF.TSEG2 = 7;
+        ciDbtcfg.bF.SJW = 7;
+        // SSP
+        ciTdc.bF.TDCOffset = 31;
+        ciTdc.bF.TDCValue = tdcValue;
+        ciTdc.bF.TDCMode = CAN_SSP_MODE_OFF;
+        break;
+    case CAN_250K_833K:
+        ciDbtcfg.bF.BRP = 0;
+        ciDbtcfg.bF.TSEG1 = 17;
+        ciDbtcfg.bF.TSEG2 = 4;
+        ciDbtcfg.bF.SJW = 4;
+        // SSP
+        ciTdc.bF.TDCOffset = 18;
+        ciTdc.bF.TDCValue = tdcValue;
+        ciTdc.bF.TDCMode = CAN_SSP_MODE_OFF;
+        break;
+    case CAN_250K_1M:
+        ciDbtcfg.bF.BRP = 0;
+        ciDbtcfg.bF.TSEG1 = 14;
+        ciDbtcfg.bF.TSEG2 = 3;
+        ciDbtcfg.bF.SJW = 3;
+        // SSP
+        ciTdc.bF.TDCOffset = 15;
+        ciTdc.bF.TDCValue = tdcValue;
+        break;
+    case CAN_250K_1M5:
+        ciDbtcfg.bF.BRP = 0;
+        ciDbtcfg.bF.TSEG1 = 8;
+        ciDbtcfg.bF.TSEG2 = 2;
+        ciDbtcfg.bF.SJW = 2;
+        // SSP
+        ciTdc.bF.TDCOffset = 9;
+        ciTdc.bF.TDCValue = tdcValue;
+        break;
+    case CAN_250K_2M:
+        ciDbtcfg.bF.BRP = 0;
+        ciDbtcfg.bF.TSEG1 = 6;
+        ciDbtcfg.bF.TSEG2 = 1;
+        ciDbtcfg.bF.SJW = 1;
+        // SSP
+        ciTdc.bF.TDCOffset = 7;
+        ciTdc.bF.TDCValue = tdcValue;
+        break;
+    case CAN_250K_3M:
+        //qDebug("Data Bitrate not feasible with this clock!");
+        return ret;
+        break;
+    case CAN_250K_4M:
+        // Data BR
+        ciDbtcfg.bF.BRP = 0;
+        ciDbtcfg.bF.TSEG1 = 2;
+        ciDbtcfg.bF.TSEG2 = 0;
+        ciDbtcfg.bF.SJW = 0;
+        // SSP
+        ciTdc.bF.TDCOffset = 3;
+        ciTdc.bF.TDCValue = tdcValue;
+        break;
+
+    default:
+        return ret;
+        break;
+    }
+
+    // Write Bit time registers
+    ret = can_spi_write_word(mcp2517_dev, cREGADDR_CiDBTCFG, ciDbtcfg.word);
+    if (ret != RT_EOK) {
+        return ret;
+    }
+
+    // Write Transmitter Delay Compensation
+#ifdef REV_A
+    ciTdc.bF.TDCOffset = 0;
+    ciTdc.bF.TDCValue = 0;
+#endif
+
+    ret = can_spi_write_word(mcp2517_dev, cREGADDR_CiTDC, ciTdc.word);
+    if (ret != RT_EOK) {
+        return ret;
+    }
+
+    return ret;
+}
+
+//DRV_CANFDSPI_BitTimeConfigureNominal10MHz
+static rt_err_t can_spi_bit_time_configure_nominal_10mhz(MCP2517_Dev *mcp2517_dev, CAN_BITTIME_SETUP bitTime)
+{
+    rt_err_t ret = -RT_ERROR;
+
+    if(NULL == mcp2517_dev)
+    {
+        return -RT_EINVAL;
+    }
+
+    REG_CiNBTCFG ciNbtcfg;
+
+    ciNbtcfg.word = canControlResetValues[cREGADDR_CiNBTCFG / 4];
+
+    // Arbitration Bit rate
+    switch (bitTime) {
+    // All 500K
+    case CAN_500K_1M:
+    case CAN_500K_2M:
+    case CAN_500K_4M:
+    case CAN_500K_5M:
+    case CAN_500K_6M7:
+    case CAN_500K_8M:
+    case CAN_500K_10M:
+        ciNbtcfg.bF.BRP = 0;
+        ciNbtcfg.bF.TSEG1 = 14;
+        ciNbtcfg.bF.TSEG2 = 3;
+        ciNbtcfg.bF.SJW = 3;
+        break;
+
+    // All 250K
+    case CAN_250K_500K:
+    case CAN_250K_833K:
+    case CAN_250K_1M:
+    case CAN_250K_1M5:
+    case CAN_250K_2M:
+    case CAN_250K_3M:
+    case CAN_250K_4M:
+        ciNbtcfg.bF.BRP = 0;
+        ciNbtcfg.bF.TSEG1 = 30;
+        ciNbtcfg.bF.TSEG2 = 7;
+        ciNbtcfg.bF.SJW = 7;
+        break;
+
+    case CAN_1000K_4M:
+    case CAN_1000K_8M:
+        ciNbtcfg.bF.BRP = 0;
+        ciNbtcfg.bF.TSEG1 = 7;
+        ciNbtcfg.bF.TSEG2 = 2;
+        ciNbtcfg.bF.SJW = 2;
+        break;
+
+    case CAN_125K_500K:
+        ciNbtcfg.bF.BRP = 0;
+        ciNbtcfg.bF.TSEG1 = 62;
+        ciNbtcfg.bF.TSEG2 = 15;
+        ciNbtcfg.bF.SJW = 15;
+        break;
+
+    default:
+        return ret;
+        break;
+    }
+
+    // Write Bit time registers
+    ret = can_spi_write_word(mcp2517_dev, cREGADDR_CiNBTCFG, ciNbtcfg.word);
+    if (ret != RT_EOK) {
+        return ret;
+    }
+    return ret;
+}
+
+//DRV_CANFDSPI_BitTimeConfigureData10MHz
+static rt_err_t can_spi_bit_time_configure_data_10mhz(MCP2517_Dev *mcp2517_dev, CAN_BITTIME_SETUP bitTime, CAN_SSP_MODE sspMode)
+{
+    rt_err_t ret = -RT_ERROR;
+
+    if(NULL == mcp2517_dev)
+    {
+        return -RT_EINVAL;
+    }
+
+    REG_CiDBTCFG ciDbtcfg;
+    REG_CiTDC ciTdc;
+
+    ciDbtcfg.word = canControlResetValues[cREGADDR_CiDBTCFG / 4];
+    ciTdc.word = 0;
+
+    // Configure Bit time and sample point
+    ciTdc.bF.TDCMode = CAN_SSP_MODE_AUTO;
+    uint32_t tdcValue = 0;
+
+    // Data Bit rate and SSP
+    switch (bitTime)
+    {
+        case CAN_500K_1M:
+            ciDbtcfg.bF.BRP = 0;
+            ciDbtcfg.bF.TSEG1 = 6;
+            ciDbtcfg.bF.TSEG2 = 1;
+            ciDbtcfg.bF.SJW = 1;
+            // SSP
+            ciTdc.bF.TDCOffset = 7;
+            ciTdc.bF.TDCValue = tdcValue;
+            break;
+        case CAN_500K_2M:
+            // Data BR
+            ciDbtcfg.bF.BRP = 0;
+            ciDbtcfg.bF.TSEG1 = 2;
+            ciDbtcfg.bF.TSEG2 = 0;
+            ciDbtcfg.bF.SJW = 0;
+            // SSP
+            ciTdc.bF.TDCOffset = 3;
+            ciTdc.bF.TDCValue = tdcValue;
+            break;
+        case CAN_500K_4M:
+        case CAN_500K_5M:
+        case CAN_500K_6M7:
+        case CAN_500K_8M:
+        case CAN_500K_10M:
+        case CAN_1000K_4M:
+        case CAN_1000K_8M:
+            //qDebug("Data Bitrate not feasible with this clock!");
+            return ret;
+            break;
+
+        case CAN_250K_500K:
+        case CAN_125K_500K:
+            ciDbtcfg.bF.BRP = 0;
+            ciDbtcfg.bF.TSEG1 = 14;
+            ciDbtcfg.bF.TSEG2 = 3;
+            ciDbtcfg.bF.SJW = 3;
+            // SSP
+            ciTdc.bF.TDCOffset = 15;
+            ciTdc.bF.TDCValue = tdcValue;
+            ciTdc.bF.TDCMode = CAN_SSP_MODE_OFF;
+            break;
+        case CAN_250K_833K:
+            ciDbtcfg.bF.BRP = 0;
+            ciDbtcfg.bF.TSEG1 = 7;
+            ciDbtcfg.bF.TSEG2 = 2;
+            ciDbtcfg.bF.SJW = 2;
+            // SSP
+            ciTdc.bF.TDCOffset = 8;
+            ciTdc.bF.TDCValue = tdcValue;
+            ciTdc.bF.TDCMode = CAN_SSP_MODE_OFF;
+            break;
+        case CAN_250K_1M:
+            ciDbtcfg.bF.BRP = 0;
+            ciDbtcfg.bF.TSEG1 = 6;
+            ciDbtcfg.bF.TSEG2 = 1;
+            ciDbtcfg.bF.SJW = 1;
+            // SSP
+            ciTdc.bF.TDCOffset = 7;
+            ciTdc.bF.TDCValue = tdcValue;
+            break;
+        case CAN_250K_1M5:
+            //qDebug("Data Bitrate not feasible with this clock!");
+            return ret;
+            break;
+        case CAN_250K_2M:
+            ciDbtcfg.bF.BRP = 0;
+            ciDbtcfg.bF.TSEG1 = 2;
+            ciDbtcfg.bF.TSEG2 = 0;
+            ciDbtcfg.bF.SJW = 0;
+            // SSP
+            ciTdc.bF.TDCOffset = 3;
+            ciTdc.bF.TDCValue = tdcValue;
+            break;
+        case CAN_250K_3M:
+        case CAN_250K_4M:
+            //qDebug("Data Bitrate not feasible with this clock!");
+            return ret;
+            break;
+
+        default:
+            return ret;
+            break;
+    }
+
+    // Write Bit time registers
+    ret = can_spi_write_word(mcp2517_dev, cREGADDR_CiDBTCFG, ciDbtcfg.word);
+    if (ret != RT_EOK) {
+        return ret;
+    }
+
+    // Write Transmitter Delay Compensation
+#ifdef REV_A
+    ciTdc.bF.TDCOffset = 0;
+    ciTdc.bF.TDCValue = 0;
+#endif
+
+    ret = can_spi_write_word(mcp2517_dev, cREGADDR_CiTDC, ciTdc.word);
+    if (ret != RT_EOK) {
+        return ret;
+    }
+    return ret;
+}
+
 //DRV_CANFDSPI_BitTimeConfigure
 static rt_err_t can_spi_bit_time_configure(MCP2517_Dev *mcp2517_dev,
                                             CAN_BITTIME_SETUP bitTime, CAN_SSP_MODE sspMode,
@@ -1507,35 +2247,220 @@ static rt_err_t can_spi_bit_time_configure(MCP2517_Dev *mcp2517_dev,
     switch (clk)
     {
         case CAN_SYSCLK_40M:
-            ret = DRV_CANFDSPI_BitTimeConfigureNominal40MHz(index, bitTime);
+            ret = can_spi_bit_time_configure_nominal_40mhz(mcp2517_dev, bitTime);
             if (ret != RT_EOK) {
                 return ret;
             }
 
-            ret = DRV_CANFDSPI_BitTimeConfigureData40MHz(index, bitTime, sspMode);
+            ret = can_spi_bit_time_configure_data_40mhz(mcp2517_dev, bitTime, sspMode);
             break;
         case CAN_SYSCLK_20M:
-            ret = DRV_CANFDSPI_BitTimeConfigureNominal20MHz(index, bitTime);
+            ret = can_spi_bit_time_configure_nominal_20mhz(mcp2517_dev, bitTime);
             if (ret != RT_EOK) {
                 return ret;
             }
 
-            ret = DRV_CANFDSPI_BitTimeConfigureData20MHz(index, bitTime, sspMode);
+            ret = can_spi_bit_time_configure_data_20mhz(mcp2517_dev, bitTime, sspMode);
             break;
         case CAN_SYSCLK_10M:
-            ret = DRV_CANFDSPI_BitTimeConfigureNominal10MHz(index, bitTime);
+            ret = can_spi_bit_time_configure_nominal_10mhz(mcp2517_dev, bitTime);
             if (ret != RT_EOK) {
                 return ret;
             }
 
-            ret = DRV_CANFDSPI_BitTimeConfigureData10MHz(index, bitTime, sspMode);
+            ret = can_spi_bit_time_configure_data_10mhz(mcp2517_dev, bitTime, sspMode);
             break;
         default:
             ret = -RT_ERROR;
             break;
     }
+    return ret;
+}
+
+//DRV_CANFDSPI_GpioModeConfigure
+static rt_err_t can_spi_gpio_mode_configure(MCP2517_Dev *mcp2517_dev, GPIO_PIN_MODE gpio0, GPIO_PIN_MODE gpio1)
+{
+    rt_err_t ret = -RT_ERROR;
+
+    if(NULL == mcp2517_dev)
+    {
+        return -RT_EINVAL;
+    }
+
+    uint16_t a = 0;
+
+    // Read
+    a = cREGADDR_IOCON + 3;
+    REG_IOCON iocon;
+    iocon.word = 0;
+
+    ret = can_spi_read_byte(mcp2517_dev, a, &iocon.byte[3]);
+    if (ret != RT_EOK) {
+        return ret;
+    }
+
+    // Modify
+    iocon.bF.PinMode0 = gpio0;
+    iocon.bF.PinMode1 = gpio1;
+
+    // Write
+    ret = can_spi_write_byte(mcp2517_dev, a, iocon.byte[3]);
+    if (ret != RT_EOK) {
+        return ret;
+    }
+    return ret;
+}
+
+//DRV_CANFDSPI_GpioDirectionConfigure
+static rt_err_t can_spi_gpio_direction_configure(MCP2517_Dev *mcp2517_dev, GPIO_PIN_DIRECTION gpio0, GPIO_PIN_DIRECTION gpio1)
+{
+    rt_err_t ret = -RT_ERROR;
+
+    if(NULL == mcp2517_dev)
+    {
+        return -RT_EINVAL;
+    }
+
+    uint16_t a = 0;
+
+    // Read
+    a = cREGADDR_IOCON;
+    REG_IOCON iocon;
+    iocon.word = 0;
+
+    ret = can_spi_read_byte(mcp2517_dev, a, &iocon.byte[0]);
+    if (ret != RT_EOK) {
+        return ret;
+    }
+
+    // Modify
+    iocon.bF.TRIS0 = gpio0;
+    iocon.bF.TRIS1 = gpio1;
+
+    // Write
+    ret = can_spi_write_byte(mcp2517_dev, a, iocon.byte[0]);
+    if (ret != RT_EOK) {
+        return ret;
+    }
 
     return ret;
+}
+
+//DRV_CANFDSPI_CalculateCRC16
+#define CRCBASE    0xFFFF
+#define CRCUPPER   1
+static uint16_t can_spi_calculate_crc16(uint8_t* data, uint16_t size)
+{
+    uint16_t init = CRCBASE;
+    uint8_t index;
+
+    while (size-- != 0) {
+        index = ((uint8_t*) & init)[CRCUPPER] ^ *data++;
+        init = (init << 8) ^ crc16_table[index];
+    }
+
+    return init;
+}
+
+//DRV_CANFDSPI_DataBytesToDlc
+/*************************************************************************************************
+功能：将CAN数据字节数转换为数据长度标识
+参数：n can数据字节数
+返回：dlc 数据长度标识
+**************************************************************************************************/
+static CAN_DLC can_spi_data_bytes_to_dlc(uint8_t n)
+{
+    CAN_DLC dlc = MCP_CAN_DLC_0;
+
+    if (n <= 4)
+    {
+        dlc = MCP_CAN_DLC_4;
+    }
+    else if (n <= 8)
+    {
+        dlc = MCP_CAN_DLC_8;
+    }
+    else if (n <= 12)
+    {
+        dlc = MCP_CAN_DLC_12;
+    }
+    else if (n <= 16)
+    {
+        dlc = MCP_CAN_DLC_16;
+    }
+    else if (n <= 20)
+    {
+        dlc = MCP_CAN_DLC_20;
+    }
+    else if (n <= 24)
+    {
+        dlc = MCP_CAN_DLC_24;
+    }
+    else if (n <= 32)
+    {
+        dlc = MCP_CAN_DLC_32;
+    }
+    else if (n <= 48)
+    {
+        dlc = MCP_CAN_DLC_48;
+    }
+    else if (n <= 64)
+    {
+        dlc = MCP_CAN_DLC_64;
+    }
+
+    return dlc;
+}
+
+//MCP2517_CAN_GetFrame
+/*************************************************************************************************
+功能：从MCP2517读取接收到的数据
+参数：mcp2517_dev 设备对象
+返回：无
+**************************************************************************************************/
+static int mcp2517_can_get_frame(MCP2517_Dev *mcp2517_dev, void *buf, rt_uint32_t fifo)
+{
+    if(NULL == mcp2517_dev || NULL == buf)
+    {
+        return -RT_ERROR;
+    }
+
+    rt_err_t ret = -RT_ERROR;
+    CAN_RX_FIFO_EVENT rxFlags;
+    CAN_RX_MSGOBJ rxObj;
+    struct rt_can_msg *pmsg;
+
+    pmsg = (struct rt_can_msg *) buf;
+
+    ret = can_spi_receive_channel_event_get(mcp2517_dev, APP_RX_FIFO, &rxFlags);
+    if(ret != RT_EOK)
+    {
+        return ret;
+    }
+    /* MCP2517内有数据就会全部读出来 */
+    while (rxFlags & CAN_RX_FIFO_NOT_EMPTY_EVENT)
+    {
+        //pmsg这里这样用只能取一包，这个函数原本用法是吧所有取出，这样子就有问题
+        //计划这杨用“pmsg[i]，参数fifo当总的要接收的包数
+        //或者把这里包数判断的放在更上一层
+        can_spi_receive_message_get(mcp2517_dev, APP_RX_FIFO, &rxObj, pmsg->data, MAX_DATA_BYTES);
+        pmsg->len = can_spi_dlc_to_data_bytes(rxObj.bF.ctrl.DLC);
+        if(rxObj.bF.ctrl.IDE==1)
+        {
+            pmsg->id = (rxObj.bF.id.SID << 18) | rxObj.bF.id.EID;
+        }
+        else
+        {
+            pmsg->id = rxObj.bF.id.SID ;
+        }
+
+        ret = can_spi_receive_channel_event_get(mcp2517_dev, APP_RX_FIFO, &rxFlags);
+        if(ret != RT_EOK)
+        {
+            /* 查询失败就退出本次接收 */
+            return ret;
+        }
+    }
 }
 
 static rt_err_t mcp2517_can_spi_reset(MCP2517_Dev *mcp2517_dev)
@@ -1563,6 +2488,12 @@ static rt_err_t mcp2517_init(MCP2517_Dev *mcp2517_dev)
 {
     rt_err_t ret = -RT_ERROR;
 
+    CAN_CONFIG config;
+    REG_CiFLTOBJ fObj;
+    REG_CiMASK mObj;
+    CAN_TX_FIFO_CONFIG txConfig;
+    CAN_RX_FIFO_CONFIG rxConfig;
+
     if(mcp2517_dev == NULL)
     {
         return -RT_ERROR;
@@ -1577,10 +2508,64 @@ static rt_err_t mcp2517_init(MCP2517_Dev *mcp2517_dev)
 
     for(int i = 0; i < 10000; i++) {};
 
+    can_spi_ecc_enable(mcp2517_dev);
 
+    can_spi_ram_init(mcp2517_dev, 0xff);
 
+    // Configure device
+    can_spi_configure_object_reset(&config);
+    config.IsoCrcEnable = 1;
+    config.StoreInTEF = 0;
+    config.BitRateSwitchDisable = 1;
+    can_spi_configure(mcp2517_dev, &config);
 
+    // Setup TX FIFO
+    can_spi_transmit_channel_configure_object_reset(&txConfig);
+    txConfig.FifoSize = 7;
+    txConfig.PayLoadSize = CAN_PLSIZE_64;
+    txConfig.TxPriority = 1;
+    can_spi_transmit_channel_configure(mcp2517_dev, APP_TX_FIFO, &txConfig);
 
+    // Setup RX FIFO
+    can_spi_receive_channel_configure_object_reset(&rxConfig);
+    rxConfig.FifoSize = 7;
+    rxConfig.PayLoadSize = CAN_PLSIZE_64;
+    can_spi_receive_channel_configure(mcp2517_dev, APP_RX_FIFO, &rxConfig);
+
+    // Setup RX Filter
+    fObj.word = 0;
+    //  fObj.bF.SID = 0x123;
+    fObj.bF.SID = 0x000;
+    fObj.bF.EXIDE = 0;
+    fObj.bF.EID = 0x00;
+
+    can_spi_filter_object_configure(mcp2517_dev, CAN_FILTER0, &fObj.bF);
+
+    // Setup RX Mask
+    mObj.word = 0;
+    //  mObj.bF.MSID = 0x7ff;
+    mObj.bF.MSID = 0x000;
+    mObj.bF.MIDE = 0;     //支持扩展帧
+    mObj.bF.MEID = 0x0;
+    can_spi_filter_mask_configure(mcp2517_dev, CAN_FILTER0, &mObj.bF);
+
+    // Link FIFO and Filter
+    can_spi_filter_to_fifo_link(mcp2517_dev, CAN_FILTER0, APP_RX_FIFO, true);
+
+    // Setup Bit Time 设置波特率
+    can_spi_bit_time_configure(mcp2517_dev, CAN_500K_2M, CAN_SSP_MODE_AUTO, CAN_SYSCLK_40M);
+
+    // Setup Transmit and Receive Interrupts
+    can_spi_gpio_mode_configure(mcp2517_dev, GPIO_MODE_INT, GPIO_MODE_INT);
+    can_spi_receive_channel_event_enable(mcp2517_dev, APP_RX_FIFO, CAN_RX_FIFO_ALL_EVENTS);
+    //  DRV_CANFDSPI_ModuleEventEnable(cps, CAN_TX_EVENT | CAN_RX_EVENT);
+    can_spi_module_event_enable(mcp2517_dev, CAN_RX_EVENT);
+
+    // Select Normal Mode
+    /* CAN  CANFD 都支持 */
+    can_spi_operation_mode_select(mcp2517_dev, CAN_NORMAL_MODE);
+
+    return ret;
 }
 
 
@@ -1614,6 +2599,11 @@ static rt_err_t rt_mcp2517_init(void)
         /* set irq pin */
         rt_pin_mode(mcp2517_can_port[i].spi_irq_pin_index, PIN_MODE_INPUT_PULLUP);
         rt_pin_attach_irq(mcp2517_can_port[i].spi_irq_pin_index, PIN_IRQ_MODE_FALLING, mcp2517_spi_irq_callback, (void *)&mcp2517_can_port[i]);
+        if(MCP2517FD_Device_Init(&mcp2517_can_port[i]) != RT_EOK)
+        {
+            LOG_E("mcp2517 can %d init error", i);
+            return -RT_ERROR;
+        }
     }
 }
 

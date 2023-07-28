@@ -7,9 +7,10 @@ cwd     = GetCurrentDir()
 CPPPATH = [cwd, cwd + '/inc']
 
 src =  Split('''
-    led_ctrl.c
     sto_record_board.c
-    eth_manage.c
+    src/led.c
+    src/eth_manage.c
+    src/board_info.c
     '''
     )
 

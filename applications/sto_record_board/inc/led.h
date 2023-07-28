@@ -7,8 +7,8 @@
  * Date           Author       Notes
  * 2023-06-24     MingZhao       the first version
  */
-#ifndef APPLICATIONS_RECORD_BOARD_LED_CTRL_H_
-#define APPLICATIONS_RECORD_BOARD_LED_CTRL_H_
+#ifndef APPLICATIONS_RECORD_BOARD_LED_H_
+#define APPLICATIONS_RECORD_BOARD_LED_H_
 
 #include <rtthread.h>
 
@@ -37,4 +37,4 @@ void LedCtrlOFF(LedIndex index);
 void LedCtrlInit(void);
 
 
-#endif /* APPLICATIONS_RECORD_BOARD_LED_CTRL_H_ */
+#endif /* APPLICATIONS_RECORD_BOARD_LED_H_ */
