@@ -27,7 +27,16 @@ static void kvdb_thread_entry(void* parameter)
 
     struct fdb_default_kv_node default_kv_table[] =
     {
-        {"system_version"               , "2.0.0"           },
+        {"system_version"               , "2.0.0"                   },
+        {"e0_ip"                        , "192.168.1.30"            },
+        {"e0_gw"                        , "192.168.1.1"             },
+        {"e0_mask"                      , "255.255.255.0"           },
+        {"e1_ip"                        , "192.168.1.31"            },
+        {"e1_gw"                        , "192.168.1.1"             },
+        {"e1_mask"                      , "255.255.255.0"           },
+        {"e2_ip"                        , "192.168.1.32"            },
+        {"e2_gw"                        , "192.168.1.1"             },
+        {"e2_mask"                      , "255.255.255.0"           },
     };
 
     struct fdb_default_kv default_kv = {0};
