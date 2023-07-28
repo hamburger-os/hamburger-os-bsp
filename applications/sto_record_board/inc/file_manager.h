@@ -13,13 +13,21 @@
 #include <rtthread.h>
 #include "type.h"
 
+#define FILE_MANAGER_TEST 0  /* 文件超出设置的大小以及个数的逻辑测试 */
+
 #define FILE_NAME_MAX_NUM   (24U)
 #define LATEST_DIR_FILE_HEAD_FLAG (0xa5a5a5a5)
 
 #define RECORD_BOARD_EMMC_MAX_SIZE (3600 * 1024 * 1024) //板子EMMC最大空间 单位KB  实际大小为3656M 预留了56M
-#define FILE_MAX_NUM               (128)             /* 最大文件个数 */  //测试用2
-#define RECORD_FILE_MAN_SIZE      (20 * 1024 * 1024)         //单个记录文件大小 单位 KB  20M   //测试用(512)//
 #define RESERVE_SIZE               (1024 * 1024)
+
+#if FILE_MANAGER_TEST
+#define FILE_MAX_NUM               (2)            /* 最大文件个数 */
+#define RECORD_FILE_MAN_SIZE      (512)           /* 单个记录文件大小 单位 KB */
+#else
+#define FILE_MAX_NUM               (128)                    /* 最大文件个数 */
+#define RECORD_FILE_MAN_SIZE     (20 * 1024 * 1024)         /* 单个记录文件大小 单位 KB  20M */
+#endif
 
 #define FIRST_LATEST_DIR_NAME_NULL "NULL"
 

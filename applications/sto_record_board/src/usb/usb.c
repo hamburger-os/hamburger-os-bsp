@@ -8,6 +8,13 @@
  * 2023-07-27     zm       the first version
  */
 
+
+#include "usb.h"
+
+#define DBG_TAG "usbthread"
+#define DBG_LVL DBG_LOG
+#include <rtdbg.h>
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -23,17 +30,12 @@
 #include <pthread.h>
 #include <string.h>
 
-
 #include <rtthread.h>
 #include <rtdevice.h>
 
-#include "usb.h"
 #include "utils.h"
 #include "file_manager.h"
-
-#define DBG_TAG "usbthread"
-#define DBG_LVL DBG_LOG
-#include <rtdbg.h>
+#include "led.h"
 
 #define USB_COPY_FILE_BUFF_MAX_SIZE  (4096)
 
@@ -142,6 +144,7 @@ static sint32_t store_file(const char *src, const char *target, sint32_t mode)
 //    char bakname[PATH_NAME_MAX_LEN];    /* 用于存放备份文件名 */
     sint32_t error = 0, pathlen;
     file_info_t *p_file_list_head = NULL, *p = NULL;
+    char full_path[PATH_NAME_MAX_LEN] = {0};
 
     /* 获取文件列表 */
     p_file_list_head = get_org_file_info(src);
@@ -153,8 +156,10 @@ static sint32_t store_file(const char *src, const char *target, sint32_t mode)
         p = p_file_list_head;
         while (p != NULL)
         {
-            LOG_I("copy '%s' to dir '%s'.\n", p->record_name, target);
-            name = get_sigle_file_name(p->record_name);
+            snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, p->record_name);
+
+            LOG_I("copy '%s' to dir '%s'.\n", full_path, target);
+            name = get_sigle_file_name(full_path);
             if (strstr(name, "DSW") == NULL) /* 没有找到DSW */
             {
                 pathlen = snprintf(targetname,
@@ -180,7 +185,7 @@ static sint32_t store_file(const char *src, const char *target, sint32_t mode)
                 }
             }
 
-            if (copy_file(p->record_name, targetname) < 0)
+            if (copy_file(full_path, targetname) < 0)
             {
                 error = -1;
                 LOG_E("copy file error ... \n");
@@ -269,8 +274,8 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
 #if 1
     LOG_I("转储记录文件到U盘 ...");
     /* 开始转储全部文件 */
-    /* 把"RECORD_FILE_PATH_NAME"目录下面的所有文件复制到U盘 */
-    if (store_file(RECORD_FILE_PATH_NAME, TARGET_DIR_NAME, BACKUP_NO) != 0)
+    /* 从"DIR_FILE_PATH_NAME"目录下面读出所有存储文件的文件名，然后把所有存储文件复制到U盘 */
+    if (store_file(DIR_FILE_PATH_NAME, TARGET_DIR_NAME, BACKUP_NO) != 0)
     {
         /* 转储失败 */
         LOG_E("转储失败");
@@ -349,13 +354,13 @@ static void usb_thread(void *args)
         case DUMP_STATE_INIT: /* 初始化状态 */
 
             /* 一直等待直至U盘插入 */
-            ret = stat(UDISK_ID_PATH, &stat_l);
+            ret = stat(USB_UD0P0_PATH, &stat_l);
             LOG_I("wait usb");
             while (ret < 0)
             {
                 /* 没有插入U盘, 休眠500ms. */
                 rt_thread_mdelay((uint32_t)500);
-                ret = stat(UDISK_ID_PATH, &stat_l);
+                ret = stat(USB_UD0P0_PATH, &stat_l);
             }
 
             /* 等待系统识别U盘内部的数据.*/
@@ -370,7 +375,10 @@ static void usb_thread(void *args)
                 rt_thread_mdelay((uint32_t)500);
                 break;
             }
-#if 0
+#if 1
+
+            state = DUMP_STATE_DUMPING;
+#else
             /* 如果存在格式化文件, 则不进行转储. */
             ret = stat(FORMAT_DIR_NAME, &stat_l);
             if (ret == 0)
@@ -383,7 +391,6 @@ static void usb_thread(void *args)
                 state = DUMP_STATE_EXIT;
                 break;
             }
-#endif
             /* 打开文件 */
             fd = open(UDISK_ID_PATH, O_RDONLY);
             if (fd < 0)
@@ -402,7 +409,6 @@ static void usb_thread(void *args)
             }
             else
             {
-#if 0
                 /* 已经读取到了U盘的ID, 进行鉴权认证 */
                 ret = check_udisk_id(udisk_id);
                 if (ret < 0)
@@ -413,9 +419,6 @@ static void usb_thread(void *args)
                 {
                     state = DUMP_STATE_DUMPING;
                 }
-#else
-                state = DUMP_STATE_DUMPING;
-#endif
             }
 
             /* 关闭文件 */
@@ -424,10 +427,11 @@ static void usb_thread(void *args)
             {
                 LOG_E("close error");
             }
-
+#endif
             break;
         case DUMP_STATE_DUMPING: /* 转储文件中 */
             LOG_I("save file");
+            LedCtrlON(USB_LED);
             /* 转储最新文件 */
             ret = usb_auto_copy(COPYMODE_NEW);
             if (ret < 0)
@@ -443,11 +447,24 @@ static void usb_thread(void *args)
             break;
         case DUMP_STATE_SUCCESS: /* 转储成功 */
             state = DUMP_STATE_EXIT;
+            LedCtrlON(USB_LED);
             break;
         case DUMP_STATE_FAIL: /* 转储失败 */
+            LedCtrlON(USB_LED);
             state = DUMP_STATE_EXIT;
             break;
         case DUMP_STATE_EXIT: /* USB操作已完成, 离开中 */
+#if 1
+            ret = stat(USB_UD0P0_PATH, &stat_l);
+            LOG_I("wait usb levae");
+            LedCtrlOFF(USB_LED);
+            while (ret == 0)
+            {
+                rt_thread_sleep(1);
+                ret = stat(USB_UD0P0_PATH, &stat_l);
+            }
+            LOG_I("usb leave");
+#else
             ret = stat(UDISK_ID_PATH, &stat_l);
             /* 等待U盘拔出 */
             while (ret == 0)
@@ -456,6 +473,7 @@ static void usb_thread(void *args)
                 ret = stat(UDISK_ID_PATH, &stat_l);
             }
             /* 表明拔下U盘 */
+#endif
             state = DUMP_STATE_INIT;
             break;
         default:

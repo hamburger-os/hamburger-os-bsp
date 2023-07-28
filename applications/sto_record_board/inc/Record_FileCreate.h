@@ -459,7 +459,7 @@ extern uint8_t g_ECU_DevCode;
 #define RUANJIANBANBENBUYIZHI    ( WENBENTISHI & 0x01 )
 
 /* public type definition ---------------------------------------------------------------------- */
-#if 1
+#if 0
 
 /* Flash使用状态 */
 typedef struct {
@@ -479,7 +479,7 @@ typedef struct {
 } FLASH_STATE;
 #endif
 
-/* 文件目录结构体 */
+/* 文件目录结构体 128 字节 */
 //typedef struct
 typedef struct __attribute__((packed)) _SFile_Directory /* 按照字节对齐*/ //TODO(mingzhao)
 {
@@ -511,7 +511,7 @@ typedef struct __attribute__((packed)){
 	uint8_t reserve;
 } PACKAGE_HEAD;
 
-/* 公共信息事件包结构体 */
+/* 公共信息事件包结构体 34字节 */
 typedef struct __attribute__((packed))
 {
   char ch_time[3];        /* 时间 */
@@ -534,7 +534,7 @@ typedef struct __attribute__((packed))
   char ch_chaizhuandianliu[2];   /* 柴转/电流 */
 } SFile_Public;
 
-/* 文件头结构体 */
+/* 文件头结构体 128字节 */
 typedef struct __attribute__((packed))
 {
     char ch_head_flag[2];                 /* 文件头标志 */
@@ -576,7 +576,7 @@ typedef struct __attribute__((packed))
     uint32_t u32_CRC32;                   /* CRC32 */
 } SFile_Head;
 
-/* 文件体 */
+/* 文件体 20 字节*/
 typedef struct __attribute__((packed))
 {
     uint16_t shijiandaima;
@@ -617,7 +617,7 @@ typedef struct __attribute__((packed)) _S_CURRENT_FILE_INFO /* 按照字节对�
 } S_CURRENT_FILE_INFO;
 
 extern WRITE_BUF write_buf;
-extern FLASH_STATE Flash_State;
+//extern FLASH_STATE Flash_State;
 extern uint8_t SoftWare_Cycle_Flag;
 extern uint8_t u8_Gonggongxinxi_Flag;
 extern SFile_Head s_file_head;

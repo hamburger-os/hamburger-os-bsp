@@ -148,7 +148,7 @@ sint32_t fm_free_space(void)
     disk_free_space = get_disk_free_space(DIR_FILE_PATH_NAME);
 
     LOG_I("free space before: %d K", disk_free_space);
-#if 1  //TODO(mingzhao)   调试删除文件时，将此段代码屏蔽
+#if !FILE_MANAGER_TEST  //TODO(mingzhao)   调试删除文件时，将此段代码屏蔽
     if (disk_free_space >= RECORD_FILE_MAN_SIZE + RESERVE_SIZE) /* 单个记录文件大小加预留空间的大小 */
     {
         return 0;
@@ -385,6 +385,11 @@ sint32_t FMInit(S_FILE_MANAGER *fm)
         return -1;
     }
     sint32_t ret = 0;
+
+    LOG_I("SFile_Head size %d", sizeof(SFile_Head));
+    LOG_I("SFile_Public size %d", sizeof(SFile_Public));
+    LOG_I("SFile_Directory size %d", sizeof(SFile_Directory));
+    LOG_I("FILE_CONTANT size %d", sizeof(FILE_CONTANT));
 
     memset(fm, 0, sizeof(S_FILE_MANAGER));
 

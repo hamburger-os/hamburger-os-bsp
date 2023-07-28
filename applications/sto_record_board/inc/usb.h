@@ -25,6 +25,8 @@
 
 /* 存储U盘ID的文件 */
 #define UDISK_ID_PATH "/proc/udisk/SerialNumber"
+#define USB_UD0P0_PATH "/mnt/udisk/ud0p0"
+
 /* 思维验证key的文件 */
 //#define SW_KEY_FILE_PATH "/mnt/udisk/ud0p0/sw.lib"
 /* U盘ID的长度,单位:byte */

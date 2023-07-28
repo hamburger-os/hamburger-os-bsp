@@ -207,7 +207,7 @@ typedef struct tagRecordingMessage
 WRITE_BUF write_buf = { 0u };
 
 /* flash当前状态 */
-FLASH_STATE Flash_State = { 0u };
+//FLASH_STATE Flash_State = { 0u };
 
 /* 公共信息结构体 */
 SFile_Public s_file_public = { 0u };
