@@ -391,7 +391,7 @@ file_info_t *get_org_file_info(const char *path)
     p_dir = opendir(path);
     if (p_dir == NULL)
     {
-        rt_kprintf("get_org_file_info error,can not open %s.\n", path);
+        rt_kprintf("get_org_file_info error,can not open %s", path);
         return NULL;
     }
 
@@ -409,9 +409,9 @@ file_info_t *get_org_file_info(const char *path)
                 fd = open(full_path, O_RDONLY);
                 if (fd > 0)
                 {
-                    bytes_read = read(fd, (void *)buffer, (size_t)PAGE_SIZE);
+                    bytes_read = read(fd, (void *)buffer, (size_t)sizeof(SFile_Directory));
                     close(fd);
-                    if (bytes_read == PAGE_SIZE)
+                    if (bytes_read == sizeof(SFile_Directory))
                     {
 //                        if ((strcmp((const char *)(((file_head_t *)buffer)->file_head_flag), (const char *)FILE_HEAD_FLAG)) == 0)
 //                        {
@@ -431,7 +431,7 @@ file_info_t *get_org_file_info(const char *path)
                                 p_cur_file_list->file_id = ((SFile_Directory *)buffer)->file_id;
                                 p_cur_file_list->dir_file_size = stat_l.st_size;
                                 p_cur_file_list->record_file_size = ((SFile_Directory *)buffer)->u32_file_size;
-                                strcpy(p_cur_file_list->dir_name, full_path);
+                                strcpy(p_cur_file_list->dir_name, ((SFile_Directory *)buffer)->ch_dir_name);
                                 strcpy(p_cur_file_list->record_name, ((SFile_Directory *)buffer)->ch_file_name);
                                 p_cur_file_list->is_save = ((SFile_Directory *)buffer)->is_save;
                             }

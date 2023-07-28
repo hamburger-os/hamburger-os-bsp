@@ -11,6 +11,7 @@
 #include "led.h"
 #include "eth_manage.h"
 #include "board_info.h"
+#include "usb.h"
 
 #include <rtthread.h>
 #include <rtdevice.h>
@@ -27,9 +28,12 @@ static void STORecordBoardInit(void)
     DataHandleInit(&eth_can_data_handle);
     FMInit(&file_manager);
     LedCtrlInit();
+
+    /* thread */
     ETHThreadInit();
 //    ETHManageTestThreadInit();
     FileThreadInit();
+    usb_init();
 }
 
 INIT_APP_EXPORT(STORecordBoardInit);

@@ -61,7 +61,7 @@ extern uint8_t g_ECU_DevCode;
 
 /* File Size. ============================================================================== */
 /* 20MB */
-#define MAX_FILE_SIZE       ( 20*1024*1024 )
+//#define MAX_FILE_SIZE       (1024)//( 20*1024*1024 )  使用 RECORD_FILE_MAN_SIZE 替代
 /* 2KB */
 #define MIN_FILE_SIZE       ( 2*1024 )
 
@@ -115,51 +115,51 @@ extern uint8_t g_ECU_DevCode;
 
 
 /* 协议解析文件头 */
-#define TIME_NYR  		      	( RSS_( 2u ).data_u8[4] )
-#define TIME_SFM  			      ( CAN_0x66( 0u ).data_u8[4] )
-#define CHECIKUOCHONG  	      ( RSS_( 3u ).data_u8[3] )
+#define TIME_NYR  		              ( RSS_( 2u ).data_u8[4] )
+#define TIME_SFM  			          ( CAN_0x66( 0u ).data_u8[4] )
+#define CHECIKUOCHONG  	              ( RSS_( 3u ).data_u8[3] )
 #define CHECI  					      ( RSS_( 3u ).data_u8[0] )
 #define SIJI1  					      ( RSS_( 0u ).data_u8[0] )
 #define SIJI2  					      ( RSS_( 0u ).data_u8[3] )
-#define SHUJUJIAOLU  		      ( RSS_( 4u ).data_u8[1] )
-#define JIANKONGJIAOLU 	      ( RSS_( 4u ).data_u8[0] )
-#define CHEZHANHAO  		      ( RSS_( 4u ).data_u8[2] )
-#define ZONGZHONG 	 		      ( RSS_( 1u ).data_u8[0] )
-#define HUANCHANG  			      ( RSS_( 1u ).data_u8[2] )
-#define LIANGSHU  			      ( RSS_( 1u ).data_u8[4] )
-#define CHESUDENGJI  		      ( RSS_( 0u ).data_u8[6] )
-#define JICHEXINGHAO  	      ( RSS_( 2u ).data_u8[2] )
+#define SHUJUJIAOLU  		          ( RSS_( 4u ).data_u8[1] )
+#define JIANKONGJIAOLU 	              ( RSS_( 4u ).data_u8[0] )
+#define CHEZHANHAO  		          ( RSS_( 4u ).data_u8[2] )
+#define ZONGZHONG 	 		          ( RSS_( 1u ).data_u8[0] )
+#define HUANCHANG  			          ( RSS_( 1u ).data_u8[2] )
+#define LIANGSHU  			          ( RSS_( 1u ).data_u8[4] )
+#define CHESUDENGJI  		          ( RSS_( 0u ).data_u8[6] )
+#define JICHEXINGHAO  	              ( RSS_( 2u ).data_u8[2] )
 #define JICHEHAO 	 			      ( RSS_( 2u ).data_u8[0] )
-#define JICHEZHONGLEI		      ( RSS_( 3u ).data_u8[7] )
+#define JICHEZHONGLEI		          ( RSS_( 3u ).data_u8[7] )
 
 /* 运行状态信息 */
 /* 新协议标准 */
-#define JIANKONGSTATE		      ( QSS_( 4u ).data_u8[7] )
+#define JIANKONGSTATE		          ( QSS_( 4u ).data_u8[7] )
 
 /* TCMS采集信息 */
 
-#define ato_jiwei_T54         ( CAN_0x32( 6u ).data_u8[5] )
-#define ato_gk_T55            ( CAN_0x32( 6u ).data_u8[6] )
+#define ato_jiwei_T54                 ( CAN_0x32( 6u ).data_u8[5] )
+#define ato_gk_T55                    ( CAN_0x32( 6u ).data_u8[6] )
 #define TCMSJIWEI				      ato_jiwei_T54
-#define TCMSGONGKUANG		      ( ato_gk_T55 & 0x07 )
+#define TCMSGONGKUANG		          ( ato_gk_T55 & 0x07 )
 
 /* 指导信息 */
-#define Sto_CurSpeed_S13      ( CAN_0x30( 1u ).data_u8[3] )
-#define ZHIDAOJIWEI			      ( QSS_( 5u ).data_u8[2] )
-#define ZHIDAOSUDU			      Sto_CurSpeed_S13
-#define ZHIDAOGONGKUANG       ( QSS_( 5u ).data_u8[7] )
-#define STOXIANSU             ( QSS_( 7u ).data_u8[0] )      //增加CAN协议内容
+#define Sto_CurSpeed_S13              ( CAN_0x30( 1u ).data_u8[3] )
+#define ZHIDAOJIWEI			          ( QSS_( 5u ).data_u8[2] )
+#define ZHIDAOSUDU			          Sto_CurSpeed_S13
+#define ZHIDAOGONGKUANG               ( QSS_( 5u ).data_u8[7] )
+#define STOXIANSU                     ( QSS_( 7u ).data_u8[0] )      //增加CAN协议内容
 
 /* 控车信息 */
 #define KONGZHIMOSHI			    ( QSS_( 2u ).data_u8[6] )
 #define YOUHUAMOSHI				    ( QSS_( 3u ).data_u8[7] )
-#define YOUHUADENGXINHAO	    ( QSS_( 5u ).data_u8[6] )
-#define SKHYOUQUANDUAN		    ( QSS_( 3u ).data_u8[6] )
-#define	KONGZHIGONGKUANG	    ( CAN_KONGCHE( 0u ).data_u8[1] )
+#define YOUHUADENGXINHAO	        ( QSS_( 5u ).data_u8[6] )
+#define SKHYOUQUANDUAN		        ( QSS_( 3u ).data_u8[6] )
+#define	KONGZHIGONGKUANG	        ( CAN_KONGCHE( 0u ).data_u8[1] )
 #define KONGZHIJIWEI			    ( CAN_KONGCHE( 0u ).data_u8[2] )
-#define SHOUBINGHUILING		    ( QSS_( 6u ).data_u8[ 6u ] )
+#define SHOUBINGHUILING		        ( QSS_( 6u ).data_u8[ 6u ] )
 /* 12-June-2018, by Liang Zhen. */
-#define ABV_CTRL_MSG          ( CAN_KONGCHE( 0u ).data_u8[1] )
+#define ABV_CTRL_MSG                ( CAN_KONGCHE( 0u ).data_u8[1] )
 
 /* 公共信息 */
 #define SHISU                 ( CAN_0x66( 0u ).data_u8[0] )
@@ -205,7 +205,7 @@ extern uint8_t g_ECU_DevCode;
 //#define JICHEXINGHAO                                  //CAN协议已有，名称一致
 #define XITONGKONGZHI              ( CAN_0x67( 5u ).data_u8[4] )
 #define JICHELEIXING               ( (*(&XITONGKONGZHI + 1u)) & 0x01 )
-//#define JICHEHAO	                                    //CAN协议已有，名称一致 
+//#define JICHEHAO	                                    //CAN协议已有，名称一致
 #define JUDUANHAO                  ETH_DAT[2]           //CAN协议没有定义
 #define CHEZHONGBIAOSHI            CHECIKUOCHONG
 #define CHECIHAO	                 CHECI
@@ -246,7 +246,7 @@ extern uint8_t g_ECU_DevCode;
 #define axle5_CLjicheli_T79        ( CAN_0x33( 1u ).data_u8[6] )
 #define axle6_CLjicheli_T80        ( CAN_0x33( 1u ).data_u8[7] )
 
-#define JULI                       JUlI          //CAN协议增加LKJ强实时信息透传                     
+#define JULI                       JUlI          //CAN协议增加LKJ强实时信息透传
 #define LICHENG                    GONGLIBIAO    //公里标即为里程
 #define JICHEXINHAO                JICHEXINHAODAIMA
 #define XIANSU                     LKJXIANSU
@@ -262,7 +262,7 @@ extern uint8_t g_ECU_DevCode;
 #define CHAIZHUANDIANLIU           CHAIYOUJIZHUANSU 
 
 
-/* 板间自检信息 */  
+/* 板间自检信息 */
 #define ZK_ZJ	                   ZK1_ZJ
 #define	TX1_ZJ	                 JCTX_ZJ
 #define JL_ZJ                    ERROR_FLAG
@@ -450,7 +450,7 @@ extern uint8_t g_ECU_DevCode;
 #define JL_BB               Version[0]      
 #define WXTX_BB             ETH_DAT[1]      //CAN协议没有定义
 #define CEU_I_BB            ETH_DAT[1]      //CAN协议没有定义
-#define CEU_II_BB           ETH_DAT[1]      //CAN协议没有定义 
+#define CEU_II_BB           ETH_DAT[1]      //CAN协议没有定义
 #define ECU_I_BB            ETH_DAT[1]      //CAN协议没有定义
 #define ECU_II_BB           ETH_DAT[1]      //CAN协议没有定义
 #define CCU_BB              ETH_DAT[1]      //CAN协议没有定义
@@ -481,26 +481,26 @@ typedef struct {
 
 /* 文件目录结构体 */
 //typedef struct
-typedef struct
-    __attribute__((packed)) /* 按照字节对齐*/ //TODO(mingzhao)
-    {
-        char ch_checi[4]; /* 车次 */
-        char ch_checikuochong[4]; /* 车次扩充 */
-        char ch_siji[4]; /* 司机号 */
-        char ch_date[4]; /* 日期 */
-        char ch_time[4]; /* 时间 */
-        uint32_t u32_over_flag; /* 结束标志 */
-        uint32_t u32_file_size; /* 文件实际大小 */
-        char ch_file_name[FILE_NAME_MAX_NUM];//        char ch_file_name[24]; /* 文件名 */
-        char ch_benbuzhuangtai[1]; /* 本补状态 */
-        char ch_reserve[3]; /* 预留 */
-        uint8_t file_id;   /* 文件ID */  //TODO(mingzhao) 对接到文件链表中使用
-        uint8_t is_save;     /* 是否转存过  1：转存 0：未转存 */
-    } SFile_Directory;
+typedef struct __attribute__((packed)) _SFile_Directory /* 按照字节对齐*/ //TODO(mingzhao)
+{
+    char ch_checi[4]; /* 车次 */
+    char ch_checikuochong[4]; /* 车次扩充 */
+    char ch_siji[4]; /* 司机号 */
+    char ch_date[4]; /* 日期 */
+    char ch_time[4]; /* 时间 */
+    uint32_t u32_over_flag; /* 结束标志 */
+    uint32_t u32_file_size; /* 文件实际大小 */
+    char ch_file_name[FILE_NAME_MAX_NUM];     /* 记录文件名 */
+    char ch_dir_name[FILE_NAME_MAX_NUM];     /* 目录文件名 */
+    char ch_benbuzhuangtai[1]; /* 本补状态 */
+    char ch_reserve[3]; /* 预留 */
+    uint8_t file_id;   /* 文件ID */  //TODO(mingzhao) 对接到文件链表中使用
+    uint8_t is_save;     /* 是否转存过  1：转存 0：未转存 */
+} SFile_Directory;
 
 
 /* 包头信息 */
-typedef struct{
+typedef struct __attribute__((packed)){
 	uint8_t file_num;
 	uint8_t file_count;
 	uint8_t lenth;
@@ -512,7 +512,7 @@ typedef struct{
 } PACKAGE_HEAD;
 
 /* 公共信息事件包结构体 */
-typedef struct
+typedef struct __attribute__((packed))
 {
   char ch_time[3];        /* 时间 */
   char ch_juli[4];        /* 距离 */
@@ -535,60 +535,62 @@ typedef struct
 } SFile_Public;
 
 /* 文件头结构体 */
-typedef struct
+typedef struct __attribute__((packed))
 {
-    char ch_head_flag[2];
-    char ch_yuliu1[2];
-    char ch_jilugeshibanbenhao[4];
-    char ch_waisheleixing[2];
-    char ch_create_time[6];
-    char ch_yunxingjiaoluhao[4];
-    char ch_LKJfachefangxiang[4];
-    char ch_chezhan[12];
-    char ch_jichexinghao[2];
-    char ch_jicheleixing[1];
-    char ch_yuliu2[1];
-    char ch_jichehao[4];
-    char ch_juduanhao[2];
-    char ch_chezhongbiaoshi[4];
-    char ch_checihao[4];
-    char ch_liecheshuxing[1];
-    char ch_yuliu3[1];
-    char ch_siji1[4];
-    char ch_siji2[4];
-    char ch_zongzhong[2];
-    char ch_jichang[2];
-    char ch_liangshu[1];
-    char ch_yuliu4[9];
-    char ch_shebeizhuangtai[1];
-    char ch_gongzuozhuangtai[1];
-    char ch_Ajikongzhiruanjianbanben[4];
-    char ch_Bjikongzhiruanjianbanben[4];
-    char ch_AjiSTOjichushujubanben[4];
-    char ch_BjiSTOjichushujubanben[4];
-    char ch_AjiSTOkongzhicanshu[4];
-    char ch_BjiSTOkongzhicanshu[4];
-    char ch_AjiLKJshujubanben[4];
-    char ch_BjiLKJshujubanben[4];
-    char ch_AjiLKJshujushijian[4];
-    char ch_BjiLKJshujushijian[4];
-    char ch_wenjianneirongCRC[4];
-    uint32_t u32_CRC32;
+    char ch_head_flag[2];                 /* 文件头标志 */
+    char ch_yuliu1[2];                    /* 预留 */
+    char ch_jilugeshibanbenhao[4];        /* 记录板格式 */
+    char ch_waisheleixing[2];             /* 外设类型 */
+    char ch_create_time[6];               /* 建立文件时间  设定内容变化造成文件头变化时不修改该时间，实际计算 byte0 + 2000  年月日时分秒 */
+    char ch_yunxingjiaoluhao[4];          /* 运行径路号 */
+    char ch_LKJfachefangxiang[4];         /* LKJ发车方向 */
+    char ch_chezhan[12];                  /* 车站 */
+    char ch_jichexinghao[2];              /* 机车型号 */
+    char ch_jicheleixing[1];              /* 机车类型 */
+    char ch_yuliu2[1];                    /* 预留 */
+    char ch_jichehao[4];                  /* 机车号 */
+    char ch_juduanhao[2];                 /* 机车配属局段号 */
+    char ch_chezhongbiaoshi[4];           /* 车种标识 */
+    char ch_checihao[4];                  /* 车次号码 */
+    char ch_liecheshuxing[1];             /* 列车属性 */
+    char ch_yuliu3[1];                    /* 预留 */
+    char ch_siji1[4];                     /* 司机1 */
+    char ch_siji2[4];                     /* 司机2 */
+    char ch_zongzhong[2];                 /* 总重 */
+    char ch_jichang[2];                   /* 计长 */
+    char ch_liangshu[1];                  /* 量数 */
+    char ch_yuliu4[9];                    /* 预留 */
+    char ch_shebeizhuangtai[1];           /* 设备状态 */
+    char ch_gongzuozhuangtai[1];          /* 工作状态 */
+    char ch_Ajikongzhiruanjianbanben[4];  /* A机控制软件版本 */
+    char ch_Bjikongzhiruanjianbanben[4];  /* B机控制软件版本 */
+    char ch_AjiSTOjichushujubanben[4];    /* A机STO基础数据版本日期 */
+    char ch_BjiSTOjichushujubanben[4];    /* B机STO基础数据版本日期 */
+    char ch_AjiSTOkongzhicanshu[4];       /* A机STO控制参数版本日期 */
+    char ch_BjiSTOkongzhicanshu[4];       /* B机STO控制参数版本日期 */
+    char ch_AjiLKJshujubanben[4];         /* A机LKJ数据版本日期 */
+    char ch_BjiLKJshujubanben[4];         /* B机LKJ数据版本日期 */
+    char ch_AjiLKJshujushijian[4];        /* A机LKJ数据时间日期 */
+    char ch_BjiLKJshujushijian[4];        /* B机LKJ数据时间日期 */
+    char ch_wenjianneirongCRC[4];         /* 文件内容CRC32 */
+    uint32_t u32_CRC32;                   /* CRC32 */
 } SFile_Head;
 
 /* 文件体 */
-typedef struct{
-  uint16_t shijiandaima;
-	char gonggongxinxi[7];
-	char shijianchangdu[1];
-	char jilunneirong[9];
-	char xiaoyanma;
+typedef struct __attribute__((packed))
+{
+    uint16_t shijiandaima;
+    char gonggongxinxi[7];
+    char shijianchangdu[1];
+    char jilunneirong[9];
+    char xiaoyanma;
 } FILE_CONTANT;
 
 /* FRAM写缓冲区 */
-typedef struct{
-  uint8_t pos;
-	uint8_t buf[256];
+typedef struct __attribute__((packed))
+{
+    uint8_t pos;
+    uint8_t buf[256];
 } WRITE_BUF;
 
 /* 插件自检状态 */
@@ -606,7 +608,7 @@ typedef enum
 //  ABNORMAL
 } ECommunicetion_State;
 
-typedef struct __attribute__((packed)) /* 按照字节对齐*/
+typedef struct __attribute__((packed)) _S_CURRENT_FILE_INFO /* 按照字节对齐*/
 {
     int32_t fd;
     SFile_Directory *file_dir;
@@ -618,6 +620,8 @@ extern WRITE_BUF write_buf;
 extern FLASH_STATE Flash_State;
 extern uint8_t SoftWare_Cycle_Flag;
 extern uint8_t u8_Gonggongxinxi_Flag;
+extern SFile_Head s_file_head;
+extern SFile_Directory s_File_Directory;
 
 /* public function declaration ----------------------------------------------------------------- */
 //void RecordBoard_FileCreate(void);

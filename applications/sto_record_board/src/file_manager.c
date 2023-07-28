@@ -15,6 +15,7 @@
 #include <pthread.h>
 #include <sys/stat.h>
 #include <sys/fcntl.h>
+#include <sys/errno.h>
 
 #include "utils.h"
 #include "Record_FileCreate.h"
@@ -22,6 +23,36 @@
 #define DBG_TAG "FileManager"
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
+
+static S_CURRENT_FILE_INFO s_current_file_info;
+
+sint32_t FMWriteDirFile(const char * dirname, const void *dir_file, size_t count)
+{
+    sint32_t fd = 0;
+    sint32_t ret = -1;
+    char full_path[PATH_NAME_MAX_LEN] = { 0 };
+
+    snprintf(full_path, sizeof(full_path), "%s/%s", DIR_FILE_PATH_NAME, dirname);
+    fd = open(full_path, O_RDWR);
+    if (fd > 0)
+    {
+        lseek(fd, 0, SEEK_SET);
+        ret = write(fd, dir_file, count);
+        fsync(fd);
+        close(fd);
+        if (ret < 0)
+        {
+            LOG_E("%s write error", full_path);
+            return (sint32_t)-1;
+        }
+        return 0;
+    }
+    else
+    {
+        LOG_E("open %s error", full_path);
+        return -1;
+    }
+}
 
 sint32_t FMReadDirFile(const char * dirname, void *dir_file)
 {
@@ -41,13 +72,13 @@ sint32_t FMReadDirFile(const char * dirname, void *dir_file)
         }
         else
         {
-            LOG_E("read dir %s size =  %%", full_path, bytes_read);
+            LOG_E("read %s size = %d", full_path, bytes_read);
             return -1;
         }
     }
     else
     {
-        LOG_E("read dir %s error", full_path);
+        LOG_E("read %s error", full_path);
         return -1;
     }
 }
@@ -111,18 +142,21 @@ sint32_t fm_free_space(void)
 {
     sint32_t disk_free_space;
     file_info_t *p_file_list_head = NULL, *p = NULL;
+    char full_path[PATH_NAME_MAX_LEN] = {0};
 
     /* 得到板载存储器的剩余空间大小 */
-    disk_free_space = get_disk_free_space(RECORD_FILE_PATH_NAME);
+    disk_free_space = get_disk_free_space(DIR_FILE_PATH_NAME);
 
-    LOG_I("free space: %d K. \n", disk_free_space);
+    LOG_I("free space before: %d K", disk_free_space);
+#if 1  //TODO(mingzhao)   调试删除文件时，将此段代码屏蔽
     if (disk_free_space >= RECORD_FILE_MAN_SIZE + RESERVE_SIZE) /* 单个记录文件大小加预留空间的大小 */
     {
         return 0;
     }
+#endif
 
     /* 1.先删除/record/目录下未转存过的文件 */
-    p_file_list_head = get_org_file_info(RECORD_FILE_PATH_NAME);
+    p_file_list_head = get_org_file_info(DIR_FILE_PATH_NAME);
     if(p_file_list_head != NULL)
     {
         p_file_list_head = sort_link(p_file_list_head, SORT_UP); /* 按照文件序号,由小到大排序,先删除序号最小的文件 */
@@ -132,13 +166,17 @@ sint32_t fm_free_space(void)
         {
             if(p->is_save)
             {
-                unlink(p->dir_name);   //删除目录文件
-                unlink(p->record_name);   //删除记录文件
+                snprintf(full_path, sizeof(full_path), "%s/%s", DIR_FILE_PATH_NAME, p->dir_name);
+                unlink(full_path);   //删除目录文件
+
+                snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, p->record_name);
+                unlink(full_path);   //删除记录文件
                 /* sync(); */
-                LOG_I("delete dir: '%s' record: %s", p->dir_name, p->record_name);
-                if (get_disk_free_space(RECORD_FILE_PATH_NAME) >= RECORD_FILE_MAN_SIZE + RESERVE_SIZE) //可以不加这个判断，在这里一次把转存过的删除
+                LOG_I("delete save dir: %s", p->dir_name);
+                LOG_I("delete save record: %s", p->record_name);
+                if (get_disk_free_space(DIR_FILE_PATH_NAME) >= RECORD_FILE_MAN_SIZE + RESERVE_SIZE) //可以不加这个判断，在这里一次把转存过的删除
                 {
-                    LOG_I("free space: %d K\n", disk_free_space);
+                    LOG_I("1.free space after: %d K", disk_free_space);
                     free_link(p_file_list_head);
                     return 0;
                 }
@@ -149,7 +187,7 @@ sint32_t fm_free_space(void)
     free_link(p_file_list_head);
 
     /* 2.如果还不够，则需要删除/record/目录下面未转储的文件了. */
-    p_file_list_head = get_org_file_info(RECORD_FILE_PATH_NAME);
+    p_file_list_head = get_org_file_info(DIR_FILE_PATH_NAME);
     if(p_file_list_head != NULL)
     {
         p_file_list_head = sort_link(p_file_list_head, SORT_UP); /* 按照文件序号,由小到大排序 */
@@ -157,27 +195,34 @@ sint32_t fm_free_space(void)
         p = p_file_list_head;
         while (p)
         {
-            unlink(p->dir_name);   //删除目录文件
-            unlink(p->record_name);   //删除记录文件
+            snprintf(full_path, sizeof(full_path), "%s/%s", DIR_FILE_PATH_NAME, p->dir_name);
+            unlink(full_path);   //删除目录文件
+
+            snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, p->record_name);
+            unlink(full_path);   //删除记录文件
             /* sync(); */
-            LOG_I("delete not save dir: '%s' record: %s", p->dir_name, p->record_name);
-            if (get_disk_free_space(RECORD_FILE_PATH_NAME) >= RECORD_FILE_MAN_SIZE + RESERVE_SIZE)
+            LOG_I("delete not save dir: %s", p->dir_name);
+            LOG_I("delete not save record: %s", p->record_name);
+            if (get_disk_free_space(DIR_FILE_PATH_NAME) >= RECORD_FILE_MAN_SIZE + RESERVE_SIZE)
             {
                 break;
             }
             p = p->next;
         }
     }
-    LOG_I("free space: %d K\n", disk_free_space);
+    else {
+        LOG_E("null");
+    }
+    LOG_I("2.free space after: %d K", disk_free_space);
     free_link(p_file_list_head);
     return 0;
 }
 
 /*******************************************************
  *
- * @brief  把当前录音文件名写入latest_dir.conf文件中
+ * @brief  把当前目录文件名写入latest_dir.conf文件中
  *
- * @param  *name: 当前录音文件名
+ * @param  *info: 最新的目录信息
  * @retval 0:成功 -1:失败
  *
  *******************************************************/
@@ -205,7 +250,7 @@ sint32_t FMWriteLatestInfo(const S_LATEST_DIR_FILE_INFO *info)
     return 0;
 }
 
-static sint32_t FMGetLatestFileInfo(const char *filename, void *data)
+sint32_t FMGetLatestFileInfo(const char *filename, void *data)
 {
     struct stat stat_l;
     char full_path[PATH_NAME_MAX_LEN] = {0};
@@ -235,7 +280,7 @@ static sint32_t FMGetLatestFileInfo(const char *filename, void *data)
     }
 
     /* 开始分析目录文件 */
-    fd = open(full_path, O_RDWR);
+    fd = open(full_path, O_RDONLY);
     if (fd > 0)
     {
         /* 正常打开文件了 */
@@ -247,6 +292,7 @@ static sint32_t FMGetLatestFileInfo(const char *filename, void *data)
         }
         else
         {
+            /* 将latest_dirname.conf文件关闭 */
             close(fd);
             return 0;
         }
@@ -266,8 +312,13 @@ static sint32_t FMGetLatestFileInfo(const char *filename, void *data)
  * @retval 0:成功 -1:失败
  *
  *******************************************************/
-sint32_t FMInitLatestFile(S_LATEST_DIR_FILE_INFO *latest_info)
+sint32_t FMInitLatestFile(S_FILE_MANAGER *fm)
 {
+    S_LATEST_DIR_FILE_INFO *latest_info = &fm->latest_dir_file_info;
+    sint32_t fd = 0;
+    char full_path[PATH_NAME_MAX_LEN] = { 0 };
+    sint32_t ret = -1;
+
     LOG_I("latest file name: %s.", NEW_DIR_FILE_NAME_CONF);
     if (FMGetLatestFileInfo(NEW_DIR_FILE_NAME_CONF, latest_info) == 0)
     {
@@ -276,10 +327,37 @@ sint32_t FMInitLatestFile(S_LATEST_DIR_FILE_INFO *latest_info)
         {
             /* 如果不是文件头,则为错误状态. */
             LOG_E("error, 不是文件头.\n");
+            return -1;
+        }
+        else
+        {
+          /* 正常读到最新目录文件信息 */
+          /* 读取最新的目录文件 */
+          snprintf(full_path, sizeof(full_path), "%s/%s", DIR_FILE_PATH_NAME, latest_info->file_name);
+          fd = open(full_path, O_RDONLY);
+          if(fd < 0)
+          {
+            LOG_E("error, can not open file %s. \n", full_path);
+            return (sint32_t)-1;
+          }
+
+          /* 正常打开文件了 */
+          if (read(fd, (void *)fm->current_info->file_dir, (size_t)sizeof(SFile_Directory)) != sizeof(SFile_Directory))
+          {
+            LOG_E("error, %s size < %d.", full_path, sizeof(SFile_Directory));
+            close(fd);
+            ret = -1;
+          }
+          else
+          {
+            /* 正确读出目录文件信息 */
+            close(fd);
+            ret = 0;
+          }
         }
         latest_info->not_exsit = 0;
 
-        return 0;
+        return ret;
     }
 
     /*
@@ -336,6 +414,11 @@ sint32_t FMInit(S_FILE_MANAGER *fm)
         LOG_E("create_dir %s", RECORD_TEMP_FILE_PATH_NAME);
     }
 
+    s_current_file_info.file_dir = &s_File_Directory;
+    s_current_file_info.file_head = &s_file_head;
+
+    fm->current_info = &s_current_file_info;
+
     /* 初始化最新的文件, 读出最新的目录文件信息  */
     ret = FMInitLatestFile(&fm->latest_dir_file_info);
     if (ret < 0)
@@ -343,13 +426,34 @@ sint32_t FMInit(S_FILE_MANAGER *fm)
         LOG_E("fm_init_latest_file error. \n");
         return (sint32_t)-1;
     }
+
     /* 打印相关信息 */
-    LOG_I("current rec file info:");
-    LOG_I("-----------------------------------------------");
-    LOG_I("| filename:                 %s", fm->latest_dir_file_info.file_name);
-    LOG_I("| head_flag:                %x", fm->latest_dir_file_info.head_flag);
-    LOG_I("| dir_num:                  %d", fm->latest_dir_file_info.dir_num);
-    LOG_I("| not_exsit:                %d", fm->latest_dir_file_info.not_exsit);
+    LOG_I(":");
+    LOG_I("---------------- latest file ------------------");
+    LOG_I("| filename:        %s", fm->latest_dir_file_info.file_name);
+    LOG_I("| head_flag:       %x", fm->latest_dir_file_info.head_flag);
+    LOG_I("| dir_num:         %d", fm->latest_dir_file_info.dir_num);
+    LOG_I("| not_exsit:       %d", fm->latest_dir_file_info.not_exsit);
+    LOG_I("------------------- dir file ------------------");
+    LOG_I("| filename:        %s", fm->current_info->file_dir->ch_file_name);
+    LOG_I("| filesize:        %d", fm->current_info->file_dir->u32_file_size);
+    LOG_I("| file id:         %d", fm->current_info->file_dir->file_id);
+    LOG_I("| save:            %d", fm->current_info->file_dir->is_save);
+    LOG_I("| CheCi:           %d.%d.%d.%d",
+                                    fm->current_info->file_dir->ch_checi[0], fm->current_info->file_dir->ch_checi[1],
+                                    fm->current_info->file_dir->ch_checi[2], fm->current_info->file_dir->ch_checi[3]);
+    LOG_I("| KuoChong:        %d.%d.%d.%d",
+                                    fm->current_info->file_dir->ch_checikuochong[0], fm->current_info->file_dir->ch_checikuochong[1],
+                                    fm->current_info->file_dir->ch_checikuochong[2], fm->current_info->file_dir->ch_checikuochong[3]);
+    LOG_I("| SiJi:            %d.%d.%d.%d",
+                                    fm->current_info->file_dir->ch_siji[0], fm->current_info->file_dir->ch_siji[1],
+                                    fm->current_info->file_dir->ch_siji[2], fm->current_info->file_dir->ch_siji[3]);
+    LOG_I("| Date:            %d.%d.%d.%d",
+                                    fm->current_info->file_dir->ch_date[0], fm->current_info->file_dir->ch_date[1],
+                                    fm->current_info->file_dir->ch_date[2], fm->current_info->file_dir->ch_date[3]);
+    LOG_I("| Time:            %d.%d.%d.%d",
+                                    fm->current_info->file_dir->ch_time[0], fm->current_info->file_dir->ch_time[1],
+                                    fm->current_info->file_dir->ch_time[2], fm->current_info->file_dir->ch_time[3]);
     LOG_I("-----------------------------------------------");
     return (sint32_t)0;
 }

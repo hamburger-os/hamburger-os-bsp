@@ -23,6 +23,7 @@ src =  Split('''
     src/app_layer.c
     src/file_manager.c
     src/utils/utils.c
+    src/usb/usb.c
     '''
     )
 
