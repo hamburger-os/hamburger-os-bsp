@@ -25,8 +25,8 @@
 
 /* 日志最大缓存, 单位:byte. */
 #define LOG_BUFFER_LEN (512)
-/* 单个日志文件最大大小.单位: kbyte.  */
-#define LOG_FILE_MAX_SIZE (512)
+/* 单个日志文件最大大小.单位: KB.  */
+#define LOG_FILE_MAX_SIZE (1024)
 
 /*******************************************************
  * 全局变量
@@ -52,9 +52,10 @@ void log_print(sint32_t level, const char *format, ...)
 {
     va_list args;
     char name[PATH_NAME_MAX_LEN];
-    char log_buffer[LOG_BUFFER_LEN];             /* 为保证线程安全, 采用局部变量. */
-    static sint32_t fd = -1;                     /* 日志文件句柄 */
-    static char cur_log_name[PATH_NAME_MAX_LEN]; /* 当前日志文件的文件名 */
+    char log_buffer[LOG_BUFFER_LEN];                /* 为保证线程安全, 采用局部变量. */
+    static sint32_t fd = -1;                        /* 日志文件句柄 */
+    static char cur_log_name[PATH_NAME_MAX_LEN];    /* 当前日志文件的文件名 */
+    static char cur_logbak_name[PATH_NAME_MAX_LEN]; /* 当前日志文件的文件名 */
     time_t t;
     struct tm *timeinfo = NULL;
 
@@ -63,10 +64,14 @@ void log_print(sint32_t level, const char *format, ...)
     {
         return; /* 低于日志记录等级, 不记录.*/
     }
-    /* 获取时间*/
-    t = time(NULL);
-    timeinfo = localtime(&t);
-    strftime(log_buffer, sizeof(log_buffer), "[%Y-%m-%d %H:%M:%S] ", timeinfo);
+    memset(log_buffer, 0, sizeof(log_buffer));
+    /* 获取时间 */
+    if (rtc_get_valid())
+    {
+        t = time(NULL);
+        timeinfo = localtime(&t);
+        strftime(log_buffer, sizeof(log_buffer), "[%Y-%m-%d %H:%M:%S] ", timeinfo);
+    }
 
     /* 格式化文件信息 */
     va_start(args, format);
@@ -84,7 +89,6 @@ void log_print(sint32_t level, const char *format, ...)
              get_locomotive_id());
 
     pthread_mutex_lock(&log_mutex);
-    // todo, 增加最大限制,做一次备份.
     /* 日志文件名发生变化时 */
     if (strcmp(name, cur_log_name) != 0)
     {
@@ -114,6 +118,25 @@ void log_print(sint32_t level, const char *format, ...)
         if (close(fd) >= 0)
         {
             fd = -1;
+            /* 如果文件大于512KB, 则备份文件 */
+            if (file_size(cur_log_name) > LOG_FILE_MAX_SIZE * 1024)
+            {
+                snprintf(cur_logbak_name,
+                         sizeof(cur_logbak_name),
+                         "%s.bak",
+                         cur_log_name);
+
+                /* 检查文件是否存在, 如果存在, 则删除. */
+                if (access(cur_logbak_name, F_OK) == 0)
+                {
+                    delete_file(cur_logbak_name);
+                }
+                /* 重新命名文件 */
+                if (rename(cur_log_name, cur_logbak_name) < 0)
+                {
+                    rt_kprintf("bakup file error. \n");
+                }
+            }
         }
     }
     pthread_mutex_unlock(&log_mutex);

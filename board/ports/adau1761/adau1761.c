@@ -345,19 +345,19 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
     R8_0x400E_Left_diff_input_vol r8 = {
         .LDEN = 1,
         .LDMUTE = 1,
-        .LDVOL = 0b110000,
+        .LDVOL = 0b101100,
     };
     adau1761_program(ADDR_R8_0x400E_Left_diff_input_vol, (uint8_t *)&r8, sizeof(R8_0x400E_Left_diff_input_vol));
 
     R9_0x400F_Right_diff_input_vol r9 = {
         .RDEN = 1,
         .RDMUTE = 1,
-        .RDVOL = 0b110000,
+        .RDVOL = 0b101100,
     };
     adau1761_program(ADDR_R9_0x400F_Right_diff_input_vol, (uint8_t *)&r9, sizeof(R9_0x400F_Right_diff_input_vol));
 
     R10_0x4010_Record_mic_bias r10 = {
-        .MBIEN = 1,
+        .MBIEN = 0,
         .MBI = 0,
         .MPERF = 0,
     };
@@ -383,7 +383,7 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
     adau1761_program(ADDR_R13_0x4013_ALC_2, (uint8_t *)&r13, sizeof(R13_0x4013_ALC_2));
 
     R14_0x4014_ALC_3 r14 = {
-        .NGTHR = 0b10000,
+        .NGTHR = 0b11000,
         .NGEN = 1,//噪声门开关
         .NGTYP = 0b11,
     };
@@ -404,7 +404,7 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
         .MSBP = 0,
         .DATDM = 0,
         .ADTDM = 0,
-        .BPF = 0b010,
+        .BPF = 0b000,
     };
     adau1761_program(ADDR_R16_0x4016_Serial_Port_1, (uint8_t *)&r16, sizeof(R16_0x4016_Serial_Port_1));
 
@@ -471,15 +471,15 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
 
     R26_0x4020_Play_L_R_mixer_left r26 = {
         .MX5EN = 1,
-        .MX5G3 = 0b01,
-        .MX5G4 = 0b01,
+        .MX5G3 = 0b10,
+        .MX5G4 = 0b10,
     };
     adau1761_program(ADDR_R26_0x4020_Play_L_R_mixer_left, (uint8_t *)&r26, sizeof(R26_0x4020_Play_L_R_mixer_left));
 
     R27_0x4021_Play_L_R_mixer_right r27 = {
         .MX6EN = 1,
-        .MX6G3 = 0b01,
-        .MX6G4 = 0b01,
+        .MX6G3 = 0b10,
+        .MX6G4 = 0b10,
     };
     adau1761_program(ADDR_R27_0x4021_Play_L_R_mixer_right, (uint8_t *)&r27, sizeof(R27_0x4021_Play_L_R_mixer_right));
 
@@ -684,7 +684,7 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
     };
     adau1761_program(ADDR_R66_0x40FA_Clock_Enable_1, (uint8_t *)&r66, sizeof(R66_0x40FA_Clock_Enable_1));
 
-    adau1761_show();
+    // adau1761_show();
 
     return 0;
 }

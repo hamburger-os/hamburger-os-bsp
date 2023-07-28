@@ -45,15 +45,15 @@
 #define LED_PIN_INDEX_5B 8
 
 /* LED设备名字 */
-#define LED_PIN_NAME_1A "PA.10"
-#define LED_PIN_NAME_2A "PB.3"
-#define LED_PIN_NAME_3A "PA.15"
-#define LED_PIN_NAME_4A "PA.6"
-#define LED_PIN_NAME_5A "PA.7"
-#define LED_PIN_NAME_1B "PB.0"
-#define LED_PIN_NAME_3B "PB.4"
-#define LED_PIN_NAME_4B "PA.4"
-#define LED_PIN_NAME_5B "PA.5"
+#define LED_PIN_NAME_1A BSP_GPIO_TABLE_SPI1_CS1
+#define LED_PIN_NAME_2A BSP_GPIO_TABLE_SPI2_SCK
+#define LED_PIN_NAME_3A BSP_GPIO_TABLE_SPI2_CS0
+#define LED_PIN_NAME_4A BSP_GPIO_TABLE_SPI1_MISO
+#define LED_PIN_NAME_5A BSP_GPIO_TABLE_SPI1_MOSI
+#define LED_PIN_NAME_1B BSP_GPIO_TABLE_SPI2_MOSI
+#define LED_PIN_NAME_3B BSP_GPIO_TABLE_SPI2_MISO  
+#define LED_PIN_NAME_4B BSP_GPIO_TABLE_SPI1_CS0
+#define LED_PIN_NAME_5B BSP_GPIO_TABLE_SPI1_SCK
 
 /* 电平状态 */
 #define LED_ON ((bool)PIN_LOW)
@@ -79,20 +79,30 @@ typedef struct
     char *ptr_name;          /* 引脚名 */
     rt_base_t pin;           /* 引脚引脚编号 */
     E_LedPinState pin_state; /* 引脚状态 */
-    bool old_state;          /* 老的引脚状态 */
+    int period;              /* 周期,单位:ms */
+    bool cur_state;          /* 当前引脚状态 */
 } led_desc_t;
 
 /* LED的结构体数组 */
 static led_desc_t led_descs[LED_MAX_NUM] = {
-    {.ptr_name = LED_PIN_NAME_1A},
-    {.ptr_name = LED_PIN_NAME_2A},
-    {.ptr_name = LED_PIN_NAME_3A},
-    {.ptr_name = LED_PIN_NAME_4A},
-    {.ptr_name = LED_PIN_NAME_5A},
-    {.ptr_name = LED_PIN_NAME_1B},
-    {.ptr_name = LED_PIN_NAME_3B},
-    {.ptr_name = LED_PIN_NAME_4B},
-    {.ptr_name = LED_PIN_NAME_5B},
+    {.ptr_name = LED_PIN_NAME_1A,
+     .period = 200},
+    {.ptr_name = LED_PIN_NAME_2A,
+     .period = 200},
+    {.ptr_name = LED_PIN_NAME_3A,
+     .period = 200},
+    {.ptr_name = LED_PIN_NAME_4A,
+     .period = 500},
+    {.ptr_name = LED_PIN_NAME_5A,
+     .period = 200},
+    {.ptr_name = LED_PIN_NAME_1B,
+     .period = 200},
+    {.ptr_name = LED_PIN_NAME_3B,
+     .period = 200},
+    {.ptr_name = LED_PIN_NAME_4B,
+     .period = 200},
+    {.ptr_name = LED_PIN_NAME_5B,
+     .period = 700},
 };
 
 /*******************************************************
@@ -161,21 +171,27 @@ void led_set(E_LED_State led_state)
         set_pin_state((uint16_t)LED_PIN_INDEX_2A, LedPinStateOff);
         break;
     case LED_STATE_RS485_ERROR: /* 未收到正确的485数据 */
-        led_descs[LED_PIN_INDEX_1B].old_state = led_descs[LED_PIN_INDEX_1A].old_state;
-        led_descs[LED_PIN_INDEX_2A].old_state = led_descs[LED_PIN_INDEX_1A].old_state;
+        led_descs[LED_PIN_INDEX_1B].cur_state = led_descs[LED_PIN_INDEX_1A].cur_state;
+        led_descs[LED_PIN_INDEX_2A].cur_state = led_descs[LED_PIN_INDEX_1A].cur_state;
         set_pin_state((uint16_t)LED_PIN_INDEX_1A, LedPinStateBlink);
         set_pin_state((uint16_t)LED_PIN_INDEX_1B, LedPinStateBlink);
         set_pin_state((uint16_t)LED_PIN_INDEX_2A, LedPinStateBlink);
+        led_descs[LED_PIN_INDEX_1A].period = 200;
+        led_descs[LED_PIN_INDEX_2A].period = 200;
         break;
     case LED_STATE_RECORDING: /* 正在录音 */
         set_pin_state((uint16_t)LED_PIN_INDEX_1A, LedPinStateOn);
         set_pin_state((uint16_t)LED_PIN_INDEX_1B, LedPinStateBlink);
         set_pin_state((uint16_t)LED_PIN_INDEX_2A, LedPinStateOff);
+        led_descs[LED_PIN_INDEX_1A].period = 100;
+        led_descs[LED_PIN_INDEX_2A].period = 100;
         break;
     case LED_STATE_PLAYING: /* 正在放音 */
         set_pin_state((uint16_t)LED_PIN_INDEX_1A, LedPinStateAlterBlinkP);
         set_pin_state((uint16_t)LED_PIN_INDEX_2A, LedPinStateAlterBlinkN);
         set_pin_state((uint16_t)LED_PIN_INDEX_1B, LedPinStateOff);
+        led_descs[LED_PIN_INDEX_1A].period = 100;
+        led_descs[LED_PIN_INDEX_2A].period = 100;
         break;
     case LED_STATE_DUMPING: /* 正在转储 */
         set_pin_state((uint16_t)LED_PIN_INDEX_3A, LedPinStateBlink);
@@ -315,54 +331,60 @@ static void *led_thread(const void *args)
         /* 显示led的状态 */
         for (i = 0; i < LED_MAX_NUM; i++)
         {
+
             pthread_mutex_lock(&g_led_mutex);
             pin_stat = led_descs[i].pin_state;
             pthread_mutex_unlock(&g_led_mutex);
-
+            /* 每 cnt*100 ms 跳变一次*/
+            if ((cnt % led_descs[i].period) != 0)
+            {
+                continue;
+            }
             switch (pin_stat)
             {
             case LedPinStateOn: /* 设置引脚为高 */
-                if (led_descs[i].old_state != LED_ON)
+                if (led_descs[i].cur_state != LED_ON)
                 {
                     rt_pin_write(led_descs[i].pin, LED_ON);
-                    led_descs[i].old_state = LED_ON;
+                    led_descs[i].cur_state = LED_ON;
                 }
                 break;
             case LedPinStateOff: /* 设置为引脚为低 */
-                if (led_descs[i].old_state != LED_OFF)
+                if (led_descs[i].cur_state != LED_OFF)
                 {
                     rt_pin_write(led_descs[i].pin, LED_OFF);
-                    led_descs[i].old_state = LED_OFF;
+                    led_descs[i].cur_state = LED_OFF;
                 }
                 break;
             case LedPinStateBlink: /* 设置引脚为闪烁 */
-                if (led_descs[i].old_state == LED_ON)
+                if (led_descs[i].cur_state == LED_ON)
                 {
                     rt_pin_write(led_descs[i].pin, LED_OFF);
-                    led_descs[i].old_state = LED_OFF;
+                    led_descs[i].cur_state = LED_OFF;
                 }
                 else
                 {
                     rt_pin_write(led_descs[i].pin, LED_ON);
-                    led_descs[i].old_state = LED_ON;
+                    led_descs[i].cur_state = LED_ON;
                 }
                 break;
-            case LedPinStateAlterBlinkP: /* 设置引脚为交替闪烁 */
+            case LedPinStateAlterBlinkP: /* 设置引脚为正向交替闪烁 */
+                led_pin_state_alter_blink_p = (bool)!led_pin_state_alter_blink_p;
                 rt_pin_write(led_descs[i].pin, led_pin_state_alter_blink_p);
-                led_descs[i].old_state = led_pin_state_alter_blink_p;
+                led_descs[i].cur_state = led_pin_state_alter_blink_p ;
                 break;
-            case LedPinStateAlterBlinkN: /* 设置引脚为交替闪烁 */
-                rt_pin_write(led_descs[i].pin,
-                             (rt_base_t)!led_pin_state_alter_blink_p);
-                led_descs[i].old_state = (bool)!led_pin_state_alter_blink_p;
-
+            case LedPinStateAlterBlinkN: /* 设置引脚为负向交替闪烁 */
+                rt_pin_write(led_descs[i].pin, (rt_base_t)!led_pin_state_alter_blink_p);
+                led_descs[i].cur_state = (bool)!led_pin_state_alter_blink_p;
                 break;
             default: /* 缺省 */
                 break;
             }
+            
+            
         }
+        cnt += 100;
         msleep((uint32_t)100); /* 休眠200ms */
-        led_pin_state_alter_blink_p = (bool)!led_pin_state_alter_blink_p;
     }
     return NULL;
 }
@@ -390,7 +412,7 @@ sint32_t led_init(void)
     {
         led_descs[i].pin = rt_pin_get((const char *)led_descs[i].ptr_name);
         led_descs[i].pin_state = LedPinStateOff;
-        led_descs[i].old_state = false; /* 引脚的旧状态 */
+        led_descs[i].cur_state = false; /* 引脚当前状态 */
 
         rt_pin_mode(led_descs[i].pin, (rt_base_t)PIN_MODE_OUTPUT);
     }

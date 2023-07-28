@@ -58,6 +58,7 @@ static int ly_05c_init(void)
         log_print(LOG_ERROR, "init log module error, error code: %d.\n", ret);
     }
 
+    log_print(LOG_INFO, "\n\n\n");
     log_print(LOG_INFO, "==========================\n");
     log_print(LOG_INFO, " hello, LY-05C! \n");
     log_print(LOG_INFO, "==========================\n");
@@ -153,7 +154,7 @@ static void *ly_05c_entry(void *args)
     ret = ly_05c_init();
     if (ret < 0)
     {
-        printf("init ly-05c device error.\n");
+        printf("init ly-05c device error. \n");
         data_set_sw_state(SW_STATE_ERROR);
         RT_ASSERT(false);
         return NULL;
@@ -185,6 +186,7 @@ sint32_t ly_05c_main(void)
     sint32_t ret = 0;
     pthread_t main_tid;
     pthread_attr_t pthread_attr_data;
+
 
     /* 创建主线程 */
     pthread_attr_init(&pthread_attr_data);

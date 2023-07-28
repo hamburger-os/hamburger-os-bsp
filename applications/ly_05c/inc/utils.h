@@ -32,6 +32,10 @@
 #define SEEK_END 2 /* set file offset to EOF plus offset */
 #endif
 
+#define F_OK 0
+#define R_OK 4
+#define W_OK 2
+#define X_OK 1
 /*******************************************************
  * 宏定义
  *******************************************************/

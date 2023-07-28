@@ -24,6 +24,25 @@
 /* #include <time.h>*/
 
 /*******************************************************
+ * 全局变量
+ *******************************************************/
+/* RTC的有效性标志 */
+static bool rtc_valid_flag  = false;
+
+/*******************************************************
+ *
+ * @brief  或许RTC的时间有效性
+ *
+ * @param  无
+ * @retval bool rtc数据有效性.
+ *
+ *******************************************************/
+bool rtc_get_valid(void)
+{
+    return rtc_valid_flag;
+}
+
+/*******************************************************
  *
  * @brief  设置系统时间
  *
@@ -43,8 +62,9 @@ void rtc_setdata(struct tm *ptm)
     int ret = settimeofday(&tv, NULL);
     if (ret < 0)
     {
-        /* printf("settimeofday error. ret = %d\n", ret);*/
+        /* printf("settimeofday error. ret = %d. \n", ret);*/
     }
+    rtc_valid_flag = true;
 }
 
 /*******************************************************

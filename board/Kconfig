@@ -211,8 +211,31 @@ menu "On-chip Peripheral Drivers"
             config BSP_GPIO_TABLE_PWM4
                 string "Set the PWM4 pin, default: PH.6"
                 default "PH.6"
+                
+            config BSP_GPIO_TABLE_SPI1_SCK
+                string "Set the SPI1_SCK pin, default: PA.5"
+                default "PA.5"
+                
+            config BSP_GPIO_TABLE_SPI1_MISO
+                string "Set the SPI1_MISO pin, default: PA.6"
+                default "PA.6"
+                
+            config BSP_GPIO_TABLE_SPI1_MOSI
+                string "Set the SPI1_MOSI pin, default: PA.7"
+                default "PA.7"
+                
+            config BSP_GPIO_TABLE_SPI2_SCK
+                string "Set the SPI2_SCK pin, default: PF.7"
+                default "PF.7"
+                
+            config BSP_GPIO_TABLE_SPI2_MISO
+                string "Set the SPI2_MISO pin, default: PF.8"
+                default "PF.8"
+                
+            config BSP_GPIO_TABLE_SPI2_MOSI
+                string "Set the SPI2_MOSI pin, default: PF.9"
+                default "PF.9"
         endif
-        
     menuconfig BSP_USING_DEV_TABLE
         bool "Enable core board dev table"
         default y

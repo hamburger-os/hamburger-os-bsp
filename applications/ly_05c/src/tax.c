@@ -30,11 +30,15 @@
 #include "rtc.h"
 #include "event.h"
 
+#define DBG_TAG "tax"
+#define DBG_LVL DBG_LOG
+#include <rtdbg.h>
+
 /*******************************************************
  * 宏定义
  *******************************************************/
 
-#define UART_DEVICE_NAME "uart4" /* 串口设备 */
+#define UART_DEVICE_NAME BSP_DEV_TABLE_UART3 /* 串口设备 */
 
 #define TAX_EVENT_NUMS 16    /* 可以缓存的最大事件的长度 */
 #define TAX_ACK_MSG_LEN 19   /* 有记录内容应答通信包长度 */
@@ -316,7 +320,10 @@ static rt_err_t uart_input(rt_device_t dev, rt_size_t size)
     struct rx_msg msg;
     msg.dev = dev;
     msg.size = size;
-
+    if (size > BUFFER_LEN)
+    {
+        size = BUFFER_LEN;
+    }
     result = rt_mq_send(uart_mq, (void *)&msg, sizeof(msg));
     return result;
 }
@@ -412,33 +419,32 @@ static sint32_t tax_recv_data(void)
     static bool is_recving = false; /* 接收通信数据中 */
     static uint8_t *ptr = NULL;
     static uint8_t packet_len /* 通信包的长度*/, recv_cnt, check_sum /* 校验和结果*/;
-    static sint32_t len /*未处理的数据长度*/, len_r /*从缓冲区中读取的数据长度*/;
+    static sint32_t len = 0 /*未处理的数据长度*/, len_r /*从缓冲区中读取的数据长度*/;
     static uint8_t buf[BUFFER_LEN];
     sint32_t ret;
     uint8_t byte;
 
     /* 清空消息队列 */
     rt_memset((void *)&msg, 0, sizeof(msg));
-
-    /* 从消息队列中读取消息 */
-    ret = rt_mq_recv(uart_mq, (void *)&msg, sizeof(msg), (rt_int32_t)READ_MESSAGE_QUEUE_TIMEOUT);
-    if (ret != RT_EOK)
-    {
-        /* log_print(LOG_ERROR, "send uart message queue error. \n");*/
-        event_push_queue(EVENT_TAX_COMM_ERROR);
-        return (sint32_t)-1;
-    }
-    event_push_queue(EVENT_TAX_COMM_NORMAL);
-
     /* 环形缓冲区中的数据已经处理完成, 开始接受新的数据. */
-    if (len == 0)
+    if (len <= 0)
     {
+        /* 从消息队列中读取消息 */
+        ret = rt_mq_recv(uart_mq, (void *)&msg, sizeof(msg), (rt_int32_t)READ_MESSAGE_QUEUE_TIMEOUT);
+        if (ret != RT_EOK)
+        {
+            if (data_get_tax_comm_state != TAX_STATE_COMM_ERROR)
+            {
+                event_push_queue(EVENT_TAX_COMM_ERROR);
+            }
+            // return (sint32_t)-1;
+        }
         /* 读取串口数据. */
         rt_memset(buf, 0, sizeof(buf));
         len_r = rt_device_read(uart_dev, 0, buf, msg.size);
         if (len_r < 0)
         {
-            log_print(LOG_ERROR, "read uart device error.\n");
+            log_print(LOG_ERROR, "read uart device error. \n");
             return (sint32_t)-2;
         }
         /* 读取的数据压入环形缓冲区中 */
@@ -494,6 +500,13 @@ static sint32_t tax_recv_data(void)
                 }
                 log_print(LOG_DEBUG, "\n");
 #endif
+                if (check_sum == 0)
+                {
+                    if (data_get_tax_comm_state != EVENT_TAX_COMM_NORMAL)
+                    {
+                        event_push_queue(EVENT_TAX_COMM_NORMAL);
+                    }
+                }
                 return (check_sum == 0) ? (sint32_t)packet_len : (sint32_t)-3;
             }
         }

@@ -90,11 +90,11 @@ sint32_t free_space(void)
 
     /* 得到板载存储器的剩余空间大小 */
     disk_free_space = get_disk_free_space(YUYIN_PATH_NAME);
-    /* log_print(LOG_INFO, "free space: %d KB. \n", disk_free_space); */
     if (check_disk_full(YUYIN_PATH_NAME) == 0)
     {
         return 0;
     }
+    // log_print(LOG_INFO, "free space: %d KB. \n", disk_free_space); 
 
     /* 如果剩余空间不够, 先删除bak目录中的文件 */
     /* 获取bak目录中的文件列表 */
@@ -140,7 +140,7 @@ sint32_t free_space(void)
             p = p->next;
         }
     }
-    log_print(LOG_INFO, "free space: %d K\n", disk_free_space);
+    log_print(LOG_INFO, "free space: %d KB. \n", disk_free_space);
     free_link(p_file_list_head);
     return 0;
 }
@@ -472,12 +472,12 @@ static sint32_t fm_check_dup_file_name(char *filename)
         }
         else
         {
-            log_print(LOG_ERROR, "发现重名文件:%s\n", bak_full_path);
+            log_print(LOG_ERROR, "发现重名文件:%s. \n", bak_full_path);
         }
     }
     else
     {
-        log_print(LOG_ERROR, "发现重名文件:%s\n", full_path);
+        log_print(LOG_ERROR, "发现重名文件:%s. \n", full_path);
     }
 
     i = 1;
@@ -508,12 +508,12 @@ static sint32_t fm_check_dup_file_name(char *filename)
             }
             else
             {
-                log_print(LOG_ERROR, "发现重名文件:%s\n", bak_full_path);
+                log_print(LOG_ERROR, "发现重名文件:%s.\n", bak_full_path);
             }
         }
         else
         {
-            log_print(LOG_ERROR, "发现重名文件:%s\n", full_path);
+            log_print(LOG_ERROR, "发现重名文件:%s. \n", full_path);
         }
         i++;
     }
@@ -571,15 +571,24 @@ sint32_t fm_is_new(void)
     day = (g_tax40.date[2] & 0x3E) >> 1;
     Month = ((g_tax40.date[2] & 0xC0) >> 6) | ((g_tax40.date[3] & 0x03) << 2);
 
+#if 0 // 调试新文件产生
+    train_id = 1;
+    driver_id = 2;
+    locomotive_num = rand()%10000;
+    Month = 5;
+    day = 20;
+    sprintf(trainid_string , "%d", train_id);
+#endif
+
     if (train_id == 0 ||
         driver_id == 0 ||
         Month == 0 ||
         day == 0 ||
         locomotive_num == 0 ||
-        strstr(trainid_string, "_")) /* 2010-5-24 10:15:41*/
+        strstr(trainid_string, "_"))
     {
         log_print(LOG_INFO,
-                  "无监控信息, 车次:%s, 司机号: %d, 机车号: %d, 月: %d, 日: %d\n",
+                  "无监控信息, 车次:%s, 司机号: %d, 机车号: %d, 月: %d, 日: %d. \n",
                   trainid_string, driver_id, locomotive_num, Month, day);
         /* 有2种情况: 1.原来板子上没有语音文件; 2.板子上有语音文件(即最新文件正常) */
         if (g_cur_rec_file_info.not_exsit)
@@ -600,7 +609,7 @@ sint32_t fm_is_new(void)
               "车次: %s, 司机号: %d, 机车号: %d, 月: %d, 日: %d. \n",
               trainid_string, driver_id, locomotive_num, Month, day);
 
-    /* 根据实时信息,产生文件名(车次-司机号.月日) */
+    /* 根据实时信息,产生文件名(车次-司机号-月日) */
     snprintf(filename,
              sizeof(filename),
              "%s-%d-%d-%02d%02d.VSW",
@@ -889,7 +898,6 @@ sint32_t fm_modify_play_flag(sint32_t fd)
 
     if (voice_head.voice_flag & 0x01)
     {
-        printf("增加放音标识. \n");
         voice_head.voice_flag &= ~(0x01);
         voice_head.voice_play_time[0] = g_tax40.date[0];
         voice_head.voice_play_time[1] = g_tax40.date[1];
@@ -901,9 +909,6 @@ sint32_t fm_modify_play_flag(sint32_t fd)
         if (ret < 0)
         {
             return (sint32_t)-1;
-        }
-        else
-        {
         }
     }
     return 0;
@@ -955,7 +960,7 @@ sint32_t fm_write_name(char *name)
     fd = open(full_path, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
     if (fd < 0)
     {
-        log_print(LOG_ERROR, "不能修改文件:%s\n", full_path);
+        log_print(LOG_ERROR, "不能修改文件:%s.\n", full_path);
         return (sint32_t)-1;
     }
     ret = write(fd, name, strlen(name));

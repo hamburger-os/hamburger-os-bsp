@@ -140,7 +140,7 @@ sint32_t check_udisk_id(char *id)
     ret = to_uppers(id);
     if (ret < 0)
     {
-        log_print(LOG_ERROR, "to_uppers Err:%d\n", ret);
+        log_print(LOG_ERROR, "to_uppers error: %d. \n", ret);
         return (sint32_t)-1;
     }
 
