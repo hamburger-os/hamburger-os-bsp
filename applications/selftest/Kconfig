@@ -1,0 +1,3 @@
+config APP_SELFTEST
+    bool "Enable selftest application"
+    default n

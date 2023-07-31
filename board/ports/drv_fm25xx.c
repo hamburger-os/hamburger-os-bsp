@@ -282,9 +282,9 @@ static rt_err_t fm25xx_writeStatus(union FM25xxStatusDef status)
     return ret;
 }
 
-static char dev_name[RT_NAME_MAX];
 static int fram_spi_device_init(void)
 {
+    char dev_name[RT_NAME_MAX];
     rt_uint8_t dev_num = 0;
     do
     {
