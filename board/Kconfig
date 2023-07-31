@@ -2435,7 +2435,7 @@ menu "Onboard Peripheral Drivers"
                     
                 choice
                     prompt "Select lcd backlight"
-                    default LCD_BACKLIGHT_USING_PWM
+                    default LCD_BACKLIGHT_USING_GPIO
     
                     config LCD_BACKLIGHT_USING_PWM
                         bool "Enable BACKLIGHT PWM"
@@ -2446,8 +2446,8 @@ menu "Onboard Peripheral Drivers"
                 
                 if LCD_BACKLIGHT_USING_GPIO
                     config LCD_BKLT_CTL_GPIO
-                        string "Set the GPIO of the BKLT CTL, default: PH.6"
-                        default "PH.6"
+                        string "Set the GPIO of the BKLT CTL, default: PC.6"
+                        default "PC.6"
                 endif
 
                 config BSP_USING_LCD_TEST
@@ -2516,7 +2516,7 @@ menu "Onboard Peripheral Drivers"
             
             config BSP_USING_LVGL_DEMO
                 bool "Enable LVGL demo"
-                default n
+                default y
         endif
         
     menuconfig BSP_USING_WM8978
