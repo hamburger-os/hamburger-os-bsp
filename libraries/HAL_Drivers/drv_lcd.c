@@ -254,6 +254,7 @@ void turn_on_lcd_backlight(void)
 #elif defined(LCD_BACKLIGHT_USING_GPIO)
 void turn_on_lcd_backlight(void)
 {
+    /* turn on the LCD backlight */
     rt_base_t ctl_pin = rt_pin_get(LCD_BKLT_CTL_GPIO);
     rt_pin_mode(ctl_pin, PIN_MODE_OUTPUT);
 
@@ -262,23 +263,24 @@ void turn_on_lcd_backlight(void)
 #else
 void turn_on_lcd_backlight(void)
 {
+    /* turn on the LCD backlight */
 }
 #endif
 
 void lcd_fill_array(rt_uint16_t x_start, rt_uint16_t y_start, rt_uint16_t x_end, rt_uint16_t y_end, void *pcolor)
 {
-    uint16_t *pixel = (rt_uint16_t *)pcolor;
-    struct drv_lcd_device *lcd = (struct drv_lcd_device *)rt_device_find("lcd");
-
-    for (int i = y_start; i < y_end; i++)
-    {
-        for (int j = x_start; j < x_end; j++)
-        {
-            lcd->lcd_info.framebuffer[2 * (i * lcd->lcd_info.width + j)] = (*pixel)>>8;
-            lcd->lcd_info.framebuffer[2 * (i * lcd->lcd_info.width + j) + 1] = (*pixel);
-        }
-    }
-    lcd->parent.control(&lcd->parent, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);
+//    uint16_t *pixel = (rt_uint16_t *)pcolor;
+//    struct drv_lcd_device *lcd = (struct drv_lcd_device *)rt_device_find("lcd");
+//
+//    for (int i = y_start; i < y_end; i++)
+//    {
+//        for (int j = x_start; j < x_end; j++)
+//        {
+//            lcd->lcd_info.framebuffer[2 * (i * lcd->lcd_info.width + j)] = (*pixel)>>8;
+//            lcd->lcd_info.framebuffer[2 * (i * lcd->lcd_info.width + j) + 1] = (*pixel);
+//        }
+//    }
+//    lcd->parent.control(&lcd->parent, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);
 }
 
 #ifdef RT_USING_DEVICE_OPS
