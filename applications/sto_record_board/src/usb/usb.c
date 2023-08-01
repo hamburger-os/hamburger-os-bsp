@@ -158,7 +158,7 @@ static sint32_t store_file(const char *src, const char *target, sint32_t mode)
         {
             snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, p->record_name);
 
-            LOG_I("copy '%s' to dir '%s'.\n", full_path, target);
+            LOG_I("copy '%s' to dir '%s'", full_path, target);
             name = get_sigle_file_name(full_path);
             if (strstr(name, "DSW") == NULL) /* 没有找到DSW */
             {
@@ -188,7 +188,7 @@ static sint32_t store_file(const char *src, const char *target, sint32_t mode)
             if (copy_file(full_path, targetname) < 0)
             {
                 error = -1;
-                LOG_E("copy file error ... \n");
+                LOG_E("copy file error ...");
                 break;
             }
 //            change_file_date(targetname);

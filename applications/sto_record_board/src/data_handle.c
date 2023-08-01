@@ -31,7 +31,7 @@ rt_err_t DataHandleInit(S_DATA_HANDLE *p_data_handle)
     memset(p_data_handle, 0, sizeof(S_DATA_HANDLE));
 
 //    p_data_handle->can_data_mq = rt_mq_create("can data queue", sizeof(S_ETH_CAN_FRAME), MAX_ETH_CAN_LEN, RT_IPC_FLAG_FIFO);
-    p_data_handle->can_data_mq = rt_mq_create("can data queue", sizeof(CAN_FRAME), MAX_ETH_CAN_LEN, RT_IPC_FLAG_FIFO);
+    p_data_handle->can_data_mq = rt_mq_create("can data queue", sizeof(CAN_FRAME), CAN_DATA_MQ_MAX_NUM, RT_IPC_FLAG_FIFO);
     if(RT_NULL == p_data_handle->can_data_mq)
     {
         LOG_E("rt_mq_create failed");
@@ -333,6 +333,9 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
             break;
             /* 06-July-2020, by DuYanPo. */
         case CANPRI_ZKQSSTC:
+//            LOG_I("no %d data %d %d %d %d %d %d %d %d", can_tmp.no_u8,
+//                               can_tmp.data_u8[0], can_tmp.data_u8[1], can_tmp.data_u8[2], can_tmp.data_u8[3],
+//                               can_tmp.data_u8[4], can_tmp.data_u8[5], can_tmp.data_u8[6], can_tmp.data_u8[7]);
             CAN_0x66(can_tmp.no_u8) = can_tmp;
             break;
             /* 06-July-2020, by DuYanPo. */

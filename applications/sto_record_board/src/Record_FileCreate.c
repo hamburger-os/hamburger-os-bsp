@@ -363,7 +363,6 @@ static void File_Erase( uint32_t addr );
 static void Update_gongyoucanshu( void );
 
 uint16_t FFFEEncode(uint8_t *u8p_SrcData, uint16_t u16_SrcLen, uint8_t *u8p_DstData);
-uint32_t S25FL256S_AnyByteWrite( uint8_t *u8_pBuffer, uint32_t u32_NumByteToWrite, uint32_t u32_WriteAddr );
 
 /* 司机操作信息*/
 static void RecordingDriverOperationMessage(void);
@@ -531,12 +530,12 @@ static void RecordingCommunicatWithECUMessage(void);
 void RecordBoard_FileCreate(void)
 {
     S_CURRENT_FILE_INFO *current_file_info = file_manager.current_info;
-    char full_path[PATH_NAME_MAX_LEN] = {0};
+    char full_path[PATH_NAME_MAX_LEN] = { 0 };
 
-    if(NULL == current_file_info)
+    if (NULL == current_file_info)
     {
-      LOG_E("current_file_info is null");
-      return;
+        LOG_E("current_file_info is null");
+        return;
     }
 
     /* 1000ms循环检测 */
@@ -557,9 +556,10 @@ void RecordBoard_FileCreate(void)
     } /* end if */
 
     /* 公共信息发生变化或者周期标志到，将已有记录事件封包存入flash */
+//    LOG_I("write_buf.pos %d", write_buf.pos);
     if ((Init_GonggongxinxiState() || SoftWare_Cycle_Flag) && (write_buf.pos > 40U))
     {
-        LOG_I("SoftWare_Cycle_Flag %d", SoftWare_Cycle_Flag);
+//        LOG_I("SoftWare_Cycle_Flag %d", SoftWare_Cycle_Flag);
         Update_gongyoucanshu();
         /* 添加数据包头及公共信息 */
         WriteGonggongxinxiPkt();
@@ -581,10 +581,11 @@ void RecordBoard_FileCreate(void)
 
         /* 文件大小 */
         s_File_Directory.u32_file_size += (u16_FFFE_Encode_length + 5U);
-        FMWriteDirFile(file_manager.latest_dir_file_info.file_name, (const void *)&s_File_Directory, sizeof(SFile_Directory));
+        FMWriteDirFile(file_manager.latest_dir_file_info.file_name, (const void *) &s_File_Directory,
+                sizeof(SFile_Directory));
         /* 写入文件 */
         snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, s_File_Directory.ch_file_name);
-        if(FMAppendWrite(full_path, (const void *)write_buf.buf, (u16_FFFE_Encode_length + 5U)) < 0)
+        if (FMAppendWrite(full_path, (const void *) write_buf.buf, (u16_FFFE_Encode_length + 5U)) < 0)
         {
             LOG_E("%s append len %d error", full_path, (u16_FFFE_Encode_length + 5U));
         }
@@ -601,7 +602,8 @@ void RecordBoard_FileCreate(void)
 //        SoftWare_Cycle_Flag = 0;//TODO(mingzhao) 原本一代代码中没有将该标志清零
 //        LOG_I("clear SoftWare_Cycle_Flag %d", SoftWare_Cycle_Flag);
     }
-    else {
+    else
+    {
 //        LOG_I("no enter SoftWare_Cycle_Flag %d write_buf.pos %d", SoftWare_Cycle_Flag, write_buf.pos);
     }
 }
@@ -707,8 +709,8 @@ void Init_FlashState(void)  //使用FMInitLatestFile替代 TODO(mingzhao)
       0--不生成记录文件
 ***************************************************************************************************/
 static uint8_t Record_Condition_Judge(void)
-{  
-	uint8_t judge_resault = 0u;
+{
+    uint8_t judge_resault = 0u;
 
     /* 文件大小大于20MB */
     if ( RECORD_FILE_MAN_SIZE <= s_File_Directory.u32_file_size)
@@ -748,13 +750,13 @@ static uint8_t Record_Condition_Judge(void)
 ********************************************************************************************/
 static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
 {
-    if(NULL == current_file_info || NULL == current_file_info->file_dir)
+    if (NULL == current_file_info || NULL == current_file_info->file_dir)
     {
         return -RT_EEMPTY;
     }
 
     static uint8_t CheCi_Count1 = 0u, CheCi_Count2 = 0u, Create_Flag = 0u;
-    char full_path[PATH_NAME_MAX_LEN] = {0};
+    char full_path[PATH_NAME_MAX_LEN] = { 0 };
     sint32_t ret = 0;
 
     /* 确认新文件生成标记，置位开始记录文件标志 */
@@ -763,7 +765,8 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
         CheCi_Count1 += 1u;
         CheCi_Count2 = 0u;
         u8_Contant_Flag = 0u;
-//    printf("车次标志1计数：%d\r\n",CheCi_Count1);
+
+//        LOG_I("车次标志1计数：%d",CheCi_Count1);
         if (CheCi_Count1 >= 3u)
         {
             LOG_I("生成新文件");
@@ -788,10 +791,11 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
 
                 s_File_Directory.u32_over_flag = 1u;
                 s_File_Directory.u32_file_size += (u16_FFFE_Encode_length + 5U);
-                FMWriteDirFile(file_manager.latest_dir_file_info.file_name, (const void *)&s_File_Directory, sizeof(SFile_Directory));
+                FMWriteDirFile(file_manager.latest_dir_file_info.file_name, (const void *) &s_File_Directory,
+                        sizeof(SFile_Directory));
 
                 snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, s_File_Directory.ch_file_name);
-                if(FMAppendWrite(full_path, (const void *)write_buf.buf, (u16_FFFE_Encode_length + 5U)) < 0)
+                if (FMAppendWrite(full_path, (const void *) write_buf.buf, (u16_FFFE_Encode_length + 5U)) < 0)
                 {
                     LOG_E("%s write pkt len %d error", full_path, (u16_FFFE_Encode_length + 5U));
                 }
@@ -805,22 +809,22 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
                 Update_FileHead();
 
                 /* 需要更新文件头内容*/
-                snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, current_file_info->file_dir->ch_file_name);
+                snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME,
+                        current_file_info->file_dir->ch_file_name);
 
                 current_file_info->fd = open(full_path, O_RDWR);
-                if(current_file_info->fd < 0)
+                if (current_file_info->fd < 0)
                 {
                     LOG_E("open %s error, fd=%d", full_path, current_file_info->fd);
                     return -RT_ERROR;
                 }
 
                 ret = fm_modify_record_file_head(current_file_info);
-                if(ret < 0)
+                if (ret < 0)
                 {
                     LOG_E("fm_modify_record_file_head error");
                     return -RT_ERROR;
                 }
-//                current_file_info->new_record_head_offset = lseek(current_file_info->fd, (off_t)0, SEEK_CUR);
                 close(current_file_info->fd);
 
                 /* 置位写公共信息包标志 */
@@ -834,7 +838,7 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
 
             Create_Flag = 1u;
             CheCi_Count1 = 0u;
-//				printf("\r\n update checihao!!!! \r\n");			
+//            LOG_I("update checihao!!!!");
             memcpy(s_File_Directory.ch_checi, &CHECI, 3u);
             memcpy(s_File_Directory.ch_checikuochong, &CHECIKUOCHONG, 4u);
             memcpy(s_File_Directory.ch_siji, &SIJI1, 3u);
@@ -869,7 +873,7 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
         LOG_I("start create new file dir num %d", file_manager.latest_dir_file_info.dir_num);
         if (file_manager.latest_dir_file_info.dir_num > FILE_MAX_NUM)    //目录个数
         {
-            if(fm_free_space() < 0)
+            if (fm_free_space() < 0)
             {
                 LOG_E("fm_free_space error");
             }
@@ -884,7 +888,8 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
         s_File_Directory.u32_file_size = sizeof(SFile_Head);
         s_File_Directory.file_id = file_manager.latest_dir_file_info.dir_num;
 
-        LOG_I("data %d %d %d %d", s_File_Directory.ch_date[0], s_File_Directory.ch_date[1], s_File_Directory.ch_date[2], s_File_Directory.ch_date[3]);
+        LOG_I("data %d %d %d %d", s_File_Directory.ch_date[0], s_File_Directory.ch_date[1], s_File_Directory.ch_date[2],
+                s_File_Directory.ch_date[3]);
         Get_FileName(&s_File_Directory);  //有返回值     生成目录与记录文件名
 
         /* 打印记录文件名与目录文件名 */
@@ -902,7 +907,8 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
 
         /* 2.生成新的目录文件 */
         memset(full_path, 0, sizeof(full_path));
-        snprintf(full_path, sizeof(full_path), "%s/%s", DIR_FILE_PATH_NAME, file_manager.latest_dir_file_info.file_name);
+        snprintf(full_path, sizeof(full_path), "%s/%s", DIR_FILE_PATH_NAME,
+                file_manager.latest_dir_file_info.file_name);
         LOG_I("creat dir file: %s", full_path);
         ret = create_file(full_path);
         if (ret < 0)
@@ -911,10 +917,11 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
         }
 
         /* 3.把最新的目录文件信息写入配置文件 */
-        FMWriteLatestInfo((const S_LATEST_DIR_FILE_INFO *)&file_manager.latest_dir_file_info);
+        FMWriteLatestInfo((const S_LATEST_DIR_FILE_INFO *) &file_manager.latest_dir_file_info);
 
         /* 4.写入目录信息 */
-        FMWriteDirFile(file_manager.latest_dir_file_info.file_name, (const void *)&s_File_Directory, sizeof(SFile_Directory));
+        FMWriteDirFile(file_manager.latest_dir_file_info.file_name, (const void *) &s_File_Directory,
+                sizeof(SFile_Directory));
 
 #if 0
         /* 打开目录文件 */
@@ -984,7 +991,7 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
     {
         u8_FileHead_Flag = 0u;
     } /* end if...else */
-
+    return RT_EOK;
 }
 
 /**************************************************************************************************
@@ -1005,7 +1012,7 @@ static void Update_FileHead(void)
     s_file_head.ch_waisheleixing[0] |= ((ZHIDONGJICHANGJIA & 0x01) << 7u);
     s_file_head.ch_waisheleixing[1] |= ((ZHIDONGJICHANGJIA & 0x0E) << 8u);
     s_file_head.ch_waisheleixing[1] |= (LIEWEICHANGJIA << 11u);
-//    printf("外设类型：%x %x\r\n",s_file_head.ch_waisheleixing[0],s_file_head.ch_waisheleixing[1]);
+//    LOG_I("外设类型：%x %x", s_file_head.ch_waisheleixing[0], s_file_head.ch_waisheleixing[1]);
 
     memcpy(s_file_head.ch_create_time, &TIME_NYR, 3u);
     memcpy(&s_file_head.ch_create_time[3], &TIME_SFM, 3u);
@@ -1064,26 +1071,26 @@ static void Update_FileHead(void)
             s_file_head.ch_shebeizhuangtai[0] |= 0x02;
     }
     s_file_head.ch_shebeizhuangtai[0] |= 0x04;
-//      printf("获取文件头设备状态：%x\r\n",s_file_head.ch_shebeizhuangtai[0]);
+//    LOG_I("获取文件头设备状态：%x",s_file_head.ch_shebeizhuangtai[0]);
     switch (GONGZUOZHUANGTAI)
     {
-    case 0x00:  //人工驾驶
-        s_file_head.ch_gongzuozhuangtai[0] = 0x01;
-        break;
-    case 0x01:  //指导驾驶
-        s_file_head.ch_gongzuozhuangtai[0] = 0x02;
-        break;
-    case 0x02:  //辅助预置驾驶
-        s_file_head.ch_gongzuozhuangtai[0] = 0x03;
-        break;
-    case 0x03:  //辅助驾驶
-        s_file_head.ch_gongzuozhuangtai[0] = 0x04;
-        break;
-    case 0x04:  //退出辅助驾驶
-        s_file_head.ch_gongzuozhuangtai[0] = 0x05;
-        break;
-    default:
-        break;
+        case 0x00:  //人工驾驶
+            s_file_head.ch_gongzuozhuangtai[0] = 0x01;
+            break;
+        case 0x01:  //指导驾驶
+            s_file_head.ch_gongzuozhuangtai[0] = 0x02;
+            break;
+        case 0x02:  //辅助预置驾驶
+            s_file_head.ch_gongzuozhuangtai[0] = 0x03;
+            break;
+        case 0x03:  //辅助驾驶
+            s_file_head.ch_gongzuozhuangtai[0] = 0x04;
+            break;
+        case 0x04:  //退出辅助驾驶
+            s_file_head.ch_gongzuozhuangtai[0] = 0x05;
+            break;
+        default:
+            break;
     }
     memcpy(s_file_head.ch_Ajikongzhiruanjianbanben, &AJIKONGZHIRUANJIANBANBEN, 4u);
     memcpy(s_file_head.ch_Bjikongzhiruanjianbanben, &BJIKONGZHIRUANJIANBANBEN, 4u);
@@ -1119,12 +1126,12 @@ static void Update_FileHead(void)
 ***************************************************************************************************/
 static rt_err_t Creat_FileHead(S_CURRENT_FILE_INFO *current_file_info)
 {
-    if(NULL == current_file_info || NULL == current_file_info->file_dir)
+    if (NULL == current_file_info || NULL == current_file_info->file_dir)
     {
         return -RT_EEMPTY;
     }
 
-    char full_path[PATH_NAME_MAX_LEN] = {0};
+    char full_path[PATH_NAME_MAX_LEN] = { 0 };
     sint32_t ret = -1;
 
     if (u8_FileHead_Flag)
@@ -1150,22 +1157,23 @@ static rt_err_t Creat_FileHead(S_CURRENT_FILE_INFO *current_file_info)
         }
 #endif
 
-        snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, current_file_info->file_dir->ch_file_name);
+        snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME,
+                current_file_info->file_dir->ch_file_name);
         current_file_info->fd = open(full_path, O_RDWR);
-        if(current_file_info->fd < 0)
+        if (current_file_info->fd < 0)
         {
             LOG_E("open %s error, fd=%d", full_path, current_file_info->fd);
             return -RT_ERROR;
         }
 
         ret = fm_write_record_file_head(current_file_info);
-        if(ret < 0)
+        if (ret < 0)
         {
             LOG_E("fm_write_file_head error");
             return -RT_ERROR;
         }
 
-        current_file_info->new_record_head_offset = lseek(current_file_info->fd, (off_t)0, SEEK_CUR);
+        current_file_info->new_record_head_offset = lseek(current_file_info->fd, (off_t) 0, SEEK_CUR);
         close(current_file_info->fd);
 
         /* 置位文件体记录标志 */
@@ -1173,6 +1181,7 @@ static rt_err_t Creat_FileHead(S_CURRENT_FILE_INFO *current_file_info)
         u8_Gonggongxinxi_Flag = 1u;
         u8_Clear_Flag = 1u;
     } /* end if */
+    return RT_EOK;
 }
 
 /**************************************************************************************************
@@ -1180,273 +1189,264 @@ static rt_err_t Creat_FileHead(S_CURRENT_FILE_INFO *current_file_info)
 参数：无
 返回：无
 ***************************************************************************************************/
-static void Get_Gonggongxinxi( void )
+static void Get_Gonggongxinxi(void)
 {
-	/* 公共信息更新 */
-  memcpy( s_file_public.ch_time, &TIME_SFM, 3u );
-  memcpy( s_file_public.ch_juli, &JULI, 2u );
-  memcpy( s_file_public.ch_licheng, &LICHENG, 3u );
+    /* 公共信息更新 */
+    memcpy(s_file_public.ch_time, &TIME_SFM, 3u);
+    memcpy(s_file_public.ch_juli, &JULI, 2u);
+    memcpy(s_file_public.ch_licheng, &LICHENG, 3u);
 #if 0
-	memcpy( s_file_public.ch_jichexinhao, &JICHEXINHAO, 1u );
+    memcpy( s_file_public.ch_jichexinhao, &JICHEXINHAO, 1u );
 #else
-	uint16_t u16_xinhaojizhuangtai = 0u;
-	u16_xinhaojizhuangtai = (uint16_t)JICHEXINHAO + ((uint16_t)(*(&JICHEXINHAO + 1)) << 8u);
+    uint16_t u16_xinhaojizhuangtai = 0u;
+    u16_xinhaojizhuangtai = (uint16_t) JICHEXINHAO + ((uint16_t) (*(&JICHEXINHAO + 1)) << 8u);
 
-	switch(u16_xinhaojizhuangtai & 0xFF)
-	{
-		case 0x01:    //绿灯
-			s_file_public.ch_jichexinhao[0] = 0x03;
-			break;
-		case 0x02:    //绿黄
-			s_file_public.ch_jichexinhao[0] = 0x04;
-			break;
-		case 0x04:    //黄灯
-			s_file_public.ch_jichexinhao[0] = 0x06;
-			break;
-		case 0x08:    //黄2灯
-			s_file_public.ch_jichexinhao[0] = 0x08;
-			break;
-		case 0x10:    //双黄
-			s_file_public.ch_jichexinhao[0] = 0x0B;
-			break;
-		case 0x20:    //红黄
-			s_file_public.ch_jichexinhao[0] = 0x0D;
-			break;
-		case 0x40:    //红灯
-			s_file_public.ch_jichexinhao[0] = 0x0E;
-			break;
-		case 0x80:    //白灯
-			s_file_public.ch_jichexinhao[0] = 0x14;
-			break;
-		default:
-			break;
-	}
+    switch (u16_xinhaojizhuangtai & 0xFF)
+    {
+        case 0x01:    //绿灯
+            s_file_public.ch_jichexinhao[0] = 0x03;
+            break;
+        case 0x02:    //绿黄
+            s_file_public.ch_jichexinhao[0] = 0x04;
+            break;
+        case 0x04:    //黄灯
+            s_file_public.ch_jichexinhao[0] = 0x06;
+            break;
+        case 0x08:    //黄2灯
+            s_file_public.ch_jichexinhao[0] = 0x08;
+            break;
+        case 0x10:    //双黄
+            s_file_public.ch_jichexinhao[0] = 0x0B;
+            break;
+        case 0x20:    //红黄
+            s_file_public.ch_jichexinhao[0] = 0x0D;
+            break;
+        case 0x40:    //红灯
+            s_file_public.ch_jichexinhao[0] = 0x0E;
+            break;
+        case 0x80:    //白灯
+            s_file_public.ch_jichexinhao[0] = 0x14;
+            break;
+        default:
+            break;
+    }
 
     static char last_ch_jichexinhao = 0;
-	if(last_ch_jichexinhao != s_file_public.ch_jichexinhao[0])
-	{
-	    LOG_I("change public xin xi ji che xin hao：%x",s_file_public.ch_jichexinhao[0]);
-	    last_ch_jichexinhao = s_file_public.ch_jichexinhao[0];
-	}
+    if (last_ch_jichexinhao != s_file_public.ch_jichexinhao[0])
+    {
+        LOG_I("change public xin xi ji che xin hao：%x", s_file_public.ch_jichexinhao[0]);
+        last_ch_jichexinhao = s_file_public.ch_jichexinhao[0];
+    }
 #endif
-	memcpy( s_file_public.ch_xiansu, &XIANSU, 2u );
-	memcpy( s_file_public.ch_LKJsudu, &LKJSUDU, 2u );
-	/* 工作状态 */
-	switch(GONGZUOZHUANGTAI)
-	{
-		case 0x00:  //人工驾驶
-			s_file_public.ch_gongzuozhuangtai[0] = 0x01;   
-			break;
-		case 0x01:  //指导驾驶
-			s_file_public.ch_gongzuozhuangtai[0] = 0x02;
-			break;
-		case 0x02:  //辅助预置驾驶
-			s_file_public.ch_gongzuozhuangtai[0] = 0x03;
-			break;
-		case 0x03:  //辅助驾驶
-			s_file_public.ch_gongzuozhuangtai[0] = 0x04;
-			break;
-		case 0x04:  //退出辅助驾驶
-			s_file_public.ch_gongzuozhuangtai[0] = 0x05;
-			break;
-    default:
-			break;
-	}
-	memcpy( s_file_public.ch_gongzuomoshi, &GONGZUOMOSHI, 1u );
-	
-	/* 系统状态 */
-	if(1u == (JINGGAOBIAOZHI & 0xC0) >> 6u)   //I端有权
-		s_file_public.ch_xitongzhuangtai[0] |= 0x01;
-	else if(2u == (JINGGAOBIAOZHI & 0xC0) >> 6u)   //II端有权
-		s_file_public.ch_xitongzhuangtai[0] |= 0x02;
-	else
-		s_file_public.ch_xitongzhuangtai[0] |= 0x00;
-	
-	if ( Get_CPU_Type() == CPU_A )
-	{
-		s_file_public.ch_xitongzhuangtai[0] |= 0x40;   //I系记录
-		
-		if( (0x01 == BENXIZHUANGTAI) || (0x03 == BENXIZHUANGTAI) )
-			s_file_public.ch_xitongzhuangtai[0] |= 0x04;    //I系为主
-	}
-	else
-	{
-		s_file_public.ch_xitongzhuangtai[0] &= 0xBF;   //II系记录
-		
-		if( (0x01 == BENXIZHUANGTAI) || (0x03 == BENXIZHUANGTAI) )
-			s_file_public.ch_xitongzhuangtai[0] |= 0x08;    //II系为主
-	}	
+    memcpy(s_file_public.ch_xiansu, &XIANSU, 2u);
+    memcpy(s_file_public.ch_LKJsudu, &LKJSUDU, 2u);
+    /* 工作状态 */
+    switch (GONGZUOZHUANGTAI)
+    {
+        case 0x00:  //人工驾驶
+            s_file_public.ch_gongzuozhuangtai[0] = 0x01;
+            break;
+        case 0x01:  //指导驾驶
+            s_file_public.ch_gongzuozhuangtai[0] = 0x02;
+            break;
+        case 0x02:  //辅助预置驾驶
+            s_file_public.ch_gongzuozhuangtai[0] = 0x03;
+            break;
+        case 0x03:  //辅助驾驶
+            s_file_public.ch_gongzuozhuangtai[0] = 0x04;
+            break;
+        case 0x04:  //退出辅助驾驶
+            s_file_public.ch_gongzuozhuangtai[0] = 0x05;
+            break;
+        default:
+            break;
+    }
+    memcpy(s_file_public.ch_gongzuomoshi, &GONGZUOMOSHI, 1u);
 
-	/* 机车发挥工况 */
-	if( (0x03 == GONGZUOZHUANGTAI) || (0x04 == GONGZUOZHUANGTAI) )   //自动驾驶
-	{
-		memcpy( s_file_public.ch_jichefahuishoubingjiwei, &JICHEFAHUISHOUBINGJIWEI, 1u );
-		switch(JICHEFAHUIGONGKUANG)
-		{
-			case 0x01:
-				s_file_public.ch_jichefahuigongkuang[0] = 0x01;
-				break;
-			case 0x02:
-				s_file_public.ch_jichefahuigongkuang[0] = 0x00;
-				break;
-			case 0x04:
-				s_file_public.ch_jichefahuigongkuang[0] = 0x02;
-				break;
-			default :
-				s_file_public.ch_jichefahuigongkuang[0] = 0x07;
-				break;
-		}		
-	}
-	else    //人工驾驶
-	{
-		memcpy( s_file_public.ch_jichefahuishoubingjiwei, &WULISHOUBINGJIWEI, 1u );
-		switch(WULIJICHEGONGKUANG)
-		{
-			case 0x01:
-				s_file_public.ch_jichefahuigongkuang[0] = 0x01;
-				break;
-			case 0x02:
-				s_file_public.ch_jichefahuigongkuang[0] = 0x00;
-				break;
-			case 0x04:
-				s_file_public.ch_jichefahuigongkuang[0] = 0x02;
-				break;
-			default :
-				s_file_public.ch_jichefahuigongkuang[0] = 0x07;
-				break;
-		}		
-	}
-  /* CCU速度 */
-	s_file_public.ch_CCUsudu[0] = *(&CCUSUDU + 1u);
-	s_file_public.ch_CCUsudu[1] = CCUSUDU;
-	
-	/* 牵引制动力 */
-	#if 0
-	memcpy( s_file_public.ch_qianyinzhidong, &QIANYINZHIDONG, 2u );
-  #else
-	uint16_t qianyinzhidongli = 0;
-	if( 1u == CHONGLIANCHE)
-	{ 
-		/* 处理牵引制动力数值 */
-		qianyinzhidongli = (uint16_t)(axle1_jicheli_T37 & 0x7F)          
-                     + (uint16_t)(axle2_jicheli_T38 & 0x7F)          
-                     + (uint16_t)(axle3_jicheli_T39 & 0x7F)          
-                     + (uint16_t)(axle4_jicheli_T40 & 0x7F)          
-                     + (uint16_t)(axle5_jicheli_T41 & 0x7F)          
-                     + (uint16_t)(axle6_jicheli_T42 & 0x7F);
-		/* 处理牵引制动力类型 */
-    if(axle1_jicheli_T37 & 0x7F)
-    {
-			qianyinzhidongli |= ((axle1_jicheli_T37 & 0x80)  << 8u);	
-		}
-    else if(axle2_jicheli_T38 & 0x7F)
-    {
-			qianyinzhidongli |= ((axle2_jicheli_T38 & 0x80)  << 8u);	
-		}
-    else if(axle3_jicheli_T39 & 0x7F)
-    {
-			qianyinzhidongli |= ((axle3_jicheli_T39 & 0x80)  << 8u);	
-		}		
-    else if(axle4_jicheli_T40 & 0x7F)
-    {
-			qianyinzhidongli |= ((axle4_jicheli_T40 & 0x80)  << 8u);	
-		}
-    else if(axle5_jicheli_T41 & 0x7F)
-    {
-			qianyinzhidongli |= ((axle5_jicheli_T41 & 0x80)  << 8u);	
-		}
-    else if(axle6_jicheli_T42 & 0x7F)
-    {
-			qianyinzhidongli |= ((axle6_jicheli_T42 & 0x80)  << 8u);	
-		}
+    /* 系统状态 */
+    if (1u == (JINGGAOBIAOZHI & 0xC0) >> 6u)   //I端有权
+        s_file_public.ch_xitongzhuangtai[0] |= 0x01;
+    else if (2u == (JINGGAOBIAOZHI & 0xC0) >> 6u)   //II端有权
+        s_file_public.ch_xitongzhuangtai[0] |= 0x02;
     else
-      qianyinzhidongli |= (0u << 15u);			
-	}
-	else if( 2u == CHONGLIANCHE)
-	{
-		/* 处理牵引制动力数值 */
-		qianyinzhidongli = (uint16_t)(axle1_jicheli_T37 & 0x7F)          
-                     + (uint16_t)(axle2_jicheli_T38 & 0x7F)          
-                     + (uint16_t)(axle3_jicheli_T39 & 0x7F)          
-                     + (uint16_t)(axle4_jicheli_T40 & 0x7F)          
-                     + (uint16_t)(axle5_jicheli_T41 & 0x7F)          
-                     + (uint16_t)(axle6_jicheli_T42 & 0x7F)
-                     + (uint16_t)(axle1_CLjicheli_T75 & 0x7F)
-                     + (uint16_t)(axle2_CLjicheli_T76 & 0x7F)
-                     + (uint16_t)(axle3_CLjicheli_T77 & 0x7F)
-                     + (uint16_t)(axle4_CLjicheli_T78 & 0x7F)
-                     + (uint16_t)(axle5_CLjicheli_T79 & 0x7F)
-                     + (uint16_t)(axle6_CLjicheli_T80 & 0x7F);
+        s_file_public.ch_xitongzhuangtai[0] |= 0x00;
 
-		/* 处理牵引制动力类型 */
-    if(axle1_jicheli_T37 & 0x7F)
+    if (Get_CPU_Type() == CPU_A)
     {
-			qianyinzhidongli |= ((axle1_jicheli_T37 & 0x80)  << 8u);	
-		}
-    else if(axle2_jicheli_T38 & 0x7F)
-    {
-			qianyinzhidongli |= ((axle2_jicheli_T38 & 0x80)  << 8u);	
-		}
-    else if(axle3_jicheli_T39 & 0x7F)
-    {
-			qianyinzhidongli |= ((axle3_jicheli_T39 & 0x80)  << 8u);	
-		}		
-    else if(axle4_jicheli_T40 & 0x7F)
-    {
-			qianyinzhidongli |= ((axle4_jicheli_T40 & 0x80)  << 8u);	
-		}
-    else if(axle5_jicheli_T41 & 0x7F)
-    {
-			qianyinzhidongli |= ((axle5_jicheli_T41 & 0x80)  << 8u);	
-		}
-    else if(axle6_jicheli_T42 & 0x7F)
-    {
-			qianyinzhidongli |= ((axle6_jicheli_T42 & 0x80)  << 8u);	
-		}
-    else if(axle1_CLjicheli_T75 & 0x7F)
-    {
-			qianyinzhidongli |= ((axle1_CLjicheli_T75 & 0x80)  << 8u);	
-		}
-    else if(axle2_CLjicheli_T76 & 0x7F)
-    {
-			qianyinzhidongli |= ((axle2_CLjicheli_T76 & 0x80)  << 8u);	
-		}		
-    else if(axle3_CLjicheli_T77 & 0x7F)
-    {
-			qianyinzhidongli |= ((axle3_CLjicheli_T77 & 0x80)  << 8u);	
-		}
-    else if(axle4_CLjicheli_T78 & 0x7F)
-    {
-			qianyinzhidongli |= ((axle4_CLjicheli_T78 & 0x80)  << 8u);	
-		}
-    else if(axle5_CLjicheli_T79 & 0x7F)
-    {
-			qianyinzhidongli |= ((axle5_CLjicheli_T79 & 0x80)  << 8u);	
-		}
-    else if(axle6_CLjicheli_T80 & 0x7F)
-    {
-			qianyinzhidongli |= ((axle6_CLjicheli_T80 & 0x80)  << 8u);	
-		}
+        s_file_public.ch_xitongzhuangtai[0] |= 0x40;   //I系记录
+
+        if ((0x01 == BENXIZHUANGTAI) || (0x03 == BENXIZHUANGTAI))
+            s_file_public.ch_xitongzhuangtai[0] |= 0x04;    //I系为主
+    }
     else
-      qianyinzhidongli |= (0u << 15u);
-	}
-	else
-	{
-		qianyinzhidongli = 1u;
-	}
+    {
+        s_file_public.ch_xitongzhuangtai[0] &= 0xBF;   //II系记录
 
-	memcpy( s_file_public.ch_qianyinzhidong, &qianyinzhidongli, 2u );
-//	printf("重联车标志：%x\r\n",CHONGLIANCHE);
-//	printf("牵引制动力记录值：%d\r\n",(s_file_public.ch_qianyinzhidong[0] + ((uint16_t)s_file_public.ch_qianyinzhidong[1] << 8)));
-	#endif
-	
-	s_file_public.ch_liecheguanyali[0] = (*(&LIECHEGUANYALI + 1));
-	s_file_public.ch_liecheguanyali[1] = LIECHEGUANYALI;
-	s_file_public.ch_zhidonggangyali[0] = (*(&ZHIDONGGANGYALI + 1));
-	s_file_public.ch_zhidonggangyali[1] = ZHIDONGGANGYALI;
-	s_file_public.ch_junfenggangyali[0] = (*(&JUNFENGGANGYALI + 1));
-	s_file_public.ch_junfenggangyali[1] = JUNFENGGANGYALI;
-	memcpy( s_file_public.ch_chaizhuandianliu, &CHAIZHUANDIANLIU, 2u );	
+        if ((0x01 == BENXIZHUANGTAI) || (0x03 == BENXIZHUANGTAI))
+            s_file_public.ch_xitongzhuangtai[0] |= 0x08;    //II系为主
+    }
+
+    /* 机车发挥工况 */
+    if ((0x03 == GONGZUOZHUANGTAI) || (0x04 == GONGZUOZHUANGTAI))   //自动驾驶
+    {
+        memcpy(s_file_public.ch_jichefahuishoubingjiwei, &JICHEFAHUISHOUBINGJIWEI, 1u);
+        switch (JICHEFAHUIGONGKUANG)
+        {
+            case 0x01:
+                s_file_public.ch_jichefahuigongkuang[0] = 0x01;
+                break;
+            case 0x02:
+                s_file_public.ch_jichefahuigongkuang[0] = 0x00;
+                break;
+            case 0x04:
+                s_file_public.ch_jichefahuigongkuang[0] = 0x02;
+                break;
+            default:
+                s_file_public.ch_jichefahuigongkuang[0] = 0x07;
+                break;
+        }
+    }
+    else    //人工驾驶
+    {
+        memcpy(s_file_public.ch_jichefahuishoubingjiwei, &WULISHOUBINGJIWEI, 1u);
+        switch (WULIJICHEGONGKUANG)
+        {
+            case 0x01:
+                s_file_public.ch_jichefahuigongkuang[0] = 0x01;
+                break;
+            case 0x02:
+                s_file_public.ch_jichefahuigongkuang[0] = 0x00;
+                break;
+            case 0x04:
+                s_file_public.ch_jichefahuigongkuang[0] = 0x02;
+                break;
+            default:
+                s_file_public.ch_jichefahuigongkuang[0] = 0x07;
+                break;
+        }
+    }
+    /* CCU速度 */
+    s_file_public.ch_CCUsudu[0] = *(&CCUSUDU + 1u);
+    s_file_public.ch_CCUsudu[1] = CCUSUDU;
+
+    /* 牵引制动力 */
+#if 0
+    memcpy( s_file_public.ch_qianyinzhidong, &QIANYINZHIDONG, 2u );
+#else
+    uint16_t qianyinzhidongli = 0;
+    if (1u == CHONGLIANCHE)
+    {
+        /* 处理牵引制动力数值 */
+        qianyinzhidongli = (uint16_t) (axle1_jicheli_T37 & 0x7F) + (uint16_t) (axle2_jicheli_T38 & 0x7F)
+                + (uint16_t) (axle3_jicheli_T39 & 0x7F) + (uint16_t) (axle4_jicheli_T40 & 0x7F)
+                + (uint16_t) (axle5_jicheli_T41 & 0x7F) + (uint16_t) (axle6_jicheli_T42 & 0x7F);
+        /* 处理牵引制动力类型 */
+        if (axle1_jicheli_T37 & 0x7F)
+        {
+            qianyinzhidongli |= ((axle1_jicheli_T37 & 0x80) << 8u);
+        }
+        else if (axle2_jicheli_T38 & 0x7F)
+        {
+            qianyinzhidongli |= ((axle2_jicheli_T38 & 0x80) << 8u);
+        }
+        else if (axle3_jicheli_T39 & 0x7F)
+        {
+            qianyinzhidongli |= ((axle3_jicheli_T39 & 0x80) << 8u);
+        }
+        else if (axle4_jicheli_T40 & 0x7F)
+        {
+            qianyinzhidongli |= ((axle4_jicheli_T40 & 0x80) << 8u);
+        }
+        else if (axle5_jicheli_T41 & 0x7F)
+        {
+            qianyinzhidongli |= ((axle5_jicheli_T41 & 0x80) << 8u);
+        }
+        else if (axle6_jicheli_T42 & 0x7F)
+        {
+            qianyinzhidongli |= ((axle6_jicheli_T42 & 0x80) << 8u);
+        }
+        else
+            qianyinzhidongli |= (0u << 15u);
+    }
+    else if (2u == CHONGLIANCHE)
+    {
+        /* 处理牵引制动力数值 */
+        qianyinzhidongli = (uint16_t) (axle1_jicheli_T37 & 0x7F) + (uint16_t) (axle2_jicheli_T38 & 0x7F)
+                + (uint16_t) (axle3_jicheli_T39 & 0x7F) + (uint16_t) (axle4_jicheli_T40 & 0x7F)
+                + (uint16_t) (axle5_jicheli_T41 & 0x7F) + (uint16_t) (axle6_jicheli_T42 & 0x7F)
+                + (uint16_t) (axle1_CLjicheli_T75 & 0x7F) + (uint16_t) (axle2_CLjicheli_T76 & 0x7F)
+                + (uint16_t) (axle3_CLjicheli_T77 & 0x7F) + (uint16_t) (axle4_CLjicheli_T78 & 0x7F)
+                + (uint16_t) (axle5_CLjicheli_T79 & 0x7F) + (uint16_t) (axle6_CLjicheli_T80 & 0x7F);
+
+        /* 处理牵引制动力类型 */
+        if (axle1_jicheli_T37 & 0x7F)
+        {
+            qianyinzhidongli |= ((axle1_jicheli_T37 & 0x80) << 8u);
+        }
+        else if (axle2_jicheli_T38 & 0x7F)
+        {
+            qianyinzhidongli |= ((axle2_jicheli_T38 & 0x80) << 8u);
+        }
+        else if (axle3_jicheli_T39 & 0x7F)
+        {
+            qianyinzhidongli |= ((axle3_jicheli_T39 & 0x80) << 8u);
+        }
+        else if (axle4_jicheli_T40 & 0x7F)
+        {
+            qianyinzhidongli |= ((axle4_jicheli_T40 & 0x80) << 8u);
+        }
+        else if (axle5_jicheli_T41 & 0x7F)
+        {
+            qianyinzhidongli |= ((axle5_jicheli_T41 & 0x80) << 8u);
+        }
+        else if (axle6_jicheli_T42 & 0x7F)
+        {
+            qianyinzhidongli |= ((axle6_jicheli_T42 & 0x80) << 8u);
+        }
+        else if (axle1_CLjicheli_T75 & 0x7F)
+        {
+            qianyinzhidongli |= ((axle1_CLjicheli_T75 & 0x80) << 8u);
+        }
+        else if (axle2_CLjicheli_T76 & 0x7F)
+        {
+            qianyinzhidongli |= ((axle2_CLjicheli_T76 & 0x80) << 8u);
+        }
+        else if (axle3_CLjicheli_T77 & 0x7F)
+        {
+            qianyinzhidongli |= ((axle3_CLjicheli_T77 & 0x80) << 8u);
+        }
+        else if (axle4_CLjicheli_T78 & 0x7F)
+        {
+            qianyinzhidongli |= ((axle4_CLjicheli_T78 & 0x80) << 8u);
+        }
+        else if (axle5_CLjicheli_T79 & 0x7F)
+        {
+            qianyinzhidongli |= ((axle5_CLjicheli_T79 & 0x80) << 8u);
+        }
+        else if (axle6_CLjicheli_T80 & 0x7F)
+        {
+            qianyinzhidongli |= ((axle6_CLjicheli_T80 & 0x80) << 8u);
+        }
+        else
+            qianyinzhidongli |= (0u << 15u);
+    }
+    else
+    {
+        qianyinzhidongli = 1u;
+    }
+
+    memcpy(s_file_public.ch_qianyinzhidong, &qianyinzhidongli, 2u);
+//    LOG_I("重联车标志：%x",CHONGLIANCHE);
+//    LOG_I("牵引制动力记录值：%d",(s_file_public.ch_qianyinzhidong[0] + ((uint16_t)s_file_public.ch_qianyinzhidong[1] << 8)));
+#endif
+
+    s_file_public.ch_liecheguanyali[0] = (*(&LIECHEGUANYALI + 1));
+    s_file_public.ch_liecheguanyali[1] = LIECHEGUANYALI;
+    s_file_public.ch_zhidonggangyali[0] = (*(&ZHIDONGGANGYALI + 1));
+    s_file_public.ch_zhidonggangyali[1] = ZHIDONGGANGYALI;
+    s_file_public.ch_junfenggangyali[0] = (*(&JUNFENGGANGYALI + 1));
+    s_file_public.ch_junfenggangyali[1] = JUNFENGGANGYALI;
+    memcpy(s_file_public.ch_chaizhuandianliu, &CHAIZHUANDIANLIU, 2u);
 }
 
 /*****************************************************************************************
@@ -1454,7 +1454,7 @@ static void Get_Gonggongxinxi( void )
 参数：无
 返回：无
 ******************************************************************************************/
-static void Update_gongyoucanshu( void )
+static void Update_gongyoucanshu(void)
 {
     /* 更新记录事项中共有参数 */
     memcpy(C_Lkjxiansu, &XIANSU, 2u);
@@ -1495,7 +1495,7 @@ static void Update_gongyoucanshu( void )
 参数：无
 返回：无
 ******************************************************************************************/
-static void WriteGonggongxinxiPkt( void )
+static void WriteGonggongxinxiPkt(void)
 {
     /* 获取公共信息 */
     Get_Gonggongxinxi();
@@ -1511,8 +1511,8 @@ static void WriteGonggongxinxiPkt( void )
     write_buf.buf[5] = 0x22;   //公共信息事项包长度
 
     memcpy(write_buf.buf + 6, &s_file_public, sizeof(SFile_Public));
-    LOG_I("write gong gong xin xi pos：%d",write_buf.pos);
-    LOG_I("time %d.%d.%d", s_file_public.ch_time[0], s_file_public.ch_time[1], s_file_public.ch_time[2]);
+//    LOG_I("write gong gong xin xi pos：%d", write_buf.pos);
+//    LOG_I("gong gong time %d.%d.%d", s_file_public.ch_time[0], s_file_public.ch_time[1], s_file_public.ch_time[2]);
 #if 0
     if(write_buf.pos == 0)
     write_buf.pos += 40U;
@@ -1525,7 +1525,7 @@ static void WriteGonggongxinxiPkt( void )
 返回：1 --> 公共信息发生变化
       0 --> 公共信息无变化
 ********************************************************************************************/
-static uint8_t Init_GonggongxinxiState( void )
+static uint8_t Init_GonggongxinxiState(void)
 {
     uint8_t u8_GonggongxinxiState = 0u;
     static SFile_Public s_file_Public_old = { 0u };
@@ -1538,7 +1538,6 @@ static uint8_t Init_GonggongxinxiState( void )
         /* 更新公共信息内容 */
         memcpy(&s_file_Public_old, &s_file_public, sizeof(SFile_Public));
         u8_GonggongxinxiState = 1u;
-        LOG_I("GongGongXinXiChange");
     }
     else
     {
@@ -1556,19 +1555,19 @@ static uint8_t Init_GonggongxinxiState( void )
       lenth       --> 事件长度.
 返回：无.
 ***********************************************************************************************/
-static void WriteFileContantPkt( uint8_t num1, uint8_t num2, uint8_t device_code, uint8_t *contant, uint8_t lenth )
+static void WriteFileContantPkt(uint8_t num1, uint8_t num2, uint8_t device_code, uint8_t *contant, uint8_t lenth)
 {
     static uint32_t rest_size = 255u;
     uint8_t contant_size = 0u;
     char file_contant[204u];
-    char full_path[PATH_NAME_MAX_LEN] = {0};
+    char full_path[PATH_NAME_MAX_LEN] = { 0 };
 
     file_contant[0u] = num1;
     file_contant[1u] = num2;
     file_contant[2u] = lenth;
     file_contant[3u] = device_code;
 
-//	printf("\r\n 记录事项代码：%x %x\r\n",num1,num2);
+    LOG_I("记录事项代码：%x %x", num1, num2);
     memcpy(file_contant + 4U, contant, lenth);
 
     /* 放入缓冲区 */
@@ -1578,13 +1577,14 @@ static void WriteFileContantPkt( uint8_t num1, uint8_t num2, uint8_t device_code
 
     while (1u)
     {
+//        LOG_I("rest_size %d contant_size %d", rest_size, contant_size);
         if (rest_size >= contant_size)
         {
             memcpy(&(write_buf.buf[write_buf.pos]), &file_contant[lenth + 4U - contant_size], contant_size);
-//      printf("\r\n 写记录事项位置：%d\r\n",write_buf.pos);
+//            LOG_I("写记录事项位置：%d", write_buf.pos);
             write_buf.pos += contant_size;
             rest_size -= contant_size;
-//      printf("\r\n 写记录事项222位置：%d   剩余空间：%d   内容长度：%d\r\n",write_buf.pos,rest_size,contant_size);
+//            LOG_I("写记录事项222位置：%d   剩余空间：%d   内容长度：%d", write_buf.pos, rest_size, contant_size);
             break;
         }
         else /* 缓存区存满 */
@@ -1603,15 +1603,15 @@ static void WriteFileContantPkt( uint8_t num1, uint8_t num2, uint8_t device_code
             /* 将编码后的数据填入buf */
             memcpy((write_buf.buf + 3U), u8_FFFE_Encode_buf, u16_FFFE_Encode_length);
             /* 更新buf包长度 */
-            write_buf.buf[2U] = (uint8_t) (u16_FFFE_Encode_length + 5U); //不能包含包头、包尾，否则长度等于256时，u8的长度为0   5 = bao tou 2 + chang du + 1 + bao wei 2
+            write_buf.buf[2U] = (uint8_t) (u16_FFFE_Encode_length + 5U); //不能包含包头、包尾，否则长度等于256时，u8的长度为0   5 = 包头 2 + 长度 + 1 + 包尾 2
             write_buf.buf[u16_FFFE_Encode_length + 3U] = 0xFF;
             write_buf.buf[u16_FFFE_Encode_length + 4U] = 0xFD;
-//            printf( "FFFE_Encode_length： %d\r\n", u16_FFFE_Encode_length );
+//            LOG_I("FFFE_Encode_length： %d", u16_FFFE_Encode_length);
             /* 写入FLASH */
             s_File_Directory.u32_file_size += (u16_FFFE_Encode_length + 5U);
 
             snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, s_File_Directory.ch_file_name);
-            if(FMAppendWrite(full_path, (const void *)write_buf.buf, (u16_FFFE_Encode_length + 5U)) < 0)
+            if (FMAppendWrite(full_path, (const void *) write_buf.buf, (u16_FFFE_Encode_length + 5U)) < 0)
             {
                 LOG_E("%s write pkt len %d error", full_path, (u16_FFFE_Encode_length + 5U));
             }
@@ -1636,7 +1636,7 @@ static void WriteFileContantPkt( uint8_t num1, uint8_t num2, uint8_t device_code
 参数：无
 返回：无
 ***********************************************************************************************/
-static void Get_FileContant( void )
+static void Get_FileContant(void)
 {
     if (u8_Contant_Flag)
     {
@@ -1657,7 +1657,7 @@ static void Get_FileContant( void )
         /* clear check flag */
         if (u8_Clear_Flag)
         {
-            LOG_I("clear check flag\r\n");
+            LOG_I("clear check flag");
 
             /* 版本信息 */
             RecordingVersionMessage();
@@ -1974,7 +1974,7 @@ static void RecordingDriverOperationMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingDMIOperationMessage( void )
+static void RecordingDMIOperationMessage(void)
 {
     static uint8_t C_contant_datI[5] = { 0 };
     static uint8_t C_contant_datII[5] = { 0 };
@@ -1983,7 +1983,7 @@ static void RecordingDMIOperationMessage( void )
     {
         if ( MINGLINGHAOI && (0x01 != MINGLINGHAOI))
         {
-//			printf("。。。I端显示器命令号变化\r\n");
+//            LOG_I("...I端显示器命令号变化\r\n");
             C_contant_datI[0] = MINGLINGHAOI;
             memcpy(&C_contant_datI[1], &MINGLINGNEIRONGI, 4U);
             WriteFileContantPkt(0xA0, 0x01, 0x21, C_contant_datI, 5);
@@ -1994,7 +1994,7 @@ static void RecordingDMIOperationMessage( void )
     {
         if ( MINGLINGHAOII && (0x01 != MINGLINGHAOII))
         {
-//			printf("。。。II端显示器命令号变化：%x\r\n",MINGLINGHAOII);
+//            LOG_I("...II端显示器命令号变化：%x\r\n", MINGLINGHAOII);
             C_contant_datII[0] = MINGLINGHAOII;
             memcpy(&C_contant_datII[1], &MINGLINGNEIRONGII, 4U);
             WriteFileContantPkt(0xA0, 0x01, 0x22, C_contant_datII, 5);
@@ -2014,7 +2014,7 @@ static void RecordingDMIOperationMessage( void )
 ***********************************************/
 static void RecordingDDUOperationMessage( void )
 {
- static uint8_t C_DDUcaozuo[5] = {0};
+// static uint8_t C_DDUcaozuo[5] = {0};
 
 //  if(MINGLINGHAO)
 //  {
@@ -2030,18 +2030,17 @@ static void RecordingDDUOperationMessage( void )
 参数：无
 返回：无
 ***********************************************/
-void RecordingLLevelMessage( void )
+void RecordingLLevelMessage(void)
 {
-  static uint8_t C_Ldengji[2] = { 0U };
+    static uint8_t C_Ldengji[2] = { 0U };
 
-  if( C_Ldengji[1] != LDENGJI )
-  {
-    C_Ldengji[0] = LDENGJI;
-//		printf("\r\n L等级值：%x\r\n",LDENGJI);
-    WriteFileContantPkt( 0xA0, 0x03, g_ZK_DevCode, C_Ldengji, 2U );
-    C_Ldengji[1] = LDENGJI;    
-  }   
-
+    if (C_Ldengji[1] != LDENGJI)
+    {
+        C_Ldengji[0] = LDENGJI;
+//        LOG_I("L等级值：%x", LDENGJI);
+        WriteFileContantPkt(0xA0, 0x03, g_ZK_DevCode, C_Ldengji, 2U);
+        C_Ldengji[1] = LDENGJI;
+    }
 } /* end function RecordingLLevelMessage */
 
 /**********************************************
@@ -2066,17 +2065,17 @@ void RecordingSpeedDownMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingHoldOutVehicleMessage( void )
+static void RecordingHoldOutVehicleMessage(void)
 {
-  static uint8_t C_Guanmencheshuliang[2] = { 0U };
+    static uint8_t C_Guanmencheshuliang[2] = { 0U };
 
-  if( C_Guanmencheshuliang[1] != GUANMENCHE )
-  {
-    C_Guanmencheshuliang[0] = GUANMENCHE;
-//		printf("\r\n 关门车：%x\r\n",GUANMENCHE);
-    WriteFileContantPkt( 0xA0, 0x05, g_ZK_DevCode, C_Guanmencheshuliang, 2U );
-    C_Guanmencheshuliang[1] = GUANMENCHE;    
-  } 
+    if (C_Guanmencheshuliang[1] != GUANMENCHE)
+    {
+        C_Guanmencheshuliang[0] = GUANMENCHE;
+//        LOG_I("关门车：%x", GUANMENCHE);
+        WriteFileContantPkt(0xA0, 0x05, g_ZK_DevCode, C_Guanmencheshuliang, 2U);
+        C_Guanmencheshuliang[1] = GUANMENCHE;
+    }
 } /* end function RecordingHoldOutVehicleMessage */
 
 /**********************************************
@@ -2084,18 +2083,18 @@ static void RecordingHoldOutVehicleMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingBrakeshoePressureMessage( void )
+static void RecordingBrakeshoePressureMessage(void)
 {
-  static uint8_t C_Zawayali[4] = { 0U };
+    static uint8_t C_Zawayali[4] = { 0U };
 
-  if ( memcmp( &C_Zawayali[2], &HUANSUANZHAWAYALI, 2U ) )
-  {
-		memcpy( C_Zawayali, &HUANSUANZHAWAYALI, 2U);
-//		printf("\r\n 闸瓦压力：%x %x\r\n",C_Zawayali[0],C_Zawayali[1]);
-		WriteFileContantPkt( 0xA0, 0x06, g_ZK_DevCode, C_Zawayali, 4u );
+    if (memcmp(&C_Zawayali[2], &HUANSUANZHAWAYALI, 2U))
+    {
+        memcpy(C_Zawayali, &HUANSUANZHAWAYALI, 2U);
+//        LOG_I("闸瓦压力：%x %x", C_Zawayali[0], C_Zawayali[1]);
+        WriteFileContantPkt(0xA0, 0x06, g_ZK_DevCode, C_Zawayali, 4u);
 
-    memcpy( &C_Zawayali[2], &HUANSUANZHAWAYALI, 2U);    
-	} /* end if */
+        memcpy(&C_Zawayali[2], &HUANSUANZHAWAYALI, 2U);
+    } /* end if */
 } /* end function RecordingBrakeshoePressureMessage */
 
 /**********************************************
@@ -2103,16 +2102,16 @@ static void RecordingBrakeshoePressureMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingIsolateSTOMessage( void )
+static void RecordingIsolateSTOMessage(void)
 {
-	static uint8_t C_geliSTO = 0U;
+    static uint8_t C_geliSTO = 0U;
 
-  if ( C_geliSTO != GELISTO )
-  {
-//		printf("。。。生成隔离STO事项。。。\r\n");
-		C_geliSTO = GELISTO;
-		WriteFileContantPkt( 0xA0, 0x07, g_ZK_DevCode, &C_geliSTO, 1u );   
-	} /* end if */
+    if (C_geliSTO != GELISTO)
+    {
+//        LOG_I("...生成隔离STO事项...");
+        C_geliSTO = GELISTO;
+        WriteFileContantPkt(0xA0, 0x07, g_ZK_DevCode, &C_geliSTO, 1u);
+    } /* end if */
 
 } /* end function RecordingIsolateSTOMessage */
 
@@ -2148,23 +2147,23 @@ static void RecordingFormPlanningMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingGuidSpeedMessage( void )
+static void RecordingGuidSpeedMessage(void)
 {
-  static uint8_t C_zhidaosudu[2]  = { 0x00U, 0x00U };
-  uint16_t zhidaosudu_New = 0u,  zhidaosudu_Old = 0u;
- 
-  zhidaosudu_New = ( uint16_t )(*(&ZHIDAOSUDU+ 1)) + ( uint16_t )(ZHIDAOSUDU << 8);
-  zhidaosudu_Old = ( uint16_t )C_zhidaosudu[0] + ( uint16_t )(C_zhidaosudu[1] << 8);
+    static uint8_t C_zhidaosudu[2] = { 0x00U, 0x00U };
+    uint16_t zhidaosudu_New = 0u, zhidaosudu_Old = 0u;
 
-//  printf("\r\n 指导速度：%d----- %d\r\n",zhidaosudu_New,zhidaosudu_Old);
-	/* 判断指导速度变化是否大于等于0.1km/h */
-  if ( 1U <= abs( zhidaosudu_New  - zhidaosudu_Old ) )
-  {
-		C_zhidaosudu[0] = *(&ZHIDAOSUDU+ 1);
-		C_zhidaosudu[1] = ZHIDAOSUDU;
-//    printf("\r\n 指导速度：%d\r\n",(C_zhidaosudu[0]+((uint16_t)C_zhidaosudu[1]<<8)));
-		WriteFileContantPkt( 0xA1, 0x01, g_ZK_DevCode, C_zhidaosudu, 2u ); 
-	} /* end if */
+    zhidaosudu_New = (uint16_t) (*(&ZHIDAOSUDU + 1)) + (uint16_t) (ZHIDAOSUDU << 8);
+    zhidaosudu_Old = (uint16_t) C_zhidaosudu[0] + (uint16_t) (C_zhidaosudu[1] << 8);
+
+//    LOG_I("指导速度：%d----- %d\r\n", zhidaosudu_New, zhidaosudu_Old);
+    /* 判断指导速度变化是否大于等于0.1km/h */
+    if (1U <= abs(zhidaosudu_New - zhidaosudu_Old))
+    {
+        C_zhidaosudu[0] = *(&ZHIDAOSUDU + 1);
+        C_zhidaosudu[1] = ZHIDAOSUDU;
+//        LOG_I("指导速度：%d", (C_zhidaosudu[0] + ((uint16_t )C_zhidaosudu[1] << 8)));
+        WriteFileContantPkt(0xA1, 0x01, g_ZK_DevCode, C_zhidaosudu, 2u);
+    } /* end if */
 } /* end function RecordingGuidSpeedMessage */
 
 /**********************************************
@@ -2172,33 +2171,33 @@ static void RecordingGuidSpeedMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingGuidConditonMessage( void )
+static void RecordingGuidConditonMessage(void)
 {
-  static uint8_t C_zhidaogongkuang = 0U ;
-	uint8_t zhidaogongkuangzhi = 0u;
+    static uint8_t C_zhidaogongkuang = 0U;
+    uint8_t zhidaogongkuangzhi = 0u;
 
-  zhidaogongkuangzhi = ZHIDAOGONGKUANG;
-  if ( memcmp( &C_zhidaogongkuang, &ZHIDAOGONGKUANG, 1U ) )
-  {
-    switch(zhidaogongkuangzhi)
-		{
-			case 1:
-				C_zhidaogongkuang = 0x01;
-				break;
-			case 2:
-				C_zhidaogongkuang = 0x00;
-				break;
-			case 3:
-				C_zhidaogongkuang = 0x02;
-				break;
-			default:
-				C_zhidaogongkuang = 0xff;
-				break;
-		}
-//    printf("\r\n 指导工况：%d\r\n",C_zhidaogongkuang);
-		WriteFileContantPkt( 0xA1, 0x02, g_ZK_DevCode, &C_zhidaogongkuang, 1u );
-		memcpy( &C_zhidaogongkuang, &ZHIDAOGONGKUANG, 1U);		
-	} /* end if */
+    zhidaogongkuangzhi = ZHIDAOGONGKUANG;
+    if (memcmp(&C_zhidaogongkuang, &ZHIDAOGONGKUANG, 1U))
+    {
+        switch (zhidaogongkuangzhi)
+        {
+            case 1:
+                C_zhidaogongkuang = 0x01;
+                break;
+            case 2:
+                C_zhidaogongkuang = 0x00;
+                break;
+            case 3:
+                C_zhidaogongkuang = 0x02;
+                break;
+            default:
+                C_zhidaogongkuang = 0xff;
+                break;
+        }
+//        LOG_I("指导工况：%d",C_zhidaogongkuang);
+        WriteFileContantPkt(0xA1, 0x02, g_ZK_DevCode, &C_zhidaogongkuang, 1u);
+        memcpy(&C_zhidaogongkuang, &ZHIDAOGONGKUANG, 1U);
+    } /* end if */
 } /* end function RecordingGuidConditonMessage */
 
 /**********************************************
@@ -2206,17 +2205,17 @@ static void RecordingGuidConditonMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingGuidLevelMessage( void )
+static void RecordingGuidLevelMessage(void)
 {
-  static uint8_t C_zhidaojiwei = 0U ;
+    static uint8_t C_zhidaojiwei = 0U;
 
-  /* 判断指导级位是否发生变化 */
-  if ( C_zhidaojiwei !=  ZHIDAOJIWEI )
-  {
-//    printf("\r\n 指导级位：%d  %d\r\n",C_zhidaojiwei,ZHIDAOJIWEI);
-		C_zhidaojiwei = ZHIDAOJIWEI;
-		WriteFileContantPkt( 0xA1, 0x03, g_ZK_DevCode, &C_zhidaojiwei, 1u ); 
-	} /* end if */
+    /* 判断指导级位是否发生变化 */
+    if (C_zhidaojiwei != ZHIDAOJIWEI)
+    {
+//        LOG_I("指导级位：%d  %d", C_zhidaojiwei, ZHIDAOJIWEI);
+        C_zhidaojiwei = ZHIDAOJIWEI;
+        WriteFileContantPkt(0xA1, 0x03, g_ZK_DevCode, &C_zhidaojiwei, 1u);
+    } /* end if */
 } /* end function RecordingGuidLevelMessage */
 
 /**********************************************
@@ -2224,17 +2223,17 @@ static void RecordingGuidLevelMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingGuidSpeedLimitMessage( void )
+static void RecordingGuidSpeedLimitMessage(void)
 {
-  static uint8_t C_zhidaoxiansu[2]  = { 0x00U, 0x00U };
+    static uint8_t C_zhidaoxiansu[2] = { 0x00U, 0x00U };
 
-  /* 判断指导限速是否变化 */
-  if ( memcmp( C_zhidaoxiansu, &ZHIDAOXIANSU, 2U ) )
-  {
-		memcpy( C_zhidaoxiansu, &ZHIDAOXIANSU, 2U);
-//    printf("\r\n 指导限速：%x %x\r\n",C_zhidaoxiansu[0],C_zhidaoxiansu[1]);
-		WriteFileContantPkt( 0xA1, 0x04, g_ZK_DevCode, C_zhidaoxiansu, 2u ); 
-	} /* end if */
+    /* 判断指导限速是否变化 */
+    if (memcmp(C_zhidaoxiansu, &ZHIDAOXIANSU, 2U))
+    {
+        memcpy(C_zhidaoxiansu, &ZHIDAOXIANSU, 2U);
+//        LOG_I("指导限速：%x %x", C_zhidaoxiansu[0], C_zhidaoxiansu[1]);
+        WriteFileContantPkt(0xA1, 0x04, g_ZK_DevCode, C_zhidaoxiansu, 2u);
+    } /* end if */
 } /* end function RecordingGuidSpeedLimitMessage */
 
 /**********************************************
@@ -2242,18 +2241,18 @@ static void RecordingGuidSpeedLimitMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingStartOptimizeMessage( void )
+static void RecordingStartOptimizeMessage(void)
 {
-  static uint8_t C_kaishiyouhua = 0U;
-	uint8_t youhuabiaozhi = 0u;
-	
-	youhuabiaozhi = ((*(&YOUHUAJIEGUO + 1u)) & 0xc0) >> 6u;
-  if ( (C_kaishiyouhua != youhuabiaozhi) && (0x01 == youhuabiaozhi) )
-  {
-//		printf("。。。生成开始优化事项。。。\r\n");
-		WriteFileContantPkt( 0xA1, 0x05, g_ZK_DevCode, &C_kaishiyouhua, 0u ); 
-	} /* end if */
-  C_kaishiyouhua = youhuabiaozhi;
+    static uint8_t C_kaishiyouhua = 0U;
+    uint8_t youhuabiaozhi = 0u;
+
+    youhuabiaozhi = ((*(&YOUHUAJIEGUO + 1u)) & 0xc0) >> 6u;
+    if ((C_kaishiyouhua != youhuabiaozhi) && (0x01 == youhuabiaozhi))
+    {
+//        LOG_I("...生成开始优化事项...");
+        WriteFileContantPkt(0xA1, 0x05, g_ZK_DevCode, &C_kaishiyouhua, 0u);
+    } /* end if */
+    C_kaishiyouhua = youhuabiaozhi;
 } /* end function RecordingStartOptimizeMessage */
 
 /**********************************************
@@ -2263,25 +2262,25 @@ static void RecordingStartOptimizeMessage( void )
 ***********************************************/
 static void RecordingOptimizeResultMessage( void )
 {
-  static uint8_t C_youhuajieguo[4] = { 0U };
-	uint8_t youhuabiaozhi = 0u;
-	uint8_t youhuajieguo = 0u;
-	
-	youhuabiaozhi = ((*(&YOUHUAJIEGUO + 1u)) & 0xc0) >> 6u;
-	youhuajieguo = ((*(&YOUHUAJIEGUO + 1u)) & 0x30) >> 4u;
+    static uint8_t C_youhuajieguo[4] = { 0U };
+    uint8_t youhuabiaozhi = 0u;
+    uint8_t youhuajieguo = 0u;
 
-  if ( (C_youhuajieguo[3] != youhuabiaozhi) && (2u == youhuabiaozhi) )
-  {
-//		printf("。。。生成优化结果事项。。。优化结果：%x\r\n",youhuajieguo);
-//		printf("优化耗时：%d\r\n",YOUHUAHAOSHI + ((*(&YOUHUAHAOSHI+1)) << 8) );
-		C_youhuajieguo[0] = youhuajieguo;
-		if( 0x01 == youhuajieguo)  //优化成功
-		  memcpy( &C_youhuajieguo[1], &YOUHUAHAOSHI, 2U);
-		else
-			memset( &C_youhuajieguo[1], 0u, 2U);
-		WriteFileContantPkt( 0xA1, 0x06, g_ZK_DevCode, C_youhuajieguo, 3u ); 
-	} /* end if */
-	C_youhuajieguo[3] = youhuabiaozhi;
+    youhuabiaozhi = ((*(&YOUHUAJIEGUO + 1u)) & 0xc0) >> 6u;
+    youhuajieguo = ((*(&YOUHUAJIEGUO + 1u)) & 0x30) >> 4u;
+
+    if ((C_youhuajieguo[3] != youhuabiaozhi) && (2u == youhuabiaozhi))
+    {
+//        LOG_I("...生成优化结果事项...优化结果：%x", youhuajieguo);
+//        LOG_I("优化耗时：%d", YOUHUAHAOSHI + ((*(&YOUHUAHAOSHI+1)) << 8));
+        C_youhuajieguo[0] = youhuajieguo;
+        if (0x01 == youhuajieguo)  //优化成功
+            memcpy(&C_youhuajieguo[1], &YOUHUAHAOSHI, 2U);
+        else
+            memset(&C_youhuajieguo[1], 0u, 2U);
+        WriteFileContantPkt(0xA1, 0x06, g_ZK_DevCode, C_youhuajieguo, 3u);
+    } /* end if */
+    C_youhuajieguo[3] = youhuabiaozhi;
 } /* end function RecordingOptimizeResultMessage */
 
 /**********************************************
@@ -2329,10 +2328,10 @@ static void RecordingSoonerAndLaterMessage( void )
 #else
     zaowandianbiaozhizhi = (ZAOWANDIANBIAOZHI & 0x03);
 #endif
-//	printf("早晚点时间：%d - %d = %d\r\n",yujishijian,biaozhunshijian,zaowandianshijian);
+//    LOG_I("早晚点时间：%d - %d = %d", yujishijian, biaozhunshijian, zaowandianshijian);
     if ((0x00 == guozhanzhongxinzhi) && GUOZHANZHONGXIN && (0x80 == LKJGONGZUOMOSHI))
     {
-//		printf("。。。生成早晚点事项。。。\r\n");
+//        LOG_I("...生成早晚点事项...");
         C_zaowandian[0] = zaowandianbiaozhizhi;
         C_zaowandian[1] = zaowandianshijian & 0xff;
         C_zaowandian[2] = (zaowandianshijian >> 8) & 0xff;
@@ -2405,15 +2404,15 @@ static void RecordingTrainControlMessage( void )
 返回：无
 ***********************************************/
 static void RecordingAllowAssistedDriveMessage( void )
-{  
-  static uint8_t C_yunxufuzhujiashi = 0U;
-	
-	if( (0u == C_yunxufuzhujiashi) && (0x01 == ((Enter_Autopilot_S1 & 0x08) >> 3u)) )
-	{
-//		printf("\r\n允许辅助驾驶。。。\r\n");
-		WriteFileContantPkt( 0xA1, 0x51, g_ZK_DevCode, &C_yunxufuzhujiashi, 0u ); 
-	} /* end if */
-	C_yunxufuzhujiashi = ((Enter_Autopilot_S1 & 0x08) >> 3u);
+{
+    static uint8_t C_yunxufuzhujiashi = 0U;
+
+    if ((0u == C_yunxufuzhujiashi) && (0x01 == ((Enter_Autopilot_S1 & 0x08) >> 3u)))
+    {
+//        LOG_I("允许辅助驾驶");
+        WriteFileContantPkt(0xA1, 0x51, g_ZK_DevCode, &C_yunxufuzhujiashi, 0u);
+    } /* end if */
+    C_yunxufuzhujiashi = ((Enter_Autopilot_S1 & 0x08) >> 3u);
 } /* end function RecordingAllowAssistedDriveMessage */
 
 /**********************************************
@@ -2423,14 +2422,14 @@ static void RecordingAllowAssistedDriveMessage( void )
 ***********************************************/
 static void RecordingWholeVehicleEnterAssistedDriveMessage( void )
 {
-  static uint8_t C_zhengchujinrufuzhujiashi = 0U;
-	
-	if( (0u == C_zhengchujinrufuzhujiashi) && ((Enter_Autopilot_S1 & 0x03) == 0x03))
-	{
-//		printf("\r\n整车进入辅助驾驶 \r\n");
-		WriteFileContantPkt( 0xA1, 0x52, g_ZK_DevCode, &C_zhengchujinrufuzhujiashi, 0u ); 
-	} /* end if */
-	C_zhengchujinrufuzhujiashi = (Enter_Autopilot_S1 & 0x03);
+    static uint8_t C_zhengchujinrufuzhujiashi = 0U;
+
+    if ((0u == C_zhengchujinrufuzhujiashi) && ((Enter_Autopilot_S1 & 0x03) == 0x03))
+    {
+//        LOG_I("整车进入辅助驾驶");
+        WriteFileContantPkt(0xA1, 0x52, g_ZK_DevCode, &C_zhengchujinrufuzhujiashi, 0u);
+    } /* end if */
+    C_zhengchujinrufuzhujiashi = (Enter_Autopilot_S1 & 0x03);
 } /* end function RecordingWholeVehicleEnterAssistedDriveMessage */
 
 /**********************************************
@@ -2438,16 +2437,16 @@ static void RecordingWholeVehicleEnterAssistedDriveMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingEnterAssistedDriveMessage( void )
+static void RecordingEnterAssistedDriveMessage(void)
 {
-  static uint8_t C_jinrufuzhujiashi = 0U;
-	
-	if( (0u == C_jinrufuzhujiashi) && ( 0x01 == ((Enter_Autopilot_S1 & 0x10) >> 4u ) ))
-	{ 
-//		printf("\r\n进入辅助驾驶。。。 \r\n");
-		WriteFileContantPkt( 0xA1, 0x53, g_ZK_DevCode, &C_jinrufuzhujiashi, 0u ); 
-	} /* end if */
-	C_jinrufuzhujiashi = (Enter_Autopilot_S1 & 0x10) >> 4u;
+    static uint8_t C_jinrufuzhujiashi = 0U;
+
+    if ((0u == C_jinrufuzhujiashi) && (0x01 == ((Enter_Autopilot_S1 & 0x10) >> 4u)))
+    {
+//        LOG_I("进入辅助驾驶");
+        WriteFileContantPkt(0xA1, 0x53, g_ZK_DevCode, &C_jinrufuzhujiashi, 0u);
+    } /* end if */
+    C_jinrufuzhujiashi = (Enter_Autopilot_S1 & 0x10) >> 4u;
 } /* end function RecordingEnterAssistedDriveMessage */
 
 /**********************************************
@@ -2455,16 +2454,16 @@ static void RecordingEnterAssistedDriveMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingWholeVehicleExitAssistedDriveMessage( void )
+static void RecordingWholeVehicleExitAssistedDriveMessage(void)
 {
-  static uint8_t C_zhengchetuichufuzhujiashi = 0U;
-	
-	if( (0u == C_zhengchetuichufuzhujiashi) && (0x01 == ((Enter_Autopilot_S1 & 0x04) >> 2u )) )
-	{ 
-//		printf("\r\n整车退出辅助驾驶。。。 \r\n");
-		WriteFileContantPkt( 0xA1, 0x54, g_ZK_DevCode, &C_zhengchetuichufuzhujiashi, 0u ); 
-	} /* end if */
-	C_zhengchetuichufuzhujiashi = (Enter_Autopilot_S1 & 0x04) >> 2u;
+    static uint8_t C_zhengchetuichufuzhujiashi = 0U;
+
+    if ((0u == C_zhengchetuichufuzhujiashi) && (0x01 == ((Enter_Autopilot_S1 & 0x04) >> 2u)))
+    {
+//        LOG_I("整车退出辅助驾驶");
+        WriteFileContantPkt(0xA1, 0x54, g_ZK_DevCode, &C_zhengchetuichufuzhujiashi, 0u);
+    } /* end if */
+    C_zhengchetuichufuzhujiashi = (Enter_Autopilot_S1 & 0x04) >> 2u;
 } /* end function RecordingWholeVehicleExitAssistedDriveMessage */
 
 /**********************************************
@@ -2472,20 +2471,20 @@ static void RecordingWholeVehicleExitAssistedDriveMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingExitAssistedDriveMessage( void )
+static void RecordingExitAssistedDriveMessage(void)
 {
-  static uint8_t C_tuichufuzhujiashi[4] = { 0U };
-	static uint32_t tuichuyuanyin_old = 0u, tuichuyuanyin_new = 0u;
-	
-	memcpy(&tuichuyuanyin_new, &TUICHUFUZHUJIASHI, 4u);
+    static uint8_t C_tuichufuzhujiashi[4] = { 0U };
+    static uint32_t tuichuyuanyin_old = 0u, tuichuyuanyin_new = 0u;
 
-  if ( (0u == tuichuyuanyin_old) && tuichuyuanyin_new )
-  {
-//		printf("。。。生成退出辅助驾驶事项:%x。。。\r\n",tuichuyuanyin_new);
-	  memcpy(C_tuichufuzhujiashi, &tuichuyuanyin_new, 4u);
-		WriteFileContantPkt( 0xA1, 0x55, g_ZK_DevCode, C_tuichufuzhujiashi, 4u ); 
-	} /* end if */
-	memcpy(&tuichuyuanyin_old, &tuichuyuanyin_new, 4u);
+    memcpy(&tuichuyuanyin_new, &TUICHUFUZHUJIASHI, 4u);
+
+    if ((0u == tuichuyuanyin_old) && tuichuyuanyin_new)
+    {
+//        LOG_I("...生成退出辅助驾驶事项:%x...", tuichuyuanyin_new);
+        memcpy(C_tuichufuzhujiashi, &tuichuyuanyin_new, 4u);
+        WriteFileContantPkt(0xA1, 0x55, g_ZK_DevCode, C_tuichufuzhujiashi, 4u);
+    } /* end if */
+    memcpy(&tuichuyuanyin_old, &tuichuyuanyin_new, 4u);
 } /* end function RecordingExitAssistedDriveMessage */
 
 /**********************************************
@@ -2493,15 +2492,15 @@ static void RecordingExitAssistedDriveMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingAllowStartMessage( void )
+static void RecordingAllowStartMessage(void)
 {
-  static uint8_t C_yunxuqidong = 0U;
+    static uint8_t C_yunxuqidong = 0U;
 
-  if ( (0u == C_yunxuqidong) && YUNXUQIDONG )
-  {
-		WriteFileContantPkt( 0xA1, 0x56, g_ZK_DevCode, &C_yunxuqidong, 0u ); 
-	} /* end if */
-	C_yunxuqidong = YUNXUQIDONG;
+    if ((0u == C_yunxuqidong) && YUNXUQIDONG)
+    {
+        WriteFileContantPkt(0xA1, 0x56, g_ZK_DevCode, &C_yunxuqidong, 0u);
+    } /* end if */
+    C_yunxuqidong = YUNXUQIDONG;
 } /* end function RecordingAllowStartMessage */
 
 /**********************************************
@@ -2509,15 +2508,15 @@ static void RecordingAllowStartMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingControlTrainStartMessage( void )
+static void RecordingControlTrainStartMessage(void)
 {
-  static uint8_t C_kongzhiliecheqidong = 0U;
+    static uint8_t C_kongzhiliecheqidong = 0U;
 
-  if ( (0u == C_kongzhiliecheqidong) && KONGZHILIECHEQIDONG )
-  {
-		WriteFileContantPkt( 0xA1, 0x57, g_ZK_DevCode, &C_kongzhiliecheqidong, 0u ); 
-	} /* end if */
-	C_kongzhiliecheqidong = KONGZHILIECHEQIDONG;
+    if ((0u == C_kongzhiliecheqidong) && KONGZHILIECHEQIDONG)
+    {
+        WriteFileContantPkt(0xA1, 0x57, g_ZK_DevCode, &C_kongzhiliecheqidong, 0u);
+    } /* end if */
+    C_kongzhiliecheqidong = KONGZHILIECHEQIDONG;
 } /* end function RecordingControlTrainStartMessage */
 
 /**********************************************
@@ -2525,33 +2524,33 @@ static void RecordingControlTrainStartMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingControlTrainConditonMessage( void )
+static void RecordingControlTrainConditonMessage(void)
 {
-  static uint8_t C_kongchegongkuang = 0U;
-  uint8_t kongchegongkuangzhi = 0u;
-	
-	switch(KONGCHEGONGKUANG & 0x0f)
-	{
-		case 0:   //保留
-			 break;
-		case 1:   //牵引
-			kongchegongkuangzhi = 0x01;
-			break;
-		case 2:   //零位
-			kongchegongkuangzhi = 0x00;
-			break;
-		case 3:   //制动
-			kongchegongkuangzhi = 0x02;
-			break;
-		default:  //无效
-			kongchegongkuangzhi = 0xff;
-			break;
-	}
-	if ( memcmp( &C_kongchegongkuang, &kongchegongkuangzhi, 1U ) )
-  {
-    C_kongchegongkuang = kongchegongkuangzhi;
-		WriteFileContantPkt( 0xA1, 0x58, g_ZK_DevCode, &C_kongchegongkuang, 1u );		
-	} /* end if */
+    static uint8_t C_kongchegongkuang = 0U;
+    uint8_t kongchegongkuangzhi = 0u;
+
+    switch (KONGCHEGONGKUANG & 0x0f)
+    {
+        case 0:   //保留
+            break;
+        case 1:   //牵引
+            kongchegongkuangzhi = 0x01;
+            break;
+        case 2:   //零位
+            kongchegongkuangzhi = 0x00;
+            break;
+        case 3:   //制动
+            kongchegongkuangzhi = 0x02;
+            break;
+        default:  //无效
+            kongchegongkuangzhi = 0xff;
+            break;
+    }
+    if (memcmp(&C_kongchegongkuang, &kongchegongkuangzhi, 1U))
+    {
+        C_kongchegongkuang = kongchegongkuangzhi;
+        WriteFileContantPkt(0xA1, 0x58, g_ZK_DevCode, &C_kongchegongkuang, 1u);
+    } /* end if */
 } /* end function RecordingControlTrainConditonMessage */
 
 /**********************************************
@@ -2559,16 +2558,16 @@ static void RecordingControlTrainConditonMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingControlTrainLevelMessage( void )
+static void RecordingControlTrainLevelMessage(void)
 {
-  static uint8_t C_kongchejiwei = 0U;
+    static uint8_t C_kongchejiwei = 0U;
 
-	if ( memcmp( &C_kongchejiwei, &KONGCHEJIWEI, 1U ) )
-  {
-		memcpy( &C_kongchejiwei, &KONGCHEJIWEI, 1U);
-//    printf("\r\n 控制级位值：%d\r\n",C_kongchejiwei);
-		WriteFileContantPkt( 0xA1, 0x59, g_ZK_DevCode, &C_kongchejiwei, 1u ); 
-	} /* end if */
+    if (memcmp(&C_kongchejiwei, &KONGCHEJIWEI, 1U))
+    {
+        memcpy(&C_kongchejiwei, &KONGCHEJIWEI, 1U);
+//        LOG_I("控制级位值：%d", C_kongchejiwei);
+        WriteFileContantPkt(0xA1, 0x59, g_ZK_DevCode, &C_kongchejiwei, 1u);
+    } /* end if */
 } /* end function RecordingControlTrainLevelMessage */
 
 /**********************************************
@@ -2576,16 +2575,16 @@ static void RecordingControlTrainLevelMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingEnterUncontrolAreaMessage( void )
+static void RecordingEnterUncontrolAreaMessage(void)
 {
-  static uint8_t C_jinbukongquyu = 0U;
+    static uint8_t C_jinbukongquyu = 0U;
 
-  if ( ( 0U == C_jinbukongquyu) && (KEKONGBIAOZHI) )
-  {
-//		printf("。。。生成进不可控区域事项。。。\r\n");
-		WriteFileContantPkt( 0xA1, 0x60, g_ZK_DevCode, &C_jinbukongquyu, 0u ); 
-	} /* end if */
-	C_jinbukongquyu = KEKONGBIAOZHI;
+    if ((0U == C_jinbukongquyu) && (KEKONGBIAOZHI))
+    {
+//        LOG_I("...生成进不可控区域事项...");
+        WriteFileContantPkt(0xA1, 0x60, g_ZK_DevCode, &C_jinbukongquyu, 0u);
+    } /* end if */
+    C_jinbukongquyu = KEKONGBIAOZHI;
 } /* end function RecordingEnterUncontrolAreaMessage */
 
 /**********************************************
@@ -2593,16 +2592,16 @@ static void RecordingEnterUncontrolAreaMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingExitUncontrolAreaMessage( void )
+static void RecordingExitUncontrolAreaMessage(void)
 {
-  static uint8_t C_chubukongquyu = 0U;
+    static uint8_t C_chubukongquyu = 0U;
 
-  if ( (0x01 == C_chubukongquyu) && (0u == KEKONGBIAOZHI) )
-  {
-//		printf("：：：生成出不可控区域事项：：：\r\n");
-		WriteFileContantPkt( 0xA1, 0x61, g_ZK_DevCode, &C_chubukongquyu, 0u ); 
-	} /* end if */
-	C_chubukongquyu = KEKONGBIAOZHI;
+    if ((0x01 == C_chubukongquyu) && (0u == KEKONGBIAOZHI))
+    {
+//        LOG_I("...生成出不可控区域事项...\r\n");
+        WriteFileContantPkt(0xA1, 0x61, g_ZK_DevCode, &C_chubukongquyu, 0u);
+    } /* end if */
+    C_chubukongquyu = KEKONGBIAOZHI;
 } /* end function RecordingExitUncontrolAreaMessage */
 
 /**********************************************
@@ -2610,20 +2609,20 @@ static void RecordingExitUncontrolAreaMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingEnterPhaseSplitterMessage( void )
+static void RecordingEnterPhaseSplitterMessage(void)
 {
-  static uint16_t C_fenxianghuilingzhi = 0U;
-	uint8_t C_jinfenxiangqu = 0u;
-	uint16_t fenxianghuilingzhi = 0u;
+    static uint16_t C_fenxianghuilingzhi = 0U;
+    uint8_t C_jinfenxiangqu = 0u;
+    uint16_t fenxianghuilingzhi = 0u;
 
-	memcpy( &fenxianghuilingzhi, &FENXIANGHUILING, 2U);
-	
-  if ( (C_fenxianghuilingzhi) && (0u == fenxianghuilingzhi ) )
-  {
-//		printf("。。。生成进分相区事项。。。\r\n");
-		WriteFileContantPkt( 0xA1, 0x62, g_ZK_DevCode, &C_jinfenxiangqu, 0u ); 
-	} /* end if */
-	C_fenxianghuilingzhi = fenxianghuilingzhi;
+    memcpy(&fenxianghuilingzhi, &FENXIANGHUILING, 2U);
+
+    if ((C_fenxianghuilingzhi) && (0u == fenxianghuilingzhi))
+    {
+//        LOG_I("...生成进分相区事项...");
+        WriteFileContantPkt(0xA1, 0x62, g_ZK_DevCode, &C_jinfenxiangqu, 0u);
+    } /* end if */
+    C_fenxianghuilingzhi = fenxianghuilingzhi;
 } /* end function RecordingEnterPhaseSplitterMessage */
 
 /**********************************************
@@ -2631,20 +2630,20 @@ static void RecordingEnterPhaseSplitterMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingExitPhaseSplitterMessage( void )
+static void RecordingExitPhaseSplitterMessage(void)
 {
-  static uint16_t C_chufenxianghuilingzhi = 0xFF;
-	uint8_t C_chufenxiangqu = 0u;
-	uint16_t chufenxianghuilingzhi = 0u;	
+    static uint16_t C_chufenxianghuilingzhi = 0xFF;
+    uint8_t C_chufenxiangqu = 0u;
+    uint16_t chufenxianghuilingzhi = 0u;
 
-	memcpy( &chufenxianghuilingzhi, &FENXIANGHUILING, 2U);
-	
-  if ( (0u == C_chufenxianghuilingzhi) && ( chufenxianghuilingzhi ) )
-  {
-//		printf("。。。生成出分相区事项。。。\r\n");
-		WriteFileContantPkt( 0xA1, 0x63, g_ZK_DevCode, &C_chufenxiangqu, 0u );
-	} /* end if */
-	C_chufenxianghuilingzhi = chufenxianghuilingzhi;
+    memcpy(&chufenxianghuilingzhi, &FENXIANGHUILING, 2U);
+
+    if ((0u == C_chufenxianghuilingzhi) && (chufenxianghuilingzhi))
+    {
+//        LOG_I("...生成出分相区事项...");
+        WriteFileContantPkt(0xA1, 0x63, g_ZK_DevCode, &C_chufenxiangqu, 0u);
+    } /* end if */
+    C_chufenxianghuilingzhi = chufenxianghuilingzhi;
 } /* end function RecordingExitPhaseSplitterMessage */
 
 /**********************************************
@@ -2652,32 +2651,32 @@ static void RecordingExitPhaseSplitterMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingThroughCommonMessage( void )
+static void RecordingThroughCommonMessage(void)
 {
-  static uint8_t C_Guantongzhiling[2]  = { 0x0U };
-	uint8_t guantongbiaozhi = 0u;
+    static uint8_t C_Guantongzhiling[2] = { 0x0U };
+    uint8_t guantongbiaozhi = 0u;
 
-	guantongbiaozhi = ((GUANTONGJIEGUO & 0x0c) >> 2u);
-  if ( (C_Guantongzhiling[0] != guantongbiaozhi) && guantongbiaozhi )
-  {
-		if(0x01 == guantongbiaozhi)  //贯通开始
-		{
-		  C_Guantongzhiling[0] = 0x01;
-      C_Guantongzhiling[1] = 0x00;			
-		}
-		else if(0x02 == guantongbiaozhi)  //贯通结束
-		{
-		  C_Guantongzhiling[0] = 0x02;
-      C_Guantongzhiling[1] = (GUANTONGJIEGUO & 0x03);			
-		}
-		else   //无效
-		{
-		  C_Guantongzhiling[0] = 0x00;
-      C_Guantongzhiling[1] = 0x00;			
-		}
+    guantongbiaozhi = ((GUANTONGJIEGUO & 0x0c) >> 2u);
+    if ((C_Guantongzhiling[0] != guantongbiaozhi) && guantongbiaozhi)
+    {
+        if (0x01 == guantongbiaozhi)  //贯通开始
+        {
+            C_Guantongzhiling[0] = 0x01;
+            C_Guantongzhiling[1] = 0x00;
+        }
+        else if (0x02 == guantongbiaozhi)  //贯通结束
+        {
+            C_Guantongzhiling[0] = 0x02;
+            C_Guantongzhiling[1] = (GUANTONGJIEGUO & 0x03);
+        }
+        else   //无效
+        {
+            C_Guantongzhiling[0] = 0x00;
+            C_Guantongzhiling[1] = 0x00;
+        }
 
-		WriteFileContantPkt( 0xA1, 0x64, g_ZK_DevCode, C_Guantongzhiling, 2u ); 
-	} /* end if */	
+        WriteFileContantPkt(0xA1, 0x64, g_ZK_DevCode, C_Guantongzhiling, 2u);
+    } /* end if */
 } /* end function RecordingThroughCommonMessage */
 
 /**********************************************
@@ -2685,23 +2684,23 @@ static void RecordingThroughCommonMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingAirBrakeCommonMessage( void )
+static void RecordingAirBrakeCommonMessage(void)
 {
-  uint8_t C_Kongqizhidong[6]  = { 0x0U };
-	static uint8_t kongzhizhuangtai_old = 0u;
+    uint8_t C_Kongqizhidong[6] = { 0x0U };
+    static uint8_t kongzhizhuangtai_old = 0u;
 
-  if ( kongzhizhuangtai_old != KONGZHIZHUANGTAI )
-  {
-//		printf("。。。生成空气制动事项。。。\r\n");
-		C_Kongqizhidong[0] = (*(&JUNFENGGANGYALI + 1));
-		C_Kongqizhidong[1] = JUNFENGGANGYALI;
-		C_Kongqizhidong[2] = (*(&ZHIDONGGANGYALI + 1));
-		C_Kongqizhidong[3] = ZHIDONGGANGYALI;
-		C_Kongqizhidong[4] = XIAOZHACEHUAN;
-		C_Kongqizhidong[5] = KONGZHIZHUANGTAI;
-		WriteFileContantPkt( 0xA1, 0x65, g_ZK_DevCode, C_Kongqizhidong, 6u );
-    kongzhizhuangtai_old = KONGZHIZHUANGTAI;
-	} /* end if */
+    if (kongzhizhuangtai_old != KONGZHIZHUANGTAI)
+    {
+//        LOG_I("...生成空气制动事项...");
+        C_Kongqizhidong[0] = (*(&JUNFENGGANGYALI + 1));
+        C_Kongqizhidong[1] = JUNFENGGANGYALI;
+        C_Kongqizhidong[2] = (*(&ZHIDONGGANGYALI + 1));
+        C_Kongqizhidong[3] = ZHIDONGGANGYALI;
+        C_Kongqizhidong[4] = XIAOZHACEHUAN;
+        C_Kongqizhidong[5] = KONGZHIZHUANGTAI;
+        WriteFileContantPkt(0xA1, 0x65, g_ZK_DevCode, C_Kongqizhidong, 6u);
+        kongzhizhuangtai_old = KONGZHIZHUANGTAI;
+    } /* end if */
 } /* end function RecordingAirBrakeCommonMessage */
 
 /**********************************************
@@ -2709,21 +2708,21 @@ static void RecordingAirBrakeCommonMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingParkingPressurizeMessage( void )
+static void RecordingParkingPressurizeMessage(void)
 {
-  static uint8_t C_Tingchebaoya[6]  = { 0x0U };
+    static uint8_t C_Tingchebaoya[6] = { 0x0U };
 
-  if ( (0u == C_Tingchebaoya[5]) && (TINGCHEBAOYA) )
-  {
-//		printf("。。。生成停车保压事项。。。\r\n");
-		C_Tingchebaoya[0] = (*(&JUNFENGGANGYALI + 1));
-		C_Tingchebaoya[1] = JUNFENGGANGYALI;
-		C_Tingchebaoya[2] = (*(&ZHIDONGGANGYALI + 1));
-		C_Tingchebaoya[3] = ZHIDONGGANGYALI;
-		C_Tingchebaoya[4] = XIAOZHACEHUAN;
-		WriteFileContantPkt( 0xA1, 0x66, g_ZK_DevCode, C_Tingchebaoya, 5u ); 
-	} /* end if */
-	C_Tingchebaoya[5] = TINGCHEBAOYA;
+    if ((0u == C_Tingchebaoya[5]) && (TINGCHEBAOYA))
+    {
+//        LOG_I("...生成停车保压事项...");
+        C_Tingchebaoya[0] = (*(&JUNFENGGANGYALI + 1));
+        C_Tingchebaoya[1] = JUNFENGGANGYALI;
+        C_Tingchebaoya[2] = (*(&ZHIDONGGANGYALI + 1));
+        C_Tingchebaoya[3] = ZHIDONGGANGYALI;
+        C_Tingchebaoya[4] = XIAOZHACEHUAN;
+        WriteFileContantPkt(0xA1, 0x66, g_ZK_DevCode, C_Tingchebaoya, 5u);
+    } /* end if */
+    C_Tingchebaoya[5] = TINGCHEBAOYA;
 } /* end function RecordingParkingPressurizeMessage */
 
 /**********************************************
@@ -2731,16 +2730,16 @@ static void RecordingParkingPressurizeMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingTextPromptMessage( void )
+static void RecordingTextPromptMessage(void)
 {
-  static uint8_t C_Wenbentishibiaozhi[2]  = { 0x0U };
+    static uint8_t C_Wenbentishibiaozhi[2] = { 0x0U };
 
-  if ( memcmp( C_Wenbentishibiaozhi, &WENBENTISHI, 2U ) && WENBENTISHI)
-  {
-		memcpy( C_Wenbentishibiaozhi, &WENBENTISHI, 2U);
-  
-		WriteFileContantPkt( 0xA1, 0x67, g_ZK_DevCode, C_Wenbentishibiaozhi, 2u ); 
-	} /* end if */
+    if (memcmp(C_Wenbentishibiaozhi, &WENBENTISHI, 2U) && WENBENTISHI)
+    {
+        memcpy(C_Wenbentishibiaozhi, &WENBENTISHI, 2U);
+
+        WriteFileContantPkt(0xA1, 0x67, g_ZK_DevCode, C_Wenbentishibiaozhi, 2u);
+    } /* end if */
 } /* end function RecordingTextPromptMessage */
 
 /**********************************************
@@ -2765,38 +2764,38 @@ static void RecordingVoicePromptMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingWorkingStateMessage( void )
+static void RecordingWorkingStateMessage(void)
 {
 //  static uint8_t C_gongzuozhuangtai = 0U;
-  uint8_t gongzuozhuangtaizhi = 0u;
-	
-	switch(GONGZUOZHUANGTAI)
-	{
-		case 0x00:  //人工驾驶
-			gongzuozhuangtaizhi = 0x01;   
-			break;
-		case 0x01:  //指导驾驶
-			gongzuozhuangtaizhi = 0x02;
-			break;
-		case 0x02:  //辅助预置驾驶
-			gongzuozhuangtaizhi = 0x03;
-			break;
-		case 0x03:  //辅助驾驶
-			gongzuozhuangtaizhi = 0x04;
-			break;
-		case 0x04:  //退出辅助驾驶
-			gongzuozhuangtaizhi = 0x05;
-			break;
-    default:
-			break;
-	}
+    uint8_t gongzuozhuangtaizhi = 0u;
 
-  if ( C_gongzuozhuangtai != gongzuozhuangtaizhi )
-  {
-		C_gongzuozhuangtai = gongzuozhuangtaizhi;
-//    printf("\r\n 生成工作状态事项：%x\r\n",gongzuozhuangtaizhi);
-		WriteFileContantPkt( 0xA1, 0x69, g_ZK_DevCode, &C_gongzuozhuangtai, 1u ); 
-	} /* end if */
+    switch (GONGZUOZHUANGTAI)
+    {
+        case 0x00:  //人工驾驶
+            gongzuozhuangtaizhi = 0x01;
+            break;
+        case 0x01:  //指导驾驶
+            gongzuozhuangtaizhi = 0x02;
+            break;
+        case 0x02:  //辅助预置驾驶
+            gongzuozhuangtaizhi = 0x03;
+            break;
+        case 0x03:  //辅助驾驶
+            gongzuozhuangtaizhi = 0x04;
+            break;
+        case 0x04:  //退出辅助驾驶
+            gongzuozhuangtaizhi = 0x05;
+            break;
+        default:
+            break;
+    }
+
+    if (C_gongzuozhuangtai != gongzuozhuangtaizhi)
+    {
+        C_gongzuozhuangtai = gongzuozhuangtaizhi;
+//        LOG_I("生成工作状态事项：%x", gongzuozhuangtaizhi);
+        WriteFileContantPkt(0xA1, 0x69, g_ZK_DevCode, &C_gongzuozhuangtai, 1u);
+    } /* end if */
 } /* end function RecordingWorkingStateMessage */
 
 /**********************************************
@@ -2804,16 +2803,16 @@ static void RecordingWorkingStateMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingWorkingModeMessage( void )
+static void RecordingWorkingModeMessage(void)
 {
 //  static uint8_t C_gongzuomoshi = 0xFFU;
-	
-  if ( C_gongzuomoshi != GONGZUOMOSHI )
-  {
-		C_gongzuomoshi = GONGZUOMOSHI;
-//    printf("\r\n 工作模式变化：%x\r\n",GONGZUOMOSHI);
-		WriteFileContantPkt( 0xA1, 0x70, g_ZK_DevCode, &C_gongzuomoshi, 1u ); 
-	} /* end if */
+
+    if (C_gongzuomoshi != GONGZUOMOSHI)
+    {
+        C_gongzuomoshi = GONGZUOMOSHI;
+//        LOG_I("工作模式变化：%x", GONGZUOMOSHI);
+        WriteFileContantPkt(0xA1, 0x70, g_ZK_DevCode, &C_gongzuomoshi, 1u);
+    } /* end if */
 } /* end function RecordingWorkingModeMessage */
 
 /**********************************************
@@ -2821,43 +2820,43 @@ static void RecordingWorkingModeMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingStaticTestMessage( void )
+static void RecordingStaticTestMessage(void)
 {
-  static uint8_t C_jingtaiceshizhuangtai = 0U;
-	uint8_t ceshizhuangtaizhi = 0xff;
-	
-	switch(JINGTAICESHIZHUANGTAI)
-	{
-		case 0x01:
-			ceshizhuangtaizhi = 0x00;
-			break;
-		case 0x02:
-			ceshizhuangtaizhi = 0x01;
-			break;
-		case 0x04:
-			ceshizhuangtaizhi = 0x02;
-			break;
-		case 0x08:
-			ceshizhuangtaizhi = 0x03;
-			break;
-		case 0x10:
-			ceshizhuangtaizhi = 0x04;
-			break;
-		case 0x20:
-			ceshizhuangtaizhi = 0x05;
-			break;
-		case 0x40:
-			ceshizhuangtaizhi = 0x06;
-			break;
-		default:
-			break;
-	}
+    static uint8_t C_jingtaiceshizhuangtai = 0U;
+    uint8_t ceshizhuangtaizhi = 0xff;
 
-  if( C_jingtaiceshizhuangtai != ceshizhuangtaizhi )
-  {
-		C_jingtaiceshizhuangtai = ceshizhuangtaizhi;
-		WriteFileContantPkt( 0xA1, 0x71, g_ZK_DevCode, &C_jingtaiceshizhuangtai, 1U ); 
-	} /* end if */		
+    switch (JINGTAICESHIZHUANGTAI)
+    {
+        case 0x01:
+            ceshizhuangtaizhi = 0x00;
+            break;
+        case 0x02:
+            ceshizhuangtaizhi = 0x01;
+            break;
+        case 0x04:
+            ceshizhuangtaizhi = 0x02;
+            break;
+        case 0x08:
+            ceshizhuangtaizhi = 0x03;
+            break;
+        case 0x10:
+            ceshizhuangtaizhi = 0x04;
+            break;
+        case 0x20:
+            ceshizhuangtaizhi = 0x05;
+            break;
+        case 0x40:
+            ceshizhuangtaizhi = 0x06;
+            break;
+        default:
+            break;
+    }
+
+    if (C_jingtaiceshizhuangtai != ceshizhuangtaizhi)
+    {
+        C_jingtaiceshizhuangtai = ceshizhuangtaizhi;
+        WriteFileContantPkt(0xA1, 0x71, g_ZK_DevCode, &C_jingtaiceshizhuangtai, 1U);
+    } /* end if */
 } /* end function RecordingStaticTestMessage */
 
 /**********************************************
@@ -2865,16 +2864,16 @@ static void RecordingStaticTestMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingSendingControlMessage( void )
+static void RecordingSendingControlMessage(void)
 {
-  static uint8_t C_kongzhisasha = 0U;
+    static uint8_t C_kongzhisasha = 0U;
 
-  if( (0u == C_kongzhisasha) && KONGZHISASHA )
-  {
-//		printf("。。。生成控制撒沙事项。。。\r\n");
-		WriteFileContantPkt( 0xA1, 0x72, g_ZK_DevCode, &C_kongzhisasha, 0U ); 
-	} /* end if */
-	C_kongzhisasha = KONGZHISASHA;	
+    if ((0u == C_kongzhisasha) && KONGZHISASHA)
+    {
+//        LOG_I("...生成控制撒沙事项...");
+        WriteFileContantPkt(0xA1, 0x72, g_ZK_DevCode, &C_kongzhisasha, 0U);
+    } /* end if */
+    C_kongzhisasha = KONGZHISASHA;
 } /* end function RecordingSendingControlMessage */
 
 /**********************************************
@@ -2882,16 +2881,16 @@ static void RecordingSendingControlMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingForcePumpAirMessage( void )
+static void RecordingForcePumpAirMessage(void)
 {
-  static uint8_t C_qiangzhibengfeng = 0U;
+    static uint8_t C_qiangzhibengfeng = 0U;
 
-  if( (0u == C_qiangzhibengfeng) && QIANGZHIBENGFENG )
-  {
-//		printf("。。。生成控制泵风事项。。。\r\n");
-		WriteFileContantPkt( 0xA1, 0x73, g_ZK_DevCode, &C_qiangzhibengfeng, 0U ); 
-	} /* end if */
-	C_qiangzhibengfeng = QIANGZHIBENGFENG;	
+    if( (0u == C_qiangzhibengfeng) && QIANGZHIBENGFENG )
+    {
+//        LOG_I(...生成控制泵风事项...");
+        WriteFileContantPkt( 0xA1, 0x73, g_ZK_DevCode, &C_qiangzhibengfeng, 0U );
+    } /* end if */
+    C_qiangzhibengfeng = QIANGZHIBENGFENG;
 } /* end function RecordingForcePumpAirMessage */
 
 /**********************************************
@@ -2936,24 +2935,24 @@ static void RecordingLocoBrakeMessage( void )
 static void RecordingTrainPipePressureMessage(void)
 {
 //  static uint8_t C_liecheguanyali[2]  = { 0x00U, 0x00U };
-  uint16_t Pressure_Dvalue = 0U;    //压力差值，单位kPa
-  uint16_t liecheguanyali_New = 0u,  liecheguanyali_Old = 0u;
-  
-  liecheguanyali_New = (( uint16_t )LIECHEGUANYALI  << 8u) + ( uint16_t )(*(&LIECHEGUANYALI + 1));
-  liecheguanyali_Old = ( uint16_t )C_liecheguanyali[0] + ( uint16_t )(C_liecheguanyali[1] << 8);
-  
-	if( (0x03 == GONGZUOZHUANGTAI) || (0x04 == GONGZUOZHUANGTAI) )   //自动驾驶
-    Pressure_Dvalue = (16*3U);
-  else
-    Pressure_Dvalue = (16*10U);
+    uint16_t Pressure_Dvalue = 0U;    //压力差值，单位kPa
+    uint16_t liecheguanyali_New = 0u, liecheguanyali_Old = 0u;
 
-  if ( Pressure_Dvalue <= abs( liecheguanyali_New  - liecheguanyali_Old ) )
-  {
-//	  printf("\r\n 列车管压力：%d --- %d\r\n",liecheguanyali_Old,liecheguanyali_New);
-		C_liecheguanyali[0] = (*(&LIECHEGUANYALI + 1));
-		C_liecheguanyali[1] = LIECHEGUANYALI;
-		WriteFileContantPkt( 0xA2, 0x01, g_ZK_DevCode, C_liecheguanyali, 0u ); 
-	} /* end if */
+    liecheguanyali_New = ((uint16_t) LIECHEGUANYALI << 8u) + (uint16_t) (*(&LIECHEGUANYALI + 1));
+    liecheguanyali_Old = (uint16_t) C_liecheguanyali[0] + (uint16_t) (C_liecheguanyali[1] << 8);
+
+    if ((0x03 == GONGZUOZHUANGTAI) || (0x04 == GONGZUOZHUANGTAI))   //自动驾驶
+        Pressure_Dvalue = (16 * 3U);
+    else
+        Pressure_Dvalue = (16 * 10U);
+
+    if (Pressure_Dvalue <= abs(liecheguanyali_New - liecheguanyali_Old))
+    {
+//        LOG_I("列车管压力：%d --- %d", liecheguanyali_Old, liecheguanyali_New);
+        C_liecheguanyali[0] = (*(&LIECHEGUANYALI + 1));
+        C_liecheguanyali[1] = LIECHEGUANYALI;
+        WriteFileContantPkt(0xA2, 0x01, g_ZK_DevCode, C_liecheguanyali, 0u);
+    } /* end if */
 } /* end function RecordingTrainPipePressureMessage */
 
 /**********************************************
@@ -2964,24 +2963,24 @@ static void RecordingTrainPipePressureMessage(void)
 static void RecordingBrakeCylinderPressureMessage(void)
 {
 //  static uint8_t C_zhidonggangyali[2]  = { 0x00U, 0x00U };
-  uint16_t Pressure_Dvalue = 0U;    //压力差值，单位kPa
-  uint16_t zhidonggangyali_New = 0u,  zhidonggangyali_Old = 0u;
- 
-  zhidonggangyali_New = (( uint16_t )ZHIDONGGANGYALI << 8u) + ( uint16_t )(*(&ZHIDONGGANGYALI + 1));
-  zhidonggangyali_Old = ( uint16_t )C_zhidonggangyali[0] + ( uint16_t )(C_zhidonggangyali[1] << 8);
-   
-	if( (0x03 == GONGZUOZHUANGTAI) || (0x04 == GONGZUOZHUANGTAI) )   //自动驾驶
-    Pressure_Dvalue = (16*3U);
-  else
-    Pressure_Dvalue = (16*10U);  
-  
-  if ( Pressure_Dvalue <= abs( zhidonggangyali_New  - zhidonggangyali_Old ) )
-  {
-		C_zhidonggangyali[0] = (*(&ZHIDONGGANGYALI + 1));
-		C_zhidonggangyali[1] = ZHIDONGGANGYALI;
-//  	printf("\r\n 制动缸压力：%x\r\n",zhidonggangyali_New);
-		WriteFileContantPkt( 0xA2, 0x02, g_ZK_DevCode, C_zhidonggangyali, 0u ); 
-	} /* end if */
+    uint16_t Pressure_Dvalue = 0U;    //压力差值，单位kPa
+    uint16_t zhidonggangyali_New = 0u, zhidonggangyali_Old = 0u;
+
+    zhidonggangyali_New = ((uint16_t) ZHIDONGGANGYALI << 8u) + (uint16_t) (*(&ZHIDONGGANGYALI + 1));
+    zhidonggangyali_Old = (uint16_t) C_zhidonggangyali[0] + (uint16_t) (C_zhidonggangyali[1] << 8);
+
+    if ((0x03 == GONGZUOZHUANGTAI) || (0x04 == GONGZUOZHUANGTAI))   //自动驾驶
+        Pressure_Dvalue = (16 * 3U);
+    else
+        Pressure_Dvalue = (16 * 10U);
+
+    if (Pressure_Dvalue <= abs(zhidonggangyali_New - zhidonggangyali_Old))
+    {
+        C_zhidonggangyali[0] = (*(&ZHIDONGGANGYALI + 1));
+        C_zhidonggangyali[1] = ZHIDONGGANGYALI;
+//        LOG_I("制动缸压力：%x", zhidonggangyali_New);
+        WriteFileContantPkt(0xA2, 0x02, g_ZK_DevCode, C_zhidonggangyali, 0u);
+    } /* end if */
 } /* end function RecordingBrakeCylinderPressureMessage */
 
 /**********************************************
@@ -2991,19 +2990,19 @@ static void RecordingBrakeCylinderPressureMessage(void)
 ***********************************************/
 static void RecordingMainAirPressureMessage(void)
 {
-  static uint8_t C_zongfenggangyali[2]  = { 0x00U, 0x00U };
-  uint16_t zongfenggangyali_New = 0u,  zongfenggangyali_Old = 0u;
- 
-  zongfenggangyali_New = ( uint16_t )(ZONGFENGGANGYALI << 8u) + ( uint16_t )(*(&ZONGFENGGANGYALI + 1));
-  zongfenggangyali_Old = ( uint16_t )C_zongfenggangyali[0] + ( uint16_t )(C_zongfenggangyali[1] << 8);
- 
-	/* 总风缸压力变化大于50kPa */
-  if ( (16*50) <= abs( zongfenggangyali_New  - zongfenggangyali_Old ) )
-  {
-		C_zongfenggangyali[0] = (*(&ZONGFENGGANGYALI + 1));
-		C_zongfenggangyali[1] = ZONGFENGGANGYALI;
-		WriteFileContantPkt( 0xA2, 0x03, g_ZK_DevCode, C_zongfenggangyali, 2u ); 
-	} /* end if */
+    static uint8_t C_zongfenggangyali[2] = { 0x00U, 0x00U };
+    uint16_t zongfenggangyali_New = 0u, zongfenggangyali_Old = 0u;
+
+    zongfenggangyali_New = (uint16_t) (ZONGFENGGANGYALI << 8u) + (uint16_t) (*(&ZONGFENGGANGYALI + 1));
+    zongfenggangyali_Old = (uint16_t) C_zongfenggangyali[0] + (uint16_t) (C_zongfenggangyali[1] << 8);
+
+    /* 总风缸压力变化大于50kPa */
+    if ((16 * 50) <= abs(zongfenggangyali_New - zongfenggangyali_Old))
+    {
+        C_zongfenggangyali[0] = (*(&ZONGFENGGANGYALI + 1));
+        C_zongfenggangyali[1] = ZONGFENGGANGYALI;
+        WriteFileContantPkt(0xA2, 0x03, g_ZK_DevCode, C_zongfenggangyali, 2u);
+    } /* end if */
 } /* end function RecordingMainAirPressureMessage */
 
 /**********************************************
@@ -3014,17 +3013,17 @@ static void RecordingMainAirPressureMessage(void)
 static void RecordingEqualizReservoirPressureMessage(void)
 {
 //  static uint8_t C_jungangyali[2]  = { 0x00U, 0x00U };
-  uint16_t jungangyali_New = 0u,  jungangyali_Old = 0u;
- 
-  jungangyali_New = (( uint16_t )JUNFENGGANGYALI << 8u) + ( uint16_t )(*(&JUNFENGGANGYALI + 1));
-  jungangyali_Old = ( uint16_t )C_jungangyali[0] + ( uint16_t )(C_jungangyali[1] << 8);
-  /* 均缸压力变化大于20kPa */
-  if ( (16*20U) <= abs( jungangyali_New  - jungangyali_Old ) )
-  {
-    C_jungangyali[0] = (*(&JUNFENGGANGYALI + 1));
-		C_jungangyali[1] = JUNFENGGANGYALI;
-		WriteFileContantPkt( 0xA2, 0x04, g_ZK_DevCode, C_jungangyali, 0u ); 
-	} /* end if */
+    uint16_t jungangyali_New = 0u, jungangyali_Old = 0u;
+
+    jungangyali_New = ((uint16_t) JUNFENGGANGYALI << 8u) + (uint16_t) (*(&JUNFENGGANGYALI + 1));
+    jungangyali_Old = (uint16_t) C_jungangyali[0] + (uint16_t) (C_jungangyali[1] << 8);
+    /* 均缸压力变化大于20kPa */
+    if ((16 * 20U) <= abs(jungangyali_New - jungangyali_Old))
+    {
+        C_jungangyali[0] = (*(&JUNFENGGANGYALI + 1));
+        C_jungangyali[1] = JUNFENGGANGYALI;
+        WriteFileContantPkt(0xA2, 0x04, g_ZK_DevCode, C_jungangyali, 0u);
+    } /* end if */
 } /* end function RecordingEqualizReservoirPressureMessage */
 
 /**********************************************
@@ -3034,30 +3033,30 @@ static void RecordingEqualizReservoirPressureMessage(void)
 ***********************************************/
 static void RecordingBrakeHandleMessage(void)
 {
-  static uint8_t C_BCUzhidongshoubing[3]  = { 0U };
-	uint8_t rec = 0U;
+    static uint8_t C_BCUzhidongshoubing[3] = { 0U };
+    uint8_t rec = 0U;
 
-	if(C_BCUzhidongshoubing[0] != ZIZHIDONGSHOUBING)
-	{
-		C_BCUzhidongshoubing[0] = ZIZHIDONGSHOUBING;
-		rec |= 1U;
-	}
-	if(C_BCUzhidongshoubing[1] != DANDUZHIDONGSHOUBING)
-	{
-		C_BCUzhidongshoubing[1] = DANDUZHIDONGSHOUBING;
-		rec |= 1U;
-	}		
-	if(C_BCUzhidongshoubing[2] != XIAOZHACEHUAN)
-	{
-		C_BCUzhidongshoubing[2] = XIAOZHACEHUAN;
-		rec |= 1U;
-	}
-	
-  if ( rec )
-  {
-//		printf("。。。生成制动手柄变化事项。。。\r\n");
-		WriteFileContantPkt( 0xA2, 0x05, 0x92, C_BCUzhidongshoubing, 3u ); 
-	} /* end if */
+    if (C_BCUzhidongshoubing[0] != ZIZHIDONGSHOUBING)
+    {
+        C_BCUzhidongshoubing[0] = ZIZHIDONGSHOUBING;
+        rec |= 1U;
+    }
+    if (C_BCUzhidongshoubing[1] != DANDUZHIDONGSHOUBING)
+    {
+        C_BCUzhidongshoubing[1] = DANDUZHIDONGSHOUBING;
+        rec |= 1U;
+    }
+    if (C_BCUzhidongshoubing[2] != XIAOZHACEHUAN)
+    {
+        C_BCUzhidongshoubing[2] = XIAOZHACEHUAN;
+        rec |= 1U;
+    }
+
+    if (rec)
+    {
+//        LOG_I("...生成制动手柄变化事项...");
+        WriteFileContantPkt(0xA2, 0x05, 0x92, C_BCUzhidongshoubing, 3u);
+    } /* end if */
 } /* end function RecordingBrakeHandleMessage */
 
 /**********************************************
@@ -3067,20 +3066,20 @@ static void RecordingBrakeHandleMessage(void)
 ***********************************************/
 static void RecordingChargingFlowMessage(void)
 {
-  static uint8_t C_BCUchongfengliuliang[2]  = { 0x00U, 0x00U };
-  uint16_t chongfengliuliang_New = 0u,  chongfengliuliang_Old = 0u;
-	
-  chongfengliuliang_New = ( uint16_t )(BCUCHONGFENGLIULIANG << 8)+ ( uint16_t )(*(&BCUCHONGFENGLIULIANG + 1));
-  chongfengliuliang_Old = ( uint16_t )C_BCUchongfengliuliang[0] + ( uint16_t )(C_BCUchongfengliuliang[1] << 8);
-  
-//	printf("充风流量值：%d-----%d\r\n",chongfengliuliang_Old,chongfengliuliang_New);
-	/* 流量变化大于0.1m3/min */
-  if ( 100U <= abs( chongfengliuliang_New  - chongfengliuliang_Old ) )
-  {
-		C_BCUchongfengliuliang[0] = (*(&BCUCHONGFENGLIULIANG + 1));
-		C_BCUchongfengliuliang[1] = BCUCHONGFENGLIULIANG;  
-		WriteFileContantPkt( 0xA2, 0x06, g_ZK_DevCode, C_BCUchongfengliuliang, 2u ); 
-	} /* end if */	
+    static uint8_t C_BCUchongfengliuliang[2] = { 0x00U, 0x00U };
+    uint16_t chongfengliuliang_New = 0u, chongfengliuliang_Old = 0u;
+
+    chongfengliuliang_New = (uint16_t) (BCUCHONGFENGLIULIANG << 8) + (uint16_t) (*(&BCUCHONGFENGLIULIANG + 1));
+    chongfengliuliang_Old = (uint16_t) C_BCUchongfengliuliang[0] + (uint16_t) (C_BCUchongfengliuliang[1] << 8);
+
+//    LOG_I("充风流量值：%d-----%d", chongfengliuliang_Old, chongfengliuliang_New);
+    /* 流量变化大于0.1m3/min */
+    if (100U <= abs(chongfengliuliang_New - chongfengliuliang_Old))
+    {
+        C_BCUchongfengliuliang[0] = (*(&BCUCHONGFENGLIULIANG + 1));
+        C_BCUchongfengliuliang[1] = BCUCHONGFENGLIULIANG;
+        WriteFileContantPkt(0xA2, 0x06, g_ZK_DevCode, C_BCUchongfengliuliang, 2u);
+    } /* end if */
 } /* end function RecordingChargingFlowMessage */
 
 /**********************************************
@@ -3090,14 +3089,14 @@ static void RecordingChargingFlowMessage(void)
 ***********************************************/
 static void RecordingBCUStateMessage(void)
 {
-  static uint8_t C_BCUzhuangtai[1]  = { 0U };
+    static uint8_t C_BCUzhuangtai[1] = { 0U };
 
-  if ( C_BCUzhuangtai[0] != BCUZHUANGTAI )
-  {
-		C_BCUzhuangtai[0] = BCUZHUANGTAI;
-//    printf("。。。BCU状态变化。。。\r\n");
-		WriteFileContantPkt( 0xA2, 0x07, g_ZK_DevCode, C_BCUzhuangtai, 1u ); 
-	} /* end if */
+    if (C_BCUzhuangtai[0] != BCUZHUANGTAI)
+    {
+        C_BCUzhuangtai[0] = BCUZHUANGTAI;
+//        LOG_I("...BCU状态变化...");
+        WriteFileContantPkt(0xA2, 0x07, g_ZK_DevCode, C_BCUzhuangtai, 1u);
+    } /* end if */
 } /* end function RecordingBCUStateMessage */
 
 /**********************************************
@@ -3107,14 +3106,14 @@ static void RecordingBCUStateMessage(void)
 ***********************************************/
 static void RecordingPenaltyBrakeMessage(void)
 {
-  static uint8_t C_BCUchengfazhidong = 0U ;
+    static uint8_t C_BCUchengfazhidong = 0U;
 
-  if ( (0u == C_BCUchengfazhidong) && BCUCHENGFAZHIDONG )
-  {  
-//		printf("。。。生成惩罚制动事项。。。\r\n");
-		WriteFileContantPkt( 0xA2, 0x08, g_ZK_DevCode, &C_BCUchengfazhidong, 0u ); 
-	} /* end if */
-	C_BCUchengfazhidong = BCUCHENGFAZHIDONG;
+    if ((0u == C_BCUchengfazhidong) && BCUCHENGFAZHIDONG)
+    {
+//        LOG_I("...生成惩罚制动事项...");
+        WriteFileContantPkt(0xA2, 0x08, g_ZK_DevCode, &C_BCUchengfazhidong, 0u);
+    } /* end if */
+    C_BCUchengfazhidong = BCUCHENGFAZHIDONG;
 } /* end function RecordingPenaltyBrakeMessage */
 
 /**********************************************
@@ -3124,13 +3123,13 @@ static void RecordingPenaltyBrakeMessage(void)
 ***********************************************/
 static void RecordingBCUAssistedDriveMessage(void)
 {
-  static uint8_t C_BCUfuzhujiashizhuangtai[1]  = { 0U };
+    static uint8_t C_BCUfuzhujiashizhuangtai[1] = { 0U };
 
-  if ( C_BCUfuzhujiashizhuangtai[0] != BCUFUZHUJIASHIZHUANGTAI )
-  {
-		C_BCUfuzhujiashizhuangtai[0] = BCUFUZHUJIASHIZHUANGTAI;
-		WriteFileContantPkt( 0xA2, 0x09, g_ZK_DevCode, C_BCUfuzhujiashizhuangtai, 1u ); 
-	} /* end if */
+    if (C_BCUfuzhujiashizhuangtai[0] != BCUFUZHUJIASHIZHUANGTAI)
+    {
+        C_BCUfuzhujiashizhuangtai[0] = BCUFUZHUJIASHIZHUANGTAI;
+        WriteFileContantPkt(0xA2, 0x09, g_ZK_DevCode, C_BCUfuzhujiashizhuangtai, 1u);
+    } /* end if */
 } /* end function RecordingBCUAssistedDriveMessage */
 
 /**********************************************
@@ -3140,14 +3139,14 @@ static void RecordingBCUAssistedDriveMessage(void)
 ***********************************************/
 static void RecordingBCUPermitConditionMessage(void)
 {
-  static uint8_t C_BCUyunxutiaojian[1]  = { 0U };
+    static uint8_t C_BCUyunxutiaojian[1] = { 0U };
 
-  if ( memcmp( C_BCUyunxutiaojian, &BCUYUNXUTIAOJIAN, 1U ) )
-  {
-		memcpy( C_BCUyunxutiaojian, &BCUYUNXUTIAOJIAN, 1U);
-  
-		WriteFileContantPkt( 0xA2, 0x10, g_ZK_DevCode, C_BCUyunxutiaojian, 1u ); 
-	} /* end if */
+    if (memcmp(C_BCUyunxutiaojian, &BCUYUNXUTIAOJIAN, 1U))
+    {
+        memcpy(C_BCUyunxutiaojian, &BCUYUNXUTIAOJIAN, 1U);
+
+        WriteFileContantPkt(0xA2, 0x10, g_ZK_DevCode, C_BCUyunxutiaojian, 1u);
+    } /* end if */
 } /* end function RecordingBCUPermitConditionMessage */
 
 /**********************************************
@@ -3157,14 +3156,14 @@ static void RecordingBCUPermitConditionMessage(void)
 ***********************************************/
 static void RecordingBCUManufacturerMessage(void)
 {
-  static uint8_t C_BCUchangjia[1]  = { 0U };
+    static uint8_t C_BCUchangjia[1] = { 0U };
 
-  if ( memcmp( C_BCUchangjia, &BCUCHANGJIA, 1U ) )
-  {
-		memcpy( C_BCUchangjia, &BCUCHANGJIA, 1U);
-  
-		WriteFileContantPkt( 0xA2, 0x11, g_ZK_DevCode, C_BCUchangjia, 1u ); 
-	} /* end if */
+    if (memcmp(C_BCUchangjia, &BCUCHANGJIA, 1U))
+    {
+        memcpy(C_BCUchangjia, &BCUCHANGJIA, 1U);
+
+        WriteFileContantPkt(0xA2, 0x11, g_ZK_DevCode, C_BCUchangjia, 1u);
+    } /* end if */
 } /* end function RecordingBCUManufacturerMessage */
 
 /**********************************************
@@ -3173,15 +3172,15 @@ static void RecordingBCUManufacturerMessage(void)
 返回：无
 ***********************************************/
 static void RecordingBCUErrorCodeMessage(void)
-{ 
-  static uint8_t C_BCUguzhangdaima[4]  = { 0U };
+{
+    static uint8_t C_BCUguzhangdaima[4] = { 0U };
 
-  if ( memcmp( C_BCUguzhangdaima, &BCUGUZHANGDAIMA, 4U ) )
-  {
-		memcpy( C_BCUguzhangdaima, &BCUGUZHANGDAIMA, 4U);
-  
-		WriteFileContantPkt( 0xA2, 0x12, g_CEU_DevCode, C_BCUguzhangdaima, 4u ); 
-	} /* end if */
+    if (memcmp(C_BCUguzhangdaima, &BCUGUZHANGDAIMA, 4U))
+    {
+        memcpy(C_BCUguzhangdaima, &BCUGUZHANGDAIMA, 4U);
+
+        WriteFileContantPkt(0xA2, 0x12, g_CEU_DevCode, C_BCUguzhangdaima, 4u);
+    } /* end if */
 } /* end function RecordingBCUErrorCodeMessage */
 
 
@@ -3242,14 +3241,14 @@ static void RecordingLocoDrawnMessage( void )
 ***********************************************/
 static void RecordingPhysicalHandleMessage(void)
 {
-  static uint8_t C_wulishoubingjiwei[1]  = { 0U };
+    static uint8_t C_wulishoubingjiwei[1] = { 0U };
 
-  if ( memcmp( C_wulishoubingjiwei, &WULISHOUBINGJIWEI, 1U ) )
-  {
-		memcpy( C_wulishoubingjiwei, &WULISHOUBINGJIWEI, 1U);
-//	  printf("物理手柄级位变化：%d\r\n",WULISHOUBINGJIWEI);
-		WriteFileContantPkt( 0xA3, 0x01, g_CEU_DevCode, C_wulishoubingjiwei, 1u ); 
-	} /* end if */
+    if (memcmp(C_wulishoubingjiwei, &WULISHOUBINGJIWEI, 1U))
+    {
+        memcpy(C_wulishoubingjiwei, &WULISHOUBINGJIWEI, 1U);
+//        LOG_I("物理手柄级位变化：%d", WULISHOUBINGJIWEI);
+        WriteFileContantPkt(0xA3, 0x01, g_CEU_DevCode, C_wulishoubingjiwei, 1u);
+    } /* end if */
 } /* end function RecordingPhysicalHandleMessage */
 
 /**********************************************
@@ -3259,29 +3258,29 @@ static void RecordingPhysicalHandleMessage(void)
 ***********************************************/
 static void RecordingPhysicalConditionMessage(void)
 {
-  static uint8_t C_wulijichegongkuang[1]  = { 0U };
-	uint8_t wuligongkuangzhi = 0xFF;
-	
-	switch(WULIJICHEGONGKUANG)
-	{
-		case 1:
-			wuligongkuangzhi = 0x01;
-			break;
-		case 2:
-      wuligongkuangzhi = 0x00;
-			break;
-		case 4:
-      wuligongkuangzhi = 0x02;
-			break;
-		default:
-			break;
-	}
+    static uint8_t C_wulijichegongkuang[1] = { 0U };
+    uint8_t wuligongkuangzhi = 0xFF;
 
-  if ( C_wulijichegongkuang[0] != wuligongkuangzhi )
-  {
-		C_wulijichegongkuang[0] = wuligongkuangzhi;
-		WriteFileContantPkt( 0xA3, 0x02, g_CEU_DevCode, C_wulijichegongkuang, 1u ); 
-	} /* end if */
+    switch (WULIJICHEGONGKUANG)
+    {
+        case 1:
+            wuligongkuangzhi = 0x01;
+            break;
+        case 2:
+            wuligongkuangzhi = 0x00;
+            break;
+        case 4:
+            wuligongkuangzhi = 0x02;
+            break;
+        default:
+            break;
+    }
+
+    if (C_wulijichegongkuang[0] != wuligongkuangzhi)
+    {
+        C_wulijichegongkuang[0] = wuligongkuangzhi;
+        WriteFileContantPkt(0xA3, 0x02, g_CEU_DevCode, C_wulijichegongkuang, 1u);
+    } /* end if */
 } /* end function RecordingPhysicalConditionMessage */
 
 /**********************************************
@@ -3291,14 +3290,14 @@ static void RecordingPhysicalConditionMessage(void)
 ***********************************************/
 static void RecordingIsolationMotorMessage(void)
 {
-  static uint8_t C_dianjigeli[2]  = { 0U };
+    static uint8_t C_dianjigeli[2] = { 0U };
 
-  if ( (C_dianjigeli[0] != DIANJIGELIZHUANGTAI ) || ( C_dianjigeli[1] != (JICHELIKEYONGBILI + CLJICHELIKEYONGBILI) ) )
-  {
-    C_dianjigeli[0] = DIANJIGELIZHUANGTAI;
-    C_dianjigeli[1] = (JICHELIKEYONGBILI + CLJICHELIKEYONGBILI);
-		WriteFileContantPkt( 0xA3, 0x03, g_ZK_DevCode, C_dianjigeli, 2u ); 
-	} /* end if */
+    if ((C_dianjigeli[0] != DIANJIGELIZHUANGTAI) || (C_dianjigeli[1] != (JICHELIKEYONGBILI + CLJICHELIKEYONGBILI)))
+    {
+        C_dianjigeli[0] = DIANJIGELIZHUANGTAI;
+        C_dianjigeli[1] = (JICHELIKEYONGBILI + CLJICHELIKEYONGBILI);
+        WriteFileContantPkt(0xA3, 0x03, g_ZK_DevCode, C_dianjigeli, 2u);
+    } /* end if */
 } /* end function RecordingIsolationMotorMessage */
 
 /**********************************************
@@ -3355,20 +3354,20 @@ static void RecordingLocoExertionMessage(void)
 ***********************************************/
 static void RecordingLocoRaceMessage(void)
 {
-  static uint8_t C_jichekongzhuan[7]  = { 0U };
+    static uint8_t C_jichekongzhuan[7] = { 0U };
 
-  if ( C_jichekongzhuan[0] != JICHEKONGZHUAN )
-  {
-		C_jichekongzhuan[0] = JICHEKONGZHUAN;
-    C_jichekongzhuan[1] = ZHOU1LI;
-    C_jichekongzhuan[2] = ZHOU2LI;
-    C_jichekongzhuan[3] = ZHOU3LI;
-    C_jichekongzhuan[4] = ZHOU4LI;
-    C_jichekongzhuan[5] = ZHOU5LI;
-    C_jichekongzhuan[6] = ZHOU6LI;
-//    printf("\r\n。。。。。。。生成机车空转事项。。。。。。。。。\r\n");
-		WriteFileContantPkt( 0xA3, 0x06, g_JK_DevCode, C_jichekongzhuan, 7u ); 
-	} /* end if */
+    if (C_jichekongzhuan[0] != JICHEKONGZHUAN)
+    {
+        C_jichekongzhuan[0] = JICHEKONGZHUAN;
+        C_jichekongzhuan[1] = ZHOU1LI;
+        C_jichekongzhuan[2] = ZHOU2LI;
+        C_jichekongzhuan[3] = ZHOU3LI;
+        C_jichekongzhuan[4] = ZHOU4LI;
+        C_jichekongzhuan[5] = ZHOU5LI;
+        C_jichekongzhuan[6] = ZHOU6LI;
+//        LOG_I("...生成机车空转事项...");
+        WriteFileContantPkt(0xA3, 0x06, g_JK_DevCode, C_jichekongzhuan, 7u);
+    } /* end if */
 } /* end function RecordingLocoRaceMessage */
 
 /**********************************************
@@ -3378,20 +3377,20 @@ static void RecordingLocoRaceMessage(void)
 ***********************************************/
 static void RecordingLocoTaxiingMessage(void)
 {
-  static uint8_t C_jichehuaxing[7]  = { 0U };
+    static uint8_t C_jichehuaxing[7] = { 0U };
 
-  if ( C_jichehuaxing[0] != JICHEHUAXING )
-  {
-		C_jichehuaxing[0] = JICHEHUAXING;
-    C_jichehuaxing[1] = ZHOU1LI;
-    C_jichehuaxing[2] = ZHOU2LI;
-    C_jichehuaxing[3] = ZHOU3LI;
-    C_jichehuaxing[4] = ZHOU4LI;
-    C_jichehuaxing[5] = ZHOU5LI;
-    C_jichehuaxing[6] = ZHOU6LI;
-//    printf("\r\n。。。。。。。生成机车滑行事项。。。。。。。。。\r\n");
-		WriteFileContantPkt( 0xA3, 0x07, g_JK_DevCode, C_jichehuaxing, 7u ); 
-	} /* end if */
+    if (C_jichehuaxing[0] != JICHEHUAXING)
+    {
+        C_jichehuaxing[0] = JICHEHUAXING;
+        C_jichehuaxing[1] = ZHOU1LI;
+        C_jichehuaxing[2] = ZHOU2LI;
+        C_jichehuaxing[3] = ZHOU3LI;
+        C_jichehuaxing[4] = ZHOU4LI;
+        C_jichehuaxing[5] = ZHOU5LI;
+        C_jichehuaxing[6] = ZHOU6LI;
+//        LOG_I("...生成机车滑行事项...");
+        WriteFileContantPkt(0xA3, 0x07, g_JK_DevCode, C_jichehuaxing, 7u);
+    } /* end if */
 } /* end function RecordingLocoTaxiingMessage */
 
 /**********************************************
@@ -3401,15 +3400,15 @@ static void RecordingLocoTaxiingMessage(void)
 ***********************************************/
 static void RecordingPantograghStatusMessage(void)
 {
-  static uint8_t C_shoudiangongzhuangtai = 0U;
+    static uint8_t C_shoudiangongzhuangtai = 0U;
 
-  if( C_shoudiangongzhuangtai != SHOUDIANGONGZHUANGTAI )
-  {
-//		printf("\r\n。。。。。。。生成受电弓状态事项。。。。。。。。。\r\n");
-		C_shoudiangongzhuangtai = SHOUDIANGONGZHUANGTAI;
-  
-		WriteFileContantPkt( 0xA3, 0x08, g_ZK_DevCode, &C_shoudiangongzhuangtai, 1U ); 
-	} /* end if */
+    if (C_shoudiangongzhuangtai != SHOUDIANGONGZHUANGTAI)
+    {
+//        LOG_I("...生成受电弓状态事项...");
+        C_shoudiangongzhuangtai = SHOUDIANGONGZHUANGTAI;
+
+        WriteFileContantPkt(0xA3, 0x08, g_ZK_DevCode, &C_shoudiangongzhuangtai, 1U);
+    } /* end if */
 } /* end function RecordingPantograghStatusMessage */
 
 /**********************************************
@@ -3419,15 +3418,15 @@ static void RecordingPantograghStatusMessage(void)
 ***********************************************/
 static void RecordingMainBreakerStatusMessage(void)
 {
-  static uint8_t C_zhuduanzhuangtai = 0U;
+    static uint8_t C_zhuduanzhuangtai = 0U;
 
-  if ( C_zhuduanzhuangtai != ZHUDUANZHUANGTAI )
-  {
-//		printf("\r\n。。。。。。。生成主断状态事项。。。。。。。。。\r\n");
-		C_zhuduanzhuangtai = ZHUDUANZHUANGTAI;
-  
-		WriteFileContantPkt( 0xA3, 0x09, g_ZK_DevCode, &C_zhuduanzhuangtai, 1U ); 
-	} /* end if */
+    if (C_zhuduanzhuangtai != ZHUDUANZHUANGTAI)
+    {
+//        LOG_I("...生成主断状态事项...");
+        C_zhuduanzhuangtai = ZHUDUANZHUANGTAI;
+
+        WriteFileContantPkt(0xA3, 0x09, g_ZK_DevCode, &C_zhuduanzhuangtai, 1U);
+    } /* end if */
 } /* end function RecordingMainBreakerStatusMessage */
 
 /**********************************************
@@ -3437,15 +3436,15 @@ static void RecordingMainBreakerStatusMessage(void)
 ***********************************************/
 static void RecordingTractionBlockMessage(void)
 {
-  static uint8_t C_qianyinfengsuo[1]  = { 0U };
+    static uint8_t C_qianyinfengsuo[1] = { 0U };
 
-  if ( C_qianyinfengsuo[0] != QIANYINFENGSUO )
-  {
-//		printf("\r\n。。。。。。。生成牵引封锁事项。。。。。。。。。\r\n");
-		C_qianyinfengsuo[0] = QIANYINFENGSUO;
-  
-		WriteFileContantPkt( 0xA3, 0x10, g_ZK_DevCode, C_qianyinfengsuo, 1U ); 
-	} /* end if */
+    if (C_qianyinfengsuo[0] != QIANYINFENGSUO)
+    {
+//        LOG_I("...生成牵引封锁事项...");
+        C_qianyinfengsuo[0] = QIANYINFENGSUO;
+
+        WriteFileContantPkt(0xA3, 0x10, g_ZK_DevCode, C_qianyinfengsuo, 1U);
+    } /* end if */
 } /* end function RecordingTractionBlockadeMessage */
 
 /**********************************************
@@ -3455,14 +3454,14 @@ static void RecordingTractionBlockMessage(void)
 ***********************************************/
 static void RecordingElectricBlockMessage(void)
 {
-  static uint8_t C_dianzhifengsuo[1]  = { 0U };
+    static uint8_t C_dianzhifengsuo[1] = { 0U };
 
-  if ( C_dianzhifengsuo[0] != DIANZHIFEGNSUO )
-  {
-//		printf("\r\n。。。。。。。生成电制封锁事项。。。。。。。。。\r\n");
-		C_dianzhifengsuo[0] = DIANZHIFEGNSUO;
-		WriteFileContantPkt( 0xA3, 0x11, g_ZK_DevCode, C_dianzhifengsuo, 1U ); 
-	} /* end if */
+    if (C_dianzhifengsuo[0] != DIANZHIFEGNSUO)
+    {
+//        LOG_I("...生成电制封锁事项...");
+        C_dianzhifengsuo[0] = DIANZHIFEGNSUO;
+        WriteFileContantPkt(0xA3, 0x11, g_ZK_DevCode, C_dianzhifengsuo, 1U);
+    } /* end if */
 } /* end function RecordingElectricBlockMessage */
 
 /**********************************************
@@ -3472,15 +3471,15 @@ static void RecordingElectricBlockMessage(void)
 ***********************************************/
 static void RecordingPrejudgeOffMessage(void)
 {
-  static uint8_t C_yuduanxinhao = 0U ;
+    static uint8_t C_yuduanxinhao = 0U;
 
-//	printf("\r\n预断值：%x \r\n",YUDUANYOUXIAO);
-  if (( C_yuduanxinhao == 0U ) && ( YUDUANYOUXIAO == 1U) )
-  {
-//		printf("\r\n。。。。。。。生成预断事项。。。。。。。。。\r\n");
-		WriteFileContantPkt( 0xA3, 0x12, g_ZK_DevCode, &C_yuduanxinhao, 0U ); 
-	} /* end if */
-  C_yuduanxinhao = YUDUANYOUXIAO;
+//    LOG_I("预断值：%x", YUDUANYOUXIAO);
+    if ((C_yuduanxinhao == 0U) && ( YUDUANYOUXIAO == 1U))
+    {
+//        LOG_I("...生成预断事项...");
+        WriteFileContantPkt(0xA3, 0x12, g_ZK_DevCode, &C_yuduanxinhao, 0U);
+    } /* end if */
+    C_yuduanxinhao = YUDUANYOUXIAO;
 } /* end function RecordingPrejudgeMessage */
 
 /**********************************************
@@ -3490,14 +3489,14 @@ static void RecordingPrejudgeOffMessage(void)
 ***********************************************/
 static void RecordingForceOffMessage(void)
 {
-  static uint8_t C_qiangduanxinhao = 0U ;
+    static uint8_t C_qiangduanxinhao = 0U;
 
-  if (( C_qiangduanxinhao == 0U ) && ( QIANGDUANHOUXIAO == 1U) )
-  {
-//		printf("\r\n。。。。。。。生成强断事项。。。。。。。。。\r\n");
-		WriteFileContantPkt( 0xA3, 0x13, g_ZK_DevCode, &C_qiangduanxinhao, 0U ); 
-	} /* end if */
-  C_qiangduanxinhao = QIANGDUANHOUXIAO;
+    if ((C_qiangduanxinhao == 0U) && ( QIANGDUANHOUXIAO == 1U))
+    {
+//        LOG_I("...生成强断事项...");
+        WriteFileContantPkt(0xA3, 0x13, g_ZK_DevCode, &C_qiangduanxinhao, 0U);
+    } /* end if */
+    C_qiangduanxinhao = QIANGDUANHOUXIAO;
 } /* end function RecordingForceOffMessage */
 
 /**********************************************
@@ -3507,15 +3506,15 @@ static void RecordingForceOffMessage(void)
 ***********************************************/
 static void RecordingParkBrakeMessage(void)
 {
-  static uint8_t C_tingfangzhidong = 0U;
+    static uint8_t C_tingfangzhidong = 0U;
 
-  if ( C_tingfangzhidong != TINGFANGZHIDONG )
-  {
-//		printf("\r\n。。。。。。。生成停放制动事项。。。。。。。。。\r\n");
-		C_tingfangzhidong = TINGFANGZHIDONG;
-  
-		WriteFileContantPkt( 0xA3, 0x14, g_ZK_DevCode, &C_tingfangzhidong, 1U ); 
-	} /* end if */
+    if (C_tingfangzhidong != TINGFANGZHIDONG)
+    {
+//        LOG_I("...生成停放制动事项...");
+        C_tingfangzhidong = TINGFANGZHIDONG;
+
+        WriteFileContantPkt(0xA3, 0x14, g_ZK_DevCode, &C_tingfangzhidong, 1U);
+    } /* end if */
 } /* end function RecordingParkBrakeMessage */
 
 /**********************************************
@@ -3525,15 +3524,15 @@ static void RecordingParkBrakeMessage(void)
 ***********************************************/
 static void RecordingSandingStateMessage(void)
 {
-  static uint8_t C_sashazhuangtai  = 0U;
+    static uint8_t C_sashazhuangtai = 0U;
 
-  if ( C_sashazhuangtai != SASHAZHUANGTAI )
-  {
-//		printf("\r\n。。。。。。。生成撒沙状态事项。。。。。。。。。\r\n");
-		C_sashazhuangtai = SASHAZHUANGTAI;
-  
-		WriteFileContantPkt( 0xA3, 0x15, g_ZK_DevCode, &C_sashazhuangtai, 1U ); 
-	} /* end if */
+    if (C_sashazhuangtai != SASHAZHUANGTAI)
+    {
+//        LOG_I("...生成撒沙状态事项...");
+        C_sashazhuangtai = SASHAZHUANGTAI;
+
+        WriteFileContantPkt(0xA3, 0x15, g_ZK_DevCode, &C_sashazhuangtai, 1U);
+    } /* end if */
 } /* end function RecordingSandingStateMessage */
 
 /**********************************************
@@ -3543,15 +3542,15 @@ static void RecordingSandingStateMessage(void)
 ***********************************************/
 static void RecordingElectropneumaticMessage(void)
 {
-  static uint8_t C_kongdianlianhezhuangtai[1]  = { 0U };
+    static uint8_t C_kongdianlianhezhuangtai[1] = { 0U };
 
-  if ( C_kongdianlianhezhuangtai[0] != KONGDIANLIANHEZHUANGTAI )
-  {
-//		printf("\r\n。。。。。。。生成空电联合事项。。。。。。。。。\r\n");
-		C_kongdianlianhezhuangtai[0] = KONGDIANLIANHEZHUANGTAI;
-  
-		WriteFileContantPkt( 0xA3, 0x16, g_ZK_DevCode, C_kongdianlianhezhuangtai, 1U ); 
-	} /* end if */
+    if (C_kongdianlianhezhuangtai[0] != KONGDIANLIANHEZHUANGTAI)
+    {
+//        LOG_I("...生成空电联合事项...");
+        C_kongdianlianhezhuangtai[0] = KONGDIANLIANHEZHUANGTAI;
+
+        WriteFileContantPkt(0xA3, 0x16, g_ZK_DevCode, C_kongdianlianhezhuangtai, 1U);
+    } /* end if */
 } /* end function RecordingElectropneumaticMessage */
 
 /**********************************************
@@ -3562,15 +3561,15 @@ static void RecordingElectropneumaticMessage(void)
 static void RecordingCCUAuxiliaryStatusMessage(void)
 {
 //  static uint8_t C_CCUfuzhuzhuangtai[1]  = { 0U };
-  uint8_t CCUfuzhuzhuangtaizhi = 0u;
-	
-	CCUfuzhuzhuangtaizhi = (CCUFUZHUZHUANGTAI & 0x07);
-  if ( C_CCUfuzhuzhuangtai[0] != CCUfuzhuzhuangtaizhi )
-  {
-//		printf("CCU辅助状态：%x  %x\r\n",C_CCUfuzhuzhuangtai[0],CCUfuzhuzhuangtaizhi);
-		C_CCUfuzhuzhuangtai[0] = CCUfuzhuzhuangtaizhi;
-		WriteFileContantPkt( 0xA3, 0x17, g_ZK_DevCode, C_CCUfuzhuzhuangtai, 1U ); 
-	} /* end if */
+    uint8_t CCUfuzhuzhuangtaizhi = 0u;
+
+    CCUfuzhuzhuangtaizhi = (CCUFUZHUZHUANGTAI & 0x07);
+    if (C_CCUfuzhuzhuangtai[0] != CCUfuzhuzhuangtaizhi)
+    {
+//        LOG_I("CCU辅助状态：%x  %x", C_CCUfuzhuzhuangtai[0], CCUfuzhuzhuangtaizhi);
+        C_CCUfuzhuzhuangtai[0] = CCUfuzhuzhuangtaizhi;
+        WriteFileContantPkt(0xA3, 0x17, g_ZK_DevCode, C_CCUfuzhuzhuangtai, 1U);
+    } /* end if */
 } /* end function RecordingCCUAuxiliaryStatusMessage */
 
 /**********************************************
@@ -3580,14 +3579,14 @@ static void RecordingCCUAuxiliaryStatusMessage(void)
 ***********************************************/
 static void RecordingCCUAllowTestMessage(void)
 {
-  static uint8_t C_CCUyunxuceshi[1]  = { 0U };
+    static uint8_t C_CCUyunxuceshi[1] = { 0U };
 
-  if ( C_CCUyunxuceshi[0] != CCUYUNXUCESHI )
-  {
-		C_CCUyunxuceshi[0] = CCUYUNXUCESHI;
-  
-		WriteFileContantPkt( 0xA3, 0x18, g_ZK_DevCode, C_CCUyunxuceshi, 1U ); 
-	} /* end if */
+    if (C_CCUyunxuceshi[0] != CCUYUNXUCESHI)
+    {
+        C_CCUyunxuceshi[0] = CCUYUNXUCESHI;
+
+        WriteFileContantPkt(0xA3, 0x18, g_ZK_DevCode, C_CCUyunxuceshi, 1U);
+    } /* end if */
 } /* end function RecordingCCUAllowTestMessage */
 
 /**********************************************
@@ -3597,19 +3596,19 @@ static void RecordingCCUAllowTestMessage(void)
 ***********************************************/
 static void RecordingPrimaryVoltageMessage(void)
 {
-  static uint8_t C_yuanbiandianya[2]  = { 0x00U, 0x00U };
-  uint16_t yuanbiandianya_New = 0u,  yuanbiandianya_Old = 0u;
- 
-  yuanbiandianya_New = ( uint16_t )(YUANBIANDIANYA << 8u) + ( uint16_t )(*(&YUANBIANDIANYA + 1));
-  yuanbiandianya_Old = ( uint16_t )C_yuanbiandianya[0] + ( uint16_t )(C_yuanbiandianya[1] << 8);
+    static uint8_t C_yuanbiandianya[2] = { 0x00U, 0x00U };
+    uint16_t yuanbiandianya_New = 0u, yuanbiandianya_Old = 0u;
 
-	/* 原边电压变化大于3kv */
-  if ( 3000U <= abs( yuanbiandianya_New  - yuanbiandianya_Old ) )
-  {
-		C_yuanbiandianya[0] = (*(&YUANBIANDIANYA + 1));
-		C_yuanbiandianya[1] = YUANBIANDIANYA;
-		WriteFileContantPkt( 0xA3, 0x19, g_JK_DevCode, C_yuanbiandianya, 2u ); 
-	} /* end if */
+    yuanbiandianya_New = (uint16_t) (YUANBIANDIANYA << 8u) + (uint16_t) (*(&YUANBIANDIANYA + 1));
+    yuanbiandianya_Old = (uint16_t) C_yuanbiandianya[0] + (uint16_t) (C_yuanbiandianya[1] << 8);
+
+    /* 原边电压变化大于3kv */
+    if (3000U <= abs(yuanbiandianya_New - yuanbiandianya_Old))
+    {
+        C_yuanbiandianya[0] = (*(&YUANBIANDIANYA + 1));
+        C_yuanbiandianya[1] = YUANBIANDIANYA;
+        WriteFileContantPkt(0xA3, 0x19, g_JK_DevCode, C_yuanbiandianya, 2u);
+    } /* end if */
 } /* end function RecordingPrimaryVoltageMessage */
 
 /**********************************************
@@ -3619,19 +3618,19 @@ static void RecordingPrimaryVoltageMessage(void)
 ***********************************************/
 static void RecordingPrimaryCurrentMessage(void)
 {
- static uint8_t C_yuanbiandianliu[2]  = { 0x00U, 0x00U };
- uint16_t yuanbiandianliu_New = 0u,  yuanbiandianliu_Old = 0u;
- 
-  yuanbiandianliu_New = ( uint16_t )(YUANBIANDIANLIU << 8u) + ( uint16_t )(*(&YUANBIANDIANLIU + 1));
-  yuanbiandianliu_Old = ( uint16_t )C_yuanbiandianliu[0] + ( uint16_t )(C_yuanbiandianliu[1] << 8);
-  
-  /* 原边电流变化大于20A */
-  if ( 20U <= abs( yuanbiandianliu_New  - yuanbiandianliu_Old ) )
-  {
-		C_yuanbiandianliu[0] = (*(&YUANBIANDIANLIU + 1));
-		C_yuanbiandianliu[1] = YUANBIANDIANLIU;
-		WriteFileContantPkt( 0xA3, 0x20, g_JK_DevCode, C_yuanbiandianliu, 2u ); 
-	} /* end if */
+    static uint8_t C_yuanbiandianliu[2] = { 0x00U, 0x00U };
+    uint16_t yuanbiandianliu_New = 0u, yuanbiandianliu_Old = 0u;
+
+    yuanbiandianliu_New = (uint16_t) (YUANBIANDIANLIU << 8u) + (uint16_t) (*(&YUANBIANDIANLIU + 1));
+    yuanbiandianliu_Old = (uint16_t) C_yuanbiandianliu[0] + (uint16_t) (C_yuanbiandianliu[1] << 8);
+
+    /* 原边电流变化大于20A */
+    if (20U <= abs(yuanbiandianliu_New - yuanbiandianliu_Old))
+    {
+        C_yuanbiandianliu[0] = (*(&YUANBIANDIANLIU + 1));
+        C_yuanbiandianliu[1] = YUANBIANDIANLIU;
+        WriteFileContantPkt(0xA3, 0x20, g_JK_DevCode, C_yuanbiandianliu, 2u);
+    } /* end if */
 } /* end function RecordingPrimaryCurrentMessage */
 
 /**********************************************
@@ -3641,14 +3640,14 @@ static void RecordingPrimaryCurrentMessage(void)
 ***********************************************/
 static void RecordingElectricKeyMessage(void)
 {
-  static uint8_t C_dianyaoshizhuangtai = 0U;
+    static uint8_t C_dianyaoshizhuangtai = 0U;
 
-  if ( C_dianyaoshizhuangtai != DIANYAOSHIZHUANGTAI )
-  {
-    C_dianyaoshizhuangtai = DIANYAOSHIZHUANGTAI;
-  
-		WriteFileContantPkt( 0xA3, 0x21, g_ZK_DevCode, &C_dianyaoshizhuangtai, 1U ); 
-	} /* end if */
+    if (C_dianyaoshizhuangtai != DIANYAOSHIZHUANGTAI)
+    {
+        C_dianyaoshizhuangtai = DIANYAOSHIZHUANGTAI;
+
+        WriteFileContantPkt(0xA3, 0x21, g_ZK_DevCode, &C_dianyaoshizhuangtai, 1U);
+    } /* end if */
 } /* end function RecordingElectricKeyMessage */
 
 
@@ -3713,31 +3712,31 @@ static void RecordingApplyRevealMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingReceiveRevealMessage( void )
+static void RecordingReceiveRevealMessage(void)
 {
-  static uint8_t C_jieshoujieshi[3]  = { 0U };
-	static uint16_t jieshi_tmp_new = 0u,jieshi_tmp_old = 0u;
-	
-	memcpy( &jieshi_tmp_new, &HUOQUJIESHITIAOSHU, 2U );
-	
-  if (( jieshi_tmp_old != jieshi_tmp_new ) && ((jieshi_tmp_new & 0x7FFF) < 0x7FFF))
-  {
-		if(0x0000 == (jieshi_tmp_new & 0x8000))  //揭示成功
-		{
-			C_jieshoujieshi[0] = 0u;
-			C_jieshoujieshi[1] = (uint8_t)(jieshi_tmp_new & 0x7FFF);
-			C_jieshoujieshi[2] = (uint8_t)((jieshi_tmp_new & 0x7FFF) >> 8);			
-		}
-		else  //揭示失败
-		{
-			C_jieshoujieshi[0] = 1u;
-			C_jieshoujieshi[1] = 0u;
-			C_jieshoujieshi[2] = 0u;			
-		}
+    static uint8_t C_jieshoujieshi[3] = { 0U };
+    static uint16_t jieshi_tmp_new = 0u, jieshi_tmp_old = 0u;
 
-		WriteFileContantPkt( 0xA4, 0x02, g_ZK_DevCode, C_jieshoujieshi, 3U );
-    memcpy( &jieshi_tmp_old, &jieshi_tmp_new, 2U );		
-	} /* end if */	
+    memcpy(&jieshi_tmp_new, &HUOQUJIESHITIAOSHU, 2U);
+
+    if ((jieshi_tmp_old != jieshi_tmp_new) && ((jieshi_tmp_new & 0x7FFF) < 0x7FFF))
+    {
+        if (0x0000 == (jieshi_tmp_new & 0x8000))  //揭示成功
+        {
+            C_jieshoujieshi[0] = 0u;
+            C_jieshoujieshi[1] = (uint8_t) (jieshi_tmp_new & 0x7FFF);
+            C_jieshoujieshi[2] = (uint8_t) ((jieshi_tmp_new & 0x7FFF) >> 8);
+        }
+        else  //揭示失败
+        {
+            C_jieshoujieshi[0] = 1u;
+            C_jieshoujieshi[1] = 0u;
+            C_jieshoujieshi[2] = 0u;
+        }
+
+        WriteFileContantPkt(0xA4, 0x02, g_ZK_DevCode, C_jieshoujieshi, 3U);
+        memcpy(&jieshi_tmp_old, &jieshi_tmp_new, 2U);
+    } /* end if */
 } /* end function RecordingReceiveRevealMessage */
 
 /**********************************************
@@ -3755,16 +3754,16 @@ static void RecordingRevealContentMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingDriverNum1Message( void )
+static void RecordingDriverNum1Message(void)
 {
-  static uint8_t C_sijihao1[4]  = { 0U };
+    static uint8_t C_sijihao1[4] = { 0U };
 
-  if ( memcmp( C_sijihao1, &SIJIHAO1, 3U ) )
-  {
-		memcpy( C_sijihao1, &SIJIHAO1, 3U );
-  
-		WriteFileContantPkt( 0xA4, 0x04, g_ZK_DevCode, C_sijihao1, 4U ); 
-	} /* end if */
+    if (memcmp(C_sijihao1, &SIJIHAO1, 3U))
+    {
+        memcpy(C_sijihao1, &SIJIHAO1, 3U);
+
+        WriteFileContantPkt(0xA4, 0x04, g_ZK_DevCode, C_sijihao1, 4U);
+    } /* end if */
 } /* end function RecordingDriverNum1Message */
 
 /**********************************************
@@ -3772,16 +3771,16 @@ static void RecordingDriverNum1Message( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingDriverNum2Message( void )
+static void RecordingDriverNum2Message(void)
 {
-  static uint8_t C_sijihao2[4]  = { 0U };
+    static uint8_t C_sijihao2[4] = { 0U };
 
-  if ( memcmp( C_sijihao2, &SIJIHAO2, 3U ) )
-  {
-		memcpy( C_sijihao2, &SIJIHAO2, 3U );
-  
-		WriteFileContantPkt( 0xA4, 0x05, g_ZK_DevCode, C_sijihao2, 4U ); 
-	} /* end if */
+    if (memcmp(C_sijihao2, &SIJIHAO2, 3U))
+    {
+        memcpy(C_sijihao2, &SIJIHAO2, 3U);
+
+        WriteFileContantPkt(0xA4, 0x05, g_ZK_DevCode, C_sijihao2, 4U);
+    } /* end if */
 } /* end function RecordingDriverNum2Message */
 
 /**********************************************
@@ -3789,16 +3788,16 @@ static void RecordingDriverNum2Message( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingRunPathMessage( void )
+static void RecordingRunPathMessage(void)
 {
-  static uint8_t C_yunxinglujing[4]  = { 0U };
+    static uint8_t C_yunxinglujing[4] = { 0U };
 
-  if ( (C_yunxinglujing[0] != (SHUJUJIAOLU & 0x1F)) || (C_yunxinglujing[2] != JIANKONGJIAOLU) )
-  {
-		C_yunxinglujing[0] = (SHUJUJIAOLU & 0x1F);
-		C_yunxinglujing[2] = JIANKONGJIAOLU;
-		WriteFileContantPkt( 0xA4, 0x06, g_ZK_DevCode, C_yunxinglujing, 4U ); 
-	} /* end if */
+    if ((C_yunxinglujing[0] != (SHUJUJIAOLU & 0x1F)) || (C_yunxinglujing[2] != JIANKONGJIAOLU))
+    {
+        C_yunxinglujing[0] = (SHUJUJIAOLU & 0x1F);
+        C_yunxinglujing[2] = JIANKONGJIAOLU;
+        WriteFileContantPkt(0xA4, 0x06, g_ZK_DevCode, C_yunxinglujing, 4U);
+    } /* end if */
 } /* end function RecordingRunPathMessage */
 
 /**********************************************
@@ -3806,17 +3805,17 @@ static void RecordingRunPathMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingLKJDepartDirectionMessage( void )
+static void RecordingLKJDepartDirectionMessage(void)
 {
-  static uint8_t C_fachefangxiang[4]  = { 0U };
-  
-  if((C_fachefangxiang[0] != LKJFACHEFANGXIANG) || (C_fachefangxiang[1] != (SHUJUJIAOLU & 0x60) >> 5u))
-	{
-	  C_fachefangxiang[0] = LKJFACHEFANGXIANG;
-	  C_fachefangxiang[1] = (SHUJUJIAOLU & 0x60) >> 5u;
-//    printf("LKJ发车方向：%d\r\n",C_fachefangxiang[0] + (C_fachefangxiang[1] << 8));
-		WriteFileContantPkt( 0xA4, 0x07, g_ZK_DevCode, C_fachefangxiang, 4U ); 
-	} /* end if */
+    static uint8_t C_fachefangxiang[4] = { 0U };
+
+    if ((C_fachefangxiang[0] != LKJFACHEFANGXIANG) || (C_fachefangxiang[1] != (SHUJUJIAOLU & 0x60) >> 5u))
+    {
+        C_fachefangxiang[0] = LKJFACHEFANGXIANG;
+        C_fachefangxiang[1] = (SHUJUJIAOLU & 0x60) >> 5u;
+//        LOG_I("LKJ发车方向：%d", C_fachefangxiang[0] + (C_fachefangxiang[1] << 8));
+        WriteFileContantPkt(0xA4, 0x07, g_ZK_DevCode, C_fachefangxiang, 4U);
+    } /* end if */
 } /* end function RecordingLKJDepartDirectionMessage */
 
 /**********************************************
@@ -3824,16 +3823,16 @@ static void RecordingLKJDepartDirectionMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingTotalWeightMessage( void )
+static void RecordingTotalWeightMessage(void)
 {
-  static uint8_t C_zongzhong[2]  = { 0U };
+    static uint8_t C_zongzhong[2] = { 0U };
 
-  if ( memcmp( C_zongzhong, &ZONGZHONG, 2U ) )
-  {
-		memcpy( C_zongzhong, &ZONGZHONG, 2U );
-  
-		WriteFileContantPkt( 0xA4, 0x08, g_ZK_DevCode, C_zongzhong, 2U ); 
-	} /* end if */
+    if (memcmp(C_zongzhong, &ZONGZHONG, 2U))
+    {
+        memcpy(C_zongzhong, &ZONGZHONG, 2U);
+
+        WriteFileContantPkt(0xA4, 0x08, g_ZK_DevCode, C_zongzhong, 2U);
+    } /* end if */
 } /* end function RecordingTotalWeightMessage */
 
 /**********************************************
@@ -3841,16 +3840,16 @@ static void RecordingTotalWeightMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingTotalLengthMessage( void )
+static void RecordingTotalLengthMessage(void)
 {
-  static uint8_t C_jichang[2]  = { 0U };
+    static uint8_t C_jichang[2] = { 0U };
 
-  if ( memcmp( C_jichang, &JICHANG, 2U ) )
-  {
-		memcpy( C_jichang, &JICHANG, 2U );
-  
-		WriteFileContantPkt( 0xA4, 0x09, g_ZK_DevCode, C_jichang, 2U ); 
-	} /* end if */
+    if (memcmp(C_jichang, &JICHANG, 2U))
+    {
+        memcpy(C_jichang, &JICHANG, 2U);
+
+        WriteFileContantPkt(0xA4, 0x09, g_ZK_DevCode, C_jichang, 2U);
+    } /* end if */
 } /* end function RecordingTotalLengthMessage */
 
 /**********************************************
@@ -3858,16 +3857,16 @@ static void RecordingTotalLengthMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingVehiclesNumMessage( void )
+static void RecordingVehiclesNumMessage(void)
 {
-  static uint8_t C_liangshu[1]  = { 0U };
+    static uint8_t C_liangshu[1] = { 0U };
 
-  if ( memcmp( C_liangshu, &LIANGSHU, 1U ) )
-  {
-		memcpy( C_liangshu, &LIANGSHU, 1U );
-  
-		WriteFileContantPkt( 0xA4, 0x10, g_ZK_DevCode, C_liangshu, 1U ); 
-	} /* end if */
+    if (memcmp(C_liangshu, &LIANGSHU, 1U))
+    {
+        memcpy(C_liangshu, &LIANGSHU, 1U);
+
+        WriteFileContantPkt(0xA4, 0x10, g_ZK_DevCode, C_liangshu, 1U);
+    } /* end if */
 } /* end function RecordingVehiclesNumMessage */
 
 /**********************************************
@@ -3875,16 +3874,16 @@ static void RecordingVehiclesNumMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingLoadMessage( void )
+static void RecordingLoadMessage(void)
 {
-  static uint8_t C_zaizhong[2]  = { 0U };
+    static uint8_t C_zaizhong[2] = { 0U };
 
-  if ( memcmp( C_zaizhong, &ZAIZHONG, 2U ) )
-  {
-		memcpy( C_zaizhong, &ZAIZHONG, 2U );
-  
-		WriteFileContantPkt( 0xA4, 0x11, g_ZK_DevCode, C_zaizhong, 2U ); 
-	} /* end if */
+    if (memcmp(C_zaizhong, &ZAIZHONG, 2U))
+    {
+        memcpy(C_zaizhong, &ZAIZHONG, 2U);
+
+        WriteFileContantPkt(0xA4, 0x11, g_ZK_DevCode, C_zaizhong, 2U);
+    } /* end if */
 } /* end function RecordingLoadMessage */
 
 /**********************************************
@@ -3892,16 +3891,16 @@ static void RecordingLoadMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingPassengerTrainMessage( void )
+static void RecordingPassengerTrainMessage(void)
 {
-  static uint8_t C_keche[1]  = { 0U };
+    static uint8_t C_keche[1] = { 0U };
 
-  if ( memcmp( C_keche, &KECHE, 1U ) )
-  {
-		memcpy( C_keche, &KECHE, 1U );
-  
-		WriteFileContantPkt( 0xA4, 0x12, g_ZK_DevCode, C_keche, 1U ); 
-	} /* end if */
+    if (memcmp(C_keche, &KECHE, 1U))
+    {
+        memcpy(C_keche, &KECHE, 1U);
+
+        WriteFileContantPkt(0xA4, 0x12, g_ZK_DevCode, C_keche, 1U);
+    } /* end if */
 } /* end function RecordingPassengerTrainMessage */
 
 /**********************************************
@@ -3909,16 +3908,16 @@ static void RecordingPassengerTrainMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingHeavyTrainMessage( void )
+static void RecordingHeavyTrainMessage(void)
 {
-  static uint8_t C_zhongche[1]  = { 0U };
+    static uint8_t C_zhongche[1] = { 0U };
 
-  if ( memcmp( C_zhongche, &ZHONGCHE, 1U ) )
-  {
-		memcpy( C_zhongche, &ZHONGCHE, 1U );
-  
-		WriteFileContantPkt( 0xA4, 0x13, g_ZK_DevCode, C_zhongche, 1U ); 
-	} /* end if */
+    if (memcmp(C_zhongche, &ZHONGCHE, 1U))
+    {
+        memcpy(C_zhongche, &ZHONGCHE, 1U);
+
+        WriteFileContantPkt(0xA4, 0x13, g_ZK_DevCode, C_zhongche, 1U);
+    } /* end if */
 } /* end function RecordingHeavyTrainMessage */
 
 /**********************************************
@@ -3926,16 +3925,16 @@ static void RecordingHeavyTrainMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingEmptyTrainMessage( void )
+static void RecordingEmptyTrainMessage(void)
 {
-  static uint8_t C_kongche[1]  = { 0U };
+    static uint8_t C_kongche[1] = { 0U };
 
-  if ( memcmp( C_kongche, &KONGCHE, 1U ) )
-  {
-		memcpy( C_kongche, &KONGCHE, 1U );
-  
-		WriteFileContantPkt( 0xA4, 0x14, g_ZK_DevCode, C_kongche, 1U ); 
-	} /* end if */
+    if (memcmp(C_kongche, &KONGCHE, 1U))
+    {
+        memcpy(C_kongche, &KONGCHE, 1U);
+
+        WriteFileContantPkt(0xA4, 0x14, g_ZK_DevCode, C_kongche, 1U);
+    } /* end if */
 } /* end function RecordingEmptyTrainMessage */
 
 /**********************************************
@@ -3943,16 +3942,16 @@ static void RecordingEmptyTrainMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingNonTrafficTrainMessage( void )
+static void RecordingNonTrafficTrainMessage(void)
 {
- static uint8_t C_feiyunyongche[1]  = { 0U };
+    static uint8_t C_feiyunyongche[1] = { 0U };
 
-  if ( memcmp( C_feiyunyongche, &FEIYUNYONGCHE, 1U ) )
-  {
-		memcpy( C_feiyunyongche, &FEIYUNYONGCHE, 1U );
-  
-		WriteFileContantPkt( 0xA4, 0x15, g_ZK_DevCode, C_feiyunyongche, 1U ); 
-	} /* end if */
+    if (memcmp(C_feiyunyongche, &FEIYUNYONGCHE, 1U))
+    {
+        memcpy(C_feiyunyongche, &FEIYUNYONGCHE, 1U);
+
+        WriteFileContantPkt(0xA4, 0x15, g_ZK_DevCode, C_feiyunyongche, 1U);
+    } /* end if */
 } /* end function RecordingNonTrafficTrainMessage */
 
 /**********************************************
@@ -3960,16 +3959,16 @@ static void RecordingNonTrafficTrainMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingSubstituteTrainMessage( void )
+static void RecordingSubstituteTrainMessage(void)
 {
- static uint8_t C_daikeche[1]  = { 0U };
+    static uint8_t C_daikeche[1] = { 0U };
 
-  if ( memcmp( C_daikeche, &DAIKECHE, 1U ) )
-  {
-		memcpy( C_daikeche, &DAIKECHE, 1U );
-  
-		WriteFileContantPkt( 0xA4, 0x16, g_ZK_DevCode, C_daikeche, 1U ); 
-	} /* end if */
+    if (memcmp(C_daikeche, &DAIKECHE, 1U))
+    {
+        memcpy(C_daikeche, &DAIKECHE, 1U);
+
+        WriteFileContantPkt(0xA4, 0x16, g_ZK_DevCode, C_daikeche, 1U);
+    } /* end if */
 } /* end function RecordingSubstituteTrainMessage */
 
 /**********************************************
@@ -3977,16 +3976,16 @@ static void RecordingSubstituteTrainMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingCabooseTrainMessage( void )
+static void RecordingCabooseTrainMessage(void)
 {
- static uint8_t C_shouche[1]  = { 0U };
- 
-  if ( memcmp( C_shouche, &SHOUCHE, 1U ) )
-  {
-		memcpy( C_shouche, &SHOUCHE, 1U );
-  
-		WriteFileContantPkt( 0xA4, 0x17, g_ZK_DevCode, C_shouche, 1U ); 
-	} /* end if */
+    static uint8_t C_shouche[1] = { 0U };
+
+    if (memcmp(C_shouche, &SHOUCHE, 1U))
+    {
+        memcpy(C_shouche, &SHOUCHE, 1U);
+
+        WriteFileContantPkt(0xA4, 0x17, g_ZK_DevCode, C_shouche, 1U);
+    } /* end if */
 } /* end function RecordingCabooseTrainMessage */
 
 /**********************************************
@@ -3994,17 +3993,17 @@ static void RecordingCabooseTrainMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingSpeedGradeMessage( void )
+static void RecordingSpeedGradeMessage(void)
 {
- static uint8_t C_chesudengji[2]  = { 0U };
+    static uint8_t C_chesudengji[2] = { 0U };
 
-  if ( C_chesudengji[1] != CHESUDENGJI )
-  {
-//		printf("\r\n 车速等级值：%x\r\n",CHESUDENGJI);
-		C_chesudengji[0] = C_chesudengji[1];
-    C_chesudengji[1] = CHESUDENGJI;
-		WriteFileContantPkt( 0xA4, 0x18, g_ZK_DevCode, C_chesudengji, 2U ); 
-	} /* end if */
+    if (C_chesudengji[1] != CHESUDENGJI)
+    {
+//		LOG_I("车速等级值：%x",CHESUDENGJI);
+        C_chesudengji[0] = C_chesudengji[1];
+        C_chesudengji[1] = CHESUDENGJI;
+        WriteFileContantPkt(0xA4, 0x18, g_ZK_DevCode, C_chesudengji, 2U);
+    } /* end if */
 } /* end function RecordingSpeedGradeMessage */
 
 
@@ -4049,18 +4048,18 @@ static void RecordingTrainOperationMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingRransitCenterMessage( void )
+static void RecordingRransitCenterMessage(void)
 {
- static uint8_t C_guozhanzhongxin[17]  = { 0U };
-  
-  if ( (0u == C_guozhanzhongxin[16]) && GUOZHANZHONGXIN && ( 0x80 == LKJGONGZUOMOSHI))
-  {
-		C_guozhanzhongxin[0] = LKJFACHEFANGXIANG;
-	  C_guozhanzhongxin[1] = (SHUJUJIAOLU & 0x60) >> 5u;
-		memcpy( &C_guozhanzhongxin[4], &CHEZHANMING, 12U );
-		WriteFileContantPkt( 0xA4, 0x50, g_ZK_DevCode, C_guozhanzhongxin, 16U );	
-	} /* end if */
-  C_guozhanzhongxin[16] = GUOZHANZHONGXIN;	
+    static uint8_t C_guozhanzhongxin[17] = { 0U };
+
+    if ((0u == C_guozhanzhongxin[16]) && GUOZHANZHONGXIN && (0x80 == LKJGONGZUOMOSHI))
+    {
+        C_guozhanzhongxin[0] = LKJFACHEFANGXIANG;
+        C_guozhanzhongxin[1] = (SHUJUJIAOLU & 0x60) >> 5u;
+        memcpy(&C_guozhanzhongxin[4], &CHEZHANMING, 12U );
+        WriteFileContantPkt(0xA4, 0x50, g_ZK_DevCode, C_guozhanzhongxin, 16U);
+    } /* end if */
+    C_guozhanzhongxin[16] = GUOZHANZHONGXIN;
 } /* end function RecordingRransitCenterMessage */
 
 /**********************************************
@@ -4101,14 +4100,14 @@ static void RecordingLKJModeMessage( void )
 		 break;	 
  }
  #else
- lkjgongzuomoshizhi = LKJGONGZUOMOSHI;
+    lkjgongzuomoshizhi = LKJGONGZUOMOSHI;
  #endif
-  if ( C_Lkjgongzuomoshi[1] != lkjgongzuomoshizhi )
-  {
-		C_Lkjgongzuomoshi[0] = C_Lkjgongzuomoshi[1];
-    C_Lkjgongzuomoshi[1] = lkjgongzuomoshizhi;
-		WriteFileContantPkt( 0xA4, 0x51, g_ZK_DevCode, C_Lkjgongzuomoshi, 2U ); 
-	} /* end if */
+    if (C_Lkjgongzuomoshi[1] != lkjgongzuomoshizhi)
+    {
+        C_Lkjgongzuomoshi[0] = C_Lkjgongzuomoshi[1];
+        C_Lkjgongzuomoshi[1] = lkjgongzuomoshizhi;
+        WriteFileContantPkt(0xA4, 0x51, g_ZK_DevCode, C_Lkjgongzuomoshi, 2U);
+    } /* end if */
 } /* end function RecordingLKJModeMessage */
 
 /**********************************************
@@ -4116,16 +4115,16 @@ static void RecordingLKJModeMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingBenchmarkingMessage( void )
+static void RecordingBenchmarkingMessage(void)
 {
- static uint8_t C_kaicheduibiao[1]  = { 0U };
+    static uint8_t C_kaicheduibiao[1] = { 0U };
 
-  if (( C_kaicheduibiao[0] == 0U ) && ( KAICHEDUIBIAO == 1U) )
-  {
-//		printf("。。。生成开车对标事项。。。\r\n");
-		WriteFileContantPkt( 0xA4, 0x52, g_ZK_DevCode, C_kaicheduibiao, 0U ); 
-	} /* end if */
-	C_kaicheduibiao[0] = KAICHEDUIBIAO;
+    if ((C_kaicheduibiao[0] == 0U) && ( KAICHEDUIBIAO == 1U))
+    {
+//        LOG_I("...生成开车对标事项...");
+        WriteFileContantPkt(0xA4, 0x52, g_ZK_DevCode, C_kaicheduibiao, 0U);
+    } /* end if */
+    C_kaicheduibiao[0] = KAICHEDUIBIAO;
 } /* end function RecordingBenchmarkingMessage */
 
 /**********************************************
@@ -4133,15 +4132,15 @@ static void RecordingBenchmarkingMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingBranchLineSelectMessage( void )
+static void RecordingBranchLineSelectMessage(void)
 {
- static uint8_t C_zhixianhao[1]  = { 0U };
+    static uint8_t C_zhixianhao[1] = { 0U };
 
-  if ( memcmp( C_zhixianhao, &ZHIXIANHAO, 1U ) )
-  {
-    memcpy( C_zhixianhao, &ZHIXIANHAO, 1U );
-		WriteFileContantPkt( 0xA4, 0x53, g_ZK_DevCode, C_zhixianhao, 1U ); 
-	} /* end if */
+    if (memcmp(C_zhixianhao, &ZHIXIANHAO, 1U))
+    {
+        memcpy(C_zhixianhao, &ZHIXIANHAO, 1U);
+        WriteFileContantPkt(0xA4, 0x53, g_ZK_DevCode, C_zhixianhao, 1U);
+    } /* end if */
 } /* end function RecordingBranchLineSelectMessage */
 
 /**********************************************
@@ -4149,18 +4148,15 @@ static void RecordingBranchLineSelectMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingSideLineSelectMessage( void )
+static void RecordingSideLineSelectMessage(void)
 {
- static uint8_t C_cexianhao[1]  = { 0U };
+    static uint8_t C_cexianhao[1] = { 0U };
 
-  if ( memcmp( C_cexianhao, &CEXIANHAO, 1U ) 		
-		   && (0u != CEXIANHAO) 
-	     && (126u != CEXIANHAO) 
-	     && (127u != CEXIANHAO))
-  {
-    memcpy( C_cexianhao, &CEXIANHAO, 1U );
-		WriteFileContantPkt( 0xA4, 0x54, g_ZK_DevCode, C_cexianhao, 1U ); 
-	} /* end if */
+    if (memcmp(C_cexianhao, &CEXIANHAO, 1U) && (0u != CEXIANHAO) && (126u != CEXIANHAO) && (127u != CEXIANHAO))
+    {
+        memcpy(C_cexianhao, &CEXIANHAO, 1U);
+        WriteFileContantPkt(0xA4, 0x54, g_ZK_DevCode, C_cexianhao, 1U);
+    } /* end if */
 } /* end function RecordingBranchLineSelectMessage */
 
 /**********************************************
@@ -4168,15 +4164,15 @@ static void RecordingSideLineSelectMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingLKJBrakeOutputMessage( void )
+static void RecordingLKJBrakeOutputMessage(void)
 {
- static uint8_t C_Lkjzhidongshuchu[2]  = { 0U };
+    static uint8_t C_Lkjzhidongshuchu[2] = { 0U };
 
-  if ( memcmp( C_Lkjzhidongshuchu, &ZHIDONGSHUCHU, 2U ) )
-  {
-    memcpy( C_Lkjzhidongshuchu, &ZHIDONGSHUCHU, 2U );
-		WriteFileContantPkt( 0xA4, 0x55, g_ZK_DevCode, C_Lkjzhidongshuchu, 2U ); 
-	} /* end if */
+    if (memcmp(C_Lkjzhidongshuchu, &ZHIDONGSHUCHU, 2U))
+    {
+        memcpy(C_Lkjzhidongshuchu, &ZHIDONGSHUCHU, 2U);
+        WriteFileContantPkt(0xA4, 0x55, g_ZK_DevCode, C_Lkjzhidongshuchu, 2U);
+    } /* end if */
 } /* end function RecordingLKJBrakeOutputMessage */
 
 /**********************************************
@@ -4184,65 +4180,65 @@ static void RecordingLKJBrakeOutputMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingPassingSignalMessage( void )
+static void RecordingPassingSignalMessage(void)
 {
- static uint8_t C_guoxinhaoji[9 + 4]  = { 0U };
- uint8_t xinhaojizhonglei = 0u;
- 
-	switch((XINHAOJILEIXING & 0xf0) >> 4u)
-	{
-		case 0:  //备用
-			break;
-		case 1:  //进出站
-			break;
-		case 2:  //出站
-			xinhaojizhonglei = 5u;
-			break;
-		case 3:  //进站
-			xinhaojizhonglei = 2u;
-			break;
-		case 4:  //通过
-			xinhaojizhonglei = 6u;
-			break;
-		case 5:  //预告
-			xinhaojizhonglei = 9u;
-			break;
-		case 6:
-			xinhaojizhonglei = 7u;
-			break;
-		case 7:
-			xinhaojizhonglei = 10u;
-			break;
-		case 8:    //未定义
-			break;
-		case 9:
-			xinhaojizhonglei = 9u;
-			break;
-		case 10:
-			xinhaojizhonglei = 9u;
-			break;
-		default:
-			break;				
-	} 
- 
-  if ( ( C_guoxinhaoji[0] != xinhaojizhonglei ) || ( memcmp( &C_guoxinhaoji[7], &XINHAOJIBIANHAO, 2U ) ))
-  {
-		memcpy( &C_guoxinhaoji[1], &XINHAOJIBIANHAOZIFUTOU, 6U );
-		
-		if(2u == C_guoxinhaoji[0])
-		{
-		  C_guoxinhaoji[9]  = QIANFANGCHEZHANHAO;
-		  C_guoxinhaoji[10]  = *(&QIANFANGCHEZHANHAO + 1u);			
-		}
-		else
-		{
-		  C_guoxinhaoji[9]  = LKJFACHEFANGXIANG;
-		  C_guoxinhaoji[10]  = (SHUJUJIAOLU & 0x60) >> 5u;			
-		}
-		WriteFileContantPkt( 0xA4, 0x56, g_ZK_DevCode, C_guoxinhaoji, 9U+4U );
-    C_guoxinhaoji[0] = xinhaojizhonglei;
-    memcpy( &C_guoxinhaoji[7], &XINHAOJIBIANHAO, 2U );		
-	} /* end if */
+    static uint8_t C_guoxinhaoji[9 + 4] = { 0U };
+    uint8_t xinhaojizhonglei = 0u;
+
+    switch ((XINHAOJILEIXING & 0xf0) >> 4u)
+    {
+        case 0:  //备用
+            break;
+        case 1:  //进出站
+            break;
+        case 2:  //出站
+            xinhaojizhonglei = 5u;
+            break;
+        case 3:  //进站
+            xinhaojizhonglei = 2u;
+            break;
+        case 4:  //通过
+            xinhaojizhonglei = 6u;
+            break;
+        case 5:  //预告
+            xinhaojizhonglei = 9u;
+            break;
+        case 6:
+            xinhaojizhonglei = 7u;
+            break;
+        case 7:
+            xinhaojizhonglei = 10u;
+            break;
+        case 8:    //未定义
+            break;
+        case 9:
+            xinhaojizhonglei = 9u;
+            break;
+        case 10:
+            xinhaojizhonglei = 9u;
+            break;
+        default:
+            break;
+    }
+
+    if ((C_guoxinhaoji[0] != xinhaojizhonglei) || (memcmp(&C_guoxinhaoji[7], &XINHAOJIBIANHAO, 2U)))
+    {
+        memcpy(&C_guoxinhaoji[1], &XINHAOJIBIANHAOZIFUTOU, 6U );
+
+        if(2u == C_guoxinhaoji[0])
+        {
+            C_guoxinhaoji[9] = QIANFANGCHEZHANHAO;
+            C_guoxinhaoji[10] = *(&QIANFANGCHEZHANHAO + 1u);
+        }
+        else
+        {
+            C_guoxinhaoji[9] = LKJFACHEFANGXIANG;
+            C_guoxinhaoji[10] = (SHUJUJIAOLU & 0x60) >> 5u;
+        }
+        WriteFileContantPkt( 0xA4, 0x56, g_ZK_DevCode, C_guoxinhaoji, 9U+4U );
+        C_guoxinhaoji[0] = xinhaojizhonglei;
+        memcpy( &C_guoxinhaoji[7], &XINHAOJIBIANHAO, 2U );
+    } /* end if */
 } /* end function RecordingLPassingSignalMessage */
 
 /**********************************************
@@ -4250,15 +4246,15 @@ static void RecordingPassingSignalMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingCabSignalChangeMessage( void )
+static void RecordingCabSignalChangeMessage(void)
 {
 //  static uint8_t C_jichexinhao[2]  = { 0U };
-//  printf("机车信号代码：%x %x\r\n",*(&JICHEXINHAODAIMA + 1),JICHEXINHAODAIMA);
-  if ( memcmp( C_jichexinhao, &JICHEXINHAODAIMA, 2U ) )
-  {
-    memcpy( C_jichexinhao, &JICHEXINHAODAIMA, 2U );
-		WriteFileContantPkt( 0xA4, 0x57, g_ZK_DevCode, C_jichexinhao, 2U ); 
-	} /* end if */		
+//    LOG_I("机车信号代码：%x %x", *(&JICHEXINHAODAIMA + 1), JICHEXINHAODAIMA);
+    if (memcmp(C_jichexinhao, &JICHEXINHAODAIMA, 2U))
+    {
+        memcpy(C_jichexinhao, &JICHEXINHAODAIMA, 2U);
+        WriteFileContantPkt(0xA4, 0x57, g_ZK_DevCode, C_jichexinhao, 2U);
+    } /* end if */
 } /* end function RecordingCabSignalChangeMessage */
 
 /**********************************************
@@ -4269,17 +4265,18 @@ static void RecordingCabSignalChangeMessage( void )
 static void RecordingSpeedMessage( void )
 {
 // static uint8_t C_Lkjsudu[2]  = { 0x00U, 0x00U };
-  uint16_t lkjsudu_New = 0u,  lkjsudu_Old = 0u;
- 
-  lkjsudu_New = ( uint16_t )LKJSUDU + ( uint16_t )((*(&LKJSUDU + 1)) << 8);
-  lkjsudu_Old = ( uint16_t )C_Lkjsudu[0] + ( uint16_t )(C_Lkjsudu[1] << 8);
-  /* 速度变化大于等于1Km/h */
-  if ( 1U <= abs( lkjsudu_New  - lkjsudu_Old ) )
-  {
-		memcpy( C_Lkjsudu, &LKJSUDU, 2U);
-//    printf("\r\nLKJ速度：%d \r\n",lkjsudu_New);
-		WriteFileContantPkt( 0xA4, 0x58, g_ZK_DevCode, C_Lkjsudu, 0u ); 
-	} /* end if */
+    uint16_t lkjsudu_New = 0u, lkjsudu_Old = 0u;
+
+    lkjsudu_New = (uint16_t) LKJSUDU + (uint16_t) ((*(&LKJSUDU + 1)) << 8);
+    lkjsudu_Old = (uint16_t) C_Lkjsudu[0] + (uint16_t) (C_Lkjsudu[1] << 8);
+    /* 速度变化大于等于1Km/h */
+//    LOG_I("\r\nLKJ速度：%d", lkjsudu_New);
+    if (1U <= abs(lkjsudu_New - lkjsudu_Old))
+    {
+        memcpy(C_Lkjsudu, &LKJSUDU, 2U);
+//        LOG_I("\r\nLKJ速度：%d", lkjsudu_New);
+        WriteFileContantPkt(0xA4, 0x58, g_ZK_DevCode, C_Lkjsudu, 0u);
+    } /* end if */
 } /* end function RecordingSpeedMessage */
 
 /**********************************************
@@ -4287,20 +4284,20 @@ static void RecordingSpeedMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingLimitSpeedMessage( void )
+static void RecordingLimitSpeedMessage(void)
 {
 // static uint8_t C_Lkjxiansu[2]  = { 0x00U, 0x00U };
-  uint16_t lkjxiansu_New = 0u,  lkjxiansu_Old = 0u;
- 
-  lkjxiansu_New = ( uint16_t )LKJXIANSU + ( uint16_t )((*(&LKJXIANSU + 1)) << 8);
-  lkjxiansu_Old = ( uint16_t )C_Lkjxiansu[0] + ( uint16_t )(C_Lkjxiansu[1] << 8);
-  /* 速度变化大于等于1Km/h */
-  if ( 1U <= abs( lkjxiansu_New  - lkjxiansu_Old ) )
-  {
-		memcpy( C_Lkjxiansu, &LKJXIANSU, 2U);
-  
-		WriteFileContantPkt( 0xA4, 0x59, g_ZK_DevCode, C_Lkjxiansu, 2u ); 
-	} /* end if */
+    uint16_t lkjxiansu_New = 0u, lkjxiansu_Old = 0u;
+
+    lkjxiansu_New = (uint16_t) LKJXIANSU + (uint16_t) ((*(&LKJXIANSU + 1)) << 8);
+    lkjxiansu_Old = (uint16_t) C_Lkjxiansu[0] + (uint16_t) (C_Lkjxiansu[1] << 8);
+    /* 速度变化大于等于1Km/h */
+    if (1U <= abs(lkjxiansu_New - lkjxiansu_Old))
+    {
+        memcpy(C_Lkjxiansu, &LKJXIANSU, 2U);
+
+        WriteFileContantPkt(0xA4, 0x59, g_ZK_DevCode, C_Lkjxiansu, 2u);
+    } /* end if */
 } /* end function RecordingLimitSpeedMessage */
 
 /**********************************************
@@ -4308,18 +4305,18 @@ static void RecordingLimitSpeedMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingPassingNeutralSectionMessage( void )
+static void RecordingPassingNeutralSectionMessage(void)
 {
-  static uint8_t C_guofenxiangbiaozhi = 0U ;
-	uint8_t guofenxiangzhi = 0u;
-	
-	guofenxiangzhi = (GUOFENXIANG & 0x01);
-  if (( C_guofenxiangbiaozhi == 0U ) && ( guofenxiangzhi == 1U) )
-  {
-//		printf("\r\n。。。。。生成过分相事项。。。。。。\r\n");
-		WriteFileContantPkt( 0xA4, 0x60, g_ZK_DevCode, &C_guofenxiangbiaozhi, 0U ); 
-	} /* end if */
-  C_guofenxiangbiaozhi = guofenxiangzhi;
+    static uint8_t C_guofenxiangbiaozhi = 0U;
+    uint8_t guofenxiangzhi = 0u;
+
+    guofenxiangzhi = (GUOFENXIANG & 0x01);
+    if ((C_guofenxiangbiaozhi == 0U) && (guofenxiangzhi == 1U))
+    {
+//        LOG_I("...生成过分相事项...");
+        WriteFileContantPkt(0xA4, 0x60, g_ZK_DevCode, &C_guofenxiangbiaozhi, 0U);
+    } /* end if */
+    C_guofenxiangbiaozhi = guofenxiangzhi;
 } /* end function RecordingPassingNeutralSectionMessage */
 
 /**********************************************
@@ -4337,16 +4334,16 @@ static void RecordingLineDataTerminationMessage( void )
 参数：无
 返回：无
 ***********************************************/
-static void RecordingDataErrorMessage( void )
+static void RecordingDataErrorMessage(void)
 {
-  static uint8_t C_Shujucuowuleixing[1]  = { 0U };
+    static uint8_t C_Shujucuowuleixing[1] = { 0U };
 
-  if ( (0x01 == C_Shujucuowuleixing[0]) && (0u == SHUJUGUZHANG) )
-  {
-//		printf("。。。生成数据故障事项。。。\r\n");
-		WriteFileContantPkt( 0xA4, 0x62, g_ZK_DevCode, C_Shujucuowuleixing, 1U ); 
-	} /* end if */
-	C_Shujucuowuleixing[0] = SHUJUGUZHANG;
+    if ((0x01 == C_Shujucuowuleixing[0]) && (0u == SHUJUGUZHANG))
+    {
+//        LOG_I("...生成数据故障事项...");
+        WriteFileContantPkt(0xA4, 0x62, g_ZK_DevCode, C_Shujucuowuleixing, 1U);
+    } /* end if */
+    C_Shujucuowuleixing[0] = SHUJUGUZHANG;
 } /* end function RecordingDataErrorMessage */
 
 /**********************************************
@@ -4380,163 +4377,162 @@ static void RecordingVersionMessage( void )
 ***********************************************/
 static void RecordingSoftwareVersionMessage(void)
 {
-  static uint8_t C_zk_I_A_bb[9]  = { 0x11U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
-  static uint8_t C_zk_I_B_bb[9]  = { 0x12U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
-  static uint8_t C_zk_II_A_bb[9] = { 0x13U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
-  static uint8_t C_zk_II_B_bb[9] = { 0x14U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
-  static uint8_t C_xsq_I_bb[9]   = { 0x21U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
-  static uint8_t C_xsq_II_bb[9]  = { 0x22U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };   
-  static uint8_t C_tx_I_bb[9]   = { 0x31U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
-  static uint8_t C_tx_II_bb[9]  = { 0x32U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U }; 
- 
-  static uint8_t C_wjjk_I_bb[9]  = { 0x51U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
-  static uint8_t C_wjjk_II_bb[9] = { 0x52U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };     
-  static uint8_t C_jl_bb[9]      = { 0x61U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
-  static uint8_t C_wxtx_bb[9]    = { 0x64U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };   
-  static uint8_t C_CEU_I_bb[9]   = { 0x71U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
-  static uint8_t C_CEU_II_bb[9]  = { 0x72U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };   
-  static uint8_t C_ECU_I_bb[9]   = { 0x81U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
-  static uint8_t C_ECU_II_bb[9]  = { 0x82U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U }; 
-  static uint8_t C_CCU_bb[9]     = { 0x81U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
-  static uint8_t C_BCU_bb[9]     = { 0x82U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };   
-  
-	if(CPU_A == Get_CPU_Type())
-	{
-		/* 主控插件版本 */
-		if ( memcmp( &C_zk_I_A_bb[1], &ZK_I_A_BB, 4u ) )
-		{
-			memcpy( &C_zk_I_A_bb[5], &C_zk_I_A_bb[1], 4u );
-			memcpy( &C_zk_I_A_bb[1], &ZK_I_A_BB, 4u );
-			WriteFileContantPkt( 0xA5, 0x01, 0x11, C_zk_I_A_bb, 9u );
-		} /* end if */
-		if ( memcmp( &C_zk_I_B_bb[1], &ZK_I_B_BB, 4u ) )
-		{
-			memcpy( &C_zk_I_B_bb[5], &C_zk_I_B_bb[1], 4u );
-			memcpy( &C_zk_I_B_bb[1], &ZK_I_B_BB, 4u );
-			WriteFileContantPkt( 0xA5, 0x01, 0x12, C_zk_I_B_bb, 9u );
-		} /* end if */
+    static uint8_t C_zk_I_A_bb[9] = { 0x11U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+    static uint8_t C_zk_I_B_bb[9] = { 0x12U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+    static uint8_t C_zk_II_A_bb[9] = { 0x13U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+    static uint8_t C_zk_II_B_bb[9] = { 0x14U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+    static uint8_t C_xsq_I_bb[9] = { 0x21U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+    static uint8_t C_xsq_II_bb[9] = { 0x22U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+    static uint8_t C_tx_I_bb[9] = { 0x31U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+    static uint8_t C_tx_II_bb[9] = { 0x32U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
 
-		/* 微机接口版本 */
-		if ( memcmp( &C_wjjk_I_bb[1], &WJJK_I_BB, 4u ) )
-		{
-			memcpy( &C_wjjk_I_bb[5], &C_wjjk_I_bb[1], 4u );
-			memcpy( &C_wjjk_I_bb[1], &WJJK_I_BB, 4u );
-			WriteFileContantPkt( 0xA5, 0x01, 0x51, C_wjjk_I_bb, 9u );
-		} /* end if */
-		/* 通信插件版本 */
-		if ( memcmp( &C_tx_I_bb[1], &TX_I_BB, 4u ) )
-		{
-			memcpy( &C_tx_I_bb[5], &C_tx_I_bb[1], 4u );
-			memcpy( &C_tx_I_bb[1], &TX_I_BB, 4u );
-			WriteFileContantPkt( 0xA5, 0x01, 0x31, C_tx_I_bb, 9u );
-		} /* end if */		
-	}
-	if(CPU_B == Get_CPU_Type())
-	{
-		/* 主控插件版本 */
-		if ( memcmp( &C_zk_II_A_bb[1], &ZK_II_A_BB, 4u ) )
-		{
-			memcpy( &C_zk_II_A_bb[5], &C_zk_II_A_bb[1], 4u );
-			memcpy( &C_zk_II_A_bb[1], &ZK_II_A_BB, 4u );
-			WriteFileContantPkt( 0xA5, 0x01, 0x13, C_zk_II_A_bb, 9u );
-		} /* end if */
-		if ( memcmp( &C_zk_II_B_bb[1], &ZK_II_B_BB, 4u ) )
-		{
-			memcpy( &C_zk_II_B_bb[5], &C_zk_II_B_bb[1], 4u );
-			memcpy( &C_zk_II_B_bb[1], &ZK_II_B_BB, 4u );
-			WriteFileContantPkt( 0xA5, 0x01, 0x14, C_zk_II_B_bb, 9u );
-		} /* end if */
-		
-		/* 微机接口版本 */
-		if ( memcmp( &C_wjjk_II_bb[1], &WJJK_II_BB, 4u ) )
-		{
-			memcpy( &C_wjjk_II_bb[5], &C_wjjk_II_bb[1], 4u );
-			memcpy( &C_wjjk_II_bb[1], &WJJK_II_BB, 4u );
-			WriteFileContantPkt( 0xA5, 0x01, 0x52, C_wjjk_II_bb, 9u );
-		} /* end if */
-		/* 通信插件版本 */
-		if ( memcmp( &C_tx_II_bb[1], &TX_II_BB, 4u ) )
-		{
-			memcpy( &C_tx_II_bb[5], &C_tx_II_bb[1], 4u );
-			memcpy( &C_tx_II_bb[1], &TX_II_BB, 4u );
-			WriteFileContantPkt( 0xA5, 0x01, 0x32, C_tx_II_bb, 9u );
-		} /* end if */ 		
-	}
-	
-	/* 记录插件版本 */
-	if ( memcmp( &C_jl_bb[1], &JL_BB, 4u ) )
-	{
-		memcpy( &C_jl_bb[5], &C_jl_bb[1], 4u );
-		memcpy( &C_jl_bb[1], &JL_BB, 4u );
-		WriteFileContantPkt( 0xA5, 0x01, 0x61, C_jl_bb, 9u );
-	} /* end if */
- 
-  /* 显示器版本 */
-  if ( memcmp( &C_xsq_I_bb[1], &XSQ_I_BB, 4u ) )
-  {
-    memcpy( &C_xsq_I_bb[5], &C_xsq_I_bb[1], 4u );
-    memcpy( &C_xsq_I_bb[1], &XSQ_I_BB, 4u );
-    WriteFileContantPkt( 0xA5, 0x01, 0x21, C_xsq_I_bb, 9u );
-  } /* end if */
-  if ( memcmp( &C_xsq_II_bb[1], &XSQ_II_BB, 4u ) )
-  {
-    memcpy( &C_xsq_II_bb[5], &C_xsq_II_bb[1], 4u );
-    memcpy( &C_xsq_II_bb[1], &XSQ_II_BB, 4u );
-    WriteFileContantPkt( 0xA5, 0x01, 0x22, C_xsq_II_bb, 9u );
-  } /* end if */  
+    static uint8_t C_wjjk_I_bb[9] = { 0x51U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+    static uint8_t C_wjjk_II_bb[9] = { 0x52U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+    static uint8_t C_jl_bb[9] = { 0x61U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+    static uint8_t C_wxtx_bb[9] = { 0x64U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+    static uint8_t C_CEU_I_bb[9] = { 0x71U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+    static uint8_t C_CEU_II_bb[9] = { 0x72U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+    static uint8_t C_ECU_I_bb[9] = { 0x81U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+    static uint8_t C_ECU_II_bb[9] = { 0x82U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+    static uint8_t C_CCU_bb[9] = { 0x81U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+    static uint8_t C_BCU_bb[9] = { 0x82U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
 
-  
-  /* 无线通信插件版本 */
-  if ( memcmp( &C_wxtx_bb[1], &WXTX_BB, 4u ) )
-  {
-    memcpy( &C_wxtx_bb[5], &C_wxtx_bb[1], 4u );
-    memcpy( &C_wxtx_bb[1], &WXTX_BB, 4u );
-    WriteFileContantPkt( 0xA5, 0x01, 0x64, C_wxtx_bb, 9u );
-  } /* end if */   
- 
-  /* CEU版本 */
-  if ( memcmp( &C_CEU_I_bb[1], &CEU_I_BB, 4u ) )
-  {
-    memcpy( &C_CEU_I_bb[5], &C_CEU_I_bb[1], 4u );
-    memcpy( &C_CEU_I_bb[1], &CEU_I_BB, 4u );
-    WriteFileContantPkt( 0xA5, 0x01, 0x71, C_CEU_I_bb, 9u );
-  } /* end if */
-  if ( memcmp( &C_CEU_II_bb[1], &CEU_II_BB, 4u ) )
-  {
-    memcpy( &C_CEU_II_bb[5], &C_CEU_II_bb[1], 4u );
-    memcpy( &C_CEU_II_bb[1], &CEU_II_BB, 4u );
-    WriteFileContantPkt( 0xA5, 0x01, 0x72, C_CEU_II_bb, 9u );
-  } /* end if */ 
+    if (CPU_A == Get_CPU_Type())
+    {
+        /* 主控插件版本 */
+        if (memcmp(&C_zk_I_A_bb[1], &ZK_I_A_BB, 4u))
+        {
+            memcpy(&C_zk_I_A_bb[5], &C_zk_I_A_bb[1], 4u);
+            memcpy(&C_zk_I_A_bb[1], &ZK_I_A_BB, 4u);
+            WriteFileContantPkt(0xA5, 0x01, 0x11, C_zk_I_A_bb, 9u);
+        } /* end if */
+        if (memcmp(&C_zk_I_B_bb[1], &ZK_I_B_BB, 4u))
+        {
+            memcpy(&C_zk_I_B_bb[5], &C_zk_I_B_bb[1], 4u);
+            memcpy(&C_zk_I_B_bb[1], &ZK_I_B_BB, 4u);
+            WriteFileContantPkt(0xA5, 0x01, 0x12, C_zk_I_B_bb, 9u);
+        } /* end if */
 
-  /* ECU版本 */
-  if ( memcmp( &C_ECU_I_bb[1], &ECU_I_BB, 4u ) )
-  {
-    memcpy( &C_ECU_I_bb[5], &C_ECU_I_bb[1], 4u );
-    memcpy( &C_ECU_I_bb[1], &ECU_I_BB, 4u );
-    WriteFileContantPkt( 0xA5, 0x01, 0x81, C_ECU_I_bb, 9u );
-  } /* end if */
-  if ( memcmp( &C_ECU_II_bb[1], &ECU_II_BB, 4u ) )
-  {
-    memcpy( &C_ECU_II_bb[5], &C_ECU_II_bb[1], 4u );
-    memcpy( &C_ECU_II_bb[1], &ECU_II_BB, 4u );
-    WriteFileContantPkt( 0xA5, 0x01, 0x82, C_ECU_II_bb, 9u );
-  } /* end if */  
+        /* 微机接口版本 */
+        if (memcmp(&C_wjjk_I_bb[1], &WJJK_I_BB, 4u))
+        {
+            memcpy(&C_wjjk_I_bb[5], &C_wjjk_I_bb[1], 4u);
+            memcpy(&C_wjjk_I_bb[1], &WJJK_I_BB, 4u);
+            WriteFileContantPkt(0xA5, 0x01, 0x51, C_wjjk_I_bb, 9u);
+        } /* end if */
+        /* 通信插件版本 */
+        if (memcmp(&C_tx_I_bb[1], &TX_I_BB, 4u))
+        {
+            memcpy(&C_tx_I_bb[5], &C_tx_I_bb[1], 4u);
+            memcpy(&C_tx_I_bb[1], &TX_I_BB, 4u);
+            WriteFileContantPkt(0xA5, 0x01, 0x31, C_tx_I_bb, 9u);
+        } /* end if */
+    }
+    if (CPU_B == Get_CPU_Type())
+    {
+        /* 主控插件版本 */
+        if (memcmp(&C_zk_II_A_bb[1], &ZK_II_A_BB, 4u))
+        {
+            memcpy(&C_zk_II_A_bb[5], &C_zk_II_A_bb[1], 4u);
+            memcpy(&C_zk_II_A_bb[1], &ZK_II_A_BB, 4u);
+            WriteFileContantPkt(0xA5, 0x01, 0x13, C_zk_II_A_bb, 9u);
+        } /* end if */
+        if (memcmp(&C_zk_II_B_bb[1], &ZK_II_B_BB, 4u))
+        {
+            memcpy(&C_zk_II_B_bb[5], &C_zk_II_B_bb[1], 4u);
+            memcpy(&C_zk_II_B_bb[1], &ZK_II_B_BB, 4u);
+            WriteFileContantPkt(0xA5, 0x01, 0x14, C_zk_II_B_bb, 9u);
+        } /* end if */
 
-  /* CCU版本 */
-  if ( memcmp( &C_CCU_bb[1], &CCU_BB, 4u ) )
-  {
-    memcpy( &C_CCU_bb[5], &C_CCU_bb[1], 4u );
-    memcpy( &C_CCU_bb[1], &CCU_BB, 4u );
-    WriteFileContantPkt( 0xA5, 0x01, 0x91, C_CCU_bb, 9u );
-  } /* end if */ 
+        /* 微机接口版本 */
+        if (memcmp(&C_wjjk_II_bb[1], &WJJK_II_BB, 4u))
+        {
+            memcpy(&C_wjjk_II_bb[5], &C_wjjk_II_bb[1], 4u);
+            memcpy(&C_wjjk_II_bb[1], &WJJK_II_BB, 4u);
+            WriteFileContantPkt(0xA5, 0x01, 0x52, C_wjjk_II_bb, 9u);
+        } /* end if */
+        /* 通信插件版本 */
+        if (memcmp(&C_tx_II_bb[1], &TX_II_BB, 4u))
+        {
+            memcpy(&C_tx_II_bb[5], &C_tx_II_bb[1], 4u);
+            memcpy(&C_tx_II_bb[1], &TX_II_BB, 4u);
+            WriteFileContantPkt(0xA5, 0x01, 0x32, C_tx_II_bb, 9u);
+        } /* end if */
+    }
 
-  /* BCU版本 */
-  if ( memcmp( &C_BCU_bb[1], &BCU_BB, 4u ) )
-  {
-    memcpy( &C_BCU_bb[5], &C_BCU_bb[1], 4u );
-    memcpy( &C_BCU_bb[1], &BCU_BB, 4u );
-    WriteFileContantPkt( 0xA5, 0x01, 0x92, C_BCU_bb, 9u );
-  } /* end if */   
+    /* 记录插件版本 */
+    if (memcmp(&C_jl_bb[1], &JL_BB, 4u ) )
+    {
+        memcpy( &C_jl_bb[5], &C_jl_bb[1], 4u );
+        memcpy( &C_jl_bb[1], &JL_BB, 4u );
+        WriteFileContantPkt( 0xA5, 0x01, 0x61, C_jl_bb, 9u );
+    } /* end if */
+
+    /* 显示器版本 */
+    if (memcmp(&C_xsq_I_bb[1], &XSQ_I_BB, 4u))
+    {
+        memcpy(&C_xsq_I_bb[5], &C_xsq_I_bb[1], 4u);
+        memcpy(&C_xsq_I_bb[1], &XSQ_I_BB, 4u);
+        WriteFileContantPkt(0xA5, 0x01, 0x21, C_xsq_I_bb, 9u);
+    } /* end if */
+    if (memcmp(&C_xsq_II_bb[1], &XSQ_II_BB, 4u))
+    {
+        memcpy(&C_xsq_II_bb[5], &C_xsq_II_bb[1], 4u);
+        memcpy(&C_xsq_II_bb[1], &XSQ_II_BB, 4u);
+        WriteFileContantPkt(0xA5, 0x01, 0x22, C_xsq_II_bb, 9u);
+    } /* end if */
+
+    /* 无线通信插件版本 */
+    if (memcmp(&C_wxtx_bb[1], &WXTX_BB, 4u ) )
+    {
+        memcpy( &C_wxtx_bb[5], &C_wxtx_bb[1], 4u );
+        memcpy( &C_wxtx_bb[1], &WXTX_BB, 4u );
+        WriteFileContantPkt( 0xA5, 0x01, 0x64, C_wxtx_bb, 9u );
+    } /* end if */
+
+    /* CEU版本 */
+    if (memcmp(&C_CEU_I_bb[1], &CEU_I_BB, 4u ) )
+    {
+        memcpy( &C_CEU_I_bb[5], &C_CEU_I_bb[1], 4u );
+        memcpy( &C_CEU_I_bb[1], &CEU_I_BB, 4u );
+        WriteFileContantPkt( 0xA5, 0x01, 0x71, C_CEU_I_bb, 9u );
+    } /* end if */
+    if (memcmp(&C_CEU_II_bb[1], &CEU_II_BB, 4u ) )
+    {
+        memcpy( &C_CEU_II_bb[5], &C_CEU_II_bb[1], 4u );
+        memcpy( &C_CEU_II_bb[1], &CEU_II_BB, 4u );
+        WriteFileContantPkt( 0xA5, 0x01, 0x72, C_CEU_II_bb, 9u );
+    } /* end if */
+
+    /* ECU版本 */
+    if (memcmp(&C_ECU_I_bb[1], &ECU_I_BB, 4u ) )
+    {
+        memcpy( &C_ECU_I_bb[5], &C_ECU_I_bb[1], 4u );
+        memcpy( &C_ECU_I_bb[1], &ECU_I_BB, 4u );
+        WriteFileContantPkt( 0xA5, 0x01, 0x81, C_ECU_I_bb, 9u );
+    } /* end if */
+    if (memcmp(&C_ECU_II_bb[1], &ECU_II_BB, 4u ) )
+    {
+        memcpy( &C_ECU_II_bb[5], &C_ECU_II_bb[1], 4u );
+        memcpy( &C_ECU_II_bb[1], &ECU_II_BB, 4u );
+        WriteFileContantPkt( 0xA5, 0x01, 0x82, C_ECU_II_bb, 9u );
+    } /* end if */
+
+    /* CCU版本 */
+    if (memcmp(&C_CCU_bb[1], &CCU_BB, 4u ) )
+    {
+        memcpy( &C_CCU_bb[5], &C_CCU_bb[1], 4u );
+        memcpy( &C_CCU_bb[1], &CCU_BB, 4u );
+        WriteFileContantPkt( 0xA5, 0x01, 0x91, C_CCU_bb, 9u );
+    } /* end if */
+
+    /* BCU版本 */
+    if (memcmp(&C_BCU_bb[1], &BCU_BB, 4u ) )
+    {
+        memcpy( &C_BCU_bb[5], &C_BCU_bb[1], 4u );
+        memcpy( &C_BCU_bb[1], &BCU_BB, 4u );
+        WriteFileContantPkt( 0xA5, 0x01, 0x92, C_BCU_bb, 9u );
+    } /* end if */
 } /* end function RecordingSoftwareVersionMessage */
 
 /**********************************************
@@ -4546,14 +4542,14 @@ static void RecordingSoftwareVersionMessage(void)
 ***********************************************/
 static void RecordingSoftwareVersionInconsistMessage(void)
 {
-  static uint8_t C_ruanjianbanbenbuyizhi = 0xFFU ;
+    static uint8_t C_ruanjianbanbenbuyizhi = 0xFFU;
 
-  if (( C_ruanjianbanbenbuyizhi == 0U ) && ( RUANJIANBANBENBUYIZHI == 1U) )
-  {
-//		printf("\r\n。。。。。。。生成软件版本不一致事项。。。。。。。。。\r\n");
-		WriteFileContantPkt( 0xA5, 0x02, g_ZK_DevCode, &C_ruanjianbanbenbuyizhi, 0U ); 
-	} /* end if */
-  C_ruanjianbanbenbuyizhi = RUANJIANBANBENBUYIZHI;
+    if ((C_ruanjianbanbenbuyizhi == 0U) && ( RUANJIANBANBENBUYIZHI == 1U))
+    {
+//        LOG_I("...生成软件版本不一致事项...");
+        WriteFileContantPkt(0xA5, 0x02, g_ZK_DevCode, &C_ruanjianbanbenbuyizhi, 0U);
+    } /* end if */
+    C_ruanjianbanbenbuyizhi = RUANJIANBANBENBUYIZHI;
 } /* end function RecordingSoftwareVersionInconsistMessage */
 
 /**********************************************
@@ -4573,46 +4569,46 @@ static void RecordingSoftwareVersionMismatchMessage(void)
 ***********************************************/
 static void RecordingSTOBasicDataVersionMessage(void)
 {
-  static uint8_t C_stoA_jichushuju_bb[9]     = { 0x01U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
-  static uint8_t C_stoB_jichushuju_bb[9]     = { 0x02U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };  
+    static uint8_t C_stoA_jichushuju_bb[9] = { 0x01U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+    static uint8_t C_stoB_jichushuju_bb[9] = { 0x02U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
 
-	// A模
-	if (  memcmp( &C_stoA_jichushuju_bb[1], &AJISTOJICHUSHUJUBANBENRIQI, 2u )
-		||  memcmp( &C_stoA_jichushuju_bb[3], &AJISTOJICHUSHUJUBIANYIRIQI, 2u ))
-	{
-	  if(CPU_A == Get_CPU_Type())  //I系记录板A模
-		  C_stoA_jichushuju_bb[0] = 0x01;
-		else if(CPU_B == Get_CPU_Type())  //II系记录板A模
-		  C_stoA_jichushuju_bb[0] = 0x02;
-		else
-		  C_stoA_jichushuju_bb[0] = 0x0;
-			
-		memcpy( &C_stoA_jichushuju_bb[5], &C_stoA_jichushuju_bb[1], 2u );
-		memcpy( &C_stoA_jichushuju_bb[7], &C_stoA_jichushuju_bb[3], 2u );			
-		memcpy( &C_stoA_jichushuju_bb[1], &AJISTOJICHUSHUJUBANBENRIQI, 2u );
-		memcpy( &C_stoA_jichushuju_bb[3], &AJISTOJICHUSHUJUBIANYIRIQI, 2u );
-		
-		WriteFileContantPkt( 0xA5, 0x04, g_ZK_DevCode, C_stoA_jichushuju_bb, 9u );
-	} /* end if */		
-  
-	// B模
-	if (  memcmp( &C_stoB_jichushuju_bb[1], &BJISTOJICHUSHUJUBANBENRIQI, 2u )
-		||  memcmp( &C_stoB_jichushuju_bb[3], &BJISTOJICHUSHUJUBIANYIRIQI, 2u ))
-	{
-	  if(CPU_A == Get_CPU_Type())  //I系记录板B模
-		  C_stoB_jichushuju_bb[0] = 0x03;
-		else if(CPU_B == Get_CPU_Type())  //II系记录板B模
-		  C_stoB_jichushuju_bb[0] = 0x04;
-		else
-		  C_stoB_jichushuju_bb[0] = 0x0;
-		
-		memcpy( &C_stoB_jichushuju_bb[5], &C_stoB_jichushuju_bb[1], 2u );
-		memcpy( &C_stoB_jichushuju_bb[7], &C_stoB_jichushuju_bb[3], 2u );			
-		memcpy( &C_stoB_jichushuju_bb[1], &BJISTOJICHUSHUJUBANBENRIQI, 2u );
-		memcpy( &C_stoB_jichushuju_bb[3], &BJISTOJICHUSHUJUBIANYIRIQI, 2u );
-		
-		WriteFileContantPkt( 0xA5, 0x04, g_ZK_DevCode, C_stoB_jichushuju_bb, 9u );
-	} /* end if */		
+    // A模
+    if (memcmp(&C_stoA_jichushuju_bb[1], &AJISTOJICHUSHUJUBANBENRIQI, 2u)
+            || memcmp(&C_stoA_jichushuju_bb[3], &AJISTOJICHUSHUJUBIANYIRIQI, 2u))
+    {
+        if (CPU_A == Get_CPU_Type())  //I系记录板A模
+            C_stoA_jichushuju_bb[0] = 0x01;
+        else if (CPU_B == Get_CPU_Type())  //II系记录板A模
+            C_stoA_jichushuju_bb[0] = 0x02;
+        else
+            C_stoA_jichushuju_bb[0] = 0x0;
+
+        memcpy(&C_stoA_jichushuju_bb[5], &C_stoA_jichushuju_bb[1], 2u);
+        memcpy(&C_stoA_jichushuju_bb[7], &C_stoA_jichushuju_bb[3], 2u);
+        memcpy(&C_stoA_jichushuju_bb[1], &AJISTOJICHUSHUJUBANBENRIQI, 2u);
+        memcpy(&C_stoA_jichushuju_bb[3], &AJISTOJICHUSHUJUBIANYIRIQI, 2u);
+
+        WriteFileContantPkt(0xA5, 0x04, g_ZK_DevCode, C_stoA_jichushuju_bb, 9u);
+    } /* end if */
+
+    // B模
+    if (memcmp(&C_stoB_jichushuju_bb[1], &BJISTOJICHUSHUJUBANBENRIQI, 2u)
+            || memcmp(&C_stoB_jichushuju_bb[3], &BJISTOJICHUSHUJUBIANYIRIQI, 2u))
+    {
+        if (CPU_A == Get_CPU_Type())  //I系记录板B模
+            C_stoB_jichushuju_bb[0] = 0x03;
+        else if (CPU_B == Get_CPU_Type())  //II系记录板B模
+            C_stoB_jichushuju_bb[0] = 0x04;
+        else
+            C_stoB_jichushuju_bb[0] = 0x0;
+
+        memcpy(&C_stoB_jichushuju_bb[5], &C_stoB_jichushuju_bb[1], 2u);
+        memcpy(&C_stoB_jichushuju_bb[7], &C_stoB_jichushuju_bb[3], 2u);
+        memcpy(&C_stoB_jichushuju_bb[1], &BJISTOJICHUSHUJUBANBENRIQI, 2u);
+        memcpy(&C_stoB_jichushuju_bb[3], &BJISTOJICHUSHUJUBIANYIRIQI, 2u);
+
+        WriteFileContantPkt(0xA5, 0x04, g_ZK_DevCode, C_stoB_jichushuju_bb, 9u);
+    } /* end if */
 } /* end function RecordingSTOBasicDataVersionMessage */
 
 /**********************************************
@@ -4622,7 +4618,7 @@ static void RecordingSTOBasicDataVersionMessage(void)
 ***********************************************/
 static void RecordingSTOBasicDataInconsistMessage(void)
 {
-  static uint8_t C_sto_jichushuju_bb  = 0U ;
+//  static uint8_t C_sto_jichushuju_bb  = 0U ;
   
 //  if ( memcmp( &AJISTOJICHUSHUJUBANBENRIQI, &BJISTOJICHUSHUJUBANBENRIQI, 2U )
 //		|| memcmp( &AJISTOJICHUSHUJUBIANYIRIQI, &BJISTOJICHUSHUJUBIANYIRIQI, 2U ))
@@ -4650,8 +4646,8 @@ static void RecordingSTOBasicDataMismatchMessage(void)
 ***********************************************/
 static void RecordingLKJBasicDataVersionMessage(void)
 {
-  static uint8_t C_lkjA_shuju_bb[9]     = { 0x01U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
-  static uint8_t C_lkjB_shuju_bb[9]     = { 0x02U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };  
+//  static uint8_t C_lkjA_shuju_bb[9]     = { 0x01U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+//  static uint8_t C_lkjB_shuju_bb[9]     = { 0x02U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
   
 //  if ( memcmp( &C_lkjA_shuju_bb[1], &AJILKJSHUJUBANBEN, 4u ) )
 //  {
@@ -4716,56 +4712,56 @@ static void RecordingSelfCheckMessage( void )
 ***********************************************/
 static void RecordingZKSelfCheckMessage(void)
 {
-  static uint8_t C_zkzj[3]  = { 0x00U, 0x00U, 0x00U };
-  
-  /* 判断自检状态是否发生变化 */
-  if ( memcmp( &C_zkzj[1], &ZK_ZJ, 2U ) ) 
-  {
-		memcpy( &C_zkzj[1], &ZK_ZJ, 2U);
-    
-    /* 判断自检为正常或异常 */
-    if( NORMAL == ZK_ZJ)
+    static uint8_t C_zkzj[3] = { 0x00U, 0x00U, 0x00U };
+
+    /* 判断自检状态是否发生变化 */
+    if (memcmp(&C_zkzj[1], &ZK_ZJ, 2U))
     {
-			if( CPU_A == Get_CPU_Type() )  //I系
-			{
-				if( g_ZK_DevCode == 0x11)  //A模
-				  C_zkzj[0] = 0x01;
-				else
-					C_zkzj[0] = 0x03;
-			}
-			else if(CPU_B == Get_CPU_Type())  //II系
-			{
-				if( g_ZK_DevCode == 0x11)  //A模
-				  C_zkzj[0] = 0x02;
-				else
-					C_zkzj[0] = 0x04;				
-			}
-			else
-				C_zkzj[0] = 0x0;			
-			
-		  WriteFileContantPkt( 0xA6u, 0x10u, g_ZK_DevCode, C_zkzj, 3u );      
-    }
-    else
-    {
-			if( CPU_A == Get_CPU_Type() )  //I系
-			{
-				if( g_ZK_DevCode == 0x11)  //A模
-				  C_zkzj[0] = 0x01;
-				else
-					C_zkzj[0] = 0x03;
-			}
-			else if(CPU_B == Get_CPU_Type())  //II系
-			{
-				if( g_ZK_DevCode == 0x11)  //A模
-				  C_zkzj[0] = 0x02;
-				else
-					C_zkzj[0] = 0x04;				
-			}
-			else
-				C_zkzj[0] = 0x0;
-		  WriteFileContantPkt( 0xA6u, 0x01u, g_ZK_DevCode, C_zkzj, 3u );       
-    }
-	} /* end if */
+        memcpy(&C_zkzj[1], &ZK_ZJ, 2U);
+
+        /* 判断自检为正常或异常 */
+        if (NORMAL == ZK_ZJ)
+        {
+            if (CPU_A == Get_CPU_Type())  //I系
+            {
+                if (g_ZK_DevCode == 0x11)  //A模
+                    C_zkzj[0] = 0x01;
+                else
+                    C_zkzj[0] = 0x03;
+            }
+            else if (CPU_B == Get_CPU_Type())  //II系
+            {
+                if (g_ZK_DevCode == 0x11)  //A模
+                    C_zkzj[0] = 0x02;
+                else
+                    C_zkzj[0] = 0x04;
+            }
+            else
+                C_zkzj[0] = 0x0;
+
+            WriteFileContantPkt(0xA6u, 0x10u, g_ZK_DevCode, C_zkzj, 3u);
+        }
+        else
+        {
+            if (CPU_A == Get_CPU_Type())  //I系
+            {
+                if (g_ZK_DevCode == 0x11)  //A模
+                    C_zkzj[0] = 0x01;
+                else
+                    C_zkzj[0] = 0x03;
+            }
+            else if (CPU_B == Get_CPU_Type())  //II系
+            {
+                if (g_ZK_DevCode == 0x11)  //A模
+                    C_zkzj[0] = 0x02;
+                else
+                    C_zkzj[0] = 0x04;
+            }
+            else
+                C_zkzj[0] = 0x0;
+            WriteFileContantPkt(0xA6u, 0x01u, g_ZK_DevCode, C_zkzj, 3u);
+        }
+    } /* end if */
 } /* end function RecordingZKSelfCheckMessage */
 
 /**********************************************
@@ -4775,45 +4771,45 @@ static void RecordingZKSelfCheckMessage(void)
 ***********************************************/
 static void RecordingTX1SelfCheckMessage(void)
 {
-  static uint8_t C_tx1zj[3]  = { 0x02U, 0x00U, 0x00U };
-  
-  /* 判断自检状态是否发生变化 */
-  if ( memcmp( &C_tx1zj[1], &TX1_ZJ, 2U ) ) 
-  {
-		memcpy( &C_tx1zj[1], &TX1_ZJ, 2U);
-  
-    /* 判断自检为正常或异常 */
-    if( NORMAL == TX1_ZJ)
+    static uint8_t C_tx1zj[3] = { 0x02U, 0x00U, 0x00U };
+
+    /* 判断自检状态是否发生变化 */
+    if (memcmp(&C_tx1zj[1], &TX1_ZJ, 2U))
     {
-			if( CPU_A == Get_CPU_Type() )  //I系
-			{
-			  C_tx1zj[0] = 0x01;
-				WriteFileContantPkt( 0xA6u, 0x11u, 0x31, C_tx1zj, 3u );
-			}
-			else if(CPU_B == Get_CPU_Type())  //II系
-			{
-			  C_tx1zj[0] = 0x02;
-				WriteFileContantPkt( 0xA6u, 0x11u, 0x32, C_tx1zj, 3u );				
-			}
-			else
-				C_tx1zj[0] = 0x00;			       
-    }
-    else
-    {
-			if( CPU_A == Get_CPU_Type() )  //I系
-			{
-			  C_tx1zj[0] = 0x01;
-				WriteFileContantPkt( 0xA6u, 0x02u, 0x31, C_tx1zj, 3u );
-			}
-			else if(CPU_B == Get_CPU_Type())  //II系
-			{
-			  C_tx1zj[0] = 0x02;
-				WriteFileContantPkt( 0xA6u, 0x02u, 0x32, C_tx1zj, 3u );				
-			}
-			else
-				C_tx1zj[0] = 0x00;			      
-    }
-	} /* end if */
+        memcpy(&C_tx1zj[1], &TX1_ZJ, 2U);
+
+        /* 判断自检为正常或异常 */
+        if (NORMAL == TX1_ZJ)
+        {
+            if (CPU_A == Get_CPU_Type())  //I系
+            {
+                C_tx1zj[0] = 0x01;
+                WriteFileContantPkt(0xA6u, 0x11u, 0x31, C_tx1zj, 3u);
+            }
+            else if (CPU_B == Get_CPU_Type())  //II系
+            {
+                C_tx1zj[0] = 0x02;
+                WriteFileContantPkt(0xA6u, 0x11u, 0x32, C_tx1zj, 3u);
+            }
+            else
+                C_tx1zj[0] = 0x00;
+        }
+        else
+        {
+            if (CPU_A == Get_CPU_Type())  //I系
+            {
+                C_tx1zj[0] = 0x01;
+                WriteFileContantPkt(0xA6u, 0x02u, 0x31, C_tx1zj, 3u);
+            }
+            else if (CPU_B == Get_CPU_Type())  //II系
+            {
+                C_tx1zj[0] = 0x02;
+                WriteFileContantPkt(0xA6u, 0x02u, 0x32, C_tx1zj, 3u);
+            }
+            else
+                C_tx1zj[0] = 0x00;
+        }
+    } /* end if */
 } /* end function RecordingTX1SelfCheckMessage */
 
 /**********************************************
@@ -4833,45 +4829,45 @@ static void RecordingTX2SelfCheckMessage(void)
 ***********************************************/
 static void RecordingJLSelfCheckMessage(void)
 {
-  static uint8_t C_jlzj[3]  = { 0x03U, 0x00U, 0x00U };
-  
-  /* 判断自检状态是否发生变化 */
-  if ( memcmp( &C_jlzj[1], &JL_ZJ, 2U ) ) 
-  {
-		memcpy( &C_jlzj[1], &JL_ZJ, 2U);
-    
-    /* 判断自检为正常或异常 */
-    if( NORMAL == JL_ZJ)
+    static uint8_t C_jlzj[3] = { 0x03U, 0x00U, 0x00U };
+
+    /* 判断自检状态是否发生变化 */
+    if (memcmp(&C_jlzj[1], &JL_ZJ, 2U))
     {
-			if ( Get_CPU_Type() == CPU_A )
-			{
-				/* I系记录 0x61 */
-				C_jlzj[0] = 0x01;
-				WriteFileContantPkt( 0xA6u, 0x13u, 0x61, C_jlzj, 3u );				
-			}
-			else
-			{
-				/* II系记录 0x62 */
-				C_jlzj[0] = 0x02;
-				WriteFileContantPkt( 0xA6u, 0x13u, 0x62, C_jlzj, 3u ); 
-			}             
-    }
-    else
-    {
-			if ( Get_CPU_Type() == CPU_A )
-			{
-        /* I系记录 0x61 */
-        C_jlzj[0] = 0x01;
-		    WriteFileContantPkt( 0xA6u, 0x04u, 0x61, C_jlzj, 3u );				
-			}
-			else
-			{
-        /* II系记录 0x62 */
-        C_jlzj[0] = 0x02;
-		    WriteFileContantPkt( 0xA6u, 0x04u, 0x62, C_jlzj, 3u ); 
-			}             
-    }
-	} /* end if */
+        memcpy(&C_jlzj[1], &JL_ZJ, 2U);
+
+        /* 判断自检为正常或异常 */
+        if (NORMAL == JL_ZJ)
+        {
+            if (Get_CPU_Type() == CPU_A)
+            {
+                /* I系记录 0x61 */
+                C_jlzj[0] = 0x01;
+                WriteFileContantPkt(0xA6u, 0x13u, 0x61, C_jlzj, 3u);
+            }
+            else
+            {
+                /* II系记录 0x62 */
+                C_jlzj[0] = 0x02;
+                WriteFileContantPkt(0xA6u, 0x13u, 0x62, C_jlzj, 3u);
+            }
+        }
+        else
+        {
+            if (Get_CPU_Type() == CPU_A)
+            {
+                /* I系记录 0x61 */
+                C_jlzj[0] = 0x01;
+                WriteFileContantPkt(0xA6u, 0x04u, 0x61, C_jlzj, 3u);
+            }
+            else
+            {
+                /* II系记录 0x62 */
+                C_jlzj[0] = 0x02;
+                WriteFileContantPkt(0xA6u, 0x04u, 0x62, C_jlzj, 3u);
+            }
+        }
+    } /* end if */
 } /* end function RecordingJLSelfCheckMessage */
 
 /**********************************************
@@ -4881,27 +4877,27 @@ static void RecordingJLSelfCheckMessage(void)
 ***********************************************/
 static void RecordingWXTXSelfCheckMessage(void)
 {
-  static uint8_t C_wxtxzj[3]  = { 0x00U, 0x00U, 0x00U };
-  
-  /* 判断自检状态是否发生变化 */
-  if ( memcmp( &C_wxtxzj[1], &WXTX_ZJ, 2U ) ) 
-  {
-		memcpy( &C_wxtxzj[1], &WXTX_ZJ, 2U);
-    
-    /* 判断自检为正常或异常 */
-    if( NORMAL == WXTX_ZJ)
+    static uint8_t C_wxtxzj[3] = { 0x00U, 0x00U, 0x00U };
+
+    /* 判断自检状态是否发生变化 */
+    if (memcmp(&C_wxtxzj[1], &WXTX_ZJ, 2U ) )
     {
-      /* 无线通信 0x64 */
-      C_wxtxzj[0] = 0x01;
-		  WriteFileContantPkt( 0xA6u, 0x14u, 0x64, C_wxtxzj, 3u );                  
-    }
-    else
-    {
-      /* 无线通信 0x64 */
-      C_wxtxzj[0] = 0x01;
-		  WriteFileContantPkt( 0xA6u, 0x05u, 0x64, C_wxtxzj, 3u );           
-    }
-	} /* end if */	
+        memcpy( &C_wxtxzj[1], &WXTX_ZJ, 2U);
+
+        /* 判断自检为正常或异常 */
+        if( NORMAL == WXTX_ZJ)
+        {
+            /* 无线通信 0x64 */
+            C_wxtxzj[0] = 0x01;
+            WriteFileContantPkt( 0xA6u, 0x14u, 0x64, C_wxtxzj, 3u );
+        }
+        else
+        {
+            /* 无线通信 0x64 */
+            C_wxtxzj[0] = 0x01;
+            WriteFileContantPkt( 0xA6u, 0x05u, 0x64, C_wxtxzj, 3u );
+        }
+    } /* end if */
 } /* end function RecordingWXTXSelfCheckMessage */
 
 /**********************************************
@@ -4911,45 +4907,45 @@ static void RecordingWXTXSelfCheckMessage(void)
 ***********************************************/
 static void RecordingWJJKSelfCheckMessage(void)
 {
-  static uint8_t C_wjjkzj[3]  = { 0x00U, 0x00U, 0x00U };
-  
-  /* 判断自检状态是否发生变化 */
-  if ( memcmp( &C_wjjkzj[1], &WJJK_ZJ, 2U ) ) 
-  {
-		memcpy( &C_wjjkzj[1], &WJJK_ZJ, 2U);
-    
-    /* 判断自检为正常或异常 */
-    if( NORMAL == WJJK_ZJ)
+    static uint8_t C_wjjkzj[3] = { 0x00U, 0x00U, 0x00U };
+
+    /* 判断自检状态是否发生变化 */
+    if (memcmp(&C_wjjkzj[1], &WJJK_ZJ, 2U))
     {
-			if ( Get_CPU_Type() == CPU_A )
-			{
-        /* I系微机接口板 0x51 */
-        C_wjjkzj[0] = 0x01;
-		    WriteFileContantPkt( 0xA6u, 0x15u, 0x51, C_wjjkzj, 3u );				
-			}
-			else
-			{
-        /* II系微机接口板 0x52 */
-        C_wjjkzj[0] = 0x02;
-		    WriteFileContantPkt( 0xA6u, 0x15u, 0x52, C_wjjkzj, 3u );				
-			}                   
-    }
-    else
-    {
-			if ( Get_CPU_Type() == CPU_A )
-			{
-        /* I系微机接口板 0x51 */
-        C_wjjkzj[0] = 0x01;
-		    WriteFileContantPkt( 0xA6u, 0x06u, 0x51, C_wjjkzj, 3u );				
-			}
-			else
-			{
-        /* II系微机接口板 0x52 */
-        C_wjjkzj[0] = 0x02;
-		    WriteFileContantPkt( 0xA6u, 0x06u, 0x52, C_wjjkzj, 3u );				
-			}            
-    }
-	} /* end if */
+        memcpy(&C_wjjkzj[1], &WJJK_ZJ, 2U);
+
+        /* 判断自检为正常或异常 */
+        if (NORMAL == WJJK_ZJ)
+        {
+            if (Get_CPU_Type() == CPU_A)
+            {
+                /* I系微机接口板 0x51 */
+                C_wjjkzj[0] = 0x01;
+                WriteFileContantPkt(0xA6u, 0x15u, 0x51, C_wjjkzj, 3u);
+            }
+            else
+            {
+                /* II系微机接口板 0x52 */
+                C_wjjkzj[0] = 0x02;
+                WriteFileContantPkt(0xA6u, 0x15u, 0x52, C_wjjkzj, 3u);
+            }
+        }
+        else
+        {
+            if (Get_CPU_Type() == CPU_A)
+            {
+                /* I系微机接口板 0x51 */
+                C_wjjkzj[0] = 0x01;
+                WriteFileContantPkt(0xA6u, 0x06u, 0x51, C_wjjkzj, 3u);
+            }
+            else
+            {
+                /* II系微机接口板 0x52 */
+                C_wjjkzj[0] = 0x02;
+                WriteFileContantPkt(0xA6u, 0x06u, 0x52, C_wjjkzj, 3u);
+            }
+        }
+    } /* end if */
 } /* end function RecordingWJJKSelfCheckMessage */
 
 /**********************************************
@@ -4959,76 +4955,76 @@ static void RecordingWJJKSelfCheckMessage(void)
 ***********************************************/
 static void RecordingDMISelfCheckMessage(void)
 {
-  static uint8_t C_xsqzj1[3]  = { 0x01U, 0x00U, 0x00U };
-	static uint8_t C_xsqzj2[3]  = { 0x02U, 0x00U, 0x00U };
-	
-  /* 判断I端显示器自检状态是否发生变化 */
-  if ( memcmp( &C_xsqzj1[1], &XSQ1_ZJ, 2U ) ) 
-  {
-		memcpy( &C_xsqzj1[1], &XSQ1_ZJ, 2U);
-    
-    /* 判断自检为正常或异常 */
-    if( NORMAL == XSQ1_ZJ)
+    static uint8_t C_xsqzj1[3] = { 0x01U, 0x00U, 0x00U };
+    static uint8_t C_xsqzj2[3] = { 0x02U, 0x00U, 0x00U };
+
+    /* 判断I端显示器自检状态是否发生变化 */
+    if (memcmp(&C_xsqzj1[1], &XSQ1_ZJ, 2U))
     {
-			if ( Get_CPU_Type() == CPU_A )
-			{
-        C_xsqzj1[0] = 0x01;
-		    WriteFileContantPkt( 0xA6u, 0x16u, 0x21, C_xsqzj1, 3u );				
-			}
-			else
-			{
-        C_xsqzj1[0] = 0x01;
-		    WriteFileContantPkt( 0xA6u, 0x16u, 0x22, C_xsqzj1, 3u );				
-			}                   
-    }
-    else
+        memcpy(&C_xsqzj1[1], &XSQ1_ZJ, 2U);
+
+        /* 判断自检为正常或异常 */
+        if (NORMAL == XSQ1_ZJ)
+        {
+            if (Get_CPU_Type() == CPU_A)
+            {
+                C_xsqzj1[0] = 0x01;
+                WriteFileContantPkt(0xA6u, 0x16u, 0x21, C_xsqzj1, 3u);
+            }
+            else
+            {
+                C_xsqzj1[0] = 0x01;
+                WriteFileContantPkt(0xA6u, 0x16u, 0x22, C_xsqzj1, 3u);
+            }
+        }
+        else
+        {
+            if (Get_CPU_Type() == CPU_A)
+            {
+                C_xsqzj1[0] = 0x01;
+                WriteFileContantPkt(0xA6u, 0x07u, 0x21, C_xsqzj1, 3u);
+            }
+            else
+            {
+                C_xsqzj1[0] = 0x01;
+                WriteFileContantPkt(0xA6u, 0x07u, 0x22, C_xsqzj1, 3u);
+            }
+        }
+    } /* end if */
+
+    /* 判断II端显示器自检状态是否发生变化 */
+    if (memcmp(&C_xsqzj2[1], &XSQ2_ZJ, 2U))
     {
-			if ( Get_CPU_Type() == CPU_A )
-			{
-        C_xsqzj1[0] = 0x01;
-		    WriteFileContantPkt( 0xA6u, 0x07u, 0x21, C_xsqzj1, 3u );				
-			}
-			else
-			{
-        C_xsqzj1[0] = 0x01;
-		    WriteFileContantPkt( 0xA6u, 0x07u, 0x22, C_xsqzj1, 3u );				
-			}			           
-    }
-	} /* end if */
-	
-  /* 判断II端显示器自检状态是否发生变化 */
-  if ( memcmp( &C_xsqzj2[1], &XSQ2_ZJ, 2U ) ) 
-  {
-		memcpy( &C_xsqzj2[1], &XSQ2_ZJ, 2U);
-    
-    /* 判断自检为正常或异常 */
-    if( NORMAL == XSQ2_ZJ)
-    {
-			if ( Get_CPU_Type() == CPU_A )
-			{
-        C_xsqzj2[0] = 0x02;
-		    WriteFileContantPkt( 0xA6u, 0x16u, 0x21, C_xsqzj2, 3u );				
-			}
-			else
-			{
-        C_xsqzj2[0] = 0x02;
-		    WriteFileContantPkt( 0xA6u, 0x16u, 0x22, C_xsqzj2, 3u );				
-			}                   
-    }
-    else
-    {
-			if ( Get_CPU_Type() == CPU_A )
-			{
-        C_xsqzj2[0] = 0x02;
-		    WriteFileContantPkt( 0xA6u, 0x07u, 0x21, C_xsqzj2, 3u );				
-			}
-			else
-			{
-        C_xsqzj2[0] = 0x02;
-		    WriteFileContantPkt( 0xA6u, 0x07u, 0x22, C_xsqzj2, 3u );				
-			}			           
-    }
-	} /* end if */	
+        memcpy(&C_xsqzj2[1], &XSQ2_ZJ, 2U);
+
+        /* 判断自检为正常或异常 */
+        if (NORMAL == XSQ2_ZJ)
+        {
+            if (Get_CPU_Type() == CPU_A)
+            {
+                C_xsqzj2[0] = 0x02;
+                WriteFileContantPkt(0xA6u, 0x16u, 0x21, C_xsqzj2, 3u);
+            }
+            else
+            {
+                C_xsqzj2[0] = 0x02;
+                WriteFileContantPkt(0xA6u, 0x16u, 0x22, C_xsqzj2, 3u);
+            }
+        }
+        else
+        {
+            if (Get_CPU_Type() == CPU_A)
+            {
+                C_xsqzj2[0] = 0x02;
+                WriteFileContantPkt(0xA6u, 0x07u, 0x21, C_xsqzj2, 3u);
+            }
+            else
+            {
+                C_xsqzj2[0] = 0x02;
+                WriteFileContantPkt(0xA6u, 0x07u, 0x22, C_xsqzj2, 3u);
+            }
+        }
+    } /* end if */
 } /* end function RecordingDMISelfCheckMessage */
 
 /**********************************************
@@ -5059,45 +5055,45 @@ static void RecordingECUSelfCheckMessage(void)
 返回：无
 ***********************************************/
 static void RecordingCommunicatWithLKJMessage(void)
-{  
-  static uint8_t C_lkj2zj = 0u;
-	uint8_t lkj2zjzhi = 0u;
-  
-  /* 判断通信间隔 标志 */
-  if ( C_lkj2zj != LKJ_COMMUNICATION ) 
-  {
-		C_lkj2zj = LKJ_COMMUNICATION;
-    
-    /* 判断通信状态为异常、中断或恢复 */
-    if( RESUME == LKJ_COMMUNICATION )    //通信恢复
+{
+    static uint8_t C_lkj2zj = 0u;
+    uint8_t lkj2zjzhi = 0u;
+
+    /* 判断通信间隔 标志 */
+    if (C_lkj2zj != LKJ_COMMUNICATION)
     {
-//			printf("。。。LKJ通信恢复。。。\r\n");
-			if ( Get_CPU_Type() == CPU_A )
-			{
-        lkj2zjzhi = 0x01;
-		    WriteFileContantPkt( 0xA6, 0x31, g_ZK_DevCode, &lkj2zjzhi, 1u );			
-			}
-			else
-			{
-        lkj2zjzhi = 0x02;
-		    WriteFileContantPkt( 0xA6, 0x31, g_ZK_DevCode, &lkj2zjzhi, 1u );				
-			}   
-    }
-    else   //通信中断
-    {
-//			printf("。。。LKJ通信中断。。。\r\n");
-			if ( Get_CPU_Type() == CPU_A )
-			{
-        lkj2zjzhi = 0x01;
-		    WriteFileContantPkt( 0xA6, 0x25, g_ZK_DevCode, &lkj2zjzhi, 1u );			
-			}
-			else
-			{
-        lkj2zjzhi = 0x02;
-		    WriteFileContantPkt( 0xA6, 0x25, g_ZK_DevCode, &lkj2zjzhi, 1u );				
-			} 			            
-    }
-	} /* end if */
+        C_lkj2zj = LKJ_COMMUNICATION;
+
+        /* 判断通信状态为异常、中断或恢复 */
+        if (RESUME == LKJ_COMMUNICATION)    //通信恢复
+        {
+//            LOG_I("...LKJ通信恢复...");
+            if (Get_CPU_Type() == CPU_A)
+            {
+                lkj2zjzhi = 0x01;
+                WriteFileContantPkt(0xA6, 0x31, g_ZK_DevCode, &lkj2zjzhi, 1u);
+            }
+            else
+            {
+                lkj2zjzhi = 0x02;
+                WriteFileContantPkt(0xA6, 0x31, g_ZK_DevCode, &lkj2zjzhi, 1u);
+            }
+        }
+        else   //通信中断
+        {
+//            LOG_I("...LKJ通信中断...");
+            if (Get_CPU_Type() == CPU_A)
+            {
+                lkj2zjzhi = 0x01;
+                WriteFileContantPkt(0xA6, 0x25, g_ZK_DevCode, &lkj2zjzhi, 1u);
+            }
+            else
+            {
+                lkj2zjzhi = 0x02;
+                WriteFileContantPkt(0xA6, 0x25, g_ZK_DevCode, &lkj2zjzhi, 1u);
+            }
+        }
+    } /* end if */
 } /* end function RecordingCommunicatWithLKJMessage */
 
 /**********************************************
@@ -5107,44 +5103,44 @@ static void RecordingCommunicatWithLKJMessage(void)
 ***********************************************/
 static void RecordingCommunicatWithCCUMessage(void)
 {
-  static uint8_t C_ccu2zj = 0u;
-	uint8_t ccu2zjzhi = 0u;	
-  
-  /* 判断通信间隔 标志 */
-  if ( C_ccu2zj != CCU_COMMUNICATION ) 
-  {
-		C_ccu2zj = CCU_COMMUNICATION;
-    
-    /* 判断通信状态为异常、中断或恢复 */
-    if( RESUME == CCU_COMMUNICATION )
+    static uint8_t C_ccu2zj = 0u;
+    uint8_t ccu2zjzhi = 0u;
+
+    /* 判断通信间隔 标志 */
+    if (C_ccu2zj != CCU_COMMUNICATION)
     {
-//			printf("。。。CCU通信恢复。。。\r\n");
-			if ( Get_CPU_Type() == CPU_A )
-			{
-        ccu2zjzhi = 0x01;
-		    WriteFileContantPkt( 0xA6, 0x32, g_ZK_DevCode, &ccu2zjzhi, 1u );			
-			}
-			else
-			{
-        ccu2zjzhi = 0x02;
-		    WriteFileContantPkt( 0xA6, 0x32, g_ZK_DevCode, &ccu2zjzhi, 1u );				
-			}			       
-    }
-    else 
-    {
-//			printf("。。。CCU通信中断。。。\r\n");
-			if ( Get_CPU_Type() == CPU_A )
-			{
-        ccu2zjzhi = 0x01;
-		    WriteFileContantPkt( 0xA6, 0x26, g_ZK_DevCode, &ccu2zjzhi, 1u );			
-			}
-			else
-			{
-        ccu2zjzhi = 0x02;
-		    WriteFileContantPkt( 0xA6, 0x26, g_ZK_DevCode, &ccu2zjzhi, 1u );				
-			}			            
-    }
-	} /* end if */
+        C_ccu2zj = CCU_COMMUNICATION;
+
+        /* 判断通信状态为异常、中断或恢复 */
+        if (RESUME == CCU_COMMUNICATION)
+        {
+//            LOG_I("...CCU通信恢复...");
+            if (Get_CPU_Type() == CPU_A)
+            {
+                ccu2zjzhi = 0x01;
+                WriteFileContantPkt(0xA6, 0x32, g_ZK_DevCode, &ccu2zjzhi, 1u);
+            }
+            else
+            {
+                ccu2zjzhi = 0x02;
+                WriteFileContantPkt(0xA6, 0x32, g_ZK_DevCode, &ccu2zjzhi, 1u);
+            }
+        }
+        else
+        {
+//            LOG_I("...CCU通信中断...");
+            if (Get_CPU_Type() == CPU_A)
+            {
+                ccu2zjzhi = 0x01;
+                WriteFileContantPkt(0xA6, 0x26, g_ZK_DevCode, &ccu2zjzhi, 1u);
+            }
+            else
+            {
+                ccu2zjzhi = 0x02;
+                WriteFileContantPkt(0xA6, 0x26, g_ZK_DevCode, &ccu2zjzhi, 1u);
+            }
+        }
+    } /* end if */
 } /* end function RecordingCommunicatWithCCUMessage */
 
 /**********************************************
@@ -5154,44 +5150,44 @@ static void RecordingCommunicatWithCCUMessage(void)
 ***********************************************/
 static void RecordingCommunicatWithBCUMessage(void)
 {
-  static uint8_t C_bcu2zj = 0u; 
-	uint8_t bcu2zjzhi = 0u;
-  
-  /* 判断通信间隔 标志 */
-  if ( C_bcu2zj != BCU_COMMUNICATION ) 
-  {
-		C_bcu2zj = BCU_COMMUNICATION;
-    
-    /* 判断通信状态为异常、中断或恢复 */
-    if( RESUME == BCU_COMMUNICATION )
+    static uint8_t C_bcu2zj = 0u;
+    uint8_t bcu2zjzhi = 0u;
+
+    /* 判断通信间隔 标志 */
+    if (C_bcu2zj != BCU_COMMUNICATION)
     {
-//			printf("。。。BCU通信恢复。。。\r\n");
-			if ( Get_CPU_Type() == CPU_A )
-			{
-        bcu2zjzhi = 0x01;
-		    WriteFileContantPkt( 0xA6, 0x33, g_ZK_DevCode, &bcu2zjzhi, 1u );			
-			}
-			else
-			{
-        bcu2zjzhi = 0x02;
-		    WriteFileContantPkt( 0xA6, 0x33, g_ZK_DevCode, &bcu2zjzhi, 1u );				
-			}      
-    }
-    else
-    {
-//			printf("。。。BCU通信中断。。。\r\n");
-			if ( Get_CPU_Type() == CPU_A )
-			{
-        bcu2zjzhi = 0x01;
-		    WriteFileContantPkt( 0xA6, 0x27, g_ZK_DevCode, &bcu2zjzhi, 1u );			
-			}
-			else
-			{
-        bcu2zjzhi = 0x02;
-		    WriteFileContantPkt( 0xA6, 0x27, g_ZK_DevCode, &bcu2zjzhi, 1u );				
-			} 			             
-    }
-	} /* end if */
+        C_bcu2zj = BCU_COMMUNICATION;
+
+        /* 判断通信状态为异常、中断或恢复 */
+        if (RESUME == BCU_COMMUNICATION)
+        {
+//            LOG_I("...BCU通信恢复...");
+            if (Get_CPU_Type() == CPU_A)
+            {
+                bcu2zjzhi = 0x01;
+                WriteFileContantPkt(0xA6, 0x33, g_ZK_DevCode, &bcu2zjzhi, 1u);
+            }
+            else
+            {
+                bcu2zjzhi = 0x02;
+                WriteFileContantPkt(0xA6, 0x33, g_ZK_DevCode, &bcu2zjzhi, 1u);
+            }
+        }
+        else
+        {
+//            LOG_I("...BCU通信中断...");
+            if (Get_CPU_Type() == CPU_A)
+            {
+                bcu2zjzhi = 0x01;
+                WriteFileContantPkt(0xA6, 0x27, g_ZK_DevCode, &bcu2zjzhi, 1u);
+            }
+            else
+            {
+                bcu2zjzhi = 0x02;
+                WriteFileContantPkt(0xA6, 0x27, g_ZK_DevCode, &bcu2zjzhi, 1u);
+            }
+        }
+    } /* end if */
 } /* end function RecordingCommunicatWithBCUMessage */
 
 /**********************************************
@@ -5212,7 +5208,7 @@ static void RecordingCommunicatWithCIRMessage(void)
         /* 判断通信状态为异常、中断或恢复 */
         if (0u == CIR_COMMUNICATION)
         {
-//			printf("。。。CIR通信恢复。。。\r\n");
+//            LOG_I("...CIR通信恢复...");
             if (Get_CPU_Type() == CPU_A)
             {
                 cir2zjzhi = 0x01;
@@ -5226,7 +5222,7 @@ static void RecordingCommunicatWithCIRMessage(void)
         }
         else
         {
-//			printf("。。。CIR通信中断。。。\r\n");
+//            LOG_I("...CIR通信中断...");
             if (Get_CPU_Type() == CPU_A)
             {
                 cir2zjzhi = 0x01;
@@ -5248,7 +5244,7 @@ static void RecordingCommunicatWithCIRMessage(void)
 ***********************************************/
 static void RecordingCommunicatWithCEUMessage(void)
 {
-  static uint8_t C_ceu2zj; 
+//  static uint8_t C_ceu2zj;
   
 //  /* 判断通信间隔 标志 */
 //  if ( C_ceu2zj != CEU_COMMUNICATION ) 
@@ -5282,7 +5278,7 @@ static void RecordingCommunicatWithCEUMessage(void)
 ***********************************************/
 static void RecordingCommunicatWithECUMessage(void)
 {
-  static uint8_t C_ecu2zj; 
+//  static uint8_t C_ecu2zj;
   
 //  /* 判断通信间隔 标志 */
 //  if ( C_ecu2zj != ECU_COMMUNICATION ) 
@@ -5317,8 +5313,8 @@ static void RecordingCommunicatWithECUMessage(void)
 ***********************************************/
 static void RecordingSwitchTimeMessage( void )
 {
-  /* 获取日期变化信息 */
-  RecordingDateChangeMessage();	
+    /* 获取日期变化信息 */
+    RecordingDateChangeMessage();
 } /* end function RecordingSwitchTimeMessage */
 
 /**********************************************
@@ -5328,10 +5324,10 @@ static void RecordingSwitchTimeMessage( void )
 ***********************************************/
 void RecordingPowerOnMessage(void)
 {
-  static uint8_t C_waisheleixing[2] = { 0x0u };
+    static uint8_t C_waisheleixing[2] = { 0x0u };
 
-  memcpy( &C_waisheleixing, &s_file_head.ch_waisheleixing, 2U);	
-  WriteFileContantPkt( 0xA7, 0x01, 0x61, C_waisheleixing, 2u );
+    memcpy( &C_waisheleixing, &s_file_head.ch_waisheleixing, 2U);
+    WriteFileContantPkt( 0xA7, 0x01, 0x61, C_waisheleixing, 2u );
 } /* end function RecordingPowerOnMessage */
 
 /**********************************************
@@ -5341,10 +5337,10 @@ void RecordingPowerOnMessage(void)
 ***********************************************/
 void RecordingPowerOffMessage(void)
 {
-  static uint8_t C_waisheleixing[2] = { 0x0u };
+    static uint8_t C_waisheleixing[2] = { 0x0u };
 
-  memcpy( &C_waisheleixing, &s_file_head.ch_waisheleixing, 2U);
-  WriteFileContantPkt( 0xA7, 0x02, 0x61, C_waisheleixing, 1u );
+    memcpy( &C_waisheleixing, &s_file_head.ch_waisheleixing, 2U);
+    WriteFileContantPkt( 0xA7, 0x02, 0x61, C_waisheleixing, 1u );
 } /* end function RecordingPowerOffMessage */
 
 /**********************************************
@@ -5403,14 +5399,14 @@ static void RecordingDebugMessage( void )
 **************************************************************************************************/
 void Update_ABV_ControllingMessage( uint8_t msg[] )
 {
-  msgRecording.EBV_MSG.ABV_CTRL_Flag  = msg[0];
-  
-  msgRecording.EBV_MSG.ABV_CTRL_WC    = msg[1];
-  
-  msgRecording.EBV_MSG.ABV_CTRL_VOLT  = ( uint16_t )( ( uint32_t )msg[3] << 8U )\
+    msgRecording.EBV_MSG.ABV_CTRL_Flag  = msg[0];
+
+    msgRecording.EBV_MSG.ABV_CTRL_WC    = msg[1];
+
+    msgRecording.EBV_MSG.ABV_CTRL_VOLT  = ( uint16_t )( ( uint32_t )msg[3] << 8U )\
                                                     + ( uint16_t )msg[2];
-  
-  msgRecording.EBV_MSG.ABV_Depressure = msg[4];
+
+    msgRecording.EBV_MSG.ABV_Depressure = msg[4];
 } /* end function Update_ABV_ControllingMessage */
 
 
@@ -5427,14 +5423,14 @@ void Update_ABV_ControllingMessage( uint8_t msg[] )
 **************************************************************************************************/
 void Update_IBV_ControllingMessage( uint8_t msg[] )
 {
-  msgRecording.EBV_MSG.IBV_CTRL_Flag  = msg[0];
-  
-  msgRecording.EBV_MSG.IBV_CTRL_WC    = msg[1];
-  
-  msgRecording.EBV_MSG.IBV_CTRL_VOLT  = ( uint16_t )( ( uint32_t )msg[3] << 8U )\
+    msgRecording.EBV_MSG.IBV_CTRL_Flag  = msg[0];
+
+    msgRecording.EBV_MSG.IBV_CTRL_WC    = msg[1];
+
+    msgRecording.EBV_MSG.IBV_CTRL_VOLT  = ( uint16_t )( ( uint32_t )msg[3] << 8U )\
                                                     + ( uint16_t )msg[2];
-  
-  msgRecording.EBV_MSG.IBV_Depressure = msg[4];
+
+    msgRecording.EBV_MSG.IBV_Depressure = msg[4];
 } /* end function Update_IBV_ControllingMessage */
 
 /**************************************************************************************************
@@ -5449,31 +5445,31 @@ void Update_IBV_ControllingMessage( uint8_t msg[] )
 (^_^) Software      : none.
 (^_^) Note          : Before using the program, you should read comments carefully.
 **************************************************************************************************/
-void Update_ABV_MonitorMessage( uint8_t msg[], uint8_t low3bit )
+void Update_ABV_MonitorMessage(uint8_t msg[], uint8_t low3bit)
 {
-  if ( 0x01U == low3bit )
-  {
-    msgRecording.EBV_MSG.ABV_MNT_WC_I   = msg[0];
-    
-    msgRecording.EBV_MSG.ABV_MNT_VOLT_I = ( uint16_t )( ( uint32_t )msg[2] << 8U )\
-                                                      + ( uint16_t )msg[1];
-    
-    msgRecording.EBV_MSG.ABV_Fault_I    = ( uint16_t )( ( uint32_t )msg[4] << 8U )\
-                                                      + ( uint16_t )msg[3];
-  }
-  else if ( 0x05U == low3bit )
-  {
-    msgRecording.EBV_MSG.ABV_MNT_WC_II   = msg[0];
-    
-    msgRecording.EBV_MSG.ABV_MNT_VOLT_II = ( uint16_t )( ( uint32_t )msg[2] << 8U )\
-                                                       + ( uint16_t )msg[1];
-    
-    msgRecording.EBV_MSG.ABV_Fault_II    = ( uint16_t )( ( uint32_t )msg[4] << 8U )\
-                                                       + ( uint16_t )msg[3];
-  }
-  else
-  {
-  } /* end if...else if...else */
+    if (0x01U == low3bit)
+    {
+        msgRecording.EBV_MSG.ABV_MNT_WC_I = msg[0];
+
+        msgRecording.EBV_MSG.ABV_MNT_VOLT_I = (uint16_t) ((uint32_t) msg[2] << 8U)\
+                                            + (uint16_t) msg[1];
+
+        msgRecording.EBV_MSG.ABV_Fault_I = (uint16_t) ((uint32_t) msg[4] << 8U)\
+                                            + (uint16_t) msg[3];
+    }
+    else if (0x05U == low3bit)
+    {
+        msgRecording.EBV_MSG.ABV_MNT_WC_II = msg[0];
+
+        msgRecording.EBV_MSG.ABV_MNT_VOLT_II = (uint16_t) ((uint32_t) msg[2] << 8U)\
+                                            + (uint16_t) msg[1];
+
+        msgRecording.EBV_MSG.ABV_Fault_II = (uint16_t) ((uint32_t) msg[4] << 8U)\
+                                            + (uint16_t) msg[3];
+    }
+    else
+    {
+    } /* end if...else if...else */
 } /* end function Update_ABV_MonitorMessage */
 
 
@@ -5648,71 +5644,70 @@ void Update_HLRT_SpeechTipsMessage( uint8_t msg[] )
 ***********************************************************************************************/
 uint16_t FFFEEncode(uint8_t *u8p_SrcData, uint16_t u16_SrcLen, uint8_t *u8p_DstData)
 {
-  bool  bFindNextFF;
-  uint8_t u8_NextFFPos;
-  
-  uint16_t u16_SrcP,u16_DstP,u16_FFPosP;
-  
-  u16_SrcP = 0;
-  u16_DstP = 0;
+    bool bFindNextFF;
+    uint8_t u8_NextFFPos;
 
-  while(u16_SrcP<u16_SrcLen)
-  {
-    u8p_DstData[u16_DstP] = u8p_SrcData[u16_SrcP];
-    if(u8p_SrcData[u16_SrcP] != 0xFF)
-    {
-      u16_SrcP++;
-      u16_DstP++;
-      continue;
-    }
-    
-    //找到第一个FF
-    u16_SrcP++;  //指向FF后面的字符
-    u16_DstP++; //预留一个字节，写入下一个FF的偏移
-    u16_FFPosP = u16_DstP;  //存储下一个FF的相对位置偏移
-    u16_DstP++; //指向后面的需要写入字符的位置
-    
-    u8_NextFFPos = 1;
-    bFindNextFF = false;
-    while(u8_NextFFPos <= 0xFC && u16_SrcP < u16_SrcLen)
-    {
-      if(u8p_SrcData[u16_SrcP] != 0xFF)
-      {
-        u8p_DstData[u16_DstP++] = u8p_SrcData[u16_SrcP++];
-        u8_NextFFPos++;
-      }
-      else
-      {
-        u8p_DstData[u16_FFPosP] = u8_NextFFPos;
-        u16_SrcP++;
-        bFindNextFF = true;
-        break;
-      }
-    }
-    
-    //如果在下面252个数据内未找到下一个FF，或者到数据结束未找到下一个FF
-    if(!bFindNextFF)
-    {
-      u8p_DstData[u16_FFPosP] = 0;
-    }
-  }
+    uint16_t u16_SrcP, u16_DstP, u16_FFPosP;
 
-  return u16_DstP;
+    u16_SrcP = 0;
+    u16_DstP = 0;
+
+    while (u16_SrcP < u16_SrcLen)
+    {
+        u8p_DstData[u16_DstP] = u8p_SrcData[u16_SrcP];
+        if (u8p_SrcData[u16_SrcP] != 0xFF)
+        {
+            u16_SrcP++;
+            u16_DstP++;
+            continue;
+        }
+
+        //找到第一个FF
+        u16_SrcP++;  //指向FF后面的字符
+        u16_DstP++; //预留一个字节，写入下一个FF的偏移
+        u16_FFPosP = u16_DstP;  //存储下一个FF的相对位置偏移
+        u16_DstP++; //指向后面的需要写入字符的位置
+
+        u8_NextFFPos = 1;
+        bFindNextFF = false;
+        while (u8_NextFFPos <= 0xFC && u16_SrcP < u16_SrcLen)
+        {
+            if (u8p_SrcData[u16_SrcP] != 0xFF)
+            {
+                u8p_DstData[u16_DstP++] = u8p_SrcData[u16_SrcP++];
+                u8_NextFFPos++;
+            }
+            else
+            {
+                u8p_DstData[u16_FFPosP] = u8_NextFFPos;
+                u16_SrcP++;
+                bFindNextFF = true;
+                break;
+            }
+        }
+
+        //如果在下面252个数据内未找到下一个FF，或者到数据结束未找到下一个FF
+        if (!bFindNextFF)
+        {
+            u8p_DstData[u16_FFPosP] = 0;
+        }
+    }
+
+    return u16_DstP;
 }
-
 
 //写文件头
 static sint32_t fm_write_record_file_head(S_CURRENT_FILE_INFO *current_file_info)
 {
     sint32_t ret;
 
-    if(NULL == current_file_info || NULL == current_file_info->file_head)
+    if (NULL == current_file_info || NULL == current_file_info->file_head)
     {
         return -1;
     }
     Update_FileHead();
     LOG_I("fm_write_record_file_head");
-    ret = write(current_file_info->fd, (char *)current_file_info->file_head, sizeof(SFile_Head));
+    ret = write(current_file_info->fd, (char *) current_file_info->file_head, sizeof(SFile_Head));
     fsync(current_file_info->fd);
     return ret;
 }
@@ -5788,6 +5783,42 @@ static void ChangeRecord_Condition_Judge(int argc, char **argv)
 #ifdef RT_USING_FINSH
 #include <finsh.h>
     MSH_CMD_EXPORT_ALIAS(ChangeRecord_Condition_Judge, changerecord, Change Record);
+#endif /* RT_USING_FINSH */
+#endif
+
+#if 1  //打印
+static void FileCreatInfo(int argc, char **argv)
+{
+    static char che_ci[4];
+    static char si_ji[4];
+    if (argc != 2 && argc != 3)
+    {
+        rt_kprintf("Usage: fileinfo [cmd]\n");
+        rt_kprintf("       fileinfo --pos\n");
+        rt_kprintf("       fileinfo --flag\n");
+    }
+    else
+    {
+        if (rt_strcmp(argv[1], "--pos") == 0)
+        {
+            LOG_I("pos %d", write_buf.pos);
+        }
+        else if(rt_strcmp(argv[1], "--flag") == 0)
+        {
+            LOG_I("SoftWare_Cycle_Flag %d", SoftWare_Cycle_Flag);
+        }
+        else
+        {
+            rt_kprintf("Usage: fileinfo [cmd]\n");
+            rt_kprintf("       fileinfo --pos\n");
+            rt_kprintf("       fileinfo --flag\n");
+        }
+    }
+}
+
+#ifdef RT_USING_FINSH
+#include <finsh.h>
+    MSH_CMD_EXPORT_ALIAS(FileCreatInfo, fileinfo, File Info);
 #endif /* RT_USING_FINSH */
 #endif
 

@@ -201,7 +201,7 @@ sint32_t dir_size(const char *dir_path)
     DIR *dir = opendir(path);
     if (NULL == dir)
     {
-        LOG_E("can not open dir %s \n", path);
+        LOG_E("can not open dir %s", path);
         return (sint32_t)-1;
     }
 
@@ -474,7 +474,7 @@ sint32_t create_dir(const char *path)
             {
                 if (mkdir(dir_name, 0777) < 0)
                 {
-                    LOG_E("can not create dir %s. \n", dir_name);
+                    LOG_E("can not create dir %s", dir_name);
                     return (sint32_t)-1;
                 }
             }
@@ -596,7 +596,7 @@ void copy_files(const char *src, const char *dest)
     dir = opendir(src);
     if (dir == NULL)
     {
-        printf("can not open src directory\n");
+        LOG_E("can not open src directory");
         return;
     }
 
@@ -609,7 +609,7 @@ void copy_files(const char *src, const char *dest)
 
         if (stat(src_path, &statbuf) == -1)
         {
-            printf("can not get file stats.\n");
+            LOG_E("can not get file stats");
             continue;
         }
 
@@ -622,7 +622,7 @@ void copy_files(const char *src, const char *dest)
             }
             if (mkdir(dest_path, statbuf.st_mode) < 0)
             {
-                printf("can not create directory.\n");
+                LOG_E("can not create directory");
                 continue;
             }
             copy_files(src_path, dest_path);
@@ -633,7 +633,7 @@ void copy_files(const char *src, const char *dest)
             FILE *src_file = fopen(src_path, "rb");
             if (src_file == NULL)
             {
-                printf("can not opening src file. \n");
+                LOG_E("can not opening src file");
                 fclose(src_file);
                 continue;
             }
@@ -641,7 +641,7 @@ void copy_files(const char *src, const char *dest)
             FILE *dest_file = fopen(dest_path, "wb");
             if (dest_file == NULL)
             {
-                printf("can not create dest file.\n");
+                LOG_E("can not create dest file");
                 fclose(src_file);
                 continue;
             }

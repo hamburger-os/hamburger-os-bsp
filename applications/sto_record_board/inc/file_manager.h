@@ -65,6 +65,7 @@ typedef struct __attribute__((packed)) {
 
 sint32_t FMWriteDirFile(const char * dirname, const void *dir_file, size_t count);
 sint32_t FMReadDirFile(const char * dirname, void *dir_file);
+sint32_t fm_free_space(void);
 sint32_t FMAppendWrite(const char *filename, const void *buffer, size_t count);
 sint32_t FMGetLatestFileInfo(const char *filename, void *data);
 sint32_t FMInit(S_FILE_MANAGER *fm);
