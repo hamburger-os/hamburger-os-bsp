@@ -342,7 +342,7 @@ static uint32_t GetDatagramAmount( uint32_t size );
 static uint32_t GetDatagramTotalSize( uint32_t base );
 static uint8_t Get_XOR_Byte( uint8_t array[], uint32_t size );
 
-static uint32_t WriteErrorCodePkt( char stat, uint8_t code, const char *spec, uint8_t *err );
+//static uint32_t WriteErrorCodePkt( char stat, uint8_t code, const char *spec, uint8_t *err );
 /**************************************************************************************************
 (^_^) Function Name : ThreadErrorCode.
 (^_^) Brief         : The thread of error code.
@@ -6183,7 +6183,7 @@ static uint32_t Processing_EC_SM_SEND( ErrorCodeInitStruct *inst )
       memset( inst->DGM_Buffer, 0U, DGM_BUFFER_SIZE );
       inst->LockFlag = UNLOCK;
       inst->EC_SM    = EC_SM_ACK;
-      inst->ACK_Time = GetTicks();
+      inst->ACK_Time = rt_tick_get();
     } /* end if...else */
   } /* end if...else */
   

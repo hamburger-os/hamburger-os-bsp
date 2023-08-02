@@ -213,11 +213,11 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
 {
     sint32_t udisk_free_space;
     sint32_t voice_size;
-    struct stat stat_l;
+//    struct stat stat_l;
 //    char logname[PATH_NAME_MAX_LEN];
 
     /* 获取最新目录文件名.*/
-    if (FMGetLatestFileInfo(NEW_DIR_FILE_NAME_CONF, &latest_dir_info) == 0)
+    if (FMGetLatestFileInfo(LATEST_DIR_NAME_FILE_PATH_NAME, NEW_DIR_FILE_NAME_CONF, &latest_dir_info, sizeof(S_LATEST_DIR_FILE_INFO)) == 0)
     {
         /* 正确读到了文件内容 */
         if (LATEST_DIR_FILE_HEAD_FLAG != latest_dir_info.head_flag)
@@ -343,9 +343,9 @@ static void usb_thread(void *args)
 {
     sint32_t ret = 0;
     E_DUMP_STATE state = DUMP_STATE_INIT;
-    char udisk_id[USB_KEY_MAX_LEN];
+//    char udisk_id[USB_KEY_MAX_LEN];
     struct stat stat_l;
-    sint32_t fd;
+//    sint32_t fd;
     LOG_I("usb thread start");
     while (1)
     {

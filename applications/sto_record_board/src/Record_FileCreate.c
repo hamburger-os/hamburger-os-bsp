@@ -352,14 +352,12 @@ static void Get_Gonggongxinxi( void );
 static void WriteFileContantPkt( uint8_t num1, uint8_t num2, uint8_t device_code, uint8_t *contant, uint8_t lenth );
 static void WriteGonggongxinxiPkt( void );
 static void Get_FileName(SFile_Directory *directory );
-static void Check_FlashState( void );
 static void Get_FileContant( void );
 static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info);
 static uint8_t Init_GonggongxinxiState( void );
 static void Update_FileHead(void);
 static sint32_t fm_write_record_file_head(S_CURRENT_FILE_INFO *current_file_info);
 static sint32_t fm_modify_record_file_head(S_CURRENT_FILE_INFO *current_file_info);
-static void File_Erase( uint32_t addr );
 static void Update_gongyoucanshu( void );
 
 uint16_t FFFEEncode(uint8_t *u8p_SrcData, uint16_t u16_SrcLen, uint8_t *u8p_DstData);
@@ -917,7 +915,7 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
         }
 
         /* 3.把最新的目录文件信息写入配置文件 */
-        FMWriteLatestInfo((const S_LATEST_DIR_FILE_INFO *) &file_manager.latest_dir_file_info);
+        FMWriteLatestInfo(LATEST_DIR_NAME_FILE_PATH_NAME, NEW_DIR_FILE_NAME_CONF, (const void *) &file_manager.latest_dir_file_info, sizeof(S_LATEST_DIR_FILE_INFO));
 
         /* 4.写入目录信息 */
         FMWriteDirFile(file_manager.latest_dir_file_info.file_name, (const void *) &s_File_Directory,
@@ -1584,6 +1582,18 @@ static void WriteFileContantPkt(uint8_t num1, uint8_t num2, uint8_t device_code,
 //            LOG_I("写记录事项位置：%d", write_buf.pos);
             write_buf.pos += contant_size;
             rest_size -= contant_size;
+
+            if(fm_free_fram_space(&file_manager) < 0)
+            {
+                LOG_E("fm_free_fram_space error");
+            }
+            else
+            {
+                if(FMWriteTmpFile(&file_manager, (const void *)&write_buf, sizeof(WRITE_BUF)) < 0)
+                {
+                    LOG_E("write record pos %d", write_buf.pos);
+                }
+            }
 //            LOG_I("写记录事项222位置：%d   剩余空间：%d   内容长度：%d", write_buf.pos, rest_size, contant_size);
             break;
         }
@@ -1715,7 +1725,7 @@ static void Get_FileContant(void)
  * 需要保证上一个文件大于等于20M或没有文件，才能调用该接口创建文件*/
 static void Get_FileName(SFile_Directory *directory)
 {
-    char filename[FILE_NAME_MAX_NUM] = {0};
+//    char filename[FILE_NAME_MAX_NUM] = {0};
 
     /* 记录文件名：车次_司机号_日期_序号 */
     /* 日期：年月日 */
@@ -2749,7 +2759,7 @@ static void RecordingTextPromptMessage(void)
 ***********************************************/
 static void RecordingVoicePromptMessage( void )
 {
-  static uint8_t C_yuyindaima[2]  = { 0x00U, 0x00U };
+//  static uint8_t C_yuyindaima[2]  = { 0x00U, 0x00U };
 
 //  if ( memcmp( C_yuyindaima, &YUYINDAIMA, 2U ) )
 //  {
@@ -5370,10 +5380,6 @@ static void RecordingUpgradeMessage( void )
 
 } /* end function RecordingUpgradeMessage */
 
-
-
-
-
 /**********************************************
 ***********************************************
 功能：获取调试信息
@@ -5789,8 +5795,8 @@ static void ChangeRecord_Condition_Judge(int argc, char **argv)
 #if 1  //打印
 static void FileCreatInfo(int argc, char **argv)
 {
-    static char che_ci[4];
-    static char si_ji[4];
+//    static char che_ci[4];
+//    static char si_ji[4];
     if (argc != 2 && argc != 3)
     {
         rt_kprintf("Usage: fileinfo [cmd]\n");

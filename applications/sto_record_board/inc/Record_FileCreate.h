@@ -500,15 +500,16 @@ typedef struct __attribute__((packed)) _SFile_Directory /* 按照字节对齐*/ 
 
 
 /* 包头信息 */
-typedef struct __attribute__((packed)){
-	uint8_t file_num;
-	uint8_t file_count;
-	uint8_t lenth;
-	uint32_t total_package;
-	uint32_t current_package;
-	uint16_t crc;
-	uint8_t file_name[24];
-	uint8_t reserve;
+typedef struct __attribute__((packed))
+{
+    uint8_t file_num;
+    uint8_t file_count;
+    uint8_t lenth;
+    uint32_t total_package;
+    uint32_t current_package;
+    uint16_t crc;
+    uint8_t file_name[FILE_NAME_MAX_NUM];
+    uint8_t reserve;
 } PACKAGE_HEAD;
 
 /* 公共信息事件包结构体 34字节 */
@@ -586,7 +587,7 @@ typedef struct __attribute__((packed))
     char xiaoyanma;
 } FILE_CONTANT;
 
-/* FRAM写缓冲区 */
+/* FRAM写缓冲区 257 */
 typedef struct __attribute__((packed))
 {
     uint8_t pos;
@@ -613,6 +614,7 @@ typedef struct __attribute__((packed)) _S_CURRENT_FILE_INFO /* 按照字节对�
     int32_t fd;
     SFile_Directory *file_dir;
     SFile_Head      *file_head;
+    WRITE_BUF       *write_buf;
     off_t new_record_head_offset;      /* 最新记录文件的文件头偏移量 */
 } S_CURRENT_FILE_INFO;
 

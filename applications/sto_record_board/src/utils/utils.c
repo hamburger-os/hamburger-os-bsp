@@ -137,7 +137,7 @@ sint32_t get_disk_free_space(const char *path)
     struct statfs disk_info;
     unsigned long long total_blocks;
     unsigned long long total_size;
-    ssize_t kb_total_size;
+//    ssize_t kb_total_size;
     unsigned long long free_disk;
     ssize_t kb_free_disk;
 
@@ -152,7 +152,7 @@ sint32_t get_disk_free_space(const char *path)
     total_blocks = disk_info.f_bsize;
     /* 获取总大小 */
     total_size = total_blocks * disk_info.f_blocks;
-    kb_total_size = total_size >> 10;
+//    kb_total_size = total_size >> 10;
     free_disk = disk_info.f_bfree * total_blocks;
     kb_free_disk = free_disk >> 10;
 
@@ -661,3 +661,17 @@ void copy_files(const char *src, const char *dest)
 
     closedir(dir);
 }
+
+int ChangeValuePositiveAndNegative(int value)
+{
+    if (value < 0)
+    {
+        value = ~(value - 1);
+    }
+    else if (value >0)
+    {
+        value = ~value + 1;
+    }
+    return value;
+}
+

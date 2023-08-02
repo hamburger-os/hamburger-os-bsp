@@ -29,8 +29,6 @@
 
 static void *FileThreadEntry(void *parameter)
 {
-    rt_err_t ret = RT_EOK;
-
     while(1)
     {
         CanDataHandle(&eth_can_data_handle);

@@ -49,7 +49,6 @@ typedef struct file_info_t
     uint8_t is_save;/* 是否转存过  1：转存 0：未转存 */
     struct file_info_t *next;         /* 下一文件 */
 } file_info_t;
-#if 0
 /*******************************************************
  * 函数声明
  *******************************************************/
@@ -64,6 +63,7 @@ typedef struct file_info_t
  *******************************************************/
 char *get_sigle_file_name(char *full_path);
 
+#if 0
 /*******************************************************
  *
  * @brief  判断EMMC存储器是满
@@ -73,6 +73,7 @@ char *get_sigle_file_name(char *full_path);
  *
  *******************************************************/
 sint32_t check_disk_full(const char *name);
+#endif
 
 /*******************************************************
  *
@@ -83,7 +84,6 @@ sint32_t check_disk_full(const char *name);
  *
  *******************************************************/
 sint32_t get_disk_free_space(const char *path);
-#endif
 /*******************************************************
  *
  * @brief  获取指定目录已使用的空间, 单位:字节
@@ -93,7 +93,6 @@ sint32_t get_disk_free_space(const char *path);
  *
  *******************************************************/
 sint32_t dir_size(const char *name);
-#if 0
 /*******************************************************
  *
  * @brief  查询指定目录下的VSW文件,如果存在, 则将文件信息
@@ -135,8 +134,6 @@ void show_link(file_info_t *list_head);
  *
  *******************************************************/
 void free_link(file_info_t *list_head);
-
-#endif
 /*******************************************************
  *
  * @brief  递归创建目录
@@ -157,7 +154,6 @@ sint32_t create_dir(const char *path);
  *******************************************************/
 sint32_t create_file(const char *path);
 
-#if 0
 /*******************************************************
  *
  * @brief  获取文件的大小,单位:byte.
@@ -178,7 +174,6 @@ uint32_t file_size(char *name);
  *******************************************************/
 
 int delete_file(const char *path);
-
 /*******************************************************
  *
  * @brief  递归拷贝文件夹
@@ -190,6 +185,14 @@ int delete_file(const char *path);
  *******************************************************/
 void copy_files(const char *src, const char *dest);
 
-#endif
+/*******************************************************
+ *
+ * @brief  修改数字符号，正数变负数，负数变正
+ *
+ * @param value 待改变的数字
+ * @retval 改变后的数字
+ *
+ *******************************************************/
+int ChangeValuePositiveAndNegative(int value);
 
 #endif

@@ -12,6 +12,8 @@
 #include "eth_manage.h"
 #include "board_info.h"
 #include "usb.h"
+#include "eth_thread.h"
+#include "file_handle_thread.h"
 
 #include <rtthread.h>
 #include <rtdevice.h>
