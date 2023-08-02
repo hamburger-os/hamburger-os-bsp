@@ -595,8 +595,9 @@ void RecordBoard_FileCreate(void)
         }
         /* 文件大小 */
         s_File_Directory.u32_file_size = stat_l.st_size;
-        FMWriteDirFile(file_manager.latest_dir_file_info.file_name, (const void *) &s_File_Directory,
-                sizeof(SFile_Directory));
+        FMWriteFile(&file_manager, file_manager.latest_dir_file_info.file_name,
+                    (const void *) &s_File_Directory,
+                    sizeof(SFile_Directory));
 
         /* 计算写入内容的CRC值 用于更新文件头内文件内容CRC值*/
         FileContent_CRC32 = CRC32CCITT((uint8_t *) write_buf.buf, u16_FFFE_Encode_length + 5U, FileContent_CRC32);
@@ -814,8 +815,9 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
                 }
                 /* 文件大小 */
                 s_File_Directory.u32_file_size = stat_l.st_size;
-                FMWriteDirFile(file_manager.latest_dir_file_info.file_name, (const void *) &s_File_Directory,
-                        sizeof(SFile_Directory));
+                FMWriteFile(&file_manager, file_manager.latest_dir_file_info.file_name,
+                            (const void *) &s_File_Directory,
+                            sizeof(SFile_Directory));
 
                 /* 计算写入内容的CRC值 用于更新文件头内文件内容CRC值*/
                 FileContent_CRC32 = CRC32CCITT((uint8_t *) write_buf.buf, write_buf.pos, FileContent_CRC32);
@@ -890,9 +892,9 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
         LOG_I("start create new file dir num %d", file_manager.latest_dir_file_info.dir_num);
         if (file_manager.latest_dir_file_info.dir_num > FILE_MAX_NUM)    //目录个数
         {
-            if (fm_free_space() < 0)
+            if (fm_free_emmc_space() < 0)
             {
-                LOG_E("fm_free_space error");
+                LOG_E("fm_free_emmc_space error");
             }
         } /* end if */
 
@@ -907,7 +909,8 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
 
         LOG_I("data %d %d %d %d", s_File_Directory.ch_date[0], s_File_Directory.ch_date[1], s_File_Directory.ch_date[2],
                 s_File_Directory.ch_date[3]);
-        Get_FileName(&s_File_Directory);  //有返回值     生成目录与记录文件名
+        /* 生成目录与记录文件名 */
+        Get_FileName(&s_File_Directory);
 
         /* 打印记录文件名与目录文件名 */
         LOG_I("file：%s dir: %s", s_File_Directory.ch_file_name, file_manager.latest_dir_file_info.file_name);
@@ -937,8 +940,9 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
         FMWriteLatestInfo(LATEST_DIR_NAME_FILE_PATH_NAME, NEW_DIR_FILE_NAME_CONF, (const void *) &file_manager.latest_dir_file_info, sizeof(S_LATEST_DIR_FILE_INFO));
 
         /* 4.写入目录信息 */
-        FMWriteDirFile(file_manager.latest_dir_file_info.file_name, (const void *) &s_File_Directory,
-                sizeof(SFile_Directory));
+        FMWriteFile(&file_manager, file_manager.latest_dir_file_info.file_name,
+                    (const void *) &s_File_Directory,
+                    sizeof(SFile_Directory));
 
 #if 0
         /* 打开目录文件 */
@@ -1251,7 +1255,7 @@ static void Get_Gonggongxinxi(void)
     static char last_ch_jichexinhao = 0;
     if (last_ch_jichexinhao != s_file_public.ch_jichexinhao[0])
     {
-        LOG_I("change public xin xi ji che xin hao：%x", s_file_public.ch_jichexinhao[0]);
+//        LOG_I("change public xin xi ji che xin hao：%x", s_file_public.ch_jichexinhao[0]);
         last_ch_jichexinhao = s_file_public.ch_jichexinhao[0];
     }
 #endif
@@ -1615,7 +1619,7 @@ static void WriteFileContantPkt(uint8_t num1, uint8_t num2, uint8_t device_code,
                     LOG_E("write record pos %d", write_buf.pos);
                 }
             }
-//            LOG_I("写记录事项222位置：%d   剩余空间：%d   内容长度：%d", write_buf.pos, rest_size, contant_size);
+            LOG_I("写记录事项222位置：%d   剩余空间：%d   内容长度：%d", write_buf.pos, rest_size, contant_size);
             break;
         }
         else /* 缓存区存满 */
@@ -1653,8 +1657,9 @@ static void WriteFileContantPkt(uint8_t num1, uint8_t num2, uint8_t device_code,
             }
             /* 文件大小 */
             s_File_Directory.u32_file_size = stat_l.st_size;
-            FMWriteDirFile(file_manager.latest_dir_file_info.file_name, (const void *) &s_File_Directory,
-                    sizeof(SFile_Directory));
+            FMWriteFile(&file_manager, file_manager.latest_dir_file_info.file_name,
+                        (const void *) &s_File_Directory,
+                        sizeof(SFile_Directory));
 
             /* 计算写入内容的CRC值 用于更新文件头内文件内容CRC值*/
             FileContent_CRC32 = CRC32CCITT((uint8_t *) write_buf.buf, u16_FFFE_Encode_length + 5U, FileContent_CRC32);
@@ -1749,7 +1754,7 @@ static void Get_FileContant(void)
 参数：addr  -->  文件地址
 返回：无
 ***********************************************/
-#if 1
+#if 0
 /*
  *
  * 需要保证上一个文件大于等于20M或没有文件，才能调用该接口创建文件*/
@@ -1784,20 +1789,15 @@ static void Get_FileName(SFile_Directory *directory)
 }
 
 #else
-static sint32_t Get_FileName(SFile_Directory *directory )
+static void Get_FileName(SFile_Directory *directory)
 {
     uint32_t i = 0u, j = 0u;
     uint32_t num, divisor = 0u;
-    uint8_t u8_lastfilename_num = 0u;
-    sint32_t ret = 0;
-
-    SFile_Directory s_lastfile_directory = { 0U };
 
     /* 车次扩充 */
     for (i = 0u; i < 4u; i++)
     {
-        if (directory->ch_checikuochong[i] != 0x20u \
-                && directory->ch_checikuochong[i] != 0x00u)
+        if (directory->ch_checikuochong[i] != 0x20u && directory->ch_checikuochong[i] != 0x00u)
         {
             directory->ch_file_name[j] = directory->ch_checikuochong[i];
             j++;
@@ -1908,79 +1908,26 @@ static sint32_t Get_FileName(SFile_Directory *directory )
 //    LOG_I("num3:%s", directory->ch_file_name);
 #endif
 #endif
-    LOG_I("ch file name %s", directory->ch_file_name);
-    /* 还没有目录文件 */
-    if(0 == strcmp(file_manager.latest_dir_file_info.file_name, FIRST_LATEST_DIR_NAME_NULL))
-    {
-        snprintf(file_manager.latest_dir_file_info.file_name, FILE_NAME_MAX_NUM, "%s_dir_%d", directory->ch_file_name, directory->file_id);
-        LOG_I("dir name %s", file_manager.latest_dir_file_info.file_name);
-    }
-    else
-    {
-        /* 文件序号 */
-        if(FMReadDirFile(file_manager.latest_dir_file_info.file_name, &s_lastfile_directory) < 0)
-        {
-            return -1;
-        }
 
-        /* 如果上个文件大于等于20M，则本文件名在上一个的基础上加序号 */
-        if( s_lastfile_directory.u32_file_size >= RECORD_FILE_MAN_SIZE )
-        {
-            for (i = 0u; i < 24u; i++)
-            {
-                if ('.' == s_lastfile_directory.ch_file_name[i])
-                {
-                    u8_lastfilename_num = ((s_lastfile_directory.ch_file_name[i - 3] - 48u) & 0x01) * 100
-                            + (s_lastfile_directory.ch_file_name[i - 2] - 48u) * 10
-                            + (s_lastfile_directory.ch_file_name[i - 1] - 48u) * 1;
-                    break;
-                }
-            }
+    directory->ch_file_name[j++] = directory->ch_date[0u] / 10u + 48u;
+    directory->ch_file_name[j++] = directory->ch_date[0u] % 10u + 48u;
+    directory->ch_file_name[j++] = directory->ch_date[1u] / 10u + 48u;
+    directory->ch_file_name[j++] = directory->ch_date[1u] % 10u + 48u;
+    directory->ch_file_name[j++] = directory->ch_date[2u] / 10u + 48u;
+    directory->ch_file_name[j++] = directory->ch_date[2u] % 10u + 48u;
 
-            /* 如果上个文件大于等于20MB，则读取上一个文件的文件名，在上个文件名基础上序号加1 */
-            if (s_lastfile_directory.u32_file_size >= RECORD_FILE_MAN_SIZE)
-            {
-                u8_lastfilename_num += 1u;
-                /* 文件序号 */
-                directory->file_id = u8_lastfilename_num;
-                directory->ch_file_name[j] = directory->ch_file_name[j] | (u8_lastfilename_num / 100) + 48u;
-                j++;
-                directory->ch_file_name[j++] = (u8_lastfilename_num % 100) / 10 + 48u;
-                directory->ch_file_name[j++] = (u8_lastfilename_num % 10) / 1 + 48u;
-            }
-            else
-            {
-                /* 文件序号 */
-                directory->ch_file_name[j] = directory->ch_file_name[j] | 0u + 48u;
-                j++;
-                directory->ch_file_name[j++] = 0u + 48u;
-                directory->ch_file_name[j++] = 1u + 48u;
-            }
+    directory->ch_file_name[j++] = '_';
+    directory->ch_file_name[j++] = directory->file_id + 48u;
 
-            /* 后缀符号‘.’ */
-            directory->ch_file_name[j++] = '.';
-            /* 日期 */
-        //  directory->ch_file_name[ j++ ] = directory->ch_date[ 0u ] / 10u + 48u;
-        //  directory->ch_file_name[ j++ ] = directory->ch_date[ 0u ] % 10u + 48u;
-            directory->ch_file_name[j++] = directory->ch_date[1u] / 10u + 48u;
-            directory->ch_file_name[j++] = directory->ch_date[1u] % 10u + 48u;
-            directory->ch_file_name[j++] = directory->ch_date[2u] / 10u + 48u;
-            directory->ch_file_name[j++] = directory->ch_date[2u] % 10u + 48u;
+    snprintf(file_manager.latest_dir_file_info.file_name, FILE_NAME_MAX_NUM, "%s_dir", directory->ch_file_name);
+    LOG_I("dir name %s", file_manager.latest_dir_file_info.file_name);
+    memcpy(directory->ch_dir_name, file_manager.latest_dir_file_info.file_name, FILE_NAME_MAX_NUM);
 
-            if (j < 24u)
-            {
-                for (i = j; i < 24u; i++)
-                {
-                    directory->ch_file_name[i] = 0u;
-                } /*  end for */
-            } /* end if */
-
-            /* 更新目录的文件名 */
-            snprintf(file_manager.latest_dir_file_info.file_name, FILE_NAME_MAX_NUM, "%s_dir_%d", directory->ch_file_name, directory->file_id);
-            LOG_I("dir name %s", file_manager.latest_dir_file_info.file_name);
-        }
-    }
-    return 0;
+    directory->ch_file_name[j++] = '.';
+    directory->ch_file_name[j++] = 'D';
+    directory->ch_file_name[j++] = 'S';
+    directory->ch_file_name[j++] = 'W';
+    LOG_I("ch file name %s j %d", directory->ch_file_name, j);
 }
 #endif
 
@@ -5767,60 +5714,6 @@ static sint32_t fm_modify_record_file_head(S_CURRENT_FILE_INFO *current_file_inf
 
     return 0;
 }
-
-#if 0  //用该测试代码时，需要将RECORD_FILE_MAN_SIZE定义改小
-static char test_write[RECORD_FILE_MAN_SIZE];
-static void ChangeRecord_Condition_Judge(int argc, char **argv)
-{
-    static char che_ci[4];
-    static char si_ji[4];
-    if (argc != 2 && argc != 3)
-    {
-        rt_kprintf("Usage: changerecord [cmd]\n");
-        rt_kprintf("       changerecord --checi\n");
-        rt_kprintf("       changerecord --siji\n");
-        rt_kprintf("       changerecord --wf\n");
-    }
-    else
-    {
-        if (rt_strcmp(argv[1], "--checi") == 0)
-        {
-            CHECI += 1;
-            LOG_I("change che ci %d", CHECI);
-        }
-        else if (rt_strcmp(argv[1], "--siji") == 0)
-        {
-            SIJI1 += 1;
-
-            LOG_I("change si ji %d", SIJI1);
-        }
-        else if (rt_strcmp(argv[1], "--wf") == 0)
-        {
-            char full_path[PATH_NAME_MAX_LEN] = {0};
-
-            memset(test_write, 0xaa, RECORD_FILE_MAN_SIZE);
-            snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, s_File_Directory.ch_file_name);
-            LOG_I("test:%s", full_path);
-            if(FMAppendWrite(full_path, (const void *)test_write, RECORD_FILE_MAN_SIZE) < 0)
-            {
-                LOG_E("test:%s write error", full_path);
-            }
-        }
-        else
-        {
-            rt_kprintf("Usage: changerecord [cmd]\n");
-            rt_kprintf("       changerecord --checi\n");
-            rt_kprintf("       changerecord --siji\n");
-            rt_kprintf("       changerecord --wf\n");
-        }
-    }
-}
-
-#ifdef RT_USING_FINSH
-#include <finsh.h>
-    MSH_CMD_EXPORT_ALIAS(ChangeRecord_Condition_Judge, changerecord, Change Record);
-#endif /* RT_USING_FINSH */
-#endif
 
 #if 1  //打印
 static void FileCreatInfo(int argc, char **argv)

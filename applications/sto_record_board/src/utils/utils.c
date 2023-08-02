@@ -136,7 +136,7 @@ sint32_t get_disk_free_space(const char *path)
     ssize_t ret = -1;
     struct statfs disk_info;
     unsigned long long total_blocks;
-    unsigned long long total_size;
+//    unsigned long long total_size;
 //    ssize_t kb_total_size;
     unsigned long long free_disk;
     ssize_t kb_free_disk;
@@ -151,7 +151,7 @@ sint32_t get_disk_free_space(const char *path)
     /* 获取块数 */
     total_blocks = disk_info.f_bsize;
     /* 获取总大小 */
-    total_size = total_blocks * disk_info.f_blocks;
+//    total_size = total_blocks * disk_info.f_blocks;
 //    kb_total_size = total_size >> 10;
     free_disk = disk_info.f_bfree * total_blocks;
     kb_free_disk = free_disk >> 10;
@@ -379,7 +379,7 @@ file_info_t *get_org_file_info(const char *path)
     DIR *p_dir;
     struct dirent *next;
     char full_path[PATH_NAME_MAX_LEN] = {0};
-    char buffer[PAGE_SIZE];
+    char buffer[SFILE_DIR_SIZE];
     sint32_t bytes_read;
     struct stat stat_l;
     sint32_t fd;

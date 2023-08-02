@@ -44,7 +44,7 @@ sint32_t fm_free_fram_space(S_FILE_MANAGER *fm)
     /* 得到板载存储器的剩余空间大小 */
     disk_free_space = get_disk_free_space(RECORD_TEMP_FILE_PATH_NAME);
 
-    LOG_I("free fram before: %d K", disk_free_space);
+//    LOG_I("free fram before: %d K", disk_free_space);
 
     snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_TEMP_FILE_PATH_NAME, fm->latest_tmp_file_info.file_name);
     /* 当前文件是否超过文件设置的大小 */
@@ -157,7 +157,7 @@ sint32_t FMWriteTmpFile(S_FILE_MANAGER *fm, const void *data, size_t count)
 /*
  * 从铁电存储器中读取临时文件
  * */
-sint32_t FMReadTmpFile(S_FILE_MANAGER *fm, void *data, size_t count)
+static sint32_t FMReadTmpFile(S_FILE_MANAGER *fm, void *data, size_t count)
 {
     char full_path[PATH_NAME_MAX_LEN] = {0};
     sint32_t bytes_read;
@@ -199,15 +199,14 @@ sint32_t FMReadTmpFile(S_FILE_MANAGER *fm, void *data, size_t count)
  * @retval 0:成功 -1:失败
  *
  *******************************************************/
-sint32_t FMInitLatestTmpFile(S_FILE_MANAGER *fm)
+static sint32_t FMInitLatestTmpFile(S_FILE_MANAGER *fm)
 {
     S_LATEST_TMP_FILE_INFO *latest_info = &fm->latest_tmp_file_info;
     sint32_t ret = -1;
     sint32_t fd = 0;
-//    struct stat stat_l;
 
     LOG_I("latest file name: %s.", LATEST_TEMP_FILE_NAME);
-    if (FMGetLatestFileInfo(LATEST_TMP_NAME_FILE_PATH_NAME, LATEST_TEMP_FILE_NAME, latest_info, sizeof(S_LATEST_TMP_FILE_INFO)) == 0)
+    if (FMGetLatestFileInfo(fm, LATEST_TMP_NAME_FILE_PATH_NAME, LATEST_TEMP_FILE_NAME, latest_info, sizeof(S_LATEST_TMP_FILE_INFO)) == 0)
     {
         /* 正确读到了文件内容 */
         if(LATEST_DIR_FILE_HEAD_FLAG != latest_info->head_flag)
@@ -218,25 +217,16 @@ sint32_t FMInitLatestTmpFile(S_FILE_MANAGER *fm)
         }
         else
         {
-//            snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_TEMP_FILE_PATH_NAME, latest_info->file_name);
-//            ret = stat(full_path, &stat_l);
-//            if(ret < 0)
-//            {
-//                LOG_E("no %s", full_path);
-//            }
-//            else
-//            {
-                ret = FMReadTmpFile(fm, s_current_file_info.write_buf, sizeof(WRITE_BUF));
-                if(ret < 0)
-                {
-                    LOG_E("FMReadTmpFile error");
-                    return (sint32_t)-1;
-                }
-                else
-                {
-                    LOG_I("write pos:%d", fm->current_info->write_buf->pos);
-                }
-//            }
+            ret = FMReadTmpFile(fm, s_current_file_info.write_buf, sizeof(WRITE_BUF));
+            if(ret < 0)
+            {
+                LOG_E("FMReadTmpFile error");
+                return (sint32_t)-1;
+            }
+            else
+            {
+                LOG_I("write pos:%d", fm->current_info->write_buf->pos);
+            }
         }
         latest_info->not_exsit = 0;
 
@@ -248,7 +238,6 @@ sint32_t FMInitLatestTmpFile(S_FILE_MANAGER *fm)
     latest_info->not_exsit = 1;
 
     char full_path[PATH_NAME_MAX_LEN] = { 0 };
-
 
     snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_TEMP_FILE_PATH_NAME, fm->latest_tmp_file_info.file_name);
     fd = open(full_path, O_CREAT | O_RDWR | O_APPEND, S_IRUSR | S_IWUSR);
@@ -262,12 +251,13 @@ sint32_t FMInitLatestTmpFile(S_FILE_MANAGER *fm)
     return FMWriteLatestInfo(LATEST_TMP_NAME_FILE_PATH_NAME, LATEST_TEMP_FILE_NAME, (const void *) latest_info, sizeof(S_LATEST_TMP_FILE_INFO));
 }
 
-sint32_t FMWriteDirFile(const char * dirname, const void *dir_file, size_t count)
+sint32_t FMWriteFile(S_FILE_MANAGER *fm, const char * dirname, const void *dir_file, size_t count)
 {
     sint32_t fd = 0;
     sint32_t ret = -1;
     char full_path[PATH_NAME_MAX_LEN] = { 0 };
 
+    rt_mutex_take(fm->file_mutex, RT_WAITING_FOREVER);
     snprintf(full_path, sizeof(full_path), "%s/%s", DIR_FILE_PATH_NAME, dirname);
     fd = open(full_path, O_RDWR);
     if (fd > 0)
@@ -279,42 +269,49 @@ sint32_t FMWriteDirFile(const char * dirname, const void *dir_file, size_t count
         if (ret < 0)
         {
             LOG_E("%s write error", full_path);
+            rt_mutex_release(fm->file_mutex);
             return (sint32_t)-1;
         }
+        rt_mutex_release(fm->file_mutex);
         return 0;
     }
     else
     {
         LOG_E("open %s error", full_path);
+        rt_mutex_release(fm->file_mutex);
         return -1;
     }
 }
 
-sint32_t FMReadDirFile(const char * dirname, void *dir_file)
+sint32_t FMReadFile(S_FILE_MANAGER *fm, const char * dirname, void *dir_file, size_t len)
 {
     sint32_t fd = 0;
     char full_path[PATH_NAME_MAX_LEN] = { 0 };
     sint32_t bytes_read;
 
+    rt_mutex_take(fm->file_mutex, RT_WAITING_FOREVER);
     snprintf(full_path, sizeof(full_path), "%s/%s", DIR_FILE_PATH_NAME, dirname);
     fd = open(full_path, O_RDONLY);
     if (fd > 0)
     {
-        bytes_read = read(fd, (void *) dir_file, (size_t) sizeof(SFile_Directory));
+        bytes_read = read(fd, (void *) dir_file, len);
         close(fd);
-        if (bytes_read == sizeof(SFile_Directory))
+        if (bytes_read == len)
         {
+            rt_mutex_release(fm->file_mutex);
             return 0;
         }
         else
         {
             LOG_E("read %s size = %d", full_path, bytes_read);
+            rt_mutex_release(fm->file_mutex);
             return -1;
         }
     }
     else
     {
         LOG_E("read %s error", full_path);
+        rt_mutex_release(fm->file_mutex);
         return -1;
     }
 }
@@ -374,7 +371,7 @@ sint32_t check_disk_full(const char *name)
  * @retval 0:成功 <0:失败
  *
  *******************************************************/
-sint32_t fm_free_space(void)
+sint32_t fm_free_emmc_space(void)
 {
     sint32_t disk_free_space;
     file_info_t *p_file_list_head = NULL, *p = NULL;
@@ -395,7 +392,7 @@ sint32_t fm_free_space(void)
     p_file_list_head = get_org_file_info(DIR_FILE_PATH_NAME);
     if(p_file_list_head != NULL)
     {
-        p_file_list_head = sort_link(p_file_list_head, SORT_UP); /* 按照文件序号,由小到大排序,先删除序号最小的文件 */
+//        p_file_list_head = sort_link(p_file_list_head, SORT_UP); /* 按照文件序号,由小到大排序,先删除序号最小的文件 */
 //        show_link(p_file_list_head);
         p = p_file_list_head;
         while(p != NULL)
@@ -486,12 +483,14 @@ sint32_t FMWriteLatestInfo(const char *pathname, const char *filename, const voi
     return 0;
 }
 
-sint32_t FMGetLatestFileInfo(const char *pathname, const char *filename, void *data, size_t size)
+sint32_t FMGetLatestFileInfo(S_FILE_MANAGER *fm, const char *pathname, const char *filename, void *data, size_t size)
 {
     struct stat stat_l;
     char full_path[PATH_NAME_MAX_LEN] = {0};
     sint32_t fd;
     sint32_t ret;
+
+    rt_mutex_take(fm->file_mutex, RT_WAITING_FOREVER);
 
     /* 获取目录文件的文件信息. */
     snprintf(full_path,
@@ -504,6 +503,7 @@ sint32_t FMGetLatestFileInfo(const char *pathname, const char *filename, void *d
     {
         LOG_W("can not stat file '%s'. error code: 0x%08x",
                   full_path, ret);
+        rt_mutex_release(fm->file_mutex);
         return ret;
     }
 
@@ -512,6 +512,7 @@ sint32_t FMGetLatestFileInfo(const char *pathname, const char *filename, void *d
     {
         LOG_E("file '%s' size :%ld",
                   full_path, stat_l.st_size);
+        rt_mutex_release(fm->file_mutex);
         return (sint32_t)-1;
     }
 
@@ -524,12 +525,14 @@ sint32_t FMGetLatestFileInfo(const char *pathname, const char *filename, void *d
         {
             LOG_E("error, 文件%s的大小小于%d", full_path, size);
             close(fd);
+            rt_mutex_release(fm->file_mutex);
             return (sint32_t)-1;
         }
         else
         {
             /* 将文件关闭 */
             close(fd);
+            rt_mutex_release(fm->file_mutex);
             return 0;
         }
     }
@@ -538,6 +541,7 @@ sint32_t FMGetLatestFileInfo(const char *pathname, const char *filename, void *d
         /* 打开文件失败,需要特殊处理 */
         LOG_E("error, can not open file %s", full_path);
     }
+    rt_mutex_release(fm->file_mutex);
     return (sint32_t)-1;
 }
 
@@ -548,7 +552,7 @@ sint32_t FMGetLatestFileInfo(const char *pathname, const char *filename, void *d
  * @retval 0:成功 -1:失败
  *
  *******************************************************/
-sint32_t FMInitLatestFile(S_FILE_MANAGER *fm)
+static sint32_t FMInitLatestFile(S_FILE_MANAGER *fm)
 {
     S_LATEST_DIR_FILE_INFO *latest_info = &fm->latest_dir_file_info;
     sint32_t fd = 0;
@@ -556,7 +560,7 @@ sint32_t FMInitLatestFile(S_FILE_MANAGER *fm)
     sint32_t ret = -1;
 
     LOG_I("latest file name: %s.", NEW_DIR_FILE_NAME_CONF);
-    if (FMGetLatestFileInfo(LATEST_DIR_NAME_FILE_PATH_NAME, NEW_DIR_FILE_NAME_CONF, latest_info, sizeof(S_LATEST_DIR_FILE_INFO)) == 0)
+    if (FMGetLatestFileInfo(fm, LATEST_DIR_NAME_FILE_PATH_NAME, NEW_DIR_FILE_NAME_CONF, latest_info, sizeof(S_LATEST_DIR_FILE_INFO)) == 0)
     {
         /* 正确读到了文件内容 */
         if(LATEST_DIR_FILE_HEAD_FLAG != latest_info->head_flag)
@@ -679,27 +683,6 @@ sint32_t FMInit(S_FILE_MANAGER *fm)
         return (sint32_t)-1;
     }
 
-#if 0
-    snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_TEMP_FILE_PATH_NAME, RECORD_TEMP_FILE_NAME);
-    ret = stat(full_path, &stat_l);
-    if(ret < 0)
-    {
-        LOG_E("no %s", full_path);
-    }
-    else
-    {
-        ret = FMReadTmpFile(s_current_file_info.write_buf, sizeof(WRITE_BUF));
-        if(ret < 0)
-        {
-            LOG_E("FMReadTmpFile error. \n");
-            return (sint32_t)-1;
-        }
-        else
-        {
-            LOG_I("write pos:%d", fm->current_info->write_buf->pos);
-        }
-    }
-#endif
     /* 打印相关信息 */
     LOG_I("---------------- latest file ------------------");
     LOG_I("| filename:        %s", fm->latest_dir_file_info.file_name);

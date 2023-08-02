@@ -50,7 +50,7 @@ void ETHToCanDataHandle(S_DATA_HANDLE *p_data_handle, uint8_t *pbuf, uint16_t da
 
     if(RT_NULL == p_data_handle)
     {
-        return -RT_EINVAL;
+        return;
     }
 
     S_ETH_CAN_FRAME *s_can_frame = NULL;
@@ -386,6 +386,6 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
         default:
             break;
     } /* end switch */
-
+    return RT_EOK;
 }
 

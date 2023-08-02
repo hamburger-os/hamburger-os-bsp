@@ -85,16 +85,15 @@ typedef struct __attribute__((packed)) {
 } S_FILE_MANAGER;
 
 sint32_t FMWriteTmpFile(S_FILE_MANAGER *fm, const void *data, size_t count);
-sint32_t FMReadTmpFile(S_FILE_MANAGER *fm, void *data, size_t count);
 sint32_t fm_free_fram_space(S_FILE_MANAGER *fm);
 
-sint32_t FMWriteDirFile(const char * dirname, const void *dir_file, size_t count);
-sint32_t FMReadDirFile(const char * dirname, void *dir_file);
-sint32_t fm_free_space(void);
+sint32_t FMWriteFile(S_FILE_MANAGER *fm, const char * dirname, const void *dir_file, size_t count);
+sint32_t FMReadFile(S_FILE_MANAGER *fm, const char * dirname, void *dir_file, size_t len);
+sint32_t fm_free_emmc_space(void);
 
 sint32_t FMAppendWrite(const char *filename, const void *buffer, size_t count);
 sint32_t FMWriteLatestInfo(const char *pathname, const char *filename, const void *data, size_t size);
-sint32_t FMGetLatestFileInfo(const char *pathname, const char *filename, void *data, size_t size);
+sint32_t FMGetLatestFileInfo(S_FILE_MANAGER *fm, const char *pathname, const char *filename, void *data, size_t size);
 sint32_t FMInit(S_FILE_MANAGER *fm);
 
 #endif /* APPLICATIONS_STO_RECORD_BOARD_INC_FILE_MANAGER_H_ */

@@ -24,7 +24,7 @@
 #include <rtdbg.h>
 
 #define FILE_THREAD_PRIORITY         15//19
-#define FILE_THREAD_STACK_SIZE       (2048 * 2)
+#define FILE_THREAD_STACK_SIZE       (2048 * 3)
 #define FILE_THREAD_TIMESLICE        5
 
 static void *FileThreadEntry(void *parameter)

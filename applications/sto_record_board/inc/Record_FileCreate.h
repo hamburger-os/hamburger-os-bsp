@@ -26,6 +26,7 @@ extern uint8_t g_ECU_DevCode;
 /* publice macro definition -------------------------------------------------------------------- */
 #define SECTOR_SIZE         ( 65536U )
 #define PAGE_SIZE           ( 256U )
+#define SFILE_DIR_SIZE      (128U)
 
 /* FRAM address. =============================================================================== */
 /* 512B */
@@ -171,8 +172,8 @@ extern uint8_t g_ECU_DevCode;
 #define ZHAGANGYALI           ( CAN_0x32( 0u ).data_u8[6] )
 #define JUNGANG1YALI          ( CAN_0x32( 0u ).data_u8[4] )
 #define CHAIYOUJIZHUANSU      ( CAN_0x68( 1u ).data_u8[6] )
-#define GUOJIZHUNDIANJULI			( QSS_( 1u ).data_u8[0] )
-#define GONGLIBIAO						( QSS_( 1u ).data_u8[4] )
+#define GUOJIZHUNDIANJULI     ( QSS_( 1u ).data_u8[0] )
+#define GONGLIBIAO            ( QSS_( 1u ).data_u8[4] )
 #define JINGGAOBIAOZHI        ( QSS_( 6u ).data_u8[0] )
 
 /* 板间自检信息 */
@@ -198,8 +199,8 @@ extern uint8_t g_ECU_DevCode;
 #define LKJCHANGJIA               ( CAN_0x6A( 0u ).data_u8[7] )
 //#define TIME_NYR                                      //CAN协议已有，名称一致
 //#define TIME_SFM                                      //CAN协议已有，名称一致
-#define YUNXINGJINGLUHAO	         ( SHUJUJIAOLU<<8 + JIANKONGJIAOLU )
-#define LKJFACHEFANGXIANG	         CHEZHANHAO
+#define YUNXINGJINGLUHAO	       ( SHUJUJIAOLU<<8 + JIANKONGJIAOLU )
+#define LKJFACHEFANGXIANG	       CHEZHANHAO
 #define QIANGZHIBENGFENG           ( LocomotiveInfo_Received_data[23] & 0x10 )
 #define CHEZHANMING                ETH_DAT[1]           //CAN协议没有定义
 //#define JICHEXINGHAO                                  //CAN协议已有，名称一致
@@ -208,15 +209,15 @@ extern uint8_t g_ECU_DevCode;
 //#define JICHEHAO	                                    //CAN协议已有，名称一致
 #define JUDUANHAO                  ETH_DAT[2]           //CAN协议没有定义
 #define CHEZHONGBIAOSHI            CHECIKUOCHONG
-#define CHECIHAO	                 CHECI
+#define CHECIHAO	               CHECI
 #define LIECHESHUXING              JICHEZHONGLEI
 #define SIJIHAO1                   SIJI1
 #define SIJIHAO2                   SIJI2
 #define BENXIZHUANGTAI             ( CAN_0x91( 1u ).data_u8[1] )
-#define GONGZUOZHUANGTAI	         KONGZHIMOSHI
+#define GONGZUOZHUANGTAI	       KONGZHIMOSHI
 
-#define AJIKONGZHIRUANJIANBANBEN	      ( CAN_0X63_( 0u ).data_u8[2] )           
-#define BJIKONGZHIRUANJIANBANBEN	      ( CAN_0X73_( 0u ).data_u8[2] )       
+#define AJIKONGZHIRUANJIANBANBEN	    ( CAN_0X63_( 0u ).data_u8[2] )
+#define BJIKONGZHIRUANJIANBANBEN	    ( CAN_0X73_( 0u ).data_u8[2] )
 #define AJISTOJICHUSHUJUBANBENRIQI      ( CAN_0X63_( 1u ).data_u8[0] )
 #define BJISTOJICHUSHUJUBANBENRIQI      ( CAN_0X73_( 1u ).data_u8[0] )
 #define AJISTOJICHUSHUJUBIANYIRIQI      ( CAN_0X63_( 1u ).data_u8[2] )
@@ -263,7 +264,7 @@ extern uint8_t g_ECU_DevCode;
 
 
 /* 板间自检信息 */
-#define ZK_ZJ	                   ZK1_ZJ
+#define ZK_ZJ	                 ZK1_ZJ
 #define	TX1_ZJ	                 JCTX_ZJ
 #define JL_ZJ                    ERROR_FLAG
 #define WXTX_ZJ                  ETH_DAT[1]      //CAN协议没有定义
@@ -272,13 +273,13 @@ extern uint8_t g_ECU_DevCode;
 #define ECU_ZJ                   ETH_DAT[1]      //CAN协议没有定义
 
 /* 主机与外部设备通信信息 */
-#define Ato_Enter_Auto_S96       ( CAN_0x31( 3u ).data_u8[7] )
-#define LKJ_COMMUNICATION	       ( Ato_Enter_Auto_S96 & 0x01 )
-#define	CCU_COMMUNICATION	       ( (CAN_0x6A( 0u ).data_u8[0] & 0x01) >> 0u )
-#define BCU_COMMUNICATION	       ( (CAN_0x6A( 0u ).data_u8[0] & 0x02) >> 1u )
-#define CIR_COMMUNICATION        ( LocomotiveInfo_Received_data[22] )
-#define CEU_COMMUNICATION        ETH_DAT[1]      //CAN协议没有定义
-#define	ECU_COMMUNICATION	       ETH_DAT[1]      //CAN协议没有定义
+#define Ato_Enter_Auto_S96        ( CAN_0x31( 3u ).data_u8[7] )
+#define LKJ_COMMUNICATION	      ( Ato_Enter_Auto_S96 & 0x01 )
+#define	CCU_COMMUNICATION	      ( (CAN_0x6A( 0u ).data_u8[0] & 0x01) >> 0u )
+#define BCU_COMMUNICATION	      ( (CAN_0x6A( 0u ).data_u8[0] & 0x02) >> 1u )
+#define CIR_COMMUNICATION         ( LocomotiveInfo_Received_data[22] )
+#define CEU_COMMUNICATION         ETH_DAT[1]      //CAN协议没有定义
+#define	ECU_COMMUNICATION	      ETH_DAT[1]      //CAN协议没有定义
 
 /* 司机操作信息 */
 #define MINGLINGHAOI              ( CAN_0X45_( 1u ).data_u8[2] )    
@@ -310,15 +311,15 @@ extern uint8_t g_ECU_DevCode;
 /* STO控车信息 */
 #define Enter_Autopilot_S1            ( CAN_0x30( 0u ).data_u8[0] )
 #define Sto_GKCom_S10                 ( CAN_0x30( 1u ).data_u8[1] ) 
-#define YUNXUFUZHUJIASHI	            ((Enter_Autopilot_S1 & 0x08) >> 3u)
-#define	ZHENGCHEJINRUFUZHUJIASHI	    (Enter_Autopilot_S1 & 0x03)
-#define JINRUFUZHUJIASHI	            ((Enter_Autopilot_S1 & 0x10) >> 4u )
+#define YUNXUFUZHUJIASHI	          ((Enter_Autopilot_S1 & 0x08) >> 3u)
+#define	ZHENGCHEJINRUFUZHUJIASHI	  (Enter_Autopilot_S1 & 0x03)
+#define JINRUFUZHUJIASHI	          ((Enter_Autopilot_S1 & 0x10) >> 4u )
 #define ZHENGCHETUICHUFUZHUJIASHI     ((Enter_Autopilot_S1 & 0x04) >> 2u )
 #define TUICHUFUZHUJIASHI             ( CAN_0x6A( 5u ).data_u8[0] )
 #define YUNXUQIDONG	                  ( CAN_0x6A( 0u ).data_u8[3] )
 #define	KONGZHILIECHEQIDONG	          ( (*(&WENBENTISHI + 1U)) & 0x01) 
-#define KONGCHEGONGKUANG	             KONGZHIGONGKUANG
-#define KONGCHEJIWEI                   KONGZHIJIWEI
+#define KONGCHEGONGKUANG	          KONGZHIGONGKUANG
+#define KONGCHEJIWEI                  KONGZHIJIWEI
 #define KEKONGBIAOZHI                 ( ((*(&WENBENTISHI + 1U)) & 0x10) >> 4U )
 #define FENXIANGHUILING               ( QSS_( 6u ).data_u8[6] )
 #define WENBENTISHI2                  ( QSS_( 2u ).data_u8[2] )
@@ -392,7 +393,7 @@ extern uint8_t g_ECU_DevCode;
 #define DIANYAOSHIZHUANGTAI            ( (skq_stat_T50 & 0x03) >> 0u )
 
 /* LKJ系统信息 */
-#define HUOQUJIESHITIAOSHU  			     ( RSS_( 1u ).data_u8[5] )
+#define HUOQUJIESHITIAOSHU             ( RSS_( 1u ).data_u8[5] )
 #define SHENQINGJIESHI                 ETH_DAT[1]      //CAN协议没有定义
 #define JIESHIXUHAO                    ETH_DAT[1]      //CAN协议没有定义
 #define JIESHINEIRONG                  ETH_DAT[1]      //CAN协议没有定义
@@ -459,28 +460,8 @@ extern uint8_t g_ECU_DevCode;
 #define RUANJIANBANBENBUYIZHI    ( WENBENTISHI & 0x01 )
 
 /* public type definition ---------------------------------------------------------------------- */
-#if 0
-
-/* Flash使用状态 */
-typedef struct {
-	uint32_t u32_init_flag;
-  /* 目录个数 */
-	uint32_t u32_file_count;
-  /* 扇区个数 */
-	uint32_t u32_sector_count;
-  /* 第一个目录的首地址 */
-	uint32_t u32_fram_start_addr;
-  /* 本次写入目录的fram首地址 */
-	uint32_t u32_fram_write_addr;
-  /* 第一个扇区的首地址 */
-	uint32_t u32_flash_start_addr;
-  /* 本次写入的扇区的首地址 */
-	uint32_t u32_flash_write_addr;
-} FLASH_STATE;
-#endif
 
 /* 文件目录结构体 128 字节 */
-//typedef struct
 typedef struct __attribute__((packed)) _SFile_Directory /* 按照字节对齐*/ //TODO(mingzhao)
 {
     char ch_checi[4]; /* 车次 */
@@ -648,7 +629,6 @@ void Update_LKJ_LLRT_Message( uint8_t msg[] );
 
 /* 28-September-2018, by Liang Zhen. */
 void Update_LKJ_HLRT_Message( uint8_t msg[] );
-
 
 void RecordingPowerOnMessage(void);
 void RecordingPowerOffMessage(void);
