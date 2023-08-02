@@ -540,6 +540,8 @@ void RecordBoard_FileCreate(void)
     static uint32_t Directory_time = 0u;
 //    uint32_t File_time = 0u;
     static uint32_t File_time = 0u;
+    struct stat stat_l;
+    int32_t ret = 0;
 
     if (Common_BeTimeOutMN(&Directory_time, 1000u))
     {
@@ -577,16 +579,24 @@ void RecordBoard_FileCreate(void)
         write_buf.buf[u16_FFFE_Encode_length + 3U] = 0xFF;
         write_buf.buf[u16_FFFE_Encode_length + 4U] = 0xFD;
 
-        /* 文件大小 */
-        s_File_Directory.u32_file_size += (u16_FFFE_Encode_length + 5U);
-        FMWriteDirFile(file_manager.latest_dir_file_info.file_name, (const void *) &s_File_Directory,
-                sizeof(SFile_Directory));
         /* 写入文件 */
         snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, s_File_Directory.ch_file_name);
         if (FMAppendWrite(full_path, (const void *) write_buf.buf, (u16_FFFE_Encode_length + 5U)) < 0)
         {
             LOG_E("%s append len %d error", full_path, (u16_FFFE_Encode_length + 5U));
+            return;
         }
+
+        ret = stat(full_path, &stat_l);
+        if(ret < 0)
+        {
+            LOG_E("can not stat file '%s'.error code: 0x%08x", full_path, ret);
+            return;
+        }
+        /* 文件大小 */
+        s_File_Directory.u32_file_size = stat_l.st_size;
+        FMWriteDirFile(file_manager.latest_dir_file_info.file_name, (const void *) &s_File_Directory,
+                sizeof(SFile_Directory));
 
         /* 计算写入内容的CRC值 用于更新文件头内文件内容CRC值*/
         FileContent_CRC32 = CRC32CCITT((uint8_t *) write_buf.buf, u16_FFFE_Encode_length + 5U, FileContent_CRC32);
@@ -756,6 +766,7 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
     static uint8_t CheCi_Count1 = 0u, CheCi_Count2 = 0u, Create_Flag = 0u;
     char full_path[PATH_NAME_MAX_LEN] = { 0 };
     sint32_t ret = 0;
+    struct stat stat_l;
 
     /* 确认新文件生成标记，置位开始记录文件标志 */
     if (Record_Condition_Judge())
@@ -788,15 +799,23 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
                 write_buf.buf[u16_FFFE_Encode_length + 4U] = 0xFD;
 
                 s_File_Directory.u32_over_flag = 1u;
-                s_File_Directory.u32_file_size += (u16_FFFE_Encode_length + 5U);
-                FMWriteDirFile(file_manager.latest_dir_file_info.file_name, (const void *) &s_File_Directory,
-                        sizeof(SFile_Directory));
 
                 snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, s_File_Directory.ch_file_name);
                 if (FMAppendWrite(full_path, (const void *) write_buf.buf, (u16_FFFE_Encode_length + 5U)) < 0)
                 {
                     LOG_E("%s write pkt len %d error", full_path, (u16_FFFE_Encode_length + 5U));
                 }
+
+                ret = stat(full_path, &stat_l);
+                if(ret < 0)
+                {
+                    LOG_E("can not stat file '%s'.error code: 0x%08x", full_path, ret);
+                    return;
+                }
+                /* 文件大小 */
+                s_File_Directory.u32_file_size = stat_l.st_size;
+                FMWriteDirFile(file_manager.latest_dir_file_info.file_name, (const void *) &s_File_Directory,
+                        sizeof(SFile_Directory));
 
                 /* 计算写入内容的CRC值 用于更新文件头内文件内容CRC值*/
                 FileContent_CRC32 = CRC32CCITT((uint8_t *) write_buf.buf, write_buf.pos, FileContent_CRC32);
@@ -1559,6 +1578,8 @@ static void WriteFileContantPkt(uint8_t num1, uint8_t num2, uint8_t device_code,
     uint8_t contant_size = 0u;
     char file_contant[204u];
     char full_path[PATH_NAME_MAX_LEN] = { 0 };
+    struct stat stat_l;
+    int32_t ret = 0;
 
     file_contant[0u] = num1;
     file_contant[1u] = num2;
@@ -1617,14 +1638,23 @@ static void WriteFileContantPkt(uint8_t num1, uint8_t num2, uint8_t device_code,
             write_buf.buf[u16_FFFE_Encode_length + 3U] = 0xFF;
             write_buf.buf[u16_FFFE_Encode_length + 4U] = 0xFD;
 //            LOG_I("FFFE_Encode_length： %d", u16_FFFE_Encode_length);
-            /* 写入FLASH */
-            s_File_Directory.u32_file_size += (u16_FFFE_Encode_length + 5U);
 
             snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, s_File_Directory.ch_file_name);
             if (FMAppendWrite(full_path, (const void *) write_buf.buf, (u16_FFFE_Encode_length + 5U)) < 0)
             {
                 LOG_E("%s write pkt len %d error", full_path, (u16_FFFE_Encode_length + 5U));
             }
+
+            ret = stat(full_path, &stat_l);
+            if(ret < 0)
+            {
+                LOG_E("can not stat file '%s'.error code: 0x%08x", full_path, ret);
+                return;
+            }
+            /* 文件大小 */
+            s_File_Directory.u32_file_size = stat_l.st_size;
+            FMWriteDirFile(file_manager.latest_dir_file_info.file_name, (const void *) &s_File_Directory,
+                    sizeof(SFile_Directory));
 
             /* 计算写入内容的CRC值 用于更新文件头内文件内容CRC值*/
             FileContent_CRC32 = CRC32CCITT((uint8_t *) write_buf.buf, u16_FFFE_Encode_length + 5U, FileContent_CRC32);
