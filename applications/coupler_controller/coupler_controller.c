@@ -26,7 +26,7 @@ CouplerCtrlUserData coupler_controller_userdata = {
     .module_devname = BSP_DEV_TABLE_UART4,
     .adc_devname = "ltc186x",
     .led_devname = {BSP_GPIO_TABLE_GPIO5, BSP_GPIO_TABLE_SPI1_CS2, BSP_GPIO_TABLE_SPI1_CS1, BSP_GPIO_TABLE_SPI1_CS0, BSP_GPIO_TABLE_GPIO4},
-    .ctrl_devname = {"PC.1", "PA.9", BSP_GPIO_TABLE_PWM3, BSP_GPIO_TABLE_PWM4},
+    .ctrl_devname = {BSP_GPIO_TABLE_I2S1_SDO, BSP_GPIO_TABLE_I2S1_CK, BSP_GPIO_TABLE_PWM3, BSP_GPIO_TABLE_PWM4},
     .bat_devname = {BSP_GPIO_TABLE_GPIO3, BSP_GPIO_TABLE_GPIO8},
 
     .isThreadRun = 1,
@@ -131,15 +131,17 @@ static void process_thread_entry(void *parameter)
                 if(type->hook == 0x1)
                 {
                     //执行挂钩
-                    LOG_I("   cmd: ID_STATION_POLLING execution hooks");
+                    LOG_I("   cmd: ID_STATION_POLLING hooking");
                     module_ctrl_open(1);
+                    puserdata->mode = MODE_HOOKING;
                 }
                 else if (type->hook == 0x2)
                 {
                     //执行摘钩
-                    LOG_I("   cmd: ID_STATION_POLLING Perform unhooking");
+                    LOG_I("   cmd: ID_STATION_POLLING unhooking");
                     module_ctrl_open(1);
                     ctrl_air_pressure(1);
+                    puserdata->mode = MODE_UNHOOKING;
                 }
                 TYPE_CONTROLLER_ACK ack = {
                     .distance_h = puserdata->distance_h,

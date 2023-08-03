@@ -25,6 +25,13 @@ enum {
     MCU_DI2,
 };
 
+typedef enum {
+    MODE_IDLE = 0,
+    MODE_HOOKING,
+    MODE_HOOKED,
+    MODE_UNHOOKING,
+}COUPLERMODEDef;
+
 typedef struct
 {
     char *station_devname;
@@ -47,6 +54,10 @@ typedef struct
     struct rt_messagequeue *rx_module_mq;
     struct rt_messagequeue *process_module_mq;
 
+    //控制器状态
+    COUPLERMODEDef mode;
+    //车钩状态
+    uint8_t status;
     //车钩adc
     uint16_t adc[2];
     //图像测距模块

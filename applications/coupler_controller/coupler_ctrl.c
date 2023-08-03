@@ -44,6 +44,34 @@ static void ctrl_thread_entry(void *parameter)
     while(puserdata->isThreadRun)
     {
         rt_thread_delay(1000);
+        puserdata->status = rt_pin_read(puserdata->ctrl_pin[CTRL_DI1]);
+        if (puserdata->status == PIN_LOW)
+        {
+            if (puserdata->mode == MODE_UNHOOKING)
+            {
+                LOG_I("mode : unhooking...");
+            }
+            else if (puserdata->mode != MODE_HOOKED)
+            {
+                LOG_I("mode : hooked.");
+                puserdata->mode = MODE_HOOKED;
+                module_ctrl_open(0);
+            }
+        }
+        else
+        {
+            if (puserdata->mode == MODE_HOOKING)
+            {
+                LOG_I("mode : hooking...");
+            }
+            else if (puserdata->mode != MODE_IDLE)
+            {
+                LOG_I("mode : idle.");
+                puserdata->mode = MODE_IDLE;
+                module_ctrl_open(0);
+                ctrl_air_pressure(0);
+            }
+        }
     }
 }
 

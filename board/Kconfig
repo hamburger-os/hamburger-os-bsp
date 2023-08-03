@@ -235,6 +235,26 @@ menu "On-chip Peripheral Drivers"
             config BSP_GPIO_TABLE_SPI2_MOSI
                 string "Set the SPI2_MOSI pin, default: PF.9"
                 default "PF.9"
+                
+            config BSP_GPIO_TABLE_I2S1_MCK
+                string "Set the I2S1_MCK pin, default: PA.3"
+                default "PA.3"
+                
+            config BSP_GPIO_TABLE_I2S1_SDI
+                string "Set the I2S1_SDI pin, default: PC.2"
+                default "PC.2"
+                
+            config BSP_GPIO_TABLE_I2S1_SDO
+                string "Set the I2S1_SDO pin, default: PC.1"
+                default "PC.1"
+                
+            config BSP_GPIO_TABLE_I2S1_WS
+                string "Set the I2S1_WS pin, default: PB.12"
+                default "PB.12"
+                
+            config BSP_GPIO_TABLE_I2S1_CK
+                string "Set the I2S1_CK pin, default: PA.9"
+                default "PA.9"
         endif
     menuconfig BSP_USING_DEV_TABLE
         bool "Enable core board dev table"
