@@ -258,7 +258,7 @@ void turn_on_lcd_backlight(void)
     rt_base_t ctl_pin = rt_pin_get(LCD_BKLT_CTL_GPIO);
     rt_pin_mode(ctl_pin, PIN_MODE_OUTPUT);
 
-    rt_pin_write(ctl_pin, PIN_HIGH);
+    rt_pin_write(ctl_pin, PIN_LOW);
 }
 #else
 void turn_on_lcd_backlight(void)
@@ -411,6 +411,8 @@ int lcd_test()
     }
     lcd->parent.control(&lcd->parent, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);
     rt_thread_mdelay(1000);
+
+    return 0;
 }
 MSH_CMD_EXPORT(lcd_test, lcd_test);
 #endif
