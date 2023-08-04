@@ -28,6 +28,7 @@ CouplerCtrlUserData coupler_controller_userdata = {
     .led_devname = {BSP_GPIO_TABLE_GPIO5, BSP_GPIO_TABLE_SPI1_CS2, BSP_GPIO_TABLE_SPI1_CS1, BSP_GPIO_TABLE_SPI1_CS0, BSP_GPIO_TABLE_GPIO4},
     .ctrl_devname = {BSP_GPIO_TABLE_I2S1_SDO, BSP_GPIO_TABLE_I2S1_CK, BSP_GPIO_TABLE_PWM3, BSP_GPIO_TABLE_PWM4},
     .bat_devname = {BSP_GPIO_TABLE_GPIO3, BSP_GPIO_TABLE_GPIO8},
+    .gnss_devname = "gnss",
 
     .isThreadRun = 1,
 };
@@ -356,6 +357,8 @@ static int coupler_controller_init(void)
     coupler_controller_ctrlinit();
     //启动风压adc读取
     coupler_controller_pressureinit();
+    //启动gps数据读取
+    coupler_controller_gnssinit();
     //启动和图像测距模组的通信
     coupler_controller_moduleinit();
     //启动和站防的485总线通信

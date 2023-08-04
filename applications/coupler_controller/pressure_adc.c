@@ -47,7 +47,7 @@ static void pressure_thread_entry(void *parameter)
 void coupler_controller_pressureinit(void)
 {
     /* 创建 读值 线程 */
-    rt_thread_t thread = rt_thread_create("pressure", pressure_thread_entry, &coupler_controller_userdata, 2048, 21, 10);
+    rt_thread_t thread = rt_thread_create("pressure", pressure_thread_entry, &coupler_controller_userdata, 2048, 20, 10);
     /* 创建成功则启动线程 */
     if (thread != RT_NULL)
     {

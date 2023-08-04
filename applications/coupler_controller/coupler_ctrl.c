@@ -98,7 +98,7 @@ MSH_CMD_EXPORT_ALIAS(air_test, airtest, air_pressure test);
 void coupler_controller_ctrlinit(void)
 {
     /* 创建 ctrl 线程 */
-    rt_thread_t thread = rt_thread_create("ctrl", ctrl_thread_entry, &coupler_controller_userdata, 2048, 26, 10);
+    rt_thread_t thread = rt_thread_create("ctrl", ctrl_thread_entry, &coupler_controller_userdata, 2048, 21, 10);
     /* 创建成功则启动线程 */
     if (thread != RT_NULL)
     {

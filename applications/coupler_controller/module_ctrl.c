@@ -337,7 +337,7 @@ static int16_t ff_init(fffeFrame *frame)
     rt_device_set_rx_indicate(puserdata->module_dev, uart_input);
 
     /* 创建 serial 线程 */
-    rt_thread_t thread = rt_thread_create("serial", serial_thread_entry, frame, 4096, 22, 10);
+    rt_thread_t thread = rt_thread_create("serial", serial_thread_entry, frame, 4096, 23, 10);
     /* 创建成功则启动线程 */
     if (thread != RT_NULL)
     {
@@ -352,7 +352,7 @@ static int16_t ff_init(fffeFrame *frame)
     puserdata->process_module_mq = rt_mq_create("process", sizeof(struct process_msg), 8, RT_IPC_FLAG_FIFO);
 
     /* 创建 协议数据处理 线程 */
-    thread = rt_thread_create("process", process_thread_entry, frame, 4096, 23, 10);
+    thread = rt_thread_create("process", process_thread_entry, frame, 4096, 24, 10);
     /* 创建成功则启动线程 */
     if (thread != RT_NULL)
     {
