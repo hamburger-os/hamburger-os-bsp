@@ -38,7 +38,7 @@ struct drv_lcd_device
     rt_uint8_t *back_buf;
 };
 
-struct drv_lcd_device _lcd;
+static struct drv_lcd_device _lcd;
 
 static rt_err_t drv_lcd_init(struct rt_device *device)
 {
@@ -267,20 +267,37 @@ void turn_on_lcd_backlight(void)
 }
 #endif
 
+struct LCD_COLOR
+{
+    uint16_t b : 5;
+    uint16_t g : 6;
+    uint16_t r : 5;
+};
+
 void lcd_fill_array(rt_uint16_t x_start, rt_uint16_t y_start, rt_uint16_t x_end, rt_uint16_t y_end, void *pcolor)
 {
-//    uint16_t *pixel = (rt_uint16_t *)pcolor;
-//    struct drv_lcd_device *lcd = (struct drv_lcd_device *)rt_device_find("lcd");
-//
-//    for (int i = y_start; i < y_end; i++)
-//    {
-//        for (int j = x_start; j < x_end; j++)
-//        {
-//            lcd->lcd_info.framebuffer[2 * (i * lcd->lcd_info.width + j)] = (*pixel)>>8;
-//            lcd->lcd_info.framebuffer[2 * (i * lcd->lcd_info.width + j) + 1] = (*pixel);
-//        }
-//    }
-//    lcd->parent.control(&lcd->parent, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);
+    //核心板的lvds转接板将RGB接为了BGR
+    struct LCD_COLOR *pixel = (struct LCD_COLOR *)pcolor;
+    struct LCD_COLOR color_bgr;
+    struct LCD_COLOR *pixel_bgr;
+
+    struct drv_lcd_device *lcd = &_lcd;
+    uint16_t cycle_y, x_offset = 0;
+
+    for(cycle_y = y_start; cycle_y <= y_end; )
+    {
+        for(x_offset = 0;x_start + x_offset <= x_end; x_offset++)
+        {
+            pixel_bgr = (struct LCD_COLOR *)&lcd->lcd_info.framebuffer[2 * (cycle_y * lcd->lcd_info.width + x_start + x_offset)];
+            color_bgr = *pixel;
+            color_bgr.r = pixel->b;
+            color_bgr.b = pixel->r;
+            *pixel_bgr = color_bgr;
+            pixel ++;
+        }
+        cycle_y++;
+    }
+    lcd->parent.control(&lcd->parent, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);
 }
 
 #ifdef RT_USING_DEVICE_OPS
@@ -311,7 +328,6 @@ int drv_lcd_hw_init(void)
         result = -RT_ENOMEM;
         goto __exit;
     }
-    turn_on_lcd_backlight();
 
     /* config LCD dev info */
     _lcd.lcd_info.height = LCD_HEIGHT;
@@ -320,9 +336,9 @@ int drv_lcd_hw_init(void)
     _lcd.lcd_info.pixel_format = LCD_PIXEL_FORMAT;
 
     /* malloc memory for Triple Buffering */
-    _lcd.lcd_info.framebuffer = rt_malloc(LCD_BUF_SIZE);
-    _lcd.back_buf = rt_malloc(LCD_BUF_SIZE);
-    _lcd.front_buf = rt_malloc(LCD_BUF_SIZE);
+    _lcd.lcd_info.framebuffer = rt_malloc_align(LCD_BUF_SIZE, RT_ALIGN_SIZE);
+    _lcd.back_buf = rt_malloc_align(LCD_BUF_SIZE, RT_ALIGN_SIZE);
+    _lcd.front_buf = rt_malloc_align(LCD_BUF_SIZE, RT_ALIGN_SIZE);
     if (_lcd.lcd_info.framebuffer == RT_NULL || _lcd.back_buf == RT_NULL || _lcd.front_buf == RT_NULL)
     {
         LOG_E("init frame buffer failed!");
@@ -384,30 +400,30 @@ INIT_DEVICE_EXPORT(drv_lcd_hw_init);
 #ifdef BSP_USING_LCD_TEST
 int lcd_test()
 {
-    struct drv_lcd_device *lcd;
-    lcd = (struct drv_lcd_device *)rt_device_find("lcd");
+    uint16_t *pixel;    //核心板的lvds转接板将RGB接为了BGR
+    struct drv_lcd_device *lcd = &_lcd;
 
     /* red */
     for (int i = 0; i < LCD_BUF_SIZE / 2; i++)
     {
-        lcd->lcd_info.framebuffer[2 * i] = 0x00;
-        lcd->lcd_info.framebuffer[2 * i + 1] = 0xF8;
+        pixel = (uint16_t *)&lcd->lcd_info.framebuffer[2 * i];
+        *pixel = 0b0000000000011111;
     }
     lcd->parent.control(&lcd->parent, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);
     rt_thread_mdelay(1000);
     /* green */
     for (int i = 0; i < LCD_BUF_SIZE / 2; i++)
     {
-        lcd->lcd_info.framebuffer[2 * i] = 0xE0;
-        lcd->lcd_info.framebuffer[2 * i + 1] = 0x07;
+        pixel = (uint16_t *)&lcd->lcd_info.framebuffer[2 * i];
+        *pixel = 0b0000011111100000;
     }
     lcd->parent.control(&lcd->parent, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);
     rt_thread_mdelay(1000);
     /* blue */
     for (int i = 0; i < LCD_BUF_SIZE / 2; i++)
     {
-        lcd->lcd_info.framebuffer[2 * i] = 0x1F;
-        lcd->lcd_info.framebuffer[2 * i + 1] = 0x00;
+        pixel = (uint16_t *)&lcd->lcd_info.framebuffer[2 * i];
+        *pixel = 0b1111100000000000;
     }
     lcd->parent.control(&lcd->parent, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);
     rt_thread_mdelay(1000);
