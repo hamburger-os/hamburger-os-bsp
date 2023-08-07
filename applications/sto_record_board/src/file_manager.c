@@ -37,91 +37,79 @@ static S_CURRENT_FILE_INFO s_current_file_info;
 sint32_t fm_free_fram_space(S_FILE_MANAGER *fm)
 {
     sint32_t disk_free_space;
-    char full_path[PATH_NAME_MAX_LEN] = {0};
+    char full_path[PATH_NAME_MAX_LEN] = { 0 };
     struct stat stat_l;
     sint32_t ret = 0;
 
     /* 得到板载存储器的剩余空间大小 */
     disk_free_space = get_disk_free_space(RECORD_TEMP_FILE_PATH_NAME);
 
-//    LOG_I("free fram before: %d K", disk_free_space);
+    LOG_I("free space before: %d K", disk_free_space);
 
-    snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_TEMP_FILE_PATH_NAME, fm->latest_tmp_file_info.file_name);
-    /* 当前文件是否超过文件设置的大小 */
-    if(stat(full_path, &stat_l) == 0)
+    if (disk_free_space >= (TMP_FILE_MAN_SIZE + FRAM_RESERVE_SIZE)) /* 单个文件大小加预留空间的大小 */
     {
-        if (stat_l.st_size < (TMP_FILE_MAN_SIZE * 1024))
-        {
-//            LOG_I("<< %s", fm->latest_tmp_file_info.file_name);
-            /* 当前文件未超过文件设置的大小 */
-            return 0;
-        }
-        else /* 当前文件超过文件设置的大小 */
-        {
-//            LOG_I(">> %s", fm->latest_tmp_file_info.file_name);
-            if(0 == strcmp(fm->latest_tmp_file_info.file_name, RECORD_TEMP_FILE_1_NAME))
-            {
-                snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_TEMP_FILE_PATH_NAME, RECORD_TEMP_FILE_2_NAME);
-                strcpy(fm->latest_tmp_file_info.file_name, RECORD_TEMP_FILE_2_NAME);
-            }
-            else
-            {
-                snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_TEMP_FILE_PATH_NAME, RECORD_TEMP_FILE_1_NAME);
-                strcpy(fm->latest_tmp_file_info.file_name, RECORD_TEMP_FILE_1_NAME);
-            }
+        return 0;
+    }
 
-            if(stat(full_path, &stat_l) < 0)
-            {
-                /* full_path对应的文件不存在,则创建文件 */
-                ret = create_file(full_path);
-                if(ret < 0)
-                {
-                    LOG_E("crea %s error", full_path);
-                    return ret;
-                }
-                ret = FMWriteLatestInfo(LATEST_TMP_NAME_FILE_PATH_NAME, LATEST_TEMP_FILE_NAME, (const void *) &fm->latest_tmp_file_info, sizeof(S_LATEST_TMP_FILE_INFO));
-                if(ret < 0)
-                {
-                    LOG_E("write latest error");
-                }
-                return ret;
-            }
-            else
-            {
-                /* full_path对应的文件存在,则删除该文件，然后再创建该文件 */
-                unlink(full_path);
-                LOG_I("delete %s", full_path);
-                if(ret < 0)
-                {
-                    LOG_E("delete error");
-                    return ret;
-                }
 
-                ret = create_file(full_path);
-                if(ret < 0)
-                {
-                    LOG_E("creat error");
-                    return ret;
-                }
-
-                ret = FMWriteLatestInfo(LATEST_TMP_NAME_FILE_PATH_NAME, LATEST_TEMP_FILE_NAME, (const void *) &fm->latest_tmp_file_info, sizeof(S_LATEST_TMP_FILE_INFO));
-                if(ret < 0)
-                {
-                    LOG_E("write latest error");
-                    return ret;
-                }
-                /* 得到板载存储器的剩余空间大小 */
-                disk_free_space = get_disk_free_space(RECORD_TEMP_FILE_PATH_NAME);
-
-                LOG_I("free fram after: %d K", disk_free_space);
-                return ret;
-            }
-        }
+    if(0 == strcmp(fm->latest_tmp_file_info.file_name, RECORD_TEMP_FILE_1_NAME))
+    {
+        snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_TEMP_FILE_PATH_NAME, RECORD_TEMP_FILE_2_NAME);
+        strcpy(fm->latest_tmp_file_info.file_name, RECORD_TEMP_FILE_2_NAME);
     }
     else
     {
-        LOG_E("stat %s error", full_path);
-        return -1;
+        snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_TEMP_FILE_PATH_NAME, RECORD_TEMP_FILE_1_NAME);
+        strcpy(fm->latest_tmp_file_info.file_name, RECORD_TEMP_FILE_1_NAME);
+    }
+
+    if(stat(full_path, &stat_l) < 0)
+    {
+        /* full_path对应的文件不存在,则创建文件 */
+        ret = create_file(full_path);
+        if(ret < 0)
+        {
+            LOG_E("crea %s error", full_path);
+            return ret;
+        }
+        ret = FMWriteLatestInfo(LATEST_TMP_NAME_FILE_PATH_NAME, LATEST_TEMP_FILE_NAME, (const void *) &fm->latest_tmp_file_info, sizeof(S_LATEST_TMP_FILE_INFO));
+        if(ret < 0)
+        {
+            LOG_E("write latest error");
+        }
+
+        LOG_I("free fram 1 after: %d K", disk_free_space);
+        return ret;
+    }
+    else
+    {
+        /* full_path对应的文件存在,则删除该文件，然后再创建该文件 */
+        unlink(full_path);
+        LOG_I("delete %s", full_path);
+        if(ret < 0)
+        {
+            LOG_E("delete error");
+            return ret;
+        }
+
+        ret = create_file(full_path);
+        if(ret < 0)
+        {
+            LOG_E("creat error");
+            return ret;
+        }
+
+        ret = FMWriteLatestInfo(LATEST_TMP_NAME_FILE_PATH_NAME, LATEST_TEMP_FILE_NAME, (const void *) &fm->latest_tmp_file_info, sizeof(S_LATEST_TMP_FILE_INFO));
+        if(ret < 0)
+        {
+            LOG_E("write latest error");
+            return ret;
+        }
+        /* 得到板载存储器的剩余空间大小 */
+        disk_free_space = get_disk_free_space(RECORD_TEMP_FILE_PATH_NAME);
+
+        LOG_I("free fram 2 after: %d K", disk_free_space);
+        return ret;
     }
 }
 
@@ -672,7 +660,7 @@ sint32_t FMInit(S_FILE_MANAGER *fm)
     if (ret < 0)
     {
         LOG_E("FMInitLatestFile error");
-        return (sint32_t)-1;
+//        return (sint32_t)-1;
     }
 
     /* 初始化最新的临时文件, 读出最新的临时文件信息  */
@@ -680,7 +668,7 @@ sint32_t FMInit(S_FILE_MANAGER *fm)
     if (ret < 0)
     {
         LOG_E("FMInitLatestTmpFile error");
-        return (sint32_t)-1;
+//        return (sint32_t)-1;
     }
 
     /* 打印相关信息 */

@@ -825,26 +825,13 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
                 memset(&write_buf, 0u, sizeof(WRITE_BUF));
                 memset(u8_FFFE_Encode_buf, 0u, sizeof(u8_FFFE_Encode_buf));
 
-                Update_FileHead();
-
                 /* 需要更新文件头内容*/
-                snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME,
-                        current_file_info->file_dir->ch_file_name);
-
-                current_file_info->fd = open(full_path, O_RDWR);
-                if (current_file_info->fd < 0)
-                {
-                    LOG_E("open %s error, fd=%d", full_path, current_file_info->fd);
-                    return -RT_ERROR;
-                }
-
                 ret = fm_modify_record_file_head(current_file_info);
                 if (ret < 0)
                 {
                     LOG_E("fm_modify_record_file_head error");
                     return -RT_ERROR;
                 }
-                close(current_file_info->fd);
 
                 /* 置位写公共信息包标志 */
                 u8_Gonggongxinxi_Flag = 1U;
@@ -1152,7 +1139,6 @@ static rt_err_t Creat_FileHead(S_CURRENT_FILE_INFO *current_file_info)
         return -RT_EEMPTY;
     }
 
-    char full_path[PATH_NAME_MAX_LEN] = { 0 };
     sint32_t ret = -1;
 
     if (u8_FileHead_Flag)
@@ -1178,24 +1164,12 @@ static rt_err_t Creat_FileHead(S_CURRENT_FILE_INFO *current_file_info)
         }
 #endif
 
-        snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME,
-                current_file_info->file_dir->ch_file_name);
-        current_file_info->fd = open(full_path, O_RDWR);
-        if (current_file_info->fd < 0)
-        {
-            LOG_E("open %s error, fd=%d", full_path, current_file_info->fd);
-            return -RT_ERROR;
-        }
-
         ret = fm_write_record_file_head(current_file_info);
         if (ret < 0)
         {
             LOG_E("fm_write_file_head error");
             return -RT_ERROR;
         }
-
-        current_file_info->new_record_head_offset = lseek(current_file_info->fd, (off_t) 0, SEEK_CUR);
-        close(current_file_info->fd);
 
         /* 置位文件体记录标志 */
         u8_Contant_Flag = 1u;
@@ -5682,16 +5656,36 @@ uint16_t FFFEEncode(uint8_t *u8p_SrcData, uint16_t u16_SrcLen, uint8_t *u8p_DstD
 //写文件头
 static sint32_t fm_write_record_file_head(S_CURRENT_FILE_INFO *current_file_info)
 {
-    sint32_t ret;
+    sint32_t ret, fd;
+    char full_path[PATH_NAME_MAX_LEN] = { 0 };
 
     if (NULL == current_file_info || NULL == current_file_info->file_head)
     {
         return -1;
     }
+
     Update_FileHead();
     LOG_I("fm_write_record_file_head");
-    ret = write(current_file_info->fd, (char *) current_file_info->file_head, sizeof(SFile_Head));
-    fsync(current_file_info->fd);
+
+    snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME,
+            current_file_info->file_dir->ch_file_name);
+
+    fd = open(full_path, O_RDWR);
+    if (fd < 0)
+    {
+        LOG_E("open %s error, fd=%d", full_path, fd);
+        return -RT_ERROR;
+    }
+
+    ret = write(fd, (const void *) current_file_info->file_head, sizeof(SFile_Head));
+    fsync(fd);
+    close(fd);
+    if (ret < 0)
+    {
+        LOG_E("%s write error", full_path);
+        return (sint32_t)-1;
+    }
+    current_file_info->new_record_head_offset = lseek(fd, (off_t) 0, SEEK_CUR);
     return ret;
 }
 
@@ -5707,11 +5701,37 @@ static sint32_t fm_write_record_file_head(S_CURRENT_FILE_INFO *current_file_info
  *******************************************************/
 static sint32_t fm_modify_record_file_head(S_CURRENT_FILE_INFO *current_file_info)
 {
+    sint32_t fd = 0;
+    sint32_t ret = -1;
+    char full_path[PATH_NAME_MAX_LEN] = { 0 };
+
     Update_FileHead();
 
-    lseek(current_file_info->fd, 0, SEEK_SET);
-    write(current_file_info->fd, (char *)&s_file_head, sizeof(SFile_Head));
+    if(RT_NULL == current_file_info || RT_NULL == current_file_info->file_dir)
+    {
+        return -1;
+    }
 
+    snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME,
+            current_file_info->file_dir->ch_file_name);
+
+    LOG_I("modify head");
+    fd = open(full_path, O_RDWR);
+    if (fd < 0)
+    {
+        LOG_E("open %s error, fd=%d", full_path,fd);
+        return -RT_ERROR;
+    }
+
+    lseek(fd, 0, SEEK_SET);
+    ret = write(fd, (const void *)current_file_info->file_head, sizeof(SFile_Head));
+    fsync(fd);
+    close(fd);
+    if (ret < 0)
+    {
+        LOG_E("%s write error", full_path);
+        return (sint32_t)-1;
+    }
     return 0;
 }
 
@@ -5720,11 +5740,15 @@ static void FileCreatInfo(int argc, char **argv)
 {
 //    static char che_ci[4];
 //    static char si_ji[4];
+    S_CURRENT_FILE_INFO *current_file_info = file_manager.current_info;
+    sint32_t ret = 0;
+
     if (argc != 2 && argc != 3)
     {
         rt_kprintf("Usage: fileinfo [cmd]\n");
         rt_kprintf("       fileinfo --pos\n");
         rt_kprintf("       fileinfo --flag\n");
+        rt_kprintf("       fileinfo --head\n");
     }
     else
     {
@@ -5736,11 +5760,22 @@ static void FileCreatInfo(int argc, char **argv)
         {
             LOG_I("SoftWare_Cycle_Flag %d", SoftWare_Cycle_Flag);
         }
+        else if(rt_strcmp(argv[1], "--head") == 0)
+        {
+            LOG_I("change head");
+
+            ret = fm_modify_record_file_head( current_file_info);
+            if (ret < 0)
+            {
+                LOG_E("fm_modify_record_file_head error");
+            }
+        }
         else
         {
             rt_kprintf("Usage: fileinfo [cmd]\n");
             rt_kprintf("       fileinfo --pos\n");
             rt_kprintf("       fileinfo --flag\n");
+            rt_kprintf("       fileinfo --head\n");
         }
     }
 }

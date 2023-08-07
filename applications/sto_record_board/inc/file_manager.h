@@ -21,7 +21,7 @@
 
 #define RECORD_BOARD_EMMC_MAX_SIZE (3600LL * 1024 * 1024) //板子EMMC最大空间 单位KB  实际大小为3656M 预留了56M
 #define RESERVE_SIZE               (1024 * 1024)
-#define FRAM_RESERVE_SIZE          (2)   //单位KB
+#define FRAM_RESERVE_SIZE          (10)   //单位KB
 #define LATEST_TMP_FILE_SIZE          (1024)
 
 #if FILE_MANAGER_TEST
@@ -34,9 +34,11 @@
 
 
 #if TMP_FILE_MANAGER_TEST
-#define TMP_FILE_MAN_SIZE        (10UL)         /* 单个临时文件大小 单位 KB*/
+#define FRAM_RESERVE_SIZE          (100)   //单位KB
+#define TMP_FILE_MAN_SIZE          (3)   //单位KB
 #else
-#define TMP_FILE_MAN_SIZE        (60UL)         /* 单个临时文件大小 单位 KB*/
+#define FRAM_RESERVE_SIZE          (10)   //单位KB
+#define TMP_FILE_MAN_SIZE          (50)   //单位KB
 #endif
 
 #define FIRST_LATEST_DIR_NAME_NULL "NULL"

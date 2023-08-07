@@ -592,7 +592,6 @@ typedef enum
 
 typedef struct __attribute__((packed)) _S_CURRENT_FILE_INFO /* 按照字节对齐*/
 {
-    int32_t fd;
     SFile_Directory *file_dir;
     SFile_Head      *file_head;
     WRITE_BUF       *write_buf;
