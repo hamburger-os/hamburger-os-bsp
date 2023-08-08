@@ -68,11 +68,11 @@ static void touch_thread_entry(void *parameter)
 #else /* PKG_USING_LVGL */
             const rt_uint32_t black = 0x0;
             rt_graphix_ops(lcd)->set_pixel((const char *)(&black),
-                                        read_data.x_coordinate,
-                                         read_data.y_coordinate);
+                                            read_data.x_coordinate,
+                                            read_data.y_coordinate);
 #endif /* PKG_USING_LVGL */
         }
-        rt_thread_mdelay(1);
+        rt_thread_mdelay(PKG_LVGL_DISP_REFR_PERIOD);
     }
 }
 

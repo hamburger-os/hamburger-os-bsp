@@ -221,17 +221,15 @@ static rt_size_t sw_touch_readpoint(struct rt_touch_device *touch, void *buf, rt
         rt_uint8_t y_count = 0;
         rt_uint32_t x_cum = 0;
         rt_uint32_t y_cum = 0;
-        for (rt_uint8_t i = 0; i < 1; i ++)
+        for (rt_uint8_t i = 0; i < 2; i ++)
         {
             rt_uint16_t temp = 0;
-            slld_Read_toucX(touch, &temp);
-            if (temp >= 0 && temp <= 4096)
+            if (slld_Read_toucX(touch, &temp) == RT_EOK && temp >= 10 && temp <= 4096)
             {
                 ++x_count;
                 x_cum += temp;
             }
-            slld_Read_toucY(touch, &temp);
-            if (temp >= 0 && temp <= 4096)
+            if (slld_Read_toucY(touch, &temp) == RT_EOK && temp >= 10 && temp <= 4096)
             {
                 ++y_count;
                 y_cum += temp;
