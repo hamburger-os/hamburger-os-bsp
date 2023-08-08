@@ -28,6 +28,10 @@
     extern const struct fal_flash_dev sram_flash;
 #endif
 
+#ifdef BSP_SDRAM_ENABLE_BLK
+    extern const struct fal_flash_dev sdram_flash;
+#endif
+
 #ifdef BSP_USING_NORFLASH
     extern const struct fal_flash_dev nor_flash;
 #endif
@@ -55,6 +59,10 @@ const struct fal_flash_dev * const device_table[] =
 
 #ifdef BSP_FMCSRAM_ENABLE_BLK
     &sram_flash,
+#endif
+
+#ifdef BSP_SDRAM_ENABLE_BLK
+    &sdram_flash,
 #endif
 
 #ifdef BSP_USING_NORFLASH
@@ -95,6 +103,10 @@ const struct fal_partition partition_table_def[] =
 
 #ifdef BSP_FMCSRAM_ENABLE_BLK
     {FAL_PART_MAGIC_WORD,  BLK_FMCSRAM,     FMCSRAM_DEV_NAME,                             0,                    BSP_FMCSRAM_SIZE, 0},
+#endif
+
+#ifdef BSP_SDRAM_ENABLE_BLK
+    {FAL_PART_MAGIC_WORD,  BLK_SDRAM,     SDRAM_DEV_NAME,                             0,         SDRAM_SIZE - BSP_SDRAM_BLK_SIZE, 0},
 #endif
 
 #ifdef BSP_USING_NORFLASH

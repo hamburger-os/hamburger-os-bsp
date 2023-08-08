@@ -2393,6 +2393,28 @@ menu "Onboard Peripheral Drivers"
 	        config SDRAM_MODEREG_WRITEBURST_MODE_SINGLE
 	            hex "Set modereg writeburst mode single, default: 0x0200"
 	            default (0x0200)
+	            
+	        config BSP_SDRAM_ENABLE_BLK
+                bool "Enable the block device"
+                default n
+                
+            config BSP_SDRAM_BLK_SIZE
+                int "Set memory size, default: (8 * 1024 * 1024)"
+                depends on BSP_SDRAM_ENABLE_BLK
+                default (8388608)
+                
+            config BSP_SDRAM_ENABLE_FS
+                bool "Enable the file system"
+                depends on BSP_SDRAM_ENABLE_BLK
+                select RT_USING_DFS
+                select RT_USING_DFS_ROMFS
+                select RT_USING_DFS_ELMFAT
+                default n
+            
+            config BSP_SDRAM_FS
+                string "Set the file system used, default: elm"
+                depends on BSP_SDRAM_ENABLE_FS
+                default "elm"
         endif
         
     menuconfig BSP_USING_LVGL
@@ -2453,6 +2475,10 @@ menu "Onboard Peripheral Drivers"
                     int "Set lcd vfp, default: 13"
                     default (13)
                     
+                config LCD_USING_RGB2BGR
+                    bool "Enable LCD RGB to BGR mode"
+                    default y
+                    
                 choice
                     prompt "Select lcd backlight"
                     default LCD_BACKLIGHT_USING_GPIO
@@ -2509,15 +2535,32 @@ menu "Onboard Peripheral Drivers"
             if BSP_USING_TOUCH
                 choice
                     prompt "Select touch driver"
-                    default TOUCH_USING_XPT2046
+                    default TOUCH_USING_SW
+                    
+                    config TOUCH_USING_SW
+                        bool "Enable touch driver sw"
                     
                     config TOUCH_USING_XPT2046
                         bool "Enable touch driver xpt2046"
                 endchoice
                 
                 config TOUCH_IRQ_PIN
-                    string "pin name for the irq pin, default: PB.1"
-                    default "PB.1"
+                    string "pin name for the irq pin, default: PC.14"
+                    default "PC.14"
+                
+                if TOUCH_USING_SW
+                    config TOUCH_SW_SPI_BUS
+                        string "Set the spi bus used, default: spi2"
+                        default "spi2"
+                        
+                    config TOUCH_SW_CS_PIN
+                        string "pin name for the chip select pin, default: PB.12"
+                        default "PB.12"
+                        
+                    config TOUCH_SW_SPI_SPEED
+                        int "Set the rate of spi, default: (2 * 1000 *1000)"
+                        default (2000000)
+                endif
                 
                 if TOUCH_USING_XPT2046
                     config TOUCH_XPT2046_SPI_BUS

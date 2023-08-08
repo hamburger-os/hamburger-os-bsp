@@ -57,6 +57,16 @@ extern "C" {
 #define FMCSRAM_BLK_SIZE                (512)
 #endif
 
+#ifdef BSP_SDRAM_ENABLE_BLK
+//sdram定义,无需修改
+#define SDRAM_DEV_NAME                  "sdram"
+#define BLK_SDRAM                       "sdram"
+#define SDRAM_BLK_SIZE                  (512)
+#endif
+#ifndef BSP_SDRAM_BLK_SIZE
+#define BSP_SDRAM_BLK_SIZE              (0)
+#endif
+
 #ifdef BSP_USING_NORFLASH
 //norflash定义,无需修改
 #define NORFLASH_DEV_NAME               "fmc_nor"

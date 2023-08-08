@@ -10,6 +10,6 @@
 #ifndef BOARD_PORTS_ATK_TOUCH_XPT2046_H_
 #define BOARD_PORTS_ATK_TOUCH_XPT2046_H_
 
-rt_err_t xpt2046_calibration(const char *lcd_name,const char *touch_name);
+rt_err_t sw_calibration(const char *lcd_name,const char *touch_name);
 
 #endif /* BOARD_PORTS_ATK_TOUCH_XPT2046_H_ */

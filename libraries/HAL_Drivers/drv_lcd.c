@@ -21,6 +21,7 @@
 #define LCD_DEVICE(dev)     (struct drv_lcd_device*)(dev)
 #define LCD_BUF_SIZE        (LCD_WIDTH * LCD_HEIGHT * LCD_BITS_PER_PIXEL / 8)
 #define LCD_PIXEL_FORMAT    RTGRAPHIC_PIXEL_FORMAT_RGB565
+#define LCD_RGB2BGR(x)      (((x & 0xf800) >> 11) | (x & 0x07e0) | ((x & 0x001f) << 11))
 
 static LTDC_HandleTypeDef LtdcHandle = {0};
 
@@ -76,7 +77,7 @@ static rt_err_t drv_lcd_control(struct rt_device *device, int cmd, void *args)
             _lcd.cur_buf = 1;
         }
         rt_sem_take(&_lcd.lcd_lock, RT_TICK_PER_SECOND / 20);
-        HAL_LTDC_Relaod(&LtdcHandle, LTDC_SRCR_VBR);
+        HAL_LTDC_Reload(&LtdcHandle, LTDC_SRCR_VBR);
     }
     break;
 
@@ -267,35 +268,26 @@ void turn_on_lcd_backlight(void)
 }
 #endif
 
-struct LCD_COLOR
-{
-    uint16_t b : 5;
-    uint16_t g : 6;
-    uint16_t r : 5;
-};
-
 void lcd_fill_array(rt_uint16_t x_start, rt_uint16_t y_start, rt_uint16_t x_end, rt_uint16_t y_end, void *pcolor)
 {
-    //核心板的lvds转接板将RGB接为了BGR
-    struct LCD_COLOR *pixel = (struct LCD_COLOR *)pcolor;
-    struct LCD_COLOR color_bgr;
-    struct LCD_COLOR *pixel_bgr;
+    uint16_t *pixel = (uint16_t *)pcolor;
+    uint16_t *framebuffer;
 
     struct drv_lcd_device *lcd = &_lcd;
     uint16_t cycle_y, x_offset = 0;
 
-    for(cycle_y = y_start; cycle_y <= y_end; )
+    for(cycle_y = y_start; cycle_y <= y_end; cycle_y++)
     {
         for(x_offset = 0;x_start + x_offset <= x_end; x_offset++)
         {
-            pixel_bgr = (struct LCD_COLOR *)&lcd->lcd_info.framebuffer[2 * (cycle_y * lcd->lcd_info.width + x_start + x_offset)];
-            color_bgr = *pixel;
-            color_bgr.r = pixel->b;
-            color_bgr.b = pixel->r;
-            *pixel_bgr = color_bgr;
+            framebuffer = (uint16_t *)&lcd->lcd_info.framebuffer[2 * (cycle_y * lcd->lcd_info.width + x_start + x_offset)];
+#ifdef LCD_USING_RGB2BGR
+            *framebuffer = LCD_RGB2BGR(*pixel);//核心板的lvds转接将RGB接为了BGR
+#else
+            *framebuffer = *pixel;
+#endif
             pixel ++;
         }
-        cycle_y++;
     }
     lcd->parent.control(&lcd->parent, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);
 }
@@ -312,7 +304,86 @@ const static struct rt_device_ops lcd_ops =
 };
 #endif
 
-int drv_lcd_hw_init(void)
+//画点
+//x,y:坐标
+//color:颜色
+static void drv_lcd_set_pixel(const char *pixel, int x, int y)
+{
+    uint16_t color = *((uint16_t *)pixel);
+#ifdef LCD_USING_RGB2BGR
+    color = LCD_RGB2BGR(color);
+#endif
+    uint16_t *framebuffer;
+
+    struct drv_lcd_device *lcd = &_lcd;
+
+    framebuffer = (uint16_t *)&lcd->lcd_info.framebuffer[2 * (y * lcd->lcd_info.width + x)];
+    *framebuffer = color;
+//    lcd->parent.control(&lcd->parent, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);
+}
+
+//读取个某点的颜色值
+//x,y:坐标
+//返回值:此点的颜色
+static void drv_lcd_get_pixel(char *pixel, int x, int y)
+{
+}
+
+//画横线
+static void drv_lcd_draw_hline(const char *pixel, int x1, int x2, int y)
+{
+    uint16_t color = *((uint16_t *)pixel);
+#ifdef LCD_USING_RGB2BGR
+    color = LCD_RGB2BGR(color);
+#endif
+    uint16_t *framebuffer;
+
+    struct drv_lcd_device *lcd = &_lcd;
+    uint16_t x_offset = 0;
+
+    for(x_offset = 0;x1 + x_offset <= x2; x_offset++)
+    {
+        framebuffer = (uint16_t *)&lcd->lcd_info.framebuffer[2 * (y * lcd->lcd_info.width + x_offset + x1)];
+        *framebuffer = color;
+    }
+//    lcd->parent.control(&lcd->parent, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);
+}
+
+//画竖线
+static void drv_lcd_draw_vline(const char *pixel, int x, int y1, int y2)
+{
+    uint16_t color = *((uint16_t *)pixel);
+#ifdef LCD_USING_RGB2BGR
+    color = LCD_RGB2BGR(color);
+#endif
+    uint16_t *framebuffer;
+
+    struct drv_lcd_device *lcd = &_lcd;
+    uint16_t cycle_y = 0;
+
+    for(cycle_y = y1; cycle_y <= y2; cycle_y++)
+    {
+        framebuffer = (uint16_t *)&lcd->lcd_info.framebuffer[2 * (cycle_y * lcd->lcd_info.width + x)];
+        *framebuffer = color;
+    }
+//    lcd->parent.control(&lcd->parent, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);
+}
+
+//画线
+static void drv_lcd_blit_line(const char *pixel, int x, int y, rt_size_t size)
+{
+}
+
+static struct rt_device_graphic_ops drv_lcd_ops =
+{
+    drv_lcd_set_pixel,
+    drv_lcd_get_pixel,
+    drv_lcd_draw_hline,
+    drv_lcd_draw_vline,
+    drv_lcd_blit_line,
+};
+
+static int drv_lcd_hw_init(void)
 {
     rt_err_t result = RT_EOK;
     struct rt_device *device = &_lcd.parent;
@@ -360,6 +431,7 @@ int drv_lcd_hw_init(void)
     device->control = drv_lcd_control;
 #endif
 #endif
+    device->user_data = &drv_lcd_ops;
 
     /* init stm32 LTDC */
     if (stm32_lcd_init(&_lcd) != RT_EOK)
@@ -398,7 +470,7 @@ __exit:
 INIT_DEVICE_EXPORT(drv_lcd_hw_init);
 
 #ifdef BSP_USING_LCD_TEST
-int lcd_test()
+static int lcd_test(void)
 {
     uint16_t *pixel;    //核心板的lvds转接板将RGB接为了BGR
     struct drv_lcd_device *lcd = &_lcd;

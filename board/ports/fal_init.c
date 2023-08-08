@@ -54,6 +54,13 @@ static int rt_fal_init(void)
     }
 #endif
 
+#ifdef BSP_SDRAM_ENABLE_BLK
+    if (fal_blk_device_create(BLK_SDRAM) == NULL)
+    {
+        LOG_E("Failed to creat blk %s!", BLK_SDRAM);
+    }
+#endif
+
 #ifdef NORFLASH_ENABLE_FS
     if (fal_mtd_nor_device_create(BLK_NOR) == NULL)
 //    if (fal_blk_device_create(BLK_NOR) == NULL)

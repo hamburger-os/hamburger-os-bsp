@@ -16,6 +16,12 @@
 #define DBG_LVL DBG_INFO
 #include <rtdbg.h>
 
+void lv_user_gui_init(void)
+{
+    extern void lv_demo_calendar(void);
+    lv_demo_calendar();
+}
+
 static int selftest_init(void)
 {
 

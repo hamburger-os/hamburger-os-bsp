@@ -49,13 +49,13 @@ static struct memDef memlist[] = {
     {
         .name = "sdram",
         .start = (void *)SDRAM_BANK_ADDR,
-        .size = SDRAM_SIZE,
+        .size = SDRAM_SIZE - BSP_SDRAM_BLK_SIZE,
         .arg = NULL,
         .init = SDRAM_Init,
     },
 #endif
 
-#if defined(BSP_USING_FMCSRAM) && !defined(BSP_FMCSRAM_ENABLE_FS)
+#if defined(BSP_USING_FMCSRAM) && !defined(BSP_FMCSRAM_ENABLE_BLK)
     {
         .name = "sram",
         .start = (void *)BSP_FMCSRAM_ADDR,

@@ -14,6 +14,7 @@
 
 #ifdef BSP_USING_TOUCH
 #include "drv_touch.h"
+#include "sw_touch.h"
 #include "xpt2046.h"
 
 #define DBG_TAG "drv.touch"
@@ -31,6 +32,7 @@ extern void lv_port_indev_input(rt_int16_t x, rt_int16_t y, lv_indev_state_t sta
 #endif /* PKG_USING_GUIENGINE */
 
 static struct _rt_drv_touch drv_touch;
+extern struct rt_touch_ops drv_touch_ops;
 
 __weak int drv_touch_bus_init(struct _rt_drv_touch *config)
 {
@@ -85,12 +87,17 @@ int drv_touch_hw_init(void)
     drv_touch.dev.info.type = RT_TOUCH_TYPE_RESISTANCE;
     drv_touch.dev.info.vendor = RT_TOUCH_VENDOR_UNKNOWN;
 #endif
+#ifdef TOUCH_USING_SW
+    drv_touch.dev.info.point_num = 1;
+    drv_touch.dev.info.type = RT_TOUCH_TYPE_RESISTANCE;
+    drv_touch.dev.info.vendor = RT_TOUCH_VENDOR_UNKNOWN;
+#endif
     drv_touch.dev.config.user_data = &drv_touch;
 #ifdef RT_TOUCH_PIN_IRQ
     drv_touch.dev.config.irq_pin.pin = rt_pin_get(TOUCH_IRQ_PIN);
     drv_touch.dev.config.irq_pin.mode = PIN_MODE_INPUT_PULLUP;
 #endif /* RT_TOUCH_PIN_IRQ */
-    drv_touch.dev.ops = &xpt2046_ops;
+    drv_touch.dev.ops = &drv_touch_ops;
 
     drv_touch_bus_init(&drv_touch);
     /* register lcd device */
@@ -114,6 +121,10 @@ INIT_DEVICE_EXPORT(drv_touch_hw_init);
 
 int drv_touch_env_init(void)
 {
+#ifdef TOUCH_USING_SW
+//    sw_calibration("lcd", "touch");
+#endif
+
 #ifdef TOUCH_USING_XPT2046
     xpt2046_calibration("lcd", "touch");
 #endif

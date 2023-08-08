@@ -39,6 +39,10 @@ static const struct romfs_dirent _romfs_root_mnt[] =
     {ROMFS_DIRENT_DIR, BLK_FMCSRAM  , RT_NULL, 0},      //sram
 #endif
 
+#ifdef BSP_SDRAM_ENABLE_FS
+    {ROMFS_DIRENT_DIR, BLK_SDRAM  , RT_NULL, 0},        //sdram
+#endif
+
 #ifdef NORFLASH_ENABLE_FS
     {ROMFS_DIRENT_DIR, BLK_NOR      , RT_NULL, 0},      //nor
 #endif
@@ -101,6 +105,10 @@ static const struct mount_fs _mount_fs[] =
 
 #ifdef BSP_FMCSRAM_ENABLE_FS
     {BLK_FMCSRAM        , BLK_FMCSRAM       , BSP_FMCSRAM_FS    },
+#endif
+
+#ifdef BSP_SDRAM_ENABLE_FS
+    {BLK_SDRAM          , BLK_SDRAM         , BSP_SDRAM_FS      },
 #endif
 
 #ifdef NORFLASH_ENABLE_FS

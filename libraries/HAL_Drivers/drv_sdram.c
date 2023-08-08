@@ -12,6 +12,11 @@
 
 #ifdef BSP_USING_SDRAM
 
+#if defined(RT_USING_FAL)
+#include "fal.h"
+#include "fal_cfg.h"
+#endif
+
 #define DRV_DEBUG
 #define LOG_TAG             "drv.sdram"
 #include <drv_log.h>
@@ -178,5 +183,87 @@ int SDRAM_Init(void *arg)
 
     return result;
 }
+
+#ifdef BSP_SDRAM_ENABLE_BLK
+static int fal_sdram_init(void);
+static int fal_sdram_read(long offset, rt_uint8_t *buf, size_t size);
+static int fal_sdram_write(long offset, const rt_uint8_t *buf, size_t size);
+static int fal_sdram_erase(long offset, size_t size);
+
+/* ===================== Flash device Configuration ========================= */
+const struct fal_flash_dev sdram_flash =
+{
+    .name = SDRAM_DEV_NAME,
+    .addr = SDRAM_BANK_ADDR + SDRAM_SIZE - BSP_SDRAM_BLK_SIZE,
+    .len = BSP_SDRAM_BLK_SIZE,
+    .blk_size = SDRAM_BLK_SIZE,
+    .ops = {fal_sdram_init, fal_sdram_read, fal_sdram_write, fal_sdram_erase},
+    .write_gran = 0,
+};
+
+static int fal_sdram_init(void)
+{
+    rt_err_t ret = RT_EOK;
+
+    LOG_I("init succeed %d MB.", sdram_flash.len/1024/1024);
+    return ret;
+}
+static int fal_sdram_read(long offset, rt_uint8_t *buf, size_t size)
+{
+    uint32_t addr = sdram_flash.addr + offset;
+    if (addr + size > sdram_flash.addr + sdram_flash.len)
+    {
+        LOG_E("read outrange flash size! addr is (0x%p)", (void*)(addr + size));
+        return -RT_EINVAL;
+    }
+    if (size < 1)
+    {
+        LOG_W("read size %d! addr is (0x%p)", size, (void*)(addr + size));
+        return -RT_EINVAL;
+    }
+
+    rt_memcpy(buf, (const void *)addr, size);
+//    LOG_D("read (0x%p) %d", (void*)(addr), size);
+
+    return size;
+}
+static int fal_sdram_write(long offset, const rt_uint8_t *buf, size_t size)
+{
+    uint32_t addr = sdram_flash.addr + offset;
+    if (addr + size > sdram_flash.addr + sdram_flash.len)
+    {
+        LOG_E("write outrange flash size! addr is (0x%p)", (void*)(addr + size));
+        return -RT_EINVAL;
+    }
+    if (size < 1)
+    {
+        LOG_W("write size %d! addr is (0x%p)", size, (void*)(addr + size));
+        return -RT_EINVAL;
+    }
+
+    rt_memcpy((void*)addr, buf, size);
+//    LOG_D("write (0x%p) %d", (void*)(addr), size);
+
+    return size;
+}
+static int fal_sdram_erase(long offset, size_t size)
+{
+    rt_uint32_t addr = sdram_flash.addr + offset;
+    if ((addr + size) > sdram_flash.addr + sdram_flash.len)
+    {
+        LOG_E("erase outrange flash size! addr is (0x%p)", (void*)(addr + size));
+        return -RT_EINVAL;
+    }
+    if (size < 1)
+    {
+        LOG_W("erase size %d! addr is (0x%p)", size, (void*)(addr + size));
+        return -RT_EINVAL;
+    }
+
+//    LOG_D("erase (0x%p) %d", (void*)(addr), size);
+
+    return size;
+}
+#endif
 
 #endif /* BSP_USING_SDRAM */
