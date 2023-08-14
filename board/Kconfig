@@ -2860,6 +2860,43 @@ menu "Onboard Peripheral Drivers"
                 default n
         endif
         
+    menuconfig BSP_USING_S25FL512
+        bool "Enable SPI FLASH (S25FL512)"
+        select RT_USING_DFS
+        select RT_USING_DFS_ROMFS
+        select PKG_USING_LITTLEFS
+        default n
+        
+        if BSP_USING_S25FL512
+            config BSP_S25FL512_SPI_BUS
+                string "Set the spi bus used, default: spi1"
+                default "spi1"
+                
+            config BSP_S25FL512_SPI_CS_PIN
+                string "Set the pin of the chip select, default: PB.14"
+                default "PB.14"
+                
+            config BSP_S25FL512_SPI_SPEED
+                int "Set the rate of spi, default: (40 * 1000 *1000)"
+                default (40000000)
+            
+            config S25FL512_SIZE_GRANULARITY_TOTAL
+                int "Set storage space size, default: (64 * 1024 * 1024)"
+                default (67108864)
+            
+            config S25FL512_BLK_SIZE
+                int "Set the memory block size, default: (262144)"
+                default (262144)
+            
+            config S25FL512_FS
+                string "Set the file system used, default: lfs"
+                default "lfs"
+                
+            config S25FL512_ENABLE_TEST
+                bool "Enable test cmd"
+                default n
+        endif
+        
     menuconfig BSP_USING_EMMC
         bool "Enable EMMC"
         select RT_USING_DFS

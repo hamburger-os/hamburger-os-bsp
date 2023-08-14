@@ -4,11 +4,18 @@ import rtconfig
 from building import *
 
 cwd     = GetCurrentDir()
-CPPPATH = [cwd, str(Dir('#'))]
-src     = Split("""
-                selftest.c
-                """)
+CPPPATH = [cwd , cwd + '/gui/generated', cwd + '/gui/generated/guider_customer_fonts', cwd + '/gui/generated/guider_fonts', cwd + '/gui/custom']
 
-group = DefineGroup('selftest', src, depend = ['APP_SELFTEST'], CPPPATH = CPPPATH)
+src     = Split('''
+                selftest.c
+                ''')
+src     += Glob('gui/generated/*.c');
+src     += Glob('gui/generated/guider_fonts/*.c');
+src     += Glob('gui/generated/images/*.c');
+src     += Glob('gui/custom/*.c');
+
+CPPDEFINES = ['LV_LVGL_H_INCLUDE_SIMPLE']
+
+group = DefineGroup('selftest', src, depend = ['APP_SELFTEST'], CPPPATH = CPPPATH, CPPDEFINES = CPPDEFINES)
 
 Return('group')

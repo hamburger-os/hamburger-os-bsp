@@ -24,6 +24,10 @@
     extern struct fal_flash_dev spiflash;
 #endif
 
+#ifdef BSP_USING_S25FL512
+    extern struct fal_flash_dev s25fl512_flash;
+#endif
+
 #ifdef BSP_FMCSRAM_ENABLE_BLK
     extern const struct fal_flash_dev sram_flash;
 #endif
@@ -55,6 +59,10 @@ const struct fal_flash_dev * const device_table[] =
 
 #ifdef BSP_USING_SPI_FLASH
     &spiflash,
+#endif
+
+#ifdef BSP_USING_S25FL512
+    &s25fl512_flash,
 #endif
 
 #ifdef BSP_FMCSRAM_ENABLE_BLK
@@ -99,6 +107,10 @@ const struct fal_partition partition_table_def[] =
 
 #ifdef BSP_USING_SPI_FLASH
     {FAL_PART_MAGIC_WORD,BLK_SPI_FLASH,   SPI_FLASH_DEV_NAME,                             0,    SPI_FLASH_SIZE_GRANULARITY_TOTAL, 0},
+#endif
+
+#ifdef BSP_USING_S25FL512
+    {FAL_PART_MAGIC_WORD, BLK_S25FL512,    S25FL512_DEV_NAME,                             0,     S25FL512_SIZE_GRANULARITY_TOTAL, 0},
 #endif
 
 #ifdef BSP_FMCSRAM_ENABLE_BLK

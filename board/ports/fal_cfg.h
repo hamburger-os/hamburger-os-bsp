@@ -50,6 +50,13 @@ extern "C" {
 #define BLK_SPI_FLASH                   "spiflash"
 #endif
 
+#ifdef BSP_USING_S25FL512
+//s25fl512定义,无需修改
+#define S25FL512_START_ADRESS           (0)
+#define S25FL512_DEV_NAME               "s25fl512"
+#define BLK_S25FL512                    "spiflash"
+#endif
+
 #ifdef BSP_FMCSRAM_ENABLE_BLK
 //sram定义,无需修改
 #define FMCSRAM_DEV_NAME                "fmc_sram"

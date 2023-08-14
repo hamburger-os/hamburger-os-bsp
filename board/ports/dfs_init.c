@@ -35,6 +35,10 @@ static const struct romfs_dirent _romfs_root_mnt[] =
     {ROMFS_DIRENT_DIR, BLK_SPI_FLASH, RT_NULL, 0},      //spiflash
 #endif
 
+#ifdef BSP_USING_S25FL512
+    {ROMFS_DIRENT_DIR, BLK_S25FL512, RT_NULL, 0},       //S25FL512
+#endif
+
 #ifdef BSP_FMCSRAM_ENABLE_FS
     {ROMFS_DIRENT_DIR, BLK_FMCSRAM  , RT_NULL, 0},      //sram
 #endif
@@ -101,6 +105,10 @@ static const struct mount_fs _mount_fs[] =
 
 #ifdef BSP_USING_SPI_FLASH
     {BLK_SPI_FLASH      , BLK_SPI_FLASH     , SPI_FLASH_FS      },
+#endif
+
+#ifdef BSP_USING_S25FL512
+    {BLK_S25FL512       , BLK_S25FL512      , S25FL512_FS      },
 #endif
 
 #ifdef BSP_FMCSRAM_ENABLE_FS

@@ -47,6 +47,13 @@ static int rt_fal_init(void)
     }
 #endif
 
+#ifdef BSP_USING_S25FL512
+    if (fal_mtd_nor_device_create(BLK_S25FL512) == NULL)
+    {
+        LOG_E("Failed to creat nor %s!", BLK_S25FL512);
+    }
+#endif
+
 #ifdef BSP_FMCSRAM_ENABLE_BLK
     if (fal_blk_device_create(BLK_FMCSRAM) == NULL)
     {
