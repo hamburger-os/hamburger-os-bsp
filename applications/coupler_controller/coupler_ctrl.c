@@ -44,8 +44,8 @@ static void ctrl_thread_entry(void *parameter)
     while(puserdata->isThreadRun)
     {
         rt_thread_delay(1000);
-        puserdata->status = rt_pin_read(puserdata->ctrl_pin[CTRL_DI1]);
-        if (puserdata->status == PIN_LOW)
+        puserdata->status = !rt_pin_read(puserdata->ctrl_pin[CTRL_DI1]);
+        if (puserdata->status == PIN_HIGH)
         {
             if (puserdata->mode == MODE_UNHOOKING)
             {
@@ -80,6 +80,7 @@ void ctrl_air_pressure(uint8_t onoff)
     rt_pin_write(coupler_controller_userdata.ctrl_pin[CTRL_DO1], onoff);
     LOG_D("air pressure %d", onoff);
 }
+
 static void air_test(int argc, char **argv)
 {
     if (argc != 2)

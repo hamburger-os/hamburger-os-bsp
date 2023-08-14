@@ -51,6 +51,7 @@ static void led_thread_entry(void *parameter)
 //        rt_pin_write(puserdata->led_pin[LED_485], !rt_pin_read(puserdata->led_pin[LED_485]));
 //        rt_pin_write(puserdata->led_pin[LED_DIO], !rt_pin_read(puserdata->led_pin[LED_DIO]));
     }
+    rt_pin_write(puserdata->led_pin[LED_RUN], PIN_HIGH);
 }
 
 void coupler_controller_led_toggle(int pin)

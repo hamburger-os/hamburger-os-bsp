@@ -184,19 +184,19 @@ static void process_thread_entry(void *parameter)
                         , data->distance_h, data->isdistance_h
                         , data->distance_l, data->isdistance_l
                         , data->out_hook, data->isout_hook);
-                if (data->islogo)
+//                if (data->islogo)
                 {
                     puserdata->logo = data->logo;
                 }
-                if (data->isdistance_h)
+//                if (data->isdistance_h)
                 {
                     puserdata->distance_h = data->distance_h;
                 }
-                if (data->isdistance_l)
+//                if (data->isdistance_l)
                 {
                     puserdata->distance_l = data->distance_l;
                 }
-                if (data->isout_hook)
+//                if (data->isout_hook)
                 {
                     puserdata->out_hook = data->out_hook;
                 }
@@ -412,6 +412,15 @@ void coupler_controller_moduleinit(void)
 {
     fffeFrame_init(&frame);
 }
+
+static void module_test(int argc, char **argv)
+{
+    CMD_OPENDef cmd = {
+        .function = 1,
+    };
+    fffeFrame_cmd(&frame, ID_CMD_OPEN, (uint8_t *)&cmd, sizeof(cmd));
+}
+MSH_CMD_EXPORT_ALIAS(module_test, moduletest, module test);
 
 void module_ctrl_open(uint8_t isopen)
 {
