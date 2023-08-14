@@ -30,14 +30,13 @@ extern void lv_port_disp_init(void);
 extern void lv_port_indev_init(void);
 extern void lv_user_gui_init(void);
 
-static struct rt_thread lvgl_thread;
+static rt_thread_t lvgl_thread;
 
 #ifdef rt_align
 rt_align(RT_ALIGN_SIZE)
 #else
 ALIGN(RT_ALIGN_SIZE)
 #endif
-static rt_uint8_t lvgl_thread_stack[PKG_LVGL_THREAD_STACK_SIZE];
 
 #if LV_USE_LOG
 static void lv_rt_log(const char *buf)
@@ -59,25 +58,30 @@ static void lvgl_thread_entry(void *parameter)
     /* handle the tasks of LVGL */
     while(1)
     {
-        lv_task_handler();
         rt_thread_mdelay(LV_DISP_DEF_REFR_PERIOD);
+        lv_task_handler();
     }
 }
 
 static int lvgl_thread_init(void)
 {
-    rt_err_t err;
-
-    err = rt_thread_init(&lvgl_thread, "LVGL", lvgl_thread_entry, RT_NULL,
-           &lvgl_thread_stack[0], sizeof(lvgl_thread_stack), PKG_LVGL_THREAD_PRIO, 0);
-    if(err != RT_EOK)
+    lvgl_thread = rt_thread_create( "LVGL",
+                                    lvgl_thread_entry,
+                                    NULL,
+                                    PKG_LVGL_THREAD_STACK_SIZE,
+                                    PKG_LVGL_THREAD_PRIO,
+                                    10);
+    if ( lvgl_thread != RT_NULL)
+    {
+        rt_thread_startup(lvgl_thread);
+    }
+    else
     {
         LOG_E("Failed to create LVGL thread");
-        return -1;
+        return -RT_ENOMEM;
     }
-    rt_thread_startup(&lvgl_thread);
 
-    return 0;
+    return RT_EOK;
 }
 INIT_ENV_EXPORT(lvgl_thread_init);
 

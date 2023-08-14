@@ -16,7 +16,7 @@
 #define DBG_LVL DBG_INFO
 #include <rtdbg.h>
 
-#if 1 //运行Gui-Guider创建的app
+#if 0 //运行Gui-Guider创建的app
 
 #include <lvgl.h>
 #include "gui_guider.h"
@@ -30,6 +30,9 @@ void lv_user_gui_init(void)
     /*Create a GUI-Guider app */
     setup_ui(&guider_ui);
     custom_init(&guider_ui);
+
+//    extern void lv_demo_calendar(void);
+//    lv_demo_calendar();
 }
 #endif
 
