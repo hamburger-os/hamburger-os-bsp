@@ -87,6 +87,7 @@ void setup_scr_screen(lv_ui *ui)
 
 	//Write codes screen_btn_ok
 	ui->screen_btn_ok = lv_btn_create(ui->screen);
+	lv_obj_add_flag(ui->screen_btn_ok, LV_OBJ_FLAG_CHECKABLE);
 	ui->screen_btn_ok_label = lv_label_create(ui->screen_btn_ok);
 	lv_label_set_text(ui->screen_btn_ok_label, "ok");
 	lv_label_set_long_mode(ui->screen_btn_ok_label, LV_LABEL_LONG_WRAP);
@@ -100,16 +101,22 @@ void setup_scr_screen(lv_ui *ui)
 	lv_obj_set_style_bg_opa(ui->screen_btn_ok, 255, LV_PART_MAIN|LV_STATE_DEFAULT);
 	lv_obj_set_style_bg_color(ui->screen_btn_ok, lv_color_hex(0x0a4082), LV_PART_MAIN|LV_STATE_DEFAULT);
 	lv_obj_set_style_border_width(ui->screen_btn_ok, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
-	lv_obj_set_style_radius(ui->screen_btn_ok, 5, LV_PART_MAIN|LV_STATE_DEFAULT);
-	lv_obj_set_style_shadow_width(ui->screen_btn_ok, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
+	lv_obj_set_style_radius(ui->screen_btn_ok, 25, LV_PART_MAIN|LV_STATE_DEFAULT);
+	lv_obj_set_style_shadow_width(ui->screen_btn_ok, 3, LV_PART_MAIN|LV_STATE_DEFAULT);
+	lv_obj_set_style_shadow_color(ui->screen_btn_ok, lv_color_hex(0x0d4b3b), LV_PART_MAIN|LV_STATE_DEFAULT);
+	lv_obj_set_style_shadow_opa(ui->screen_btn_ok, 255, LV_PART_MAIN|LV_STATE_DEFAULT);
+	lv_obj_set_style_shadow_spread(ui->screen_btn_ok, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
+	lv_obj_set_style_shadow_ofs_x(ui->screen_btn_ok, 1, LV_PART_MAIN|LV_STATE_DEFAULT);
+	lv_obj_set_style_shadow_ofs_y(ui->screen_btn_ok, 2, LV_PART_MAIN|LV_STATE_DEFAULT);
 	lv_obj_set_style_text_color(ui->screen_btn_ok, lv_color_hex(0xffffff), LV_PART_MAIN|LV_STATE_DEFAULT);
-	lv_obj_set_style_text_font(ui->screen_btn_ok, &lv_font_simsun_22, LV_PART_MAIN|LV_STATE_DEFAULT);
+	lv_obj_set_style_text_font(ui->screen_btn_ok, &lv_font_simsun_18, LV_PART_MAIN|LV_STATE_DEFAULT);
 	lv_obj_set_style_text_align(ui->screen_btn_ok, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN|LV_STATE_DEFAULT);
 
 	//Write codes screen_btn_cancel
 	ui->screen_btn_cancel = lv_btn_create(ui->screen);
+	lv_obj_add_flag(ui->screen_btn_cancel, LV_OBJ_FLAG_CHECKABLE);
 	ui->screen_btn_cancel_label = lv_label_create(ui->screen_btn_cancel);
-	lv_label_set_text(ui->screen_btn_cancel_label, "cancel");
+	lv_label_set_text(ui->screen_btn_cancel_label, "cancel\n");
 	lv_label_set_long_mode(ui->screen_btn_cancel_label, LV_LABEL_LONG_WRAP);
 	lv_obj_align(ui->screen_btn_cancel_label, LV_ALIGN_CENTER, 0, 0);
 	lv_obj_set_style_pad_all(ui->screen_btn_cancel, 0, LV_STATE_DEFAULT);
@@ -121,10 +128,15 @@ void setup_scr_screen(lv_ui *ui)
 	lv_obj_set_style_bg_opa(ui->screen_btn_cancel, 255, LV_PART_MAIN|LV_STATE_DEFAULT);
 	lv_obj_set_style_bg_color(ui->screen_btn_cancel, lv_color_hex(0x0a4082), LV_PART_MAIN|LV_STATE_DEFAULT);
 	lv_obj_set_style_border_width(ui->screen_btn_cancel, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
-	lv_obj_set_style_radius(ui->screen_btn_cancel, 5, LV_PART_MAIN|LV_STATE_DEFAULT);
-	lv_obj_set_style_shadow_width(ui->screen_btn_cancel, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
+	lv_obj_set_style_radius(ui->screen_btn_cancel, 25, LV_PART_MAIN|LV_STATE_DEFAULT);
+	lv_obj_set_style_shadow_width(ui->screen_btn_cancel, 3, LV_PART_MAIN|LV_STATE_DEFAULT);
+	lv_obj_set_style_shadow_color(ui->screen_btn_cancel, lv_color_hex(0x0d4b3b), LV_PART_MAIN|LV_STATE_DEFAULT);
+	lv_obj_set_style_shadow_opa(ui->screen_btn_cancel, 255, LV_PART_MAIN|LV_STATE_DEFAULT);
+	lv_obj_set_style_shadow_spread(ui->screen_btn_cancel, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
+	lv_obj_set_style_shadow_ofs_x(ui->screen_btn_cancel, 1, LV_PART_MAIN|LV_STATE_DEFAULT);
+	lv_obj_set_style_shadow_ofs_y(ui->screen_btn_cancel, 2, LV_PART_MAIN|LV_STATE_DEFAULT);
 	lv_obj_set_style_text_color(ui->screen_btn_cancel, lv_color_hex(0xffffff), LV_PART_MAIN|LV_STATE_DEFAULT);
-	lv_obj_set_style_text_font(ui->screen_btn_cancel, &lv_font_simsun_22, LV_PART_MAIN|LV_STATE_DEFAULT);
+	lv_obj_set_style_text_font(ui->screen_btn_cancel, &lv_font_simsun_18, LV_PART_MAIN|LV_STATE_DEFAULT);
 	lv_obj_set_style_text_align(ui->screen_btn_cancel, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN|LV_STATE_DEFAULT);
 
 	//Write codes screen_ta
@@ -133,8 +145,8 @@ void setup_scr_screen(lv_ui *ui)
 	#if LV_USE_KEYBOARD != 0 || LV_USE_ZH_KEYBOARD != 0
 		lv_obj_add_event_cb(ui->screen_ta, ta_event_cb, LV_EVENT_ALL, ui->g_kb_screen);
 	#endif
-	lv_obj_set_pos(ui->screen_ta, 0, -4);
-	lv_obj_set_size(ui->screen_ta, 800, 30);
+	lv_obj_set_pos(ui->screen_ta, 10, -4);
+	lv_obj_set_size(ui->screen_ta, 780, 40);
 	lv_obj_set_scrollbar_mode(ui->screen_ta, LV_SCROLLBAR_MODE_OFF);
 
 	//Write style for screen_ta, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.

@@ -23,7 +23,7 @@
 #define MY_CLASS &lv_btnmatrix_class
 
 #define BTN_EXTRA_CLICK_AREA_MAX (LV_DPI_DEF / 10)
-#define LV_BTNMATRIX_WIDTH_MASK 0x000F
+#define LV_BTNMATRIX_WIDTH_MASK 0x0007
 
 /**********************
  *      TYPEDEFS
@@ -520,8 +520,6 @@ static void lv_btnmatrix_event(const lv_obj_class_t * class_p, lv_event_t * e)
         btnm->btn_id_sel = LV_BTNMATRIX_BTN_NONE;
     }
     else if(code == LV_EVENT_FOCUSED) {
-        if(btnm->btn_cnt == 0) return;
-
         lv_indev_t * indev = lv_event_get_param(e);
         lv_indev_type_t indev_type = lv_indev_get_type(indev);
 
@@ -565,15 +563,9 @@ static void lv_btnmatrix_event(const lv_obj_class_t * class_p, lv_event_t * e)
             else btnm->btn_id_sel++;
             if(btnm->btn_id_sel >= btnm->btn_cnt) btnm->btn_id_sel = 0;
 
-            uint16_t btn_id_start = btnm->btn_id_sel;
             while(button_is_hidden(btnm->ctrl_bits[btnm->btn_id_sel]) || button_is_inactive(btnm->ctrl_bits[btnm->btn_id_sel])) {
                 btnm->btn_id_sel++;
                 if(btnm->btn_id_sel >= btnm->btn_cnt) btnm->btn_id_sel = 0;
-
-                if(btnm->btn_id_sel == btn_id_start) {
-                    btnm->btn_id_sel = LV_BTNMATRIX_BTN_NONE;
-                    break;
-                }
             }
         }
         else if(c == LV_KEY_LEFT) {
@@ -582,15 +574,9 @@ static void lv_btnmatrix_event(const lv_obj_class_t * class_p, lv_event_t * e)
             if(btnm->btn_id_sel == 0) btnm->btn_id_sel = btnm->btn_cnt - 1;
             else if(btnm->btn_id_sel > 0) btnm->btn_id_sel--;
 
-            uint16_t btn_id_start = btnm->btn_id_sel;
             while(button_is_hidden(btnm->ctrl_bits[btnm->btn_id_sel]) || button_is_inactive(btnm->ctrl_bits[btnm->btn_id_sel])) {
                 if(btnm->btn_id_sel > 0) btnm->btn_id_sel--;
                 else btnm->btn_id_sel = btnm->btn_cnt - 1;
-
-                if(btnm->btn_id_sel == btn_id_start) {
-                    btnm->btn_id_sel = LV_BTNMATRIX_BTN_NONE;
-                    break;
-                }
             }
         }
         else if(c == LV_KEY_DOWN) {
@@ -600,10 +586,7 @@ static void lv_btnmatrix_event(const lv_obj_class_t * class_p, lv_event_t * e)
                 btnm->btn_id_sel = 0;
                 while(button_is_hidden(btnm->ctrl_bits[btnm->btn_id_sel]) || button_is_inactive(btnm->ctrl_bits[btnm->btn_id_sel])) {
                     btnm->btn_id_sel++;
-                    if(btnm->btn_id_sel >= btnm->btn_cnt) {
-                        btnm->btn_id_sel = LV_BTNMATRIX_BTN_NONE;
-                        break;
-                    }
+                    if(btnm->btn_id_sel >= btnm->btn_cnt) btnm->btn_id_sel = 0;
                 }
             }
             else {
@@ -631,10 +614,7 @@ static void lv_btnmatrix_event(const lv_obj_class_t * class_p, lv_event_t * e)
                 btnm->btn_id_sel = 0;
                 while(button_is_hidden(btnm->ctrl_bits[btnm->btn_id_sel]) || button_is_inactive(btnm->ctrl_bits[btnm->btn_id_sel])) {
                     btnm->btn_id_sel++;
-                    if(btnm->btn_id_sel >= btnm->btn_cnt) {
-                        btnm->btn_id_sel = LV_BTNMATRIX_BTN_NONE;
-                        break;
-                    }
+                    if(btnm->btn_id_sel >= btnm->btn_cnt) btnm->btn_id_sel = 0;
                 }
             }
             else {

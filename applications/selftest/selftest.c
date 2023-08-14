@@ -30,9 +30,6 @@ void lv_user_gui_init(void)
     /*Create a GUI-Guider app */
     setup_ui(&guider_ui);
     custom_init(&guider_ui);
-
-//    extern void lv_demo_calendar(void);
-//    lv_demo_calendar();
 }
 #endif
 

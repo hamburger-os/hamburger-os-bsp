@@ -19,19 +19,16 @@ __WEAK void lv_user_gui_init(void)
 {
     LOG_D("lvgl demo start...");
     /* display demo; you may replace with your LVGL application at here */
-#if LV_USE_DEMO_RTT_MUSIC == 1
+#if defined(PKG_USING_LV_MUSIC_DEMO)
     extern void lv_demo_music(void);
     lv_demo_music();
+#elif defined(PKG_USING_GUI_GUIDER_DEMO)
+    extern void gui_guider_setup(void);
+    gui_guider_setup();
 #elif defined(BSP_USING_LVGL_DEMO)
     extern void lv_demo_calendar(void);
     lv_demo_calendar();
 #else
-    lv_color_t *cbuf = rt_malloc(LV_CANVAS_BUF_SIZE_TRUE_COLOR(LCD_WIDTH, LCD_HEIGHT));
-    extern lv_obj_t * lv_100ask_sketchpad_create(lv_obj_t * parent);
-    lv_obj_t * sketchpad = lv_100ask_sketchpad_create(lv_scr_act());
 
-    lv_canvas_set_buffer(sketchpad, cbuf, LCD_WIDTH, LCD_HEIGHT, LV_IMG_CF_RGB565);
-    lv_obj_center(sketchpad);
-    lv_canvas_fill_bg(sketchpad, lv_palette_lighten(LV_PALETTE_RED, 3), LV_OPA_TRANSP);
 #endif
 }

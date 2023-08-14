@@ -171,7 +171,6 @@ if GetDepend(['BSP_USING_LVGL']):
     path += [cwd + '/ports/lvgl']
     src += Glob('ports/lvgl/demo/lv_demo.c')
     src += Glob('ports/lvgl/demo/lv_demo_calendar.c')
-    src += Glob('ports/lvgl/demo/lv_100ask_sketchpad.c')
     path += [cwd + '/ports/lvgl/demo']
         
 if GetDepend(['BSP_USING_TOUCH']):

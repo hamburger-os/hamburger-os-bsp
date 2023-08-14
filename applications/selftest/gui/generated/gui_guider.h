@@ -40,9 +40,8 @@ LV_IMG_DECLARE(_swlogo_alpha_240x204);
 
 LV_FONT_DECLARE(lv_font_simsun_28)
 LV_FONT_DECLARE(lv_font_montserratMedium_16)
-LV_FONT_DECLARE(lv_font_simsun_22)
-LV_FONT_DECLARE(lv_font_montserratMedium_12)
 LV_FONT_DECLARE(lv_font_simsun_18)
+LV_FONT_DECLARE(lv_font_montserratMedium_12)
 
 
 #ifdef __cplusplus

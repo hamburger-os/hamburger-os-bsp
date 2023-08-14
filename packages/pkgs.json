@@ -6,8 +6,18 @@
  }, 
  {
   "path": "/packages/multimedia/LVGL/LVGL", 
-  "ver": "v8.3.8", 
+  "ver": "v8.3.5", 
   "name": "LVGL"
+ }, 
+ {
+  "path": "/packages/multimedia/LVGL/lv_music_demo", 
+  "ver": "v0.3.2", 
+  "name": "LV_MUSIC_DEMO"
+ }, 
+ {
+  "path": "/packages/multimedia/LVGL/gui_guider_demo", 
+  "ver": "latest", 
+  "name": "GUI_GUIDER_DEMO"
  }, 
  {
   "path": "/packages/multimedia/wavplayer", 
