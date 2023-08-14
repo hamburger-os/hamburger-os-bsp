@@ -13,7 +13,7 @@
 #include "coupler_controller.h"
 
 #define DBG_TAG "gnss"
-#define DBG_LVL DBG_LOG
+#define DBG_LVL DBG_INFO
 #include <rtdbg.h>
 
 static void gnss_thread_entry(void *parameter)

@@ -61,7 +61,7 @@ typedef struct
     //控制器状态
     COUPLERMODEDef mode;
     //车钩状态
-    uint8_t status;             //0，挂钩；1，脱钩
+    uint8_t status;             //1，挂钩；0，脱钩
     //车钩adc
     uint16_t adc[2];
     //图像测距模块

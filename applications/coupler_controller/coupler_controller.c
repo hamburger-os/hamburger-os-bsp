@@ -150,7 +150,7 @@ static void process_thread_entry(void *parameter)
                     .logo = puserdata->logo,
                     .pressure_1 = puserdata->adc[0],
                     .pressure_2 = puserdata->adc[1],
-                    .put_hook = 0,
+                    .put_hook = puserdata->status,
                     .out_hook = puserdata->out_hook,
                     .reserve = 0x7c7e,
                 };
