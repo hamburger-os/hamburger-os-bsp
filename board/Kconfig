@@ -2891,10 +2891,39 @@ menu "Onboard Peripheral Drivers"
             config S25FL512_FS
                 string "Set the file system used, default: lfs"
                 default "lfs"
+        endif
+        
+    menuconfig BSP_USING_AT45DB321E
+        bool "Enable SPI FLASH (AT45DB321E)"
+        select RT_USING_DFS
+        select RT_USING_DFS_ROMFS
+        select PKG_USING_LITTLEFS
+        default n
+        
+        if BSP_USING_AT45DB321E
+            config BSP_AT45DB321E_SPI_BUS
+                string "Set the spi bus used, default: spi2"
+                default "spi2"
                 
-            config S25FL512_ENABLE_TEST
-                bool "Enable test cmd"
-                default n
+            config BSP_AT45DB321E_SPI_CS_PIN
+                string "Set the pin of the chip select, default: PA.15"
+                default "PA.15"
+                
+            config BSP_AT45DB321E_SPI_SPEED
+                int "Set the rate of spi, default: (40 * 1000 *1000)"
+                default (40000000)
+            
+            config AT45DB321E_SIZE_GRANULARITY_TOTAL
+                int "Set storage space size, default: (4 * 1024 * 1024)"
+                default (4194304)
+            
+            config AT45DB321E_BLK_SIZE
+                int "Set the memory block size, default: (512)"
+                default (512)
+            
+            config AT45DB321E_FS
+                string "Set the file system used, default: lfs"
+                default "lfs"
         endif
         
     menuconfig BSP_USING_EMMC

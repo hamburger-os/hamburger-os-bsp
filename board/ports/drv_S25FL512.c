@@ -189,6 +189,8 @@ static int fal_s25fl512_read(long offset, rt_uint8_t *buf, size_t size)
 
     return size;
 }
+
+#define PAGE_SIZE 512
 static int fal_s25fl512_write(long offset, const rt_uint8_t *buf, size_t size)
 {
     uint32_t addr = s25fl512_flash.addr + offset;
@@ -203,27 +205,49 @@ static int fal_s25fl512_write(long offset, const rt_uint8_t *buf, size_t size)
         return 0;
     }
 
-    s25fl512_writeEnable();
-
-    /* 发送写命令 */
-    uint8_t cmd[] = {0x12, (uint8_t)((addr) >> 24U), (uint8_t)((addr) >> 16U), (uint8_t)((addr) >> 8U), (uint8_t)((addr))};
-
-    /* 写数据 */
-    rt_err_t ret = rt_spi_send_then_send(s25fl512_spidev, cmd, sizeof(cmd), buf, size);
-    if (ret != RT_EOK)
+    uint32_t addr_page = addr;
+    const uint8_t *buf_page = buf;
+    size_t size_less = size;
+    size_t size_page = PAGE_SIZE;
+    size_t countmax = (size%PAGE_SIZE == 0)?(size/PAGE_SIZE):(size/PAGE_SIZE + 1);
+    for (size_t count = 0; count < countmax; count++)
     {
-        LOG_E("write data error %d!", ret);
-        return -RT_EIO;
-    }
+        s25fl512_writeEnable();
 
-    s25fl512_writeDisable();
-    s25fl512_wait_busy();
+        /* 计算页长度 */
+        if (size_less >= PAGE_SIZE)
+        {
+            size_page = PAGE_SIZE;
+        }
+        else
+        {
+            size_page = size_less % PAGE_SIZE;
+        }
+
+        /* 发送写命令 */
+        uint8_t cmd[] = {0x12, (uint8_t)((addr_page) >> 24U), (uint8_t)((addr_page) >> 16U), (uint8_t)((addr_page) >> 8U), (uint8_t)((addr_page))};
+
+        /* 写数据 */
+        rt_err_t ret = rt_spi_send_then_send(s25fl512_spidev, cmd, sizeof(cmd), buf_page, size_page);
+        if (ret != RT_EOK)
+        {
+            LOG_E("write data error %d!", ret);
+            return -RT_EIO;
+        }
+        addr_page += PAGE_SIZE;
+        buf_page += PAGE_SIZE;
+        size_less -= PAGE_SIZE;
+
+        s25fl512_writeDisable();
+        s25fl512_wait_busy();
+    }
 
     LOG_HEX("write", 16, (uint8_t *)buf, (size > 64)?(64):(size));
     LOG_D("write (0x%p) %d", (void*)(addr), size);
 
     return size;
 }
+
 static int fal_s25fl512_erase(long offset, size_t size)
 {
     rt_uint32_t addr = s25fl512_flash.addr + offset;
@@ -238,21 +262,27 @@ static int fal_s25fl512_erase(long offset, size_t size)
         return 0;
     }
 
-    s25fl512_writeEnable();
-
-    /* 发送写命令 */
-    uint8_t cmd[] = {0xDC, (uint8_t)((addr) >> 24U), (uint8_t)((addr) >> 16U), (uint8_t)((addr) >> 8U), (uint8_t)((addr))};
-
-    /* 写数据 */
-    rt_err_t ret = rt_spi_send(s25fl512_spidev, cmd, sizeof(cmd));
-    if (ret != sizeof(cmd))
+    uint32_t addr_blk = addr;
+    size_t countmax = (size%s25fl512_flash.blk_size == 0)?(size/s25fl512_flash.blk_size):(size/s25fl512_flash.blk_size + 1);
+    for (size_t count = 0; count < countmax; count++)
     {
-        LOG_E("erase error %d!", ret);
-        return -RT_EIO;
-    }
+        s25fl512_writeEnable();
 
-    s25fl512_writeDisable();
-    s25fl512_wait_busy();
+        /* 发送擦命令 */
+        uint8_t cmd[] = {0xDC, (uint8_t)((addr_blk) >> 24U), (uint8_t)((addr_blk) >> 16U), (uint8_t)((addr_blk) >> 8U), (uint8_t)((addr_blk))};
+
+        /* 擦数据 */
+        rt_err_t ret = rt_spi_send(s25fl512_spidev, cmd, sizeof(cmd));
+        if (ret != sizeof(cmd))
+        {
+            LOG_E("erase error %d!", ret);
+            return -RT_EIO;
+        }
+        addr_blk += s25fl512_flash.blk_size;
+
+        s25fl512_writeDisable();
+        s25fl512_wait_busy();
+    }
 
     LOG_D("erase (0x%p) %d", (void*)(addr), size);
 
