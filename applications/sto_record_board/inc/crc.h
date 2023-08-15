@@ -1,9 +1,12 @@
-/* ***************************************************
- * 文件名： crc.h
- * 模  块： CRC校验模块
+/*
+ * Copyright (c) 2006-2021, RT-Thread Development Team
  *
+ * SPDX-License-Identifier: Apache-2.0
  *
- ****************************************************/
+ * Change Logs:
+ * Date           Author       Notes
+ * 2023-07-22     zm       the first version
+ */
 
 #ifndef CRC_H
 #define CRC_H

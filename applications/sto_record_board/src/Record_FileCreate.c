@@ -5,15 +5,12 @@
 **@author: Created By Sunzq
 **@date  : 2015.11.19
 **@brief : None
+**@Change Logs:
+**Date           Author       Notes
+**2023-07-21      zm           add swos2
 ********************************************************************************************/
 #include "Record_FileCreate.h"
-//#include "s25fl1.h"  //TODO(mingzhao)
 #include "common.h"
-//#include "FM25V05_Manage.h"   //TODO(mingzhao)
-//#include "ETH_Manage.h"      //TODO(mingzhao)
-//#include "Record_Selfcheck.h"      //TODO(mingzhao)
-//#include "System_Vote.h"      //TODO(mingzhao)
-//#include "s25fl256s.h"      //TODO(mingzhao)
 #include <rtthread.h>
 
 #include <stdio.h>
@@ -23,7 +20,6 @@
 #include <sys/fcntl.h>
 
 #include "utils.h"
-
 #include "sto_record_board.h"
 
 #define DBG_TAG "FileCreat"
@@ -617,100 +613,6 @@ void RecordBoard_FileCreate(void)
     }
 }
 
-
-/********************************************************************************************
-** @brief: Get_FlashState
-** @param: null
-********************************************************************************************/
-#if 0 //TODO(mingzhoa)
-
-
-void Init_FlashState(void)  //使用FMInitLatestFile替代 TODO(mingzhao)
-{
-    /* 读取FRAM的0地址数据放入Flash_State; */
-    FLASH_STATE flash_state = { 0u }, flash_state_old = { 0u };
-
-    while (1u)
-    {
-        FM25V05_Manage_ReadData(0u, (uint8_t *) &flash_state, sizeof(FLASH_STATE));
-
-        printf("init %x %x %x\r\n", flash_state.u32_init_flag, flash_state.u32_file_count,
-                flash_state.u32_sector_count);
-
-        if (memcmp(&flash_state_old, &flash_state, sizeof(FLASH_STATE)))
-        {
-            memcpy(&flash_state_old, &flash_state, sizeof(FLASH_STATE));
-        }
-        else
-        {
-            memcpy(&Flash_State, &flash_state, sizeof(FLASH_STATE));
-            break;
-        } /* end if...else */
-
-        Wait(1u);
-    } /* end while */
-
-    /* 判断FLASH是否初始化 */
-    if (Flash_State.u32_init_flag != 0x05555559u)
-//  if ( Flash_State.u32_init_flag != 0x05555552u )
-    {
-        printf("init the flash\r\n");
-        S25FL256S_EraseChip();
-
-        Flash_State.u32_init_flag = 0x05555559u;
-        Flash_State.u32_sector_count = 0u;
-        Flash_State.u32_file_count = 0u;
-        Flash_State.u32_fram_start_addr = FRAM_BASE_ADDR;
-        Flash_State.u32_fram_write_addr = FRAM_BASE_ADDR - sizeof(SFile_Directory);
-        Flash_State.u32_flash_start_addr = FLASH_RecordFile_BASE_ADDR;
-        Flash_State.u32_flash_write_addr = FLASH_RecordFile_BASE_ADDR - SECTOR_SIZE;
-
-        /* 更新FLASH状态到FRAM的0地址 */
-        FM25V05_Manage_WriteEnable();
-        FM25V05_Manage_WriteData(0u, (uint8_t *) &Flash_State, sizeof(FLASH_STATE));
-
-        /* 初始化写buf */
-        memset(&write_buf, 0u, sizeof(WRITE_BUF));
-        FM25V05_Manage_WriteEnable();
-        FM25V05_Manage_WriteData( FRAM_FlashBuffer_BASE_ADDR, (uint8_t *) &write_buf, sizeof(WRITE_BUF));
-
-        uint8_t dat_buff[1024] = { 0 };
-        uint32_t i = 0;
-        /* 初始化文件目录 */
-        for (i = 0; i < 62; i++)
-        {
-            FM25V05_Manage_WriteEnable();
-            FM25V05_Manage_WriteData( FRAM_FileDirectory_BASE_ADDR + i * 1024, dat_buff, 1024);
-        }
-    }
-    else
-    {
-        if (Flash_State.u32_file_count != 0u)
-        {
-            /* 得到最后记录的车次信息 */
-            FM25V05_Manage_ReadData(Flash_State.u32_fram_write_addr, (uint8_t *) &s_File_Directory,
-                    sizeof(SFile_Directory));
-//          printf("最后记录司机:%d\r\n",(uint16_t)s_File_Directory.ch_siji[0]
-//                                  + ((uint16_t)s_File_Directory.ch_siji[1]<<8)
-//                                  + ((uint16_t)s_File_Directory.ch_siji[2]<<16)
-//                                  + ((uint16_t)s_File_Directory.ch_siji[3]<<24));
-//          printf("最后记录车次:%d\r\n",(uint16_t)s_File_Directory.ch_checi[0]
-//                                  + ((uint16_t)s_File_Directory.ch_checi[1]<<8)
-//                                  + ((uint16_t)s_File_Directory.ch_checi[2]<<16)
-//                                  + ((uint16_t)s_File_Directory.ch_checi[3]<<24));
-//          printf("最后本补状态：%x\r\n",s_File_Directory.ch_benbuzhuangtai[0]);
-
-//            Flash_Addr = s_File_Directory.u32_start_addr + s_File_Directory.u32_page_count * PAGE_SIZE; //TODO(mingzhoa)
-            printf("Flash_Addr is 0x%08x\r\n", Flash_Addr);
-            /* 得到上次丢失的数据 */
-            FM25V05_Manage_ReadData( FRAM_FlashBuffer_BASE_ADDR, (uint8_t *) &write_buf, sizeof(WRITE_BUF));
-            printf("得到上次丢失的位置： 0x%08x\r\n", write_buf.pos);
-        } /* end if */
-    } /* end if...else */
-}
-
-#endif
-
 /**************************************************************************************************
 功能：判断是否生成记录文件
 参数：无
@@ -898,9 +800,6 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
                 s_File_Directory.ch_date[3]);
         /* 生成目录与记录文件名 */
         Get_FileName(&s_File_Directory);
-
-        /* 打印记录文件名与目录文件名 */
-        LOG_I("file：%s dir: %s", s_File_Directory.ch_file_name, file_manager.latest_dir_file_info.file_name);
 
         /* 1.生成新的记录文件 */
         char full_path[PATH_NAME_MAX_LEN];
@@ -1118,12 +1017,6 @@ static void Update_FileHead(void)
     memcpy(s_file_head.ch_wenjianneirongCRC, &FileContent_CRC32, 4u);
     /* CRC校验 */
     s_file_head.u32_CRC32 = CRC32CCITT((uint8_t *) &s_file_head, sizeof(SFile_Head) - 2u, 0xFFFFFFFF);
-
-#if 0  //TODO(mingzhao)  文件头在记录文件中存储  原来为什么要存在fm
-    /* 将文件头内容缓存到FRAM */
-    FM25V05_Manage_WriteEnable();
-    FM25V05_Manage_WriteData( FRAM_FileHead_BASE_ADDR, (uint8_t *) &s_file_head, sizeof(SFile_Head));
-#endif
 }
 
 
@@ -1593,7 +1486,7 @@ static void WriteFileContantPkt(uint8_t num1, uint8_t num2, uint8_t device_code,
                     LOG_E("write record pos %d", write_buf.pos);
                 }
             }
-            LOG_I("写记录事项222位置：%d   剩余空间：%d   内容长度：%d", write_buf.pos, rest_size, contant_size);
+            LOG_I("写记录事项位置：%d   剩余空间：%d   内容长度：%d", write_buf.pos, rest_size, contant_size);
             break;
         }
         else /* 缓存区存满 */
@@ -1725,55 +1618,21 @@ static void Get_FileContant(void)
 
 /**********************************************
 功能：获取文件名
-参数：addr  -->  文件地址
+参数：directory  -->  文件目录结构体信息
 返回：无
 ***********************************************/
-#if 0
-/*
- *
- * 需要保证上一个文件大于等于20M或没有文件，才能调用该接口创建文件*/
-static void Get_FileName(SFile_Directory *directory)
-{
-//    char filename[FILE_NAME_MAX_NUM] = {0};
-
-    /* 记录文件名：车次_司机号_日期_序号 */
-    /* 日期：年月日 */
-//    snprintf(directory->ch_file_name, FILE_NAME_MAX_NUM,
-//            "%d%d%d%d_%d%d%d%d_%d%d%d_%d",
-//            directory->ch_checi[0], directory->ch_checi[1], directory->ch_checi[2], directory->ch_checi[3],
-//            directory->ch_siji[0], directory->ch_siji[1], directory->ch_siji[2], directory->ch_siji[3],
-//            directory->ch_date[0], directory->ch_date[1], directory->ch_date[2],
-//            directory->file_id);
-
-    snprintf(directory->ch_file_name, FILE_NAME_MAX_NUM,
-            "%d%d%d%d_%d%d%d_%d.DSW",
-            directory->ch_checi[0], directory->ch_checi[1], directory->ch_checi[2], directory->ch_checi[3],
-            directory->ch_date[0], directory->ch_date[1], directory->ch_date[2],
-            directory->file_id);
-
-    /* 目录文件    dir_车次_日期_序号 */
-    snprintf(file_manager.latest_dir_file_info.file_name, FILE_NAME_MAX_NUM,
-            "dir_%d%d%d%d_%d%d%d_%d",
-            directory->ch_checi[0], directory->ch_checi[1], directory->ch_checi[2], directory->ch_checi[3],
-            directory->ch_date[0], directory->ch_date[1], directory->ch_date[2],
-            directory->file_id);
-    memcpy(directory->ch_dir_name, file_manager.latest_dir_file_info.file_name, FILE_NAME_MAX_NUM);
-
-    LOG_I("dir: %s record: %s", file_manager.latest_dir_file_info.file_name, directory->ch_file_name);
-}
-
-#else
 static void Get_FileName(SFile_Directory *directory)
 {
     uint32_t i = 0u, j = 0u;
     uint32_t num, divisor = 0u;
+    char tmp_file_name[FILE_NAME_MAX_NUM];
 
     /* 车次扩充 */
     for (i = 0u; i < 4u; i++)
     {
         if (directory->ch_checikuochong[i] != 0x20u && directory->ch_checikuochong[i] != 0x00u)
         {
-            directory->ch_file_name[j] = directory->ch_checikuochong[i];
+            tmp_file_name[j] = directory->ch_checikuochong[i];
             j++;
         } /* end if */
     } /* end for */
@@ -1813,7 +1672,7 @@ static void Get_FileName(SFile_Directory *directory)
 
     for (; i > 0u; i--)
     {
-        directory->ch_file_name[j] = num / divisor + 48u;    //将十进制数字转换为ASCII码字符
+        tmp_file_name[j] = num / divisor + 48u;    //将十进制数字转换为ASCII码字符
         num = num % divisor;
         j++;
         divisor = divisor / 10u;
@@ -1865,7 +1724,7 @@ static void Get_FileName(SFile_Directory *directory)
 
     for (; i > 0u; i--)
     {
-        directory->ch_file_name[j] = num / divisor + 48u;    //将十进制数字转换为ASCII码字符
+        tmp_file_name[j] = num / divisor + 48u;    //将十进制数字转换为ASCII码字符
         num = num % divisor;
         j++;
         divisor = divisor / 10u;
@@ -1883,27 +1742,26 @@ static void Get_FileName(SFile_Directory *directory)
 #endif
 #endif
 
-    directory->ch_file_name[j++] = directory->ch_date[0u] / 10u + 48u;
-    directory->ch_file_name[j++] = directory->ch_date[0u] % 10u + 48u;
-    directory->ch_file_name[j++] = directory->ch_date[1u] / 10u + 48u;
-    directory->ch_file_name[j++] = directory->ch_date[1u] % 10u + 48u;
-    directory->ch_file_name[j++] = directory->ch_date[2u] / 10u + 48u;
-    directory->ch_file_name[j++] = directory->ch_date[2u] % 10u + 48u;
+    tmp_file_name[j++] = directory->ch_date[0u] / 10u + 48u;
+    tmp_file_name[j++] = directory->ch_date[0u] % 10u + 48u;
+    tmp_file_name[j++] = directory->ch_date[1u] / 10u + 48u;
+    tmp_file_name[j++] = directory->ch_date[1u] % 10u + 48u;
+    tmp_file_name[j++] = directory->ch_date[2u] / 10u + 48u;
+    tmp_file_name[j++] = directory->ch_date[2u] % 10u + 48u;
 
-    directory->ch_file_name[j++] = '_';
-    directory->ch_file_name[j++] = directory->file_id + 48u;
-
-    snprintf(file_manager.latest_dir_file_info.file_name, FILE_NAME_MAX_NUM, "%s_dir", directory->ch_file_name);
-    LOG_I("dir name %s", file_manager.latest_dir_file_info.file_name);
+    /* 文件id */
+    snprintf(&tmp_file_name[j], FILE_NAME_MAX_NUM, "_%d", directory->file_id);
+    /* latest_dir_file文件中记录最新的目录文件名 */
+    snprintf(file_manager.latest_dir_file_info.file_name, FILE_NAME_MAX_NUM, "%s_dir", tmp_file_name);
+    /* 设置最新的目录文件名 */
     memcpy(directory->ch_dir_name, file_manager.latest_dir_file_info.file_name, FILE_NAME_MAX_NUM);
 
-    directory->ch_file_name[j++] = '.';
-    directory->ch_file_name[j++] = 'D';
-    directory->ch_file_name[j++] = 'S';
-    directory->ch_file_name[j++] = 'W';
-    LOG_I("ch file name %s j %d", directory->ch_file_name, j);
+    /* 最新的文件名 */
+    snprintf(directory->ch_file_name, FILE_NAME_MAX_NUM, "%s.DSW", tmp_file_name);
+
+    /* 打印记录文件名与目录文件名 */
+    LOG_I("file：%s dir: %s", directory->ch_file_name, file_manager.latest_dir_file_info.file_name);
 }
-#endif
 
 /**********************************************
 ***********************************************
@@ -5667,6 +5525,8 @@ static sint32_t fm_write_record_file_head(S_CURRENT_FILE_INFO *current_file_info
     Update_FileHead();
     LOG_I("fm_write_record_file_head");
 
+//    LOG_I("file dir: %s, %s. addr %d, %d",
+//            current_file_info->file_dir->ch_file_name, s_File_Directory.ch_file_name, &current_file_info->file_dir->ch_file_name, &s_File_Directory.ch_file_name);
     snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME,
             current_file_info->file_dir->ch_file_name);
 

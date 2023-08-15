@@ -5,26 +5,13 @@
 **@author: Created By Sunzq
 **@date  : 2015.11.18
 **@brief : None
+**@Change Logs:
+**Date           Author       Notes
+**2023-07-21      zm           add swos2
 ********************************************************************************************/
 #include "Record_Board_App.h"
 #include "Common.h"
-//#include "IRQ_Manage.h"
-//#include "CAN_Manage.h"
-//#include "Timer_Manage.h"
-//#include "timetick.h"
-//#include "mcan.h"
 #include "CAN_CommonDef.h"
-//#include "S25FL256_Manage.h"
-//#include "FM25V05_Manage.h"
-//#include "GPIO_Manage.h"
-//#include "ETH_Manage.h"
-//#include "KSZ8895_Manage.h"
-//#include "Record_FileDown.h"
-//#include "Record_SelfCheck.h"
-//#include "Record_FileCreate.h"
-//
-//#include "VCUZH_IAP.h"
-//#include "RS485_Manage.h"
 #include "RecordErrorCode.h"
 
 #define DBG_TAG "record_app"

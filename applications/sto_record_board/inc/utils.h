@@ -1,19 +1,19 @@
-/*******************************************************
+/*
+ * Copyright (c) 2006-2021, RT-Thread Development Team
  *
- * @FileName: utils.h
- * @Date: 2023-05-24 16:06:26
- * @Author: ccy
- * @Description: 工具模块都文件.
+ * SPDX-License-Identifier: Apache-2.0
  *
- * Copyright (c) 2023 by thinker, All Rights Reserved.
- *
- *******************************************************/
+ * Change Logs:
+ * Date           Author       Notes
+ * 2023-07-25     zm       the first version
+ */
 
 #ifndef UTILS_H_
 #define UTILS_H_
 
 #include <rtthread.h>
 #include "type.h"
+#include <drivers/rtc.h>
 
 /*******************************************************
  * 宏定义
@@ -194,5 +194,15 @@ void copy_files(const char *src, const char *dest);
  *
  *******************************************************/
 int ChangeValuePositiveAndNegative(int value);
+
+/*******************************************************
+ *
+ * @brief  设置板卡时间
+ *
+ * @param time_now 设置的时间
+ * @retval sint32_t 0:成功 负数:失败
+ *
+ *******************************************************/
+int32_t set_boart_time(struct tm *time_now);
 
 #endif

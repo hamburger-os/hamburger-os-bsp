@@ -1,13 +1,12 @@
-/* ***************************************************
- * 文件名：  crc.c
- * 模  块： CRC校验模块。
- * 详  述：
- *        提供CRC校验计算函数。
+/*
+ * Copyright (c) 2006-2021, RT-Thread Development Team
  *
- *  Copyright (C) 2017 Henan Thinker Co.,Ltd. All rights reserved.
- *  版权所有:河南思维轨道交通技术研究院有限公司，所有权利保留。
- * 
- ****************************************************/
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Change Logs:
+ * Date           Author       Notes
+ * 2023-07-22     zm       the first version
+ */
 #include "crc.h"
 #include "string.h"
 

@@ -19,9 +19,6 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-/* private variable declaration ---------------------------------------------------------------- */
-//static uint8_t reset_ksz8895_enable = 0u;
-
 rt_err_t DataHandleInit(S_DATA_HANDLE *p_data_handle)
 {
     if(RT_NULL == p_data_handle)
@@ -119,6 +116,9 @@ void ETHToCanDataHandle(S_DATA_HANDLE *p_data_handle, uint8_t *pbuf, uint16_t da
 rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
 {
     rt_err_t ret = -RT_ERROR;
+    struct tm tm_new;
+    static uint8_t read_time_flag = 0;
+    static uint32_t set_rtc_time = 0u;
 
     if(RT_NULL == p_data_handle)
     {
@@ -167,6 +167,37 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
             {
                 UpdateErrorCodeTime(&can_tmp.data_u8[4]);
             } /* end if */
+
+
+            if(read_time_flag == 1)
+            {
+                tm_new.tm_year = 2000 + TIME_N;
+                tm_new.tm_mon = TIME_Y;
+                tm_new.tm_mday = TIME_R;
+
+                tm_new.tm_hour = TIME_S;
+                tm_new.tm_min = TIME_F;
+                tm_new.tm_sec = TIME_M;
+    //            LOG_I("time %d-%d-%d %d.%d.%d", tm_new.tm_year, tm_new.tm_mon, tm_new.tm_mday, tm_new.tm_hour, tm_new.tm_min, tm_new.tm_sec);
+                set_boart_time(&tm_new);
+                read_time_flag = 2;
+            }
+            else if(2 == read_time_flag)       /* 10分钟更新一次rtc时间 */
+            {
+                if(Common_BeTimeOutMN(&set_rtc_time, SET_RTC_CYCLE_MS))
+                {
+                    tm_new.tm_year = 2000 + TIME_N;
+                    tm_new.tm_mon = TIME_Y;
+                    tm_new.tm_mday = TIME_R;
+
+                    tm_new.tm_hour = TIME_S;
+                    tm_new.tm_min = TIME_F;
+                    tm_new.tm_sec = TIME_M;
+//                    LOG_I("time %d-%d-%d %d.%d.%d", tm_new.tm_year, tm_new.tm_mon, tm_new.tm_mday, tm_new.tm_hour, tm_new.tm_min, tm_new.tm_sec);
+                    set_boart_time(&tm_new);
+                }
+            }
+
             break;
 
         case CANPRI_ZKRSSA:
@@ -185,6 +216,11 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
             {
                 UpdateErrorCodeDate(&can_tmp.data_u8[4]);
             } /* end if */
+
+            if(0 == read_time_flag)
+            {
+                read_time_flag = 1;
+            }
             break;
 
         case CANPRI_KONGCHEA:
@@ -325,6 +361,9 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
         case LKJ_LLRT_MSG:
             CAN_0x68(can_tmp.no_u8) = can_tmp;
             Processing_LKJ_LLRT_Message(can_tmp.no_u8, can_tmp.data_u8);
+//            LOG_I("68_no %d data %d %d %d %d %d %d %d %d", can_tmp.no_u8,
+//                               can_tmp.data_u8[0], can_tmp.data_u8[1], can_tmp.data_u8[2], can_tmp.data_u8[3],
+//                               can_tmp.data_u8[4], can_tmp.data_u8[5], can_tmp.data_u8[6], can_tmp.data_u8[7]);
             break;
 
             /* 06-July-2020, by DuYanPo. */

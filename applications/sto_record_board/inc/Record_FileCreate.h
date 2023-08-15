@@ -5,7 +5,11 @@
 **@author: Created By Sunzq
 **@date  : 2015.11.19
 **@brief : None
+**@Change Logs:
+**Date           Author       Notes
+**2023-07-21      zm           add swos2
 ********************************************************************************************/
+
 #ifndef __RECORD_
 #define __RECORD_
 
@@ -116,8 +120,19 @@ extern uint8_t g_ECU_DevCode;
 
 
 /* 协议解析文件头 */
-#define TIME_NYR  		              ( RSS_( 2u ).data_u8[4] )
+#if 0
 #define TIME_SFM  			          ( CAN_0x66( 0u ).data_u8[4] )
+#define TIME_NYR                      ( RSS_( 2u ).data_u8[4] )
+#else
+#define TIME_NYR                      ( RSS_( 2u ).data_u8[4] )
+#define TIME_N                        ( RSS_( 2u ).data_u8[4] )
+#define TIME_Y                        ( RSS_( 2u ).data_u8[5] )
+#define TIME_R                        ( RSS_( 2u ).data_u8[6] )
+#define TIME_SFM                      ( QSS_( 0u ).data_u8[4] )
+#define TIME_S                        ( QSS_( 0u ).data_u8[4] )
+#define TIME_F                        ( QSS_( 0u ).data_u8[5] )
+#define TIME_M                        ( QSS_( 0u ).data_u8[6] )
+#endif
 #define CHECIKUOCHONG  	              ( RSS_( 3u ).data_u8[3] )
 #define CHECI  					      ( RSS_( 3u ).data_u8[0] )
 #define SIJI1  					      ( RSS_( 0u ).data_u8[0] )
@@ -145,7 +160,11 @@ extern uint8_t g_ECU_DevCode;
 #define TCMSGONGKUANG		          ( ato_gk_T55 & 0x07 )
 
 /* 指导信息 */
+#if 0  //TODO(mingzhao)
 #define Sto_CurSpeed_S13              ( CAN_0x30( 1u ).data_u8[3] )
+#else
+#define Sto_CurSpeed_S13              ( QSS_( 5u ).data_u8[0] )
+#endif
 #define ZHIDAOJIWEI			          ( QSS_( 5u ).data_u8[2] )
 #define ZHIDAOSUDU			          Sto_CurSpeed_S13
 #define ZHIDAOGONGKUANG               ( QSS_( 5u ).data_u8[7] )
@@ -156,8 +175,13 @@ extern uint8_t g_ECU_DevCode;
 #define YOUHUAMOSHI				    ( QSS_( 3u ).data_u8[7] )
 #define YOUHUADENGXINHAO	        ( QSS_( 5u ).data_u8[6] )
 #define SKHYOUQUANDUAN		        ( QSS_( 3u ).data_u8[6] )
+#if 0 //TODO(mingzhao)
 #define	KONGZHIGONGKUANG	        ( CAN_KONGCHE( 0u ).data_u8[1] )
 #define KONGZHIJIWEI			    ( CAN_KONGCHE( 0u ).data_u8[2] )
+#else
+#define KONGZHIGONGKUANG            ( QSS_( 2u ).data_u8[7] )
+#define KONGZHIJIWEI                ( QSS_( 2u ).data_u8[5] )
+#endif
 #define SHOUBINGHUILING		        ( QSS_( 6u ).data_u8[ 6u ] )
 /* 12-June-2018, by Liang Zhen. */
 #define ABV_CTRL_MSG                ( CAN_KONGCHE( 0u ).data_u8[1] )
@@ -168,9 +192,15 @@ extern uint8_t g_ECU_DevCode;
 //#define JICHEXINHAODAIMA      ( QSS_( 0u ).data_u8[7] )
 #define JICHEXINHAODAIMA      ( CAN_0x66( 1u ).data_u8[2] )
 #define JUlI                  ( CAN_0x66( 2u ).data_u8[3] )
+#if 0   //TODO(mingzhao)
 #define LIECHEGUANYA          ( CAN_0x32( 0u ).data_u8[0] )
 #define ZHAGANGYALI           ( CAN_0x32( 0u ).data_u8[6] )
 #define JUNGANG1YALI          ( CAN_0x32( 0u ).data_u8[4] )
+#else
+#define LIECHEGUANYA          ( CAN_0x68( 0u ).data_u8[0] )
+#define ZHAGANGYALI           ( CAN_0x68( 0u ).data_u8[2] )
+#define JUNGANG1YALI          ( CAN_0x68( 0u ).data_u8[4] )
+#endif
 #define CHAIYOUJIZHUANSU      ( CAN_0x68( 1u ).data_u8[6] )
 #define GUOJIZHUNDIANJULI     ( QSS_( 1u ).data_u8[0] )
 #define GONGLIBIAO            ( QSS_( 1u ).data_u8[4] )

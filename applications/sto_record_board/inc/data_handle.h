@@ -14,10 +14,12 @@
 
 /* 定义通道编号 */
 /*对系内通道*/
-#define IN_ETH_DEV              (0x01)              /* 内网 */
+#define IN_ETH_DEV              (0x01U)              /* 内网 */
 
-#define MAX_ETH_CAN_LEN          (1465) /*应用层负载区数据最大为1476-exp_head(8)-pack_head(3)*/
+#define MAX_ETH_CAN_LEN         (1465U) /*应用层负载区数据最大为1476-exp_head(8)-pack_head(3)*/
 #define CAN_DATA_MQ_MAX_NUM     (MAX_ETH_CAN_LEN + 100)
+
+#define SET_RTC_CYCLE_MS        (600000UL)
 
 
 #pragma pack(push, 1)

@@ -1,18 +1,21 @@
-/*******************************************************
+/*
+ * Copyright (c) 2006-2021, RT-Thread Development Team
  *
- * @FileName: utils.c
- * @Date: 2023-05-24 16:06:26
- * @Author: ccy
- * @Description: 工具模块
+ * SPDX-License-Identifier: Apache-2.0
  *
- * Copyright (c) 2023 by thinker, All Rights Reserved.
- *
- *******************************************************/
+ * Change Logs:
+ * Date           Author       Notes
+ * 2023-07-25     zm       the first version
+ */
 
 /*******************************************************
  * 头文件
  *******************************************************/
 #include "utils.h"
+
+#define DBG_TAG "utils"
+#define DBG_LVL DBG_LOG
+#include <rtdbg.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,10 +40,6 @@
 
 #include "file_manager.h"
 #include "Record_FileCreate.h"
-
-#define DBG_TAG "utils"
-#define DBG_LVL DBG_LOG
-#include <rtdbg.h>
 
 /*******************************************************
  * 宏定义
@@ -675,3 +674,28 @@ int ChangeValuePositiveAndNegative(int value)
     return value;
 }
 
+int32_t set_boart_time(struct tm *time_now)
+{
+//    time_t now;
+
+    if(NULL == time_now)
+    {
+        return -1;
+    }
+
+    if(set_date(time_now->tm_year, time_now->tm_mon, time_now->tm_mday) != RT_EOK)
+    {
+        LOG_E("set rtc date error");
+        return -1;
+    }
+
+    if(set_time(time_now->tm_hour, time_now->tm_min, time_now->tm_sec) != RT_EOK)
+    {
+        LOG_E("set rtc time error, %d.%d.%d", time_now->tm_hour, time_now->tm_min, time_now->tm_sec);
+        return -1;
+    }
+
+//    now = time(RT_NULL);
+//    LOG_I("time %s", ctime(&now));
+    return 0;
+}

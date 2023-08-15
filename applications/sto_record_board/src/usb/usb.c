@@ -41,8 +41,6 @@
 
 #define USB_COPY_FILE_BUFF_MAX_SIZE  (4096)
 
-static S_LATEST_DIR_FILE_INFO latest_dir_info;
-
 /*******************************************************
  *
  * @brief  将文件(from)拷贝到文件(to)中去
@@ -132,23 +130,72 @@ static sint32_t copy_file(const char *from, const char *to)
  *
  * @brief  转储文件到U盘.如果mode为0,只是复制文件到U盘;mode为1,先复制文件到U盘,再备份文件.
  *
- * @param  *src: 语音文件在板子上的存储路径.
- * @param  *target: U盘中保存语音文件的路径.
- * @param  mode: 转储的方式; mode为0,只复制文件到U盘; mode为1,先复制文件到U盘,再备份文件.
+ * @param  *src: 目录文件在板子上的存储路径.
+ * @param  *target: U盘中保存日志文件的路径.
+ * @param  mode: 转储的方式; mode为0,只复制未转存过的文件到U盘; mode为1,将所有文件复制到U盘.
  * @retval 0:成功 非0:失败
  *
  *******************************************************/
-// todo, 增加文件列表大小限制.
-static sint32_t store_file(const char *src, const char *target, sint32_t mode)
+static sint32_t store_file_func(file_info_t *p, const char *target)
 {
+    sint32_t pathlen = 0;
     char *name = NULL;
     char targetname[PATH_NAME_MAX_LEN]; /* 用于存放目标文件名 */
-//    char bakname[PATH_NAME_MAX_LEN];    /* 用于存放备份文件名 */
-    sint32_t error = 0, pathlen;
-    file_info_t *p_file_list_head = NULL, *p = NULL;
     char full_path[PATH_NAME_MAX_LEN] = { 0 };
-
     char buffer[SFILE_DIR_SIZE];
+
+    snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, p->record_name);
+
+    LOG_I("copy '%s' to dir '%s'", full_path, target);
+    name = get_sigle_file_name(full_path);
+    if (strstr(name, "DSW") == NULL) /* 没有找到DSW */
+    {
+        pathlen = snprintf(targetname, sizeof(targetname), "%s/%s.DSW", target, name);
+        if (pathlen > sizeof(targetname))
+        {
+            return -1;/* 缓冲区溢出, 字符串被截断了.*/
+        }
+    }
+    else
+    {
+        pathlen = snprintf(targetname, sizeof(targetname), "%s/%s", target, name);
+        if (pathlen > sizeof(targetname))
+        {
+            return -1;/* 缓冲区溢出, 字符串被截断了.*/
+        }
+    }
+
+    if (copy_file(full_path, targetname) < 0)
+    {
+        LOG_E("copy file error ...");
+        return -1;
+    }
+
+    /* 将拷贝成功的记录文件对应的目录内容设置为已转存 */
+    if(FMReadFile(&file_manager, p->dir_name, (void *)buffer, sizeof(SFile_Directory)) == 0)
+    {
+        ((SFile_Directory *)buffer)->is_save = 1;
+        if(FMWriteFile(&file_manager, p->dir_name, (const void *)buffer, sizeof(SFile_Directory)) < 0)
+        {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+static sint32_t store_file(const char *src, const char *target, E_CopyMode mode)
+{
+    sint32_t error = 0;
+    file_info_t *p_file_list_head = NULL, *p = NULL;
+
+    if (mode == COPYMODE_ALL) /* 开始转储全部文件 */
+    {
+        LOG_I("转储全部记录文件到U盘 ...");
+    }
+    else /* 开始转储最新文件 */
+    {
+        LOG_I("转储最新文件到U盘...");
+    }
 
     /* 获取文件列表 */
     p_file_list_head = get_org_file_info(src);
@@ -160,54 +207,31 @@ static sint32_t store_file(const char *src, const char *target, sint32_t mode)
         p = p_file_list_head;
         while (p != NULL)
         {
-            if (0 == p->is_save)
+            if(COPYMODE_NEW == mode)   /* 拷贝未转存过的 */
             {
-                snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, p->record_name);
-
-                LOG_I("copy '%s' to dir '%s'", full_path, target);
-                name = get_sigle_file_name(full_path);
-                if (strstr(name, "DSW") == NULL) /* 没有找到DSW */
+                if (0 == p->is_save)
                 {
-                    pathlen = snprintf(targetname, sizeof(targetname), "%s/%s.DSW", target, name);
-                    if (pathlen > sizeof(targetname))
+                    if(store_file_func(p, target) < 0)
                     {
-                        error = -1;
-                        break; /* 缓冲区溢出, 字符串被截断了.*/
+                        break;
                     }
                 }
                 else
                 {
-                    pathlen = snprintf(targetname, sizeof(targetname), "%s/%s", target, name);
-                    if (pathlen > sizeof(targetname))
-                    {
-                        error = -1;
-                        break; /* 缓冲区溢出, 字符串被截断了.*/
-                    }
+                    LOG_I("%s has already been saved", p->record_name);
                 }
-
-                if (copy_file(full_path, targetname) < 0)
+                p = p->next;
+                rt_thread_mdelay(1);
+            }
+            else  /* 拷贝所有文件 */
+            {
+                if(store_file_func(p, target) < 0)
                 {
-                    error = -1;
-                    LOG_E("copy file error ...");
                     break;
                 }
-
-                /* 将拷贝成功的记录文件对应的目录内容设置为已转存 */
-                if(FMReadFile(&file_manager, p->dir_name, (void *)buffer, sizeof(SFile_Directory)) == 0)
-                {
-                    ((SFile_Directory *)buffer)->is_save = 1;
-                    FMWriteFile(&file_manager, p->dir_name, (const void *)buffer, sizeof(SFile_Directory));
-                }
-
-//            change_file_date(targetname);
                 p = p->next;
+//                rt_thread_mdelay(1);
             }
-            else
-            {
-                LOG_I("%s has already been saved", p->record_name);
-                p = p->next;
-            }
-            rt_thread_mdelay(1);
         }
         /* 释放缓存空间 */
         free_link(p_file_list_head);
@@ -279,35 +303,13 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
     }
 
     /* step2: 转储记录文件 */
-#if 1
-    LOG_I("转储记录文件到U盘 ...");
-    /* 开始转储全部文件 */
     /* 从"DIR_FILE_PATH_NAME"目录下面读出所有存储文件的文件名，然后把所有存储文件复制到U盘 */
-    if (store_file(DIR_FILE_PATH_NAME, TARGET_DIR_NAME, BACKUP_NO) != 0)
+    if (store_file(DIR_FILE_PATH_NAME, TARGET_DIR_NAME, mode) != 0)
     {
         /* 转储失败 */
         LOG_E("转储失败");
         return (sint32_t)-1;
     }
-#else
-    if (mode == COPYMODE_ALL) /* 开始转储全部文件 */
-    {
-        LOG_I("转储全部记录文件到U盘 ...");
-        /* 开始转储全部文件 */
-        /* 把"yysj/bak"目录下面的所有文件复制到U盘 */
-        if (store_file(RECORD_FILE_PATH_NAME, TARGET_DIR_NAME, BACKUP_NO) != 0)
-        {
-            /* 转储失败 */
-            LOG_E("转储失败");
-            return (sint32_t)-1;
-        }
-    }
-    else /* 开始转储最新文件 */
-    {
-        LOG_I("转储最新文件到U盘...");
-        /* 开始转储最新文件. */
-    }
-#endif
 
 #if 0
     /* step3:转储日志文件 */
@@ -388,7 +390,8 @@ static void usb_thread(void *args)
             LOG_I("save file");
             LedCtrlON(USB_LED);
             /* 转储最新文件 */
-            ret = usb_auto_copy(COPYMODE_NEW);
+//            ret = usb_auto_copy(COPYMODE_NEW);
+            ret = usb_auto_copy(COPYMODE_ALL);
             if (ret < 0)
             {
                 state = DUMP_STATE_FAIL;

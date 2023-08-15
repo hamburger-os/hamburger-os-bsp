@@ -5,6 +5,9 @@
 **@author: Created By Chengt
 **@date  : 2015.09.23
 **@brief : Manage CAN Device
+**@Change Logs:
+**Date           Author       Notes
+**2023-07-21      zm           add swos2
 ********************************************************************************************/
 #ifndef COMMON_H
 #define COMMON_H

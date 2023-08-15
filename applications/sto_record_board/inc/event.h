@@ -1,6 +1,6 @@
 /*******************************************************
  *
- * @FileName: event.c
+ * @FileName: event.h
  * @Date: 2023-05-24 16:06:26
  * @Author: ccy
  * @Description: 事件管理模块头文件.

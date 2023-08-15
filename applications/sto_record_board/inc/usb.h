@@ -45,14 +45,6 @@ typedef enum
     COPYMODE_ALL = 1  /* 转储全部文件模式 */
 } E_CopyMode;
 
-
-/* 备份模式 */
-typedef enum
-{
-    BACKUP_NO = 0, /* 只是复制文件到U盘 */
-    BACKUP = 1     /* 先复制文件到U盘,再备份文件 */
-} E_Backup;
-
 /* 转储状态 */
 typedef enum
 {

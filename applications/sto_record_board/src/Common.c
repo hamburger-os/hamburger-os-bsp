@@ -5,6 +5,9 @@
 **@author: Created By Chengt
 **@date  : 2015.10.19
 **@brief : the function for the project
+**@Change Logs:
+**Date           Author       Notes
+**2023-07-21      zm          add swos2
 ********************************************************************************************/
 #include "Common.h"
 
