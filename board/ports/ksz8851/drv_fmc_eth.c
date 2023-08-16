@@ -223,16 +223,31 @@ static rt_size_t fmc_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_si
 {
     struct rt_fmc_eth_port *fmc_eth = dev->user_data;
     rt_uint16_t read_size = 0;
+    S_LEP_BUF *p_s_LepBuf = RT_NULL;
 
-    if(size > fmc_eth->link_layer_rx_len)
+    p_s_LepBuf = lep_if_is_received(&fmc_eth->link_layer_buf);
+    if (p_s_LepBuf != RT_NULL)
     {
-        read_size = fmc_eth->link_layer_rx_len;
+      /* step2：获取接收包数据长度 */
+      if(fmc_eth->link_layer_buf.prx_rptr->len > LEP_MAC_PKT_MAX_LEN)
+      {
+          read_size = LEP_MAC_PKT_MAX_LEN;
+      }
+      else
+      {
+          read_size = fmc_eth->link_layer_buf.prx_rptr->len;
+      }
+
+      /* step3：提取包数据 */
+      memcpy(buffer, fmc_eth->link_layer_buf.prx_rptr->buf, read_size);
+
+      /* step4：释放接收接收缓冲区 */
+      lep_if_release_rptr(&fmc_eth->link_layer_buf);
     }
     else
     {
-        read_size = size;
+      /* nothing */
     }
-    memcpy(buffer, fmc_eth->link_layer_rx, read_size);
     return read_size;
 }
 
@@ -241,7 +256,7 @@ static rt_size_t fmc_eth_write(rt_device_t dev, rt_off_t pos, const void *buffer
     struct rt_fmc_eth_port *fmc_eth = dev->user_data;
     rt_uint16_t tx_size = 0;
 
-    memset(&fmc_eth->link_layer_buf_tx, 0, sizeof(KSZ_S_LEP_BUF));
+    memset(&fmc_eth->link_layer_buf_tx, 0, sizeof(S_LEP_BUF));
     if(size > LEP_MAC_PKT_MAX_LEN)
     {
         tx_size = LEP_MAC_PKT_MAX_LEN;
@@ -329,9 +344,25 @@ struct pbuf *fmc_eth_rx(rt_device_t dev)
     p = ks_irq(fmc_eth);
     if(dev->rx_indicate != NULL)
     {
-        fmc_eth->link_layer_rx = p->payload;
-        fmc_eth->link_layer_rx_len = p->len;
-        dev->rx_indicate(dev, p->len);
+        if(0 != p->len)
+        {
+            S_LEP_BUF *ps_lep_buf = RT_NULL;
+
+            ps_lep_buf = lep_get_free_buf(&fmc_eth->link_layer_buf);
+            if(RT_NULL != ps_lep_buf)
+            {
+                ps_lep_buf->flag |= LEP_RBF_RV;
+                ps_lep_buf->len = p->len;
+                memcpy(ps_lep_buf->buf, p->payload, p->len);
+                fmc_eth->link_layer_buf.prx_wptr = ps_lep_buf->pnext;          /* 接收位置指针指向下一个位置 */
+
+                dev->rx_indicate(dev, p->len);
+            }
+            else
+            {
+                LOG_E("ps_lep_buf rx null");
+            }
+        }
     }
 
 #ifdef BSP_USING_KSZ8851_RX_DUMP
@@ -399,6 +430,7 @@ static int rt_fmc_eth_init(void)
         fmc_eth_device.port[i].parent.eth_rx = fmc_eth_rx;
         fmc_eth_device.port[i].parent.eth_tx = fmc_eth_tx;
 
+        lep_eth_if_init(&fmc_eth_device.port[i].link_layer_buf);
         /* register eth device */
         state = eth_device_init(&(fmc_eth_device.port[i].parent), fmc_eth_device.port[i].dev_name);
         if (RT_EOK == state)

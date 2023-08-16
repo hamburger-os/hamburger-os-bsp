@@ -741,7 +741,7 @@ int ks_start_xmit(struct rt_fmc_eth_port *ps_ks, struct pbuf *p)
  * spin_lock_irqsave is required because tx and rx should be mutual exclusive.
  * So while tx is in-progress, prevent IRQ interrupt from happenning.
  */
-int32_t ks_start_xmit_link_layer(struct rt_fmc_eth_port *ps_ks, KSZ_S_LEP_BUF *ps_lep_buf)
+int32_t ks_start_xmit_link_layer(struct rt_fmc_eth_port *ps_ks, S_LEP_BUF *ps_lep_buf)
 {
     int32_t retv_i32 = 0;
 

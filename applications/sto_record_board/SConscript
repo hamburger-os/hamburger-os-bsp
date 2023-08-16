@@ -11,6 +11,19 @@ src =  Split('''
     src/led.c
     src/eth_manage.c
     src/board_info.c
+    src/data_handle.c
+    src/file_handle_thread.c
+    src/eth_thread.c
+    src/Record_Board_App.c
+    src/RecordErrorCode.c
+    src/Common.c
+    src/Record_FileCreate.c
+    src/safe_layer.c
+    src/crc.c
+    src/app_layer.c
+    src/file_manager.c
+    src/utils/utils.c
+    src/usb/usb.c
     '''
     )
 
