@@ -58,8 +58,8 @@ static void lvgl_thread_entry(void *parameter)
     /* handle the tasks of LVGL */
     while(1)
     {
-        rt_thread_mdelay(LV_DISP_DEF_REFR_PERIOD);
         lv_task_handler();
+        rt_thread_mdelay(LV_DISP_DEF_REFR_PERIOD);
     }
 }
 
