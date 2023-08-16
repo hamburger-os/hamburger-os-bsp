@@ -11,6 +11,10 @@
 #include "board.h"
 #include <lvgl.h>
 
+#ifdef PKG_LVGL_USING_DEMOS
+#include "lv_demos.h"
+#endif
+
 #define DBG_TAG "lv_demo"
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
@@ -19,12 +23,19 @@ __WEAK void lv_user_gui_init(void)
 {
     LOG_D("lvgl demo start...");
     /* display demo; you may replace with your LVGL application at here */
-#if defined(PKG_USING_LV_MUSIC_DEMO)
+#if defined(BSP_USING_LVGL_WIDGETS_DEMO)
+    lv_demo_widgets();
+#elif defined(BSP_USING_LVGL_BENCHMARK_DEMO)
+    lv_demo_benchmark();
+#elif defined(BSP_USING_LVGL_STRESS_DEMO)
+    lv_demo_stress();
+#elif defined(BSP_USING_LVGL_KEYPAD_AND_ENCODER_DEMO)
+    lv_demo_keypad_encoder();
+#elif defined(BSP_USING_LVGL_MUSIC_DEMO)
+    lv_demo_music();
+#elif defined(BSP_USING_LVGL_RT_MUSIC_DEMO)
     extern void lv_demo_music(void);
     lv_demo_music();
-#elif defined(PKG_USING_GUI_GUIDER_DEMO)
-    extern void gui_guider_setup(void);
-    gui_guider_setup();
 #elif defined(BSP_USING_LVGL_DEMO)
     extern void lv_demo_calendar(void);
     lv_demo_calendar();

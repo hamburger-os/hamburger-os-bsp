@@ -54,6 +54,13 @@ static int rt_fal_init(void)
     }
 #endif
 
+#ifdef BSP_USING_AT45DB321E
+    if (fal_mtd_nor_device_create(BLK_AT45DB321E) == NULL)
+    {
+        LOG_E("Failed to creat nor %s!", BLK_AT45DB321E);
+    }
+#endif
+
 #ifdef BSP_FMCSRAM_ENABLE_BLK
     if (fal_blk_device_create(BLK_FMCSRAM) == NULL)
     {

@@ -162,6 +162,9 @@ if GetDepend(['BSP_USING_SPI_FLASH']):
 if GetDepend(['BSP_USING_S25FL512']):
     src += Glob('ports/drv_S25FL512.c')
     
+if GetDepend(['BSP_USING_AT45DB321E']):
+    src += Glob('ports/drv_AT45DB321E.c')
+    
 if GetDepend(['BSP_USING_FMCLCD']):
     src += Glob('ports/drv_fmclcd.c')
     

@@ -2577,9 +2577,61 @@ menu "Onboard Peripheral Drivers"
                 endif
             endif
             
-            config BSP_USING_LVGL_DEMO
-                bool "Enable LVGL demo"
-                default y
+            choice
+                prompt "Select demo"
+                default BSP_USING_LVGL_WIDGETS_DEMO
+
+                config BSP_USING_LVGL_WIDGETS_DEMO
+                    bool "Enable demo widgets"
+                    select PKG_LVGL_USING_DEMOS
+                    
+                config BSP_USING_LVGL_BENCHMARK_DEMO
+                    bool "Enable demo benchmark"
+                    select PKG_LVGL_USING_DEMOS
+                    
+                config BSP_USING_LVGL_STRESS_DEMO
+                    bool "Enable demo stress"
+                    select PKG_LVGL_USING_DEMOS
+                    
+                config BSP_USING_LVGL_KEYPAD_AND_ENCODER_DEMO
+                    bool "Enable demo keypad and encoder"
+                    select PKG_LVGL_USING_DEMOS
+                    
+                config BSP_USING_LVGL_MUSIC_DEMO
+                    bool "Enable demo music"
+                    select PKG_LVGL_USING_DEMOS
+                    
+                config BSP_USING_LVGL_DEMO
+                    bool "Enable demo calendar"
+            endchoice
+            
+            if BSP_USING_LVGL_WIDGETS_DEMO
+                config LVGL_WIDGETS_DEMO_SLIDESHOW
+                    bool "Enable demo widgets slideshow"
+                    default n
+            endif
+            
+            if BSP_USING_LVGL_MUSIC_DEMO
+                config LVGL_MUSIC_DEMO_SQUARE
+                    bool "Enable demo music square"
+                    default y
+                    
+                config LVGL_MUSIC_DEMO_LANDSCAPE
+                    bool "Enable demo music landscape"
+                    default y
+                    
+                config LVGL_MUSIC_DEMO_ROUND
+                    bool "Enable demo music round"
+                    default y
+                    
+                config LVGL_MUSIC_DEMO_LARGE
+                    bool "Enable demo music large"
+                    default n
+                    
+                config LVGL_MUSIC_DEMO_AUTO_PLAY
+                    bool "Enable demo music auto play"
+                    default y
+            endif
         endif
         
     menuconfig BSP_USING_WM8978
@@ -2918,8 +2970,8 @@ menu "Onboard Peripheral Drivers"
                 default (4194304)
             
             config AT45DB321E_BLK_SIZE
-                int "Set the memory block size, default: (512)"
-                default (512)
+                int "Set the memory block size, default: (4096)"
+                default (4096)
             
             config AT45DB321E_FS
                 string "Set the file system used, default: lfs"

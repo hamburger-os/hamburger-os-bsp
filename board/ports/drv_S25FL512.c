@@ -206,7 +206,7 @@ static int fal_s25fl512_write(long offset, const rt_uint8_t *buf, size_t size)
     }
 
     uint32_t addr_page = addr;
-    const uint8_t *buf_page = buf;
+    uint8_t *buf_page = (uint8_t *)buf;
     size_t size_less = size;
     size_t size_page = PAGE_SIZE;
     size_t countmax = (size%PAGE_SIZE == 0)?(size/PAGE_SIZE):(size/PAGE_SIZE + 1);

@@ -39,6 +39,10 @@ static const struct romfs_dirent _romfs_root_mnt[] =
     {ROMFS_DIRENT_DIR, BLK_S25FL512, RT_NULL, 0},       //S25FL512
 #endif
 
+#ifdef BSP_USING_AT45DB321E
+    {ROMFS_DIRENT_DIR, BLK_AT45DB321E, RT_NULL, 0},       //AT45DB321E
+#endif
+
 #ifdef BSP_FMCSRAM_ENABLE_FS
     {ROMFS_DIRENT_DIR, BLK_FMCSRAM  , RT_NULL, 0},      //sram
 #endif
@@ -108,7 +112,11 @@ static const struct mount_fs _mount_fs[] =
 #endif
 
 #ifdef BSP_USING_S25FL512
-    {BLK_S25FL512       , BLK_S25FL512      , S25FL512_FS      },
+    {BLK_S25FL512       , BLK_S25FL512      , S25FL512_FS       },
+#endif
+
+#ifdef BSP_USING_AT45DB321E
+    {BLK_AT45DB321E     , BLK_AT45DB321E    , AT45DB321E_FS     },
 #endif
 
 #ifdef BSP_FMCSRAM_ENABLE_FS

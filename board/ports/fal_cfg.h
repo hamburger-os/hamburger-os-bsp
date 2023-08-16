@@ -57,6 +57,13 @@ extern "C" {
 #define BLK_S25FL512                    "spiflash"
 #endif
 
+#ifdef BSP_USING_AT45DB321E
+//at45db321e定义,无需修改
+#define AT45DB321E_START_ADRESS         (0)
+#define AT45DB321E_DEV_NAME             "at45db321e"
+#define BLK_AT45DB321E                  "at45db321e"
+#endif
+
 #ifdef BSP_FMCSRAM_ENABLE_BLK
 //sram定义,无需修改
 #define FMCSRAM_DEV_NAME                "fmc_sram"
