@@ -93,8 +93,8 @@ static void ETHManageTestThreadEntry(void *arg)
 
     ETHManageSetRXCallback(ETHManageChannel2, ETHRXChannel1Callback);
 
-    memcpy(Eth2_Txbuf,RecordBoard_ETHMAC1,sizeof(RecordBoard_ETHMAC1));
-    memcpy(&Eth2_Txbuf[6],RecordBoard_ETHMAC2,sizeof(RecordBoard_ETHMAC2));
+    rt_memcpy (Eth2_Txbuf,RecordBoard_ETHMAC1,sizeof(RecordBoard_ETHMAC1));
+    rt_memcpy (&Eth2_Txbuf[6],RecordBoard_ETHMAC2,sizeof(RecordBoard_ETHMAC2));
     memset(&Eth2_Txbuf[12],0xaa,1024);
     Eth2_Txbuf[60] = 0;
     while(1)

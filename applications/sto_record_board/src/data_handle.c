@@ -96,7 +96,7 @@ void ETHToCanDataHandle(S_DATA_HANDLE *p_data_handle, uint8_t *pbuf, uint16_t da
         can_tmp.no_u8 = (uint8_t)(s_can_frame->ID & 0x07);
 
         can_tmp.length_u8 = s_can_frame->len;
-        memcpy(can_tmp.data_u8, s_can_frame->Data, s_can_frame->len);
+        rt_memcpy (can_tmp.data_u8, s_can_frame->Data, s_can_frame->len);
 
         ret = rt_mq_send(p_data_handle->can_data_mq, (const void *)&can_tmp, sizeof(CAN_FRAME));
         if(ret != RT_EOK)
@@ -137,7 +137,7 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
     can_tmp.no_u8 = (uint8_t)(s_can_frame.ID & 0x07);
 
     can_tmp.length_u8 = s_can_frame.len;
-    memcpy(can_tmp.data_u8, s_can_frame.Data, s_can_frame.len);
+    rt_memcpy (can_tmp.data_u8, s_can_frame.Data, s_can_frame.len);
 #endif
 //    LOG_I("pr = %x, no = %x data = %x", can_tmp.priority_u8, can_tmp.no_u8, can_tmp.data_u8[0]);  //打开这个会导致上面队列发送出错 返回值为-3   过一会导致lwip里宕机
 

@@ -287,12 +287,12 @@ uint32_t CRC32CCITT(uint8_t *pData, uint32_t len, uint32_t u32_nReg)
   {
   	if(len - n >= 4)  
   	{
-  	  memcpy(&nTmp,&pData[n],4);   /** ??4???*/
+  	  rt_memcpy (&nTmp,&pData[n],4);   /** ??4???*/
     }
 		else
 		{               
     	nTmp = 0;
-    	memcpy(&nTmp,&pData[n],len - n);   /** ??????*/
+    	rt_memcpy (&nTmp,&pData[n],len - n);   /** ??????*/
     }
     u32_nReg ^= nTmp;                
     for(i=0; i<4; i++)
@@ -386,7 +386,7 @@ sArrayList *Common_arraylist_init(uint8_t *pname, uint32_t item_count, uint32_t 
 			{
 				len = 23u;
 			} /* end if */
-			memcpy( &pal->name[ 0u ], pname, len );
+			rt_memcpy ( &pal->name[ 0u ], pname, len );
 		} /* end if */
 		pal->parray = p;
 		
@@ -424,7 +424,7 @@ bool Common_arraylist_add( sArrayList *pal, uint8_t *pdata, uint32_t len )
 			
 			idx = pal->write_idx * pal->item_size;
       
-			memcpy( &pal->parray[ idx ], pdata, pal->item_size );
+			rt_memcpy ( &pal->parray[ idx ], pdata, pal->item_size );
 			
 			pal->write_idx++;
 			pal->write_idx = pal->write_idx % pal->item_count;
@@ -467,7 +467,7 @@ uint32_t Common_arraylist_get( sArrayList *pal, uint8_t *pdata )
       
 			idx = pal->read_idx * pal->item_size;
       
-			memcpy( pdata, &pal->parray[ idx ], pal->item_size );
+			rt_memcpy ( pdata, &pal->parray[ idx ], pal->item_size );
       
 			pal->read_idx++;
 			pal->read_idx = pal->read_idx % pal->item_count;

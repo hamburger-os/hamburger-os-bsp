@@ -379,7 +379,7 @@ void ErrorCodeInit( const char *dprt )
 {
   /* 1. Department catagory. */
   memset( ErrorCodeInitInst.DPRT, 0U, sizeof( ErrorCodeInitInst.DPRT ) );
-  memcpy( ErrorCodeInitInst.DPRT, dprt, strlen( dprt ) );
+  rt_memcpy ( ErrorCodeInitInst.DPRT, dprt, strlen( dprt ) );
   
   /* 2. The flag of new datagram. */
   ErrorCodeInitInst.LockFlag = UNLOCK;
@@ -697,7 +697,7 @@ static uint32_t PageTimeCompare( TIME_METHOD method, uint8_t page[], uint8_t cmp
             {
               break_code = 1U;
               
-              memcpy( cmp, &page[i + 2U], 21U );
+              rt_memcpy ( cmp, &page[i + 2U], 21U );
               
               break;
             }
@@ -732,7 +732,7 @@ static uint32_t PageTimeCompare( TIME_METHOD method, uint8_t page[], uint8_t cmp
             {
               break_code = 1U;
               
-              memcpy( cmp, &page[i + 2U], 21U );
+              rt_memcpy ( cmp, &page[i + 2U], 21U );
               
               break;
             }
@@ -958,7 +958,7 @@ static uint32_t WriteErrorCodeToFlash( char error_stat, uint8_t error_code, cons
     #endif
     
     /* Load specification. */
-    memcpy( &err_code_Date[index], error_spec, len_spec );
+    rt_memcpy ( &err_code_Date[index], error_spec, len_spec );
 		index += 	len_spec;
     
     /* Load CRC32 code. */
@@ -976,7 +976,7 @@ static uint32_t WriteErrorCodeToFlash( char error_stat, uint8_t error_code, cons
     err_code_packet[1] = 0xFE; 
     err_code_packet[2] = u16_Encode_Length + 5U;    //故障包实际长度
 //		err_code_packet[2] = len_spec + 35U;    //故障包实际长度
-    memcpy (err_code_packet + 3U,u8_Encode_Buff,u16_Encode_Length);
+    rt_memcpy  (err_code_packet + 3U,u8_Encode_Buff,u16_Encode_Length);
     err_code_packet[3U + u16_Encode_Length] = 0xFF;
     err_code_packet[4U + u16_Encode_Length] = 0xFD;        
     
@@ -1044,8 +1044,8 @@ static uint32_t ErrorCode_HMB( void )
       uint32_t len_dprt = strlen( ErrorCodeInitInst.DPRT );
       uint32_t len_cpu  = strlen( cpu_a );
       
-      memcpy( ec_dist.spec, ErrorCodeInitInst.DPRT, len_dprt );
-      memcpy( &ec_dist.spec[len_dprt], cpu_a, len_cpu );
+      rt_memcpy ( ec_dist.spec, ErrorCodeInitInst.DPRT, len_dprt );
+      rt_memcpy ( &ec_dist.spec[len_dprt], cpu_a, len_cpu );
       
       ec_dist.cpu    = CPU_A;
       ec_dist.offset = len_dprt + len_cpu;
@@ -1066,8 +1066,8 @@ static uint32_t ErrorCode_HMB( void )
       uint32_t len_dprt = strlen( ErrorCodeInitInst.DPRT );
       uint32_t len_cpu  = strlen( cpu_b );
       
-      memcpy( ec_dist.spec, ErrorCodeInitInst.DPRT, len_dprt );
-      memcpy( &ec_dist.spec[len_dprt], cpu_b, len_cpu );
+      rt_memcpy ( ec_dist.spec, ErrorCodeInitInst.DPRT, len_dprt );
+      rt_memcpy ( &ec_dist.spec[len_dprt], cpu_b, len_cpu );
       
       ec_dist.cpu    = CPU_B;
       ec_dist.offset = len_dprt + len_cpu;
@@ -1239,13 +1239,13 @@ static uint32_t ErrorCode_HMB_Reboot( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0001U )
     {
-      memcpy( &ecd->spec[ecd->offset], hmb_reboot_T, strlen( hmb_reboot_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hmb_reboot_T, strlen( hmb_reboot_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], hmb_reboot_F, strlen( hmb_reboot_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hmb_reboot_F, strlen( hmb_reboot_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -1318,13 +1318,13 @@ static uint32_t ErrorCode_HMB_CAN_1( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0002U )
     {
-      memcpy( &ecd->spec[ecd->offset], hmb_can_1_T, strlen( hmb_can_1_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hmb_can_1_T, strlen( hmb_can_1_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], hmb_can_1_F, strlen( hmb_can_1_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hmb_can_1_F, strlen( hmb_can_1_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -1396,13 +1396,13 @@ static uint32_t ErrorCode_HMB_CAN_2( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0004U )
     {
-      memcpy( &ecd->spec[ecd->offset], hmb_can_2_T, strlen( hmb_can_2_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hmb_can_2_T, strlen( hmb_can_2_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], hmb_can_2_F, strlen( hmb_can_2_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hmb_can_2_F, strlen( hmb_can_2_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -1474,13 +1474,13 @@ static uint32_t ErrorCode_HMB_LKJ_CAN_1( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0008U )
     {
-      memcpy( &ecd->spec[ecd->offset], lkj_can_1_T, strlen( lkj_can_1_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], lkj_can_1_T, strlen( lkj_can_1_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], lkj_can_1_F, strlen( lkj_can_1_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], lkj_can_1_F, strlen( lkj_can_1_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -1552,13 +1552,13 @@ static uint32_t ErrorCode_HMB_LKJ_CAN_2( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0010U )
     {
-      memcpy( &ecd->spec[ecd->offset], lkj_can_2_T, strlen( lkj_can_2_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], lkj_can_2_T, strlen( lkj_can_2_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], lkj_can_2_F, strlen( lkj_can_2_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], lkj_can_2_F, strlen( lkj_can_2_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -1630,13 +1630,13 @@ static uint32_t ErrorCode_HMB_485_A( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0020U )
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -1708,13 +1708,13 @@ static uint32_t ErrorCode_HMB_485_B( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0040U )
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -1786,13 +1786,13 @@ static uint32_t ErrorCode_HMB_RAM( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0080U )
     {
-      memcpy( &ecd->spec[ecd->offset], ram_T, strlen( ram_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], ram_T, strlen( ram_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], ram_F, strlen( ram_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], ram_F, strlen( ram_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -1864,13 +1864,13 @@ static uint32_t ErrorCode_HMB_Flash( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0100U )
     {
-      memcpy( &ecd->spec[ecd->offset], flash_T, strlen( flash_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], flash_T, strlen( flash_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], flash_F, strlen( flash_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], flash_F, strlen( flash_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -1942,13 +1942,13 @@ static uint32_t ErrorCode_HMB_Network( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0200U )
     {
-      memcpy( &ecd->spec[ecd->offset], net_T, strlen( net_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], net_T, strlen( net_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], net_F, strlen( net_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], net_F, strlen( net_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -2020,13 +2020,13 @@ static uint32_t ErrorCode_HMB_BasedData( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0400U )
     {
-      memcpy( &ecd->spec[ecd->offset], bd_T, strlen( bd_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], bd_T, strlen( bd_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], bd_F, strlen( bd_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], bd_F, strlen( bd_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -2098,13 +2098,13 @@ static uint32_t ErrorCode_HMB_DP( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0800U )
     {
-      memcpy( &ecd->spec[ecd->offset], bd_T, strlen( bd_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], bd_T, strlen( bd_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], bd_F, strlen( bd_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], bd_F, strlen( bd_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -2174,8 +2174,8 @@ static uint32_t ErrorCode_HIB( void )
       uint32_t len_dprt = strlen( ErrorCodeInitInst.DPRT );
       uint32_t len_hib  = strlen( hib );
       
-      memcpy( ec_dist.spec, ErrorCodeInitInst.DPRT, len_dprt );
-      memcpy( &ec_dist.spec[len_dprt], hib, len_hib );
+      rt_memcpy ( ec_dist.spec, ErrorCodeInitInst.DPRT, len_dprt );
+      rt_memcpy ( &ec_dist.spec[len_dprt], hib, len_hib );
       
       ec_dist.cpu    = Get_CPU_Type();
       ec_dist.offset = len_dprt + len_hib;
@@ -2317,13 +2317,13 @@ static uint32_t ErrorCode_HIB_ICAN_1( ErrorCodeDistribution *ecd )
       
     if ( ecd->ec_new & 0x0002U )
     {
-      memcpy( &ecd->spec[ecd->offset], hib_can_1_T, strlen( hib_can_1_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hib_can_1_T, strlen( hib_can_1_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], hib_can_1_F, strlen( hib_can_1_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hib_can_1_F, strlen( hib_can_1_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -2377,13 +2377,13 @@ static uint32_t ErrorCode_HIB_ICAN_2( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0004U )
     {
-      memcpy( &ecd->spec[ecd->offset], hib_can_2_T, strlen( hib_can_2_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hib_can_2_T, strlen( hib_can_2_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], hib_can_2_F, strlen( hib_can_2_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hib_can_2_F, strlen( hib_can_2_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -2437,13 +2437,13 @@ static uint32_t ErrorCode_HIB_ECAN_1( ErrorCodeDistribution *ecd )
       
     if ( ecd->ec_new & 0x0008U )
     {
-      memcpy( &ecd->spec[ecd->offset], hib_can_1_T, strlen( hib_can_1_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hib_can_1_T, strlen( hib_can_1_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], hib_can_1_F, strlen( hib_can_1_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hib_can_1_F, strlen( hib_can_1_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -2497,13 +2497,13 @@ static uint32_t ErrorCode_HIB_ECAN_2( ErrorCodeDistribution *ecd )
       
     if ( ecd->ec_new & 0x0010U )
     {
-      memcpy( &ecd->spec[ecd->offset], hib_can_2_T, strlen( hib_can_2_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hib_can_2_T, strlen( hib_can_2_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], hib_can_2_F, strlen( hib_can_2_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hib_can_2_F, strlen( hib_can_2_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -2557,13 +2557,13 @@ static uint32_t ErrorCode_HIB_485_A( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0020U )
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -2617,13 +2617,13 @@ static uint32_t ErrorCode_HIB_485_B( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0040U )
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -2677,13 +2677,13 @@ static uint32_t ErrorCode_HIB_RAM( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0080U )
     {
-      memcpy( &ecd->spec[ecd->offset], ram_T, strlen( ram_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], ram_T, strlen( ram_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], ram_F, strlen( ram_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], ram_F, strlen( ram_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -2737,13 +2737,13 @@ static uint32_t ErrorCode_HIB_Flash( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0100U )
     {
-      memcpy( &ecd->spec[ecd->offset], flash_T, strlen( flash_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], flash_T, strlen( flash_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], flash_F, strlen( flash_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], flash_F, strlen( flash_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -2795,8 +2795,8 @@ static uint32_t ErrorCode_HRB( void )
       uint32_t len_dprt = strlen( ErrorCodeInitInst.DPRT );
       uint32_t len_hrb  = strlen( hrb );
       
-      memcpy( ec_dist.spec, ErrorCodeInitInst.DPRT, len_dprt );
-      memcpy( &ec_dist.spec[len_dprt], hrb, len_hrb );
+      rt_memcpy ( ec_dist.spec, ErrorCodeInitInst.DPRT, len_dprt );
+      rt_memcpy ( &ec_dist.spec[len_dprt], hrb, len_hrb );
       
       ec_dist.cpu    = Get_CPU_Type();
       ec_dist.offset = len_dprt + len_hrb;
@@ -2928,13 +2928,13 @@ static uint32_t ErrorCode_HRB_Reboot( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0001U )
     {
-      memcpy( &ecd->spec[ecd->offset], hrb_reboot_T, strlen( hrb_reboot_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hrb_reboot_T, strlen( hrb_reboot_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], hrb_reboot_F, strlen( hrb_reboot_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hrb_reboot_F, strlen( hrb_reboot_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -2989,13 +2989,13 @@ static uint32_t ErrorCode_HRB_CAN_1( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0002U )
     {
-      memcpy( &ecd->spec[ecd->offset], hrb_can_1_T, strlen( hrb_can_1_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hrb_can_1_T, strlen( hrb_can_1_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], hrb_can_1_F, strlen( hrb_can_1_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hrb_can_1_F, strlen( hrb_can_1_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -3049,13 +3049,13 @@ static uint32_t ErrorCode_HRB_CAN_2( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0004U )
     {
-      memcpy( &ecd->spec[ecd->offset], hrb_can_2_T, strlen( hrb_can_2_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hrb_can_2_T, strlen( hrb_can_2_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], hrb_can_2_F, strlen( hrb_can_2_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hrb_can_2_F, strlen( hrb_can_2_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -3109,13 +3109,13 @@ static uint32_t ErrorCode_HRB_485_A( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0020U )
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -3169,13 +3169,13 @@ static uint32_t ErrorCode_HRB_485_B( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0040U )
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -3229,13 +3229,13 @@ static uint32_t ErrorCode_HRB_RAM( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0080U )
     {
-      memcpy( &ecd->spec[ecd->offset], ram_T, strlen( ram_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], ram_T, strlen( ram_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], ram_F, strlen( ram_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], ram_F, strlen( ram_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -3289,13 +3289,13 @@ static uint32_t ErrorCode_HRB_Flash( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0100U )
     {
-      memcpy( &ecd->spec[ecd->offset], flash_T, strlen( flash_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], flash_T, strlen( flash_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], flash_F, strlen( flash_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], flash_F, strlen( flash_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -3347,8 +3347,8 @@ static uint32_t ErrorCode_HCB( void )
       uint32_t len_dprt = strlen( ErrorCodeInitInst.DPRT );
       uint32_t len_hcb  = strlen( hcb );
       
-      memcpy( ec_dist.spec, ErrorCodeInitInst.DPRT, len_dprt );
-      memcpy( &ec_dist.spec[len_dprt], hcb, len_hcb );
+      rt_memcpy ( ec_dist.spec, ErrorCodeInitInst.DPRT, len_dprt );
+      rt_memcpy ( &ec_dist.spec[len_dprt], hcb, len_hcb );
       
       ec_dist.cpu    = Get_CPU_Type();
       ec_dist.offset = len_dprt + len_hcb;
@@ -3490,13 +3490,13 @@ static uint32_t ErrorCode_HCB_ICAN_1( ErrorCodeDistribution *ecd )
       
     if ( ecd->ec_new & 0x0002U )
     {
-      memcpy( &ecd->spec[ecd->offset], hcb_can_1_T, strlen( hcb_can_1_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hcb_can_1_T, strlen( hcb_can_1_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], hcb_can_1_F, strlen( hcb_can_1_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hcb_can_1_F, strlen( hcb_can_1_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -3550,13 +3550,13 @@ static uint32_t ErrorCode_HCB_ICAN_2( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0004U )
     {
-      memcpy( &ecd->spec[ecd->offset], hcb_can_2_T, strlen( hcb_can_2_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hcb_can_2_T, strlen( hcb_can_2_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], hcb_can_2_F, strlen( hcb_can_2_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hcb_can_2_F, strlen( hcb_can_2_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -3610,13 +3610,13 @@ static uint32_t ErrorCode_HCB_ECAN_1( ErrorCodeDistribution *ecd )
       
     if ( ecd->ec_new & 0x0008U )
     {
-      memcpy( &ecd->spec[ecd->offset], hcb_can_1_T, strlen( hcb_can_1_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hcb_can_1_T, strlen( hcb_can_1_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], hcb_can_1_F, strlen( hcb_can_1_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hcb_can_1_F, strlen( hcb_can_1_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -3670,13 +3670,13 @@ static uint32_t ErrorCode_HCB_ECAN_2( ErrorCodeDistribution *ecd )
       
     if ( ecd->ec_new & 0x0010U )
     {
-      memcpy( &ecd->spec[ecd->offset], hcb_can_2_T, strlen( hcb_can_2_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hcb_can_2_T, strlen( hcb_can_2_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], hcb_can_2_F, strlen( hcb_can_2_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], hcb_can_2_F, strlen( hcb_can_2_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -3730,13 +3730,13 @@ static uint32_t ErrorCode_HCB_485_A( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0020U )
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -3790,13 +3790,13 @@ static uint32_t ErrorCode_HCB_485_B( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0040U )
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -3850,13 +3850,13 @@ static uint32_t ErrorCode_HCB_RAM( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0080U )
     {
-      memcpy( &ecd->spec[ecd->offset], ram_T, strlen( ram_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], ram_T, strlen( ram_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], ram_F, strlen( ram_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], ram_F, strlen( ram_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -3910,13 +3910,13 @@ static uint32_t ErrorCode_HCB_Flash( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0100U )
     {
-      memcpy( &ecd->spec[ecd->offset], flash_T, strlen( flash_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], flash_T, strlen( flash_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], flash_F, strlen( flash_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], flash_F, strlen( flash_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -3971,8 +3971,8 @@ static uint32_t ErrorCode_DMI( void )
       uint32_t len_dprt = strlen( dmi_i );
       uint32_t len_dmi  = strlen( dmi );
       
-      memcpy( ec_dist.spec, dmi_i, len_dprt );
-      memcpy( &ec_dist.spec[len_dprt], dmi, len_dmi );
+      rt_memcpy ( ec_dist.spec, dmi_i, len_dprt );
+      rt_memcpy ( &ec_dist.spec[len_dprt], dmi, len_dmi );
       
       ec_dist.side   = DEV_SIDE_I;
       ec_dist.offset = len_dprt + len_dmi;
@@ -3993,8 +3993,8 @@ static uint32_t ErrorCode_DMI( void )
       uint32_t len_dprt = strlen( dmi_ii );
       uint32_t len_dmi  = strlen( dmi );
       
-      memcpy( ec_dist.spec, dmi_ii, len_dprt );
-      memcpy( &ec_dist.spec[len_dprt], dmi, len_dmi );
+      rt_memcpy ( ec_dist.spec, dmi_ii, len_dprt );
+      rt_memcpy ( &ec_dist.spec[len_dprt], dmi, len_dmi );
       
       ec_dist.side   = DEV_SIDE_II;
       ec_dist.offset = len_dprt + len_dmi;
@@ -4146,13 +4146,13 @@ static uint32_t ErrorCode_DMI_CAN_1( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0002U )
     {
-      memcpy( &ecd->spec[ecd->offset], dmi_can_1_T, strlen( dmi_can_1_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], dmi_can_1_T, strlen( dmi_can_1_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], dmi_can_1_F, strlen( dmi_can_1_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], dmi_can_1_F, strlen( dmi_can_1_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -4206,13 +4206,13 @@ static uint32_t ErrorCode_DMI_CAN_2( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0004U )
     {
-      memcpy( &ecd->spec[ecd->offset], dmi_can_2_T, strlen( dmi_can_2_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], dmi_can_2_T, strlen( dmi_can_2_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], dmi_can_2_F, strlen( dmi_can_2_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], dmi_can_2_F, strlen( dmi_can_2_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -4266,13 +4266,13 @@ static uint32_t ErrorCode_DMI_485_A( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0020U )
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -4326,13 +4326,13 @@ static uint32_t ErrorCode_DMI_485_B( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0040U )
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -4386,13 +4386,13 @@ static uint32_t ErrorCode_DMI_RAM( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0080U )
     {
-      memcpy( &ecd->spec[ecd->offset], ram_T, strlen( ram_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], ram_T, strlen( ram_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], ram_F, strlen( ram_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], ram_F, strlen( ram_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -4446,13 +4446,13 @@ static uint32_t ErrorCode_DMI_Flash( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0100U )
     {
-      memcpy( &ecd->spec[ecd->offset], flash_T, strlen( flash_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], flash_T, strlen( flash_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], flash_F, strlen( flash_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], flash_F, strlen( flash_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -4507,8 +4507,8 @@ static uint32_t ErrorCode_CEU( void )
       uint32_t len_dprt = strlen( ceu_i );
       uint32_t len_ceu  = strlen( ceu );
       
-      memcpy( ec_dist.spec, ceu_i, len_dprt );
-      memcpy( &ec_dist.spec[len_dprt], ceu, len_ceu );
+      rt_memcpy ( ec_dist.spec, ceu_i, len_dprt );
+      rt_memcpy ( &ec_dist.spec[len_dprt], ceu, len_ceu );
       
       ec_dist.side   = DEV_SIDE_I;
       ec_dist.offset = len_dprt + len_ceu;
@@ -4529,8 +4529,8 @@ static uint32_t ErrorCode_CEU( void )
       uint32_t len_dprt = strlen( ceu_ii );
       uint32_t len_ceu  = strlen( ceu );
       
-      memcpy( ec_dist.spec, ceu_ii, len_dprt );
-      memcpy( &ec_dist.spec[len_dprt], ceu, len_ceu );
+      rt_memcpy ( ec_dist.spec, ceu_ii, len_dprt );
+      rt_memcpy ( &ec_dist.spec[len_dprt], ceu, len_ceu );
       
       ec_dist.side   = DEV_SIDE_II;
       ec_dist.offset = len_dprt + len_ceu;
@@ -4686,13 +4686,13 @@ static uint32_t ErrorCode_CEU_CAN_A( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0004U )
     {
-      memcpy( &ecd->spec[ecd->offset], ceu_can_a_T, strlen( ceu_can_a_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], ceu_can_a_T, strlen( ceu_can_a_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], ceu_can_a_F, strlen( ceu_can_a_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], ceu_can_a_F, strlen( ceu_can_a_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -4746,13 +4746,13 @@ static uint32_t ErrorCode_CEU_CAN_B( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0002U )
     {
-      memcpy( &ecd->spec[ecd->offset], ceu_can_b_T, strlen( ceu_can_b_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], ceu_can_b_T, strlen( ceu_can_b_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], ceu_can_b_F, strlen( ceu_can_b_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], ceu_can_b_F, strlen( ceu_can_b_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -4806,13 +4806,13 @@ static uint32_t ErrorCode_CEU_485_A( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0008U )
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -4866,13 +4866,13 @@ static uint32_t ErrorCode_CEU_485_B( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0010U )
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -4926,13 +4926,13 @@ static uint32_t ErrorCode_CEU_Relay( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0020U )
     {
-      memcpy( &ecd->spec[ecd->offset], relay_T, strlen( relay_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], relay_T, strlen( relay_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], relay_F, strlen( relay_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], relay_F, strlen( relay_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -4986,13 +4986,13 @@ static uint32_t ErrorCode_CEU_FRAM( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0100U )
     {
-      memcpy( &ecd->spec[ecd->offset], fram_T, strlen( fram_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], fram_T, strlen( fram_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], fram_F, strlen( fram_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], fram_F, strlen( fram_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -5046,13 +5046,13 @@ static uint32_t ErrorCode_CEU_DAC( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0200U )
     {
-      memcpy( &ecd->spec[ecd->offset], dac_T, strlen( dac_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], dac_T, strlen( dac_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], dac_F, strlen( dac_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], dac_F, strlen( dac_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -5107,8 +5107,8 @@ static uint32_t ErrorCode_EBV( void )
       uint32_t len_dprt = strlen( ebv_i );
       uint32_t len_ebv  = strlen( ebv );
       
-      memcpy( ec_dist.spec, ebv_i, len_dprt );
-      memcpy( &ec_dist.spec[len_dprt], ebv, len_ebv );
+      rt_memcpy ( ec_dist.spec, ebv_i, len_dprt );
+      rt_memcpy ( &ec_dist.spec[len_dprt], ebv, len_ebv );
       
       ec_dist.side   = DEV_SIDE_I;
       ec_dist.offset = len_dprt + len_ebv;
@@ -5129,8 +5129,8 @@ static uint32_t ErrorCode_EBV( void )
       uint32_t len_dprt = strlen( ebv_ii );
       uint32_t len_ebv  = strlen( ebv );
       
-      memcpy( ec_dist.spec, ebv_ii, len_dprt );
-      memcpy( &ec_dist.spec[len_dprt], ebv, len_ebv );
+      rt_memcpy ( ec_dist.spec, ebv_ii, len_dprt );
+      rt_memcpy ( &ec_dist.spec[len_dprt], ebv, len_ebv );
       
       ec_dist.side   = DEV_SIDE_II;
       ec_dist.offset = len_dprt + len_ebv;
@@ -5294,13 +5294,13 @@ static uint32_t ErrorCode_EBV_CAN_A( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0004U )
     {
-      memcpy( &ecd->spec[ecd->offset], ebv_can_a_T, strlen( ebv_can_a_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], ebv_can_a_T, strlen( ebv_can_a_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], ebv_can_a_F, strlen( ebv_can_a_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], ebv_can_a_F, strlen( ebv_can_a_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -5354,13 +5354,13 @@ static uint32_t ErrorCode_EBV_CAN_B( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0002U )
     {
-      memcpy( &ecd->spec[ecd->offset], ebv_can_b_T, strlen( ebv_can_b_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], ebv_can_b_T, strlen( ebv_can_b_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], ebv_can_b_F, strlen( ebv_can_b_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], ebv_can_b_F, strlen( ebv_can_b_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -5414,13 +5414,13 @@ static uint32_t ErrorCode_EBV_485_A( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0008U )
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -5474,13 +5474,13 @@ static uint32_t ErrorCode_EBV_485_B( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0010U )
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_T, strlen( rs485_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], rs485_F, strlen( rs485_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -5534,13 +5534,13 @@ static uint32_t ErrorCode_EBV_Relay( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0020U )
     {
-      memcpy( &ecd->spec[ecd->offset], relay_T, strlen( relay_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], relay_T, strlen( relay_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], relay_F, strlen( relay_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], relay_F, strlen( relay_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -5594,13 +5594,13 @@ static uint32_t ErrorCode_EBV_FRAM( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0100U )
     {
-      memcpy( &ecd->spec[ecd->offset], fram_T, strlen( fram_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], fram_T, strlen( fram_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], fram_F, strlen( fram_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], fram_F, strlen( fram_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -5654,13 +5654,13 @@ static uint32_t ErrorCode_EBV_DAC_Selfcheck( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0200U )
     {
-      memcpy( &ecd->spec[ecd->offset], dac_T, strlen( dac_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], dac_T, strlen( dac_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], dac_F, strlen( dac_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], dac_F, strlen( dac_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -5714,13 +5714,13 @@ static uint32_t ErrorCode_EBV_DAC_Output( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0400U )
     {
-      memcpy( &ecd->spec[ecd->offset], dac_T, strlen( dac_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], dac_T, strlen( dac_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], dac_F, strlen( dac_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], dac_F, strlen( dac_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -5774,13 +5774,13 @@ static uint32_t ErrorCode_EBV_5V_Power( ErrorCodeDistribution *ecd )
     
     if ( ecd->ec_new & 0x0800U )
     {
-      memcpy( &ecd->spec[ecd->offset], power_T, strlen( power_T ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], power_T, strlen( power_T ) );
       
       state = ERROR_TRUE;
     }
     else
     {
-      memcpy( &ecd->spec[ecd->offset], power_F, strlen( power_F ) );
+      rt_memcpy ( &ecd->spec[ecd->offset], power_F, strlen( power_F ) );
       
       state = ERROR_FALSE;
     } /* end if...else */
@@ -5911,7 +5911,7 @@ uint32_t GetNewDatagram( uint8_t dgm[], uint32_t len )
   {
     if ( UNLOCK == ErrorCodeInitInst.LockFlag )
     {
-      memcpy( ErrorCodeInitInst.DGM_Buffer, dgm, len );
+      rt_memcpy ( ErrorCodeInitInst.DGM_Buffer, dgm, len );
       
       ErrorCodeInitInst.LockFlag = LOCK;
     }

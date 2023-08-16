@@ -412,7 +412,7 @@ void Processing_Gradepacket_Message(CAN_FRAME *ps_can_frame)
 	if (ps_can_frame->no_u8 == 0)
   {
 		/* 解析包描述帧 */
-		memcpy(&s_pack_describe, &ps_can_frame->data_u8[2],4);
+		rt_memcpy (&s_pack_describe, &ps_can_frame->data_u8[2],4);
 		curve_type = ps_can_frame->data_u8[0] & 0x0f;
 		end_group = ps_can_frame->data_u8[1];
 		end_frame = (uint8_t)s_pack_describe.end_frm;
