@@ -23,15 +23,16 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-#define FILE_THREAD_PRIORITY         15//19
-#define FILE_THREAD_STACK_SIZE       (2048 * 3)
+#define FILE_THREAD_PRIORITY         15
+#define FILE_THREAD_STACK_SIZE       (1024 * 4)
 #define FILE_THREAD_TIMESLICE        5
 
 static void *FileThreadEntry(void *parameter)
 {
     while(1)
     {
-        CanDataHandle(&eth_can_data_handle);
+        CanDataHandle(&eth0_can_data_handle);
+        CanDataHandle(&eth1_can_data_handle);
         RecordBoard_FileCreate();
         rt_thread_mdelay(1);
     }

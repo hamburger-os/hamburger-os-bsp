@@ -22,12 +22,14 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-S_DATA_HANDLE eth_can_data_handle;
+S_DATA_HANDLE eth0_can_data_handle;
+S_DATA_HANDLE eth1_can_data_handle;
 S_FILE_MANAGER file_manager;
 
 static void STORecordBoardInit(void)
 {
-    DataHandleInit(&eth_can_data_handle);
+    DataHandleInit(&eth0_can_data_handle);
+    DataHandleInit(&eth1_can_data_handle);
     FMInit(&file_manager);
     LedCtrlInit();
 
