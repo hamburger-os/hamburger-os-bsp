@@ -21,11 +21,25 @@
   * @param  none
   * @retval none;
   */
-void lep_eth_if_init(S_ETH_IF *ps_eth_if)
+rt_err_t lep_eth_if_init(S_ETH_IF *ps_eth_if)
 {
   uint32_t i;
 
+  if(NULL == ps_eth_if)
+  {
+      return -RT_EEMPTY;
+  }
+
   memset((void *)ps_eth_if, 0, sizeof(S_ETH_IF));
+
+  ps_eth_if->rx_buf = rt_malloc(sizeof(S_LEP_BUF) * LEP_RX_BUF_NUM);
+  if(NULL == ps_eth_if->rx_buf)
+  {
+      LOG_E("malloc size %d error", sizeof(S_LEP_BUF) * LEP_RX_BUF_NUM);
+      return -RT_EEMPTY;
+  }
+
+  memset((void *)ps_eth_if->rx_buf, 0, sizeof(S_LEP_BUF) * LEP_RX_BUF_NUM);
 
   for (i= 0U; i<(LEP_RX_BUF_NUM-1U); i++)
   {
@@ -35,13 +49,7 @@ void lep_eth_if_init(S_ETH_IF *ps_eth_if)
   ps_eth_if->prx_rptr = &ps_eth_if->rx_buf[0];
   ps_eth_if->prx_wptr = &ps_eth_if->rx_buf[0];
 
-  for (i= 0U; i<(LEP_TX_BUF_NUM-1U); i++)
-  {
-    ps_eth_if->tx_buf[i].pnext = &ps_eth_if->tx_buf[i+1];
-  }
-  ps_eth_if->tx_buf[i].pnext = &ps_eth_if->tx_buf[0];
-  ps_eth_if->ptx_rptr = &ps_eth_if->tx_buf[0];
-  ps_eth_if->ptx_wptr = &ps_eth_if->tx_buf[0];
+  return RT_EOK;
 }
 
 /*
@@ -82,7 +90,6 @@ S_LEP_BUF *lep_get_free_buf( S_ETH_IF *ps_eth_if)
   if (ps_eth_if != NULL && (ps_eth_if->prx_wptr != NULL))
   {
     if ((ps_eth_if->prx_wptr->flag & LEP_RBF_RV) == 0U)
-    /* if (ps_eth_if->prx_wptr != NULL_)*/
     {
       return ps_eth_if->prx_wptr;
     }

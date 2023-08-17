@@ -256,7 +256,7 @@ static rt_size_t fmc_eth_write(rt_device_t dev, rt_off_t pos, const void *buffer
     struct rt_fmc_eth_port *fmc_eth = dev->user_data;
     rt_uint16_t tx_size = 0;
 
-    memset(&fmc_eth->link_layer_buf_tx, 0, sizeof(S_LEP_BUF));
+    memset(&fmc_eth->link_layer_buf.tx_buf, 0, sizeof(S_LEP_BUF));
     if(size > LEP_MAC_PKT_MAX_LEN)
     {
         tx_size = LEP_MAC_PKT_MAX_LEN;
@@ -265,10 +265,10 @@ static rt_size_t fmc_eth_write(rt_device_t dev, rt_off_t pos, const void *buffer
     {
         tx_size = size;
     }
-    memcpy(fmc_eth->link_layer_buf_tx.buf, buffer, tx_size);
-    fmc_eth->link_layer_buf_tx.len = tx_size;
+    memcpy(fmc_eth->link_layer_buf.tx_buf.buf, buffer, tx_size);
+    fmc_eth->link_layer_buf.tx_buf.len = tx_size;
 
-    if (ks_start_xmit_link_layer(fmc_eth, &fmc_eth->link_layer_buf_tx) != 0)
+    if (ks_start_xmit_link_layer(fmc_eth, &fmc_eth->link_layer_buf.tx_buf) != 0)
     {
         LOG_D("link layer write error");
         return 0;
@@ -430,7 +430,11 @@ static int rt_fmc_eth_init(void)
         fmc_eth_device.port[i].parent.eth_rx = fmc_eth_rx;
         fmc_eth_device.port[i].parent.eth_tx = fmc_eth_tx;
 
-        lep_eth_if_init(&fmc_eth_device.port[i].link_layer_buf);
+        state = lep_eth_if_init(&fmc_eth_device.port[i].link_layer_buf);
+        if(state != RT_EOK)
+        {
+            return state;
+        }
         /* register eth device */
         state = eth_device_init(&(fmc_eth_device.port[i].parent), fmc_eth_device.port[i].dev_name);
         if (RT_EOK == state)

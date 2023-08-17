@@ -24,6 +24,7 @@ src =  Split('''
     src/file_manager.c
     src/utils/utils.c
     src/usb/usb.c
+    src/can_common.c
     '''
     )
 

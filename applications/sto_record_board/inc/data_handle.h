@@ -11,6 +11,7 @@
 #define APPLICATIONS_STO_RECORD_BOARD_INC_DATA_HANDLE_H_
 
 #include <rtthread.h>
+#include "can_common_def.h"
 
 /* 定义通道编号 */
 /*对系内通道*/
@@ -21,6 +22,7 @@
 
 #define SET_RTC_CYCLE_MS        (600000UL)
 
+extern S_CAN_PACKE_Grade s_packet_gradeInfo;
 
 #pragma pack(push, 1)
 /* 链路层通信的数据头 */

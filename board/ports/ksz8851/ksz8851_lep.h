@@ -16,8 +16,7 @@
 
 #define LEP_MAC_PKT_MAX_LEN   (1536U)              /* 链路层最大数据包长度 */
 
-#define LEP_RX_BUF_NUM    (50)//(32U)
-#define LEP_TX_BUF_NUM    (8U)
+#define LEP_RX_BUF_NUM    (50)
 
 #define LEP_RBF_TV        (1U)
 #define LEP_RBF_RV        (2U)
@@ -34,14 +33,12 @@ typedef struct eth_interface /* 接收环形缓冲区，应用程序维护 */
 {
     S_LEP_BUF *prx_rptr; /* 接收缓冲区读位置指针 */
     S_LEP_BUF *prx_wptr; /* 接收缓冲区写位置指针 */
-    S_LEP_BUF *ptx_rptr; /* 发送缓冲区读位置指针 */
-    S_LEP_BUF *ptx_wptr; /* 发送缓冲区写位置指针 */
-    S_LEP_BUF rx_buf[LEP_RX_BUF_NUM];
-    S_LEP_BUF tx_buf[LEP_TX_BUF_NUM];
+    S_LEP_BUF *rx_buf;
+    S_LEP_BUF tx_buf;
 } S_ETH_IF;
 
 /* Exported function prototypes ----------------------------------------------*/
-void lep_eth_if_init(S_ETH_IF *ps_eth_if);
+rt_err_t lep_eth_if_init(S_ETH_IF *ps_eth_if);
 S_LEP_BUF *lep_get_free_buf(S_ETH_IF *ps_eth_if);
 S_LEP_BUF *lep_if_is_received(const S_ETH_IF *ps_eth_if);
 void lep_if_release_rptr(S_ETH_IF *ps_eth_if);

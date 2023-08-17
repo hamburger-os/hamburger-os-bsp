@@ -11,15 +11,13 @@
 ********************************************************************************************/
 #include "Record_Board_App.h"
 #include "Common.h"
-#include "CAN_CommonDef.h"
+#include "can_common_def.h"
 #include "RecordErrorCode.h"
 
 #define DBG_TAG "record_app"
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-/* 测试用定义 */
-uint8_t dat_buff[1024] = {0u};
 
 /* 06-July-2020, by DuYanPo. */
 #define MAX_VAILD_PER_FRM (7)                           		/* CAN打包发送每帧最大有效字节数 */
@@ -30,16 +28,6 @@ uint8_t dat_buff[1024] = {0u};
 /* Define something usefull */
 #define TO_UINT16(X,Y)            ( ( ( uint16_t )( X ) << 8u ) + ( uint16_t )( Y ) )
 
-/* private macro definition -------------------------------------------------------------------- */
-/* 06-July-2020, by DuYanPo. */
-S_CAN_PACKE_Grade s_packet_gradeInfo;                    /* 曲线的打包数据缓存区 */
-
-uint8_t Grade_Receiving_data_u8[PACKET_LEN];                /* 包数据接收缓冲区 */
-#if 0
-uint8_t Grade_Received_data[MAX_LENGTH_PACKET];             /* 保存坡度数据的缓冲区 */
-#endif
-uint8_t LocomotiveInfo_Received_data[MAX_LENGTH_PACKET];    /* 保存机车信息的缓冲区 */
-
 uint8_t GradePacket_Start_Flag = 0;      /* 坡道信息开始接收标志 */
 uint8_t GradePacket_Finish_Flag = 0;     /* 坡道信息接收完成标志 */
 uint8_t LocomotiveInfo_Start_Flag = 0;   /* 机车信息开始接收标志 */
@@ -49,14 +37,6 @@ uint8_t LocomotiveInfo_Finish_Flag = 0;  /* 机车信息接收完成标志 */
 /* "Iϵ", "IIϵ" */
 static const char DPRT_I[]  = { 0x49U, 0xCFU, 0xB5U, '\0' };
 static const char DPRT_II[] = { 0x49U, 0x49U, 0xCFU, 0xB5U, '\0' };
-
-
-
-
-
-
-
-
 
 
 #if 0  //TODO(mingzhao)
@@ -444,7 +424,7 @@ void Processing_Gradepacket_Message(CAN_FRAME *ps_can_frame)
       else if (LocomotiveInfo_Type == curve_type)
       {
 //				printf("LocomotiveInfo_Type!\n");
-				s_packet_gradeInfo.received_data_u8 = LocomotiveInfo_Received_data;
+//				s_packet_gradeInfo.received_data_u8 = LocomotiveInfo_Received_data;
 				s_packet_gradeInfo.locomotiveinfo_total_length_u16 = CAL_PACKAGE_SIZE(pack_id,end_group,end_frame,s_pack_describe.end_frm_len);
 
 				if (1 == pack_id)
@@ -625,34 +605,4 @@ void Processing_Gradepacket_Message(CAN_FRAME *ps_can_frame)
 		}
 	}
 }
-
-#if 0  //TODO(mingzhao)
-/* 显示器拷贝程序 20201027 by dyp
- * can_buf_init - 接收CAN数据缓冲区初始化
- */
-static void can_buf_init(void)
-{
-	/* s_packet_gradeInfoµÄ³õÊ¼»¯ */
-	s_packet_gradeInfo.e_state = E_IDLE; 				                      /* 接收状态 */
-	s_packet_gradeInfo.frame_id_u8 = 0;					                      /* 帧号 */
-	s_packet_gradeInfo.total_length_u16 = 0; 			                    /* 总长度 */
-	s_packet_gradeInfo.receiving_length_u16 = 0; 		                  /* 正在接收的数据长度 */
-	s_packet_gradeInfo.receiving_data_u8 = Grade_Receiving_data_u8;	  /* 正在接收的数据缓冲区 */
-	s_packet_gradeInfo.received_data_u8 = NULL;
-	s_packet_gradeInfo.received_length_u16 = 0;			                  /* 已接收完成的数据长度 */
-}
-#endif
-/**************************************************************************************************
-(^_^) Function Name : 
-(^_^) Brief         : 
-(^_^) Author        : 
-(^_^) Date          : 
-(^_^) Parameter     : 
-(^_^) Return        : 
-(^_^) Harware       : 
-(^_^) Software      : 
-(^_^) Note          : Before using the program, you should read comments carefully.
-**************************************************************************************************/
-
-
 

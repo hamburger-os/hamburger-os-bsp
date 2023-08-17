@@ -69,7 +69,7 @@ typedef struct exp_chanl_head {
         uint16_t data_len;     /*数据长度*/
   } h_exp_chanl;
 #pragma pack()
-//rt_err_t app_layer_check(uint8_t *pBuf, uint8_t *p_safe_layer);
+
 rt_err_t app_layer_check(S_DATA_HANDLE * data_handle, uint8_t *pBuf, uint8_t *p_safe_layer);
 
 #endif /* APPLICATIONS_STO_RECORD_BOARD_INC_APP_LAYER_H_ */

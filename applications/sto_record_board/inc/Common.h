@@ -30,14 +30,23 @@ extern uint8_t Version[4];
 extern uint16_t Verdate;
 extern uint8_t ID;
 
-extern uint32_t CAN0_time,CAN1_time,MCPCAN0_time,MCPCAN1_time;
-extern CAN_FRAME SelfCheck_txMailbox;
+extern uint32_t SK1ZJ_time;
+extern uint32_t SK2ZJ_time;
+extern uint32_t JCJKZJ_time;
+extern uint32_t ZK1ZJ_time;
+extern uint32_t ZK2ZJ_time;
+extern uint32_t XSQ1ZJ_time;
+extern uint32_t XSQ2ZJ_time;
+extern uint32_t JCTXZJ_time;
+
+//extern uint32_t CAN0_time,CAN1_time,MCPCAN0_time,MCPCAN1_time;
+//extern CAN_FRAME SelfCheck_txMailbox;
 extern uint16_t ERROR_FLAG;
 
-extern uint32_t I_CAN0_time, I_CAN1_time, E_CAN0_time, E_CAN1_time;
-extern uint32_t ZK1ZJ_time,  ZK2ZJ_time,  JCTXZJ_time, JCJKZJ_time, JLZJ_time;
-extern uint32_t XSQ1ZJ_time, XSQ2ZJ_time, SK1ZJ_time,  SK2ZJ_time,  WJJKZJ_time;
-extern uint32_t SKZJ_time,   XSQZJ_time,  SYSHEART_time;
+//extern uint32_t I_CAN0_time, I_CAN1_time, E_CAN0_time, E_CAN1_time;
+//extern uint32_t ZK1ZJ_time,  ZK2ZJ_time,  JCTXZJ_time, JCJKZJ_time, JLZJ_time;
+//extern uint32_t XSQ1ZJ_time, XSQ2ZJ_time, SK1ZJ_time,  SK2ZJ_time,  WJJKZJ_time;
+//extern uint32_t SKZJ_time,   XSQZJ_time,  SYSHEART_time;
 
 //TODO(mingzhao)
 //extern sArrayList *i_can0_recv_list;
@@ -46,14 +55,14 @@ extern uint32_t SKZJ_time,   XSQZJ_time,  SYSHEART_time;
 //extern sArrayList *p_can0_recv_list;
 //extern sArrayList  *p_can1_recv_list;
 
-/* UART BUFFER */
-typedef struct
-{
-	uint8_t buf[100];
-	uint8_t read_pos;
-	uint8_t write_pos;
-	uint8_t size;
-}UART_BUF;
+///* UART BUFFER */
+//typedef struct
+//{
+//	uint8_t buf[100];
+//	uint8_t read_pos;
+//	uint8_t write_pos;
+//	uint8_t size;
+//}UART_BUF;
 
 //TODO(mingzhao)
 ///* Operation_interface */
@@ -101,8 +110,8 @@ typedef struct
 /* The following macro definition was created by Liang Zhen, 22-November-2017. ================= */
 /* public macro definition --------------------------------------------------------------------- */
 /* The priority of train interface board. */
-#define PRIORITY_TRAIN_SELFCHECK         ( 0x90u )
-#define PRIORITY_TRAIN_STATE_INFO        ( 0x91u )
+//#define PRIORITY_TRAIN_SELFCHECK         ( 0x90u )
+//#define PRIORITY_TRAIN_STATE_INFO        ( 0x91u )
 
 /* Firmware date. */
 /* ------------------------------------------------------------------------------------------
@@ -270,8 +279,8 @@ extern uint8_t CAN_OutTime(uint32_t time,uint32_t ms );
 //extern bool Common_arraylist_add(sArrayList *pal, uint8_t *pdata, uint32_t len);
 //extern uint32_t Common_arraylist_get(sArrayList *pal, uint8_t *pdata);
 
-extern void UartBuf_add(UART_BUF *rec_buf,uint8_t data);
-extern uint8_t UartBuf_get(UART_BUF *rec_buf,uint8_t *data);
+//extern void UartBuf_add(UART_BUF *rec_buf,uint8_t data);
+//extern uint8_t UartBuf_get(UART_BUF *rec_buf,uint8_t *data);
 
 extern uint8_t u16_abscmp(uint16_t a,uint16_t b,uint16_t val);
 

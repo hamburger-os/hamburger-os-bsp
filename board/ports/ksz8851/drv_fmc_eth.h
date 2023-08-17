@@ -83,10 +83,7 @@ struct rt_fmc_eth_port
     uint8_t frm_cnt_u8; /** QMU接收缓冲区中接收到的帧数 */
     FRAME_HEAD frame_head[KSZ_MAX_RFRM_THD];
 
-    S_LEP_BUF link_layer_buf_tx;
     S_ETH_IF link_layer_buf;
-//    void *link_layer_rx;
-//    rt_uint16_t link_layer_rx_len;
 };
 
 void fmc_eth_memcpy(void *DstAddress, void *SrcAddress, uint32_t DataLength);

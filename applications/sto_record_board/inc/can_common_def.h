@@ -12,6 +12,7 @@
 #ifndef CAN_COMMONDEF_H
 #define CAN_COMMONDEF_H
 
+#include <rtthread.h>
 
 /* public macro definition --------------------------------------------------------------------- */
 /* 通信板->主控板 ============================================================================== */
@@ -140,8 +141,8 @@ typedef enum
 	E_RECEIVING = 0x02,               /* 正在接收 */
 	E_RECEIVED_OK = 0x03,             /* 接收完成 */
 	E_RECEIVING_FAILURE = 0x04        /* 接收错误 */
-}E_CAN_RECEIVE_STATE;
 
+}E_CAN_RECEIVE_STATE;
 /* 06-July-2020, by DuYanPo. */
 /* CAN打包信息包描述 */
 typedef struct
@@ -167,8 +168,8 @@ typedef struct
 	uint8_t *received_data_u8;             		      /* 已接收完成的数据缓冲区 */
 }S_CAN_PACKE_Grade;
 
-extern uint8_t LocomotiveInfo_Received_data[MAX_LENGTH_PACKET];
 
+rt_err_t can_buf_init(S_CAN_PACKE_Grade *can_pkt_grade);
 #endif
 /**************************************end file*********************************************/
 

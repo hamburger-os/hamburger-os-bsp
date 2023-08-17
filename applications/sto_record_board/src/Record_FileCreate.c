@@ -40,7 +40,7 @@ uint8_t SoftWare_Cycle_Flag = 0U;
 uint8_t FLASH_SectorWriteRead_Buff[256U] = {0U};
 
 uint8_t ETH_DAT[12] = { 0u };   //临时定义
-uint32_t JILUGESHIBANBEN = 0x01020000;
+uint32_t JILUGESHIBANBEN = 0x01020000;   //记录格式版本
 
 /* 定义主控设备代码，默认：0x11--A模，0x12--B模 */
 uint8_t g_ZK_DevCode = 0x11;
@@ -338,9 +338,6 @@ static RecordingMessage  msgRecording =\
   }
 };
 
-
-
-#if 1
 /* private function declaration ---------------------------------------------------------------- */
 static uint8_t Record_Condition_Judge(void);
 static rt_err_t Creat_FileHead(S_CURRENT_FILE_INFO *current_file_info);
@@ -514,8 +511,6 @@ static void RecordingCommunicatWithCIRMessage(void);
 static void RecordingCommunicatWithCEUMessage(void);
 static void RecordingCommunicatWithECUMessage(void);
 
-#endif
-
 /********************************************************************************************
 ** @brief: RecordBoard_DataProc
 ** @param: null
@@ -683,7 +678,6 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
         {
             LOG_I("生成新文件");
             /* 生成新文件之前，判断上一个文件是否记录完整 */
-#if 1
             if (write_buf.pos > 40u)
             {
                 LOG_W("上一个文件记录尚不完整");
@@ -739,7 +733,6 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
                 u8_Gonggongxinxi_Flag = 1U;
 
             } /* end if */
-#endif 
             /* 初始化write buf */
             memset(&write_buf, 0u, sizeof(WRITE_BUF));
             memset(&s_File_Directory, 0, sizeof(SFile_Directory));
@@ -1982,7 +1975,7 @@ static void RecordingGuidSpeedMessage(void)
 //        C_zhidaosudu[1] = *(&ZHIDAOSUDU + 1);
         C_zhidaosudu[0] = (uint8_t)zhidaosudu_New;
         C_zhidaosudu[1] = (uint8_t)(zhidaosudu_New >> 8);
-        LOG_I("指导速度：%d -- %d", zhidaosudu_Old, zhidaosudu_New);
+//        LOG_I("指导速度：%d -- %d", zhidaosudu_Old, zhidaosudu_New);
         WriteFileContantPkt(0xA1, 0x01, g_ZK_DevCode, C_zhidaosudu, 2u);
     } /* end if */
 } /* end function RecordingGuidSpeedMessage */
@@ -2762,7 +2755,7 @@ static void RecordingTrainPipePressureMessage(void)
 
     if (GANG_YA_PRESSURE_DVALUE <= abs(liecheguanyali_New - liecheguanyali_Old))
     {
-        LOG_I("列车管压力：%d --- %d", liecheguanyali_Old, liecheguanyali_New);
+//        LOG_I("列车管压力：%d --- %d", liecheguanyali_Old, liecheguanyali_New);
         C_liecheguanyali[0] = LIECHEGUANYALI;
         C_liecheguanyali[1] = (*(&LIECHEGUANYALI + 1));
         WriteFileContantPkt(0xA2, 0x01, g_ZK_DevCode, C_liecheguanyali, 0u);
@@ -2786,7 +2779,7 @@ static void RecordingBrakeCylinderPressureMessage(void)
         C_zhidonggangyali[0] = ZHIDONGGANGYALI;
         C_zhidonggangyali[1] = (*(&ZHIDONGGANGYALI + 1));
 
-        LOG_I("制动缸压力：%d --- %d", zhidonggangyali_Old, zhidonggangyali_New);
+//        LOG_I("制动缸压力：%d --- %d", zhidonggangyali_Old, zhidonggangyali_New);
         WriteFileContantPkt(0xA2, 0x02, g_ZK_DevCode, C_zhidonggangyali, 0u);
     } /* end if */
 } /* end function RecordingBrakeCylinderPressureMessage */
@@ -2830,7 +2823,7 @@ static void RecordingEqualizReservoirPressureMessage(void)
     {
         C_jungangyali[0] = (*(&JUNFENGGANGYALI + 1));
         C_jungangyali[1] = JUNFENGGANGYALI;
-        LOG_I("均缸压力：%d --- %d", jungangyali_Old, jungangyali_New);
+//        LOG_I("均缸压力：%d --- %d", jungangyali_Old, jungangyali_New);
         WriteFileContantPkt(0xA2, 0x04, g_ZK_DevCode, C_jungangyali, 0u);
     } /* end if */
 } /* end function RecordingEqualizReservoirPressureMessage */

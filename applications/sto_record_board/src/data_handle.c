@@ -8,7 +8,7 @@
  * 2023-07-20     zm       the first version
  */
 #include "data_handle.h"
-#include "CAN_CommonDef.h"
+#include "can_common_def.h"
 #include "Record_FileCreate.h"
 #include "Record_Board_App.h"
 #include "RecordErrorCode.h"
@@ -19,8 +19,12 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
+S_CAN_PACKE_Grade s_packet_gradeInfo;           /* 曲线的打包数据缓存区 */
+
 rt_err_t DataHandleInit(S_DATA_HANDLE *p_data_handle)
 {
+    static bool is_init = 0;
+
     if(RT_NULL == p_data_handle)
     {
         return -RT_EINVAL;
@@ -33,6 +37,17 @@ rt_err_t DataHandleInit(S_DATA_HANDLE *p_data_handle)
         LOG_E("rt_mq_create failed");
         return -RT_ERROR;
     }
+
+    if(0 == is_init)
+    {
+        is_init = 1;
+        if(can_buf_init(&s_packet_gradeInfo) != RT_EOK)
+        {
+            return -RT_ERROR;
+        }
+        LOG_I("is_init");
+    }
+
     return RT_EOK;
 }
 

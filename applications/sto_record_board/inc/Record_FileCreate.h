@@ -14,7 +14,7 @@
 #define __RECORD_
 
 #include "common.h"
-#include "CAN_CommonDef.h"
+#include "can_common_def.h"
 #include "type.h"
 #include "file_manager.h"
 
@@ -27,48 +27,7 @@ extern uint8_t g_JK_DevCode;
 extern uint8_t g_CEU_DevCode;
 extern uint8_t g_ECU_DevCode;
 
-/* publice macro definition -------------------------------------------------------------------- */
-#define SECTOR_SIZE         ( 65536U )
-#define PAGE_SIZE           ( 256U )
-#define SFILE_DIR_SIZE      (128U)
-
-/* FRAM address. =============================================================================== */
-/* 512B */
-#define FRAM_State_BASE_ADDR              ( 0U )
-/* 512B */
-#define FRAM_FlashBuffer_BASE_ADDR        ( 0x0200U )
-/* 1K */
-#define FRAM_FileHead_BASE_ADDR           ( 0x0400U )
-/* 62K */
-#define FRAM_FileDirectory_BASE_ADDR      ( 0x0800U )
-#define FRAM_FileDirectory_MAX_ADDR       ( 0x10000U )
-
-#define FRAM_BASE_ADDR                    FRAM_FileDirectory_BASE_ADDR    
-#define FRAM_MAX_ADDR                     FRAM_FileDirectory_MAX_ADDR
-
-/* Flash address. ============================================================================== */
-/* 8M */
-#define FLASH_RecordFile_BASE_ADDR     ( 0x800000U )
-/* 27-August-2018, by Liang Zhen. */
-#if ( FLASH_RecordFile_BASE_ADDR % SECTOR_SIZE )
-  #error "The based address of flash is invalid."
-#endif
-
-/* 32M */
-#define FLASH_RecordFile_MAX_ADDR      ( 0x2000000U )
-/* 27-August-2018, by Liang Zhen. */
-#if ( FLASH_RecordFile_MAX_ADDR % SECTOR_SIZE )
-  #error "The maximum address of flash is invalid."
-#endif
-
-/* 27-August-2018, by Liang Zhen. */
-#define MAX_SECTOR_AMOUNT   ( ( FLASH_RecordFile_MAX_ADDR - FLASH_RecordFile_BASE_ADDR ) / SECTOR_SIZE )
-
-/* File Size. ============================================================================== */
-/* 20MB */
-//#define MAX_FILE_SIZE       (1024)//( 20*1024*1024 )  使用 RECORD_FILE_MAN_SIZE 替代
-/* 2KB */
-#define MIN_FILE_SIZE       ( 2*1024 )
+#define SFILE_DIR_SIZE      (128U)  /* 结构体SFile_Directory的大小 */
 
 /* Bus Data. ============================================================================== */
 /* 0x60/0x70 */
@@ -231,7 +190,7 @@ extern uint8_t g_ECU_DevCode;
 //#define TIME_SFM                                      //CAN协议已有，名称一致
 #define YUNXINGJINGLUHAO	       ( SHUJUJIAOLU<<8 + JIANKONGJIAOLU )
 #define LKJFACHEFANGXIANG	       CHEZHANHAO
-#define QIANGZHIBENGFENG           ( LocomotiveInfo_Received_data[23] & 0x10 )
+#define QIANGZHIBENGFENG           (s_packet_gradeInfo.received_data_u8[23] & 0x10)
 #define CHEZHANMING                ETH_DAT[1]           //CAN协议没有定义
 //#define JICHEXINGHAO                                  //CAN协议已有，名称一致
 #define XITONGKONGZHI              ( CAN_0x67( 5u ).data_u8[4] )
@@ -307,7 +266,7 @@ extern uint8_t g_ECU_DevCode;
 #define LKJ_COMMUNICATION	      ( Ato_Enter_Auto_S96 & 0x01 )
 #define	CCU_COMMUNICATION	      ( (CAN_0x6A( 0u ).data_u8[0] & 0x01) >> 0u )
 #define BCU_COMMUNICATION	      ( (CAN_0x6A( 0u ).data_u8[0] & 0x02) >> 1u )
-#define CIR_COMMUNICATION         ( LocomotiveInfo_Received_data[22] )
+#define CIR_COMMUNICATION         ( s_packet_gradeInfo.received_data_u8[22] )
 #define CEU_COMMUNICATION         ETH_DAT[1]      //CAN协议没有定义
 #define	ECU_COMMUNICATION	      ETH_DAT[1]      //CAN协议没有定义
 
@@ -365,8 +324,8 @@ extern uint8_t g_ECU_DevCode;
 #define QIANGZHIBENGFENG               ( (Sto_GKCom_S10 & 0x10) >> 4u )
 
 /* 机车制动系统信息 */
-//#define LIECHEGUANYALI               LocomotiveInfo_Received_data[26]  //公共信息已定义
-//#define ZHIDONGGANGYALI              LocomotiveInfo_Received_data[28]  //公共信息已定义
+//#define LIECHEGUANYALI               s_packet_gradeInfo.received_data_u8[26]  //公共信息已定义
+//#define ZHIDONGGANGYALI              s_packet_gradeInfo.received_data_u8[28]  //公共信息已定义
 #define ZONGFENGGANGYALI               ( CAN_0x32( 0u ).data_u8[2] )
 //#define JUNGANGYALI                    JUNFENGGANGYALI  
 #define ZIZHIDONGSHOUBING              ( CAN_0x32( 2u ).data_u8[2] )
@@ -485,7 +444,7 @@ extern uint8_t g_ECU_DevCode;
 #define ECU_I_BB            ETH_DAT[1]      //CAN协议没有定义
 #define ECU_II_BB           ETH_DAT[1]      //CAN协议没有定义
 #define CCU_BB              ETH_DAT[1]      //CAN协议没有定义
-#define BCU_BB              LocomotiveInfo_Received_data[7]
+#define BCU_BB              s_packet_gradeInfo.received_data_u8[7]
 
 #define RUANJIANBANBENBUYIZHI    ( WENBENTISHI & 0x01 )
 
@@ -493,7 +452,9 @@ extern uint8_t g_ECU_DevCode;
 
 /* public type definition ---------------------------------------------------------------------- */
 
-/* 文件目录结构体 128 字节 */
+/* 文件目录结构体 128 字节
+ * 该结构体修改时需要修改 宏定义：SFILE_DIR_SIZE
+ * */
 typedef struct __attribute__((packed)) _SFile_Directory /* 按照字节对齐*/ //TODO(mingzhao)
 {
     char ch_checi[4]; /* 车次 */
