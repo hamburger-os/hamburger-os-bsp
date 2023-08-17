@@ -8,6 +8,8 @@ CPPPATH = [cwd , cwd + '/gui/generated', cwd + '/gui/generated/guider_customer_f
 
 src     = Split('''
                 selftest.c
+                gpio.c
+                filesysterm.c
                 ''')
 src     += Glob('gui/generated/*.c');
 src     += Glob('gui/generated/guider_fonts/*.c');

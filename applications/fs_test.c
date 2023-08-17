@@ -155,7 +155,8 @@ static void fsrw_thread_entry(void* parameter)
                 , write_run / 1024, write_speed / 1024);
     }
 
-    end: fsrw_thread = RT_NULL;
+end:
+    fsrw_thread = RT_NULL;
     rt_free(write_data);
     rt_free(read_data);
     LOG_D("fsrw test end.");
