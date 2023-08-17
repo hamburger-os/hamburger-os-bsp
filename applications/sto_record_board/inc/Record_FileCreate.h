@@ -489,6 +489,8 @@ extern uint8_t g_ECU_DevCode;
 
 #define RUANJIANBANBENBUYIZHI    ( WENBENTISHI & 0x01 )
 
+#define GANG_YA_PRESSURE_DVALUE  (10u) //压力差值，单位kPa
+
 /* public type definition ---------------------------------------------------------------------- */
 
 /* 文件目录结构体 128 字节 */
