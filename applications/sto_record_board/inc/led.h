@@ -22,7 +22,7 @@
 
 typedef enum {
   ERR_LED = 0,
-  SELF_LED,
+  USB_LED,
   DUMP_LED,
   ETH_LED,
   CAN_LED

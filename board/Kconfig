@@ -3411,6 +3411,32 @@ menu "Onboard Peripheral Drivers"
                 default "PC.13"
         endif
         
+      menuconfig BSP_USING_KSZ8794
+        bool "Enable ksz8794"
+        default n
+        
+        if BSP_USING_KSZ8794
+            config BSP_KSZ8794_SPI_BUS
+              string "Set the spi bus used, default: spi5"
+              default "spi5"
+              
+            config BSP_KSZ8794_SPI_CS_PIN
+              string "Set the pin of the chip select, default: PF.6"
+              default "PF.6"
+            
+            config BSP_KSZ8794_SPI_SPEED
+              int "Set the rate of spi, default: (40 * 1000 *1000)"
+              default (40000000)
+              
+            config BSP_KSZ8794_IRQ_PIN
+              string "Set the pin of the chip irq, default: PI.4"
+              default "PI.4"
+              
+            config BSP_KSZ8794_RST_PIN
+              string "Set the pin of the chip rst, default: PI.7"
+              default "PI.7"
+        endif
+        
 endmenu
 
 endmenu
