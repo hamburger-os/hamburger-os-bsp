@@ -54,45 +54,16 @@ static rt_err_t at45db321e_readDeviceID(uint8_t *id)
     uint8_t check[] = {0x1f, 0x27, 0x01, 0x01, 0x00};
     if (rt_memcmp(id, check, 5) == 0)
     {
-        LOG_I("init succeed 0x%x %x %x %x %x.", id[0], id[1], id[2], id[3], id[4]);
+        LOG_I("init succeed 0x%02x %02x %02x %02x %02x.", id[0], id[1], id[2], id[3], id[4]);
     }
     else
     {
-        LOG_E("init failed 0x%x %x %x %x %x.", id[0], id[1], id[2], id[3], id[4]);
+        LOG_E("init failed 0x%02x %02x %02x %02x %02x.", id[0], id[1], id[2], id[3], id[4]);
     }
 
     return ret;
 }
 
-static rt_err_t at45db321e_writeEnable(void)
-{
-    rt_err_t ret = RT_EOK;
-
-//    uint8_t cmd[] = {0x06};
-//    rt_size_t size = rt_spi_send(at45db321e_spidev, cmd, sizeof(cmd));
-//    if (size != sizeof(cmd))
-//    {
-//        LOG_E("write enable error %d!", ret);
-//        ret = -RT_EIO;
-//    }
-
-    return ret;
-}
-
-static rt_err_t at45db321e_writeDisable(void)
-{
-    rt_err_t ret = RT_EOK;
-
-//    uint8_t cmd[] = {0x04};
-//    rt_size_t size = rt_spi_send(at45db321e_spidev, cmd, sizeof(cmd));
-//    if (size != sizeof(cmd))
-//    {
-//        LOG_E("write disable error %d!", ret);
-//        ret = -RT_EIO;
-//    }
-
-    return ret;
-}
 
 static void at45db321e_wait_busy(void)
 {
@@ -159,12 +130,21 @@ static int fal_at45db321e_init(void)
     uint8_t id[5];
     ret = at45db321e_readDeviceID(id);
 
-    //设置页大小512
+    // 软件复位
+    uint8_t cmd_rst[] = {0xF0, 0x00, 0x00, 0x00};
+    rt_size_t size = rt_spi_send(at45db321e_spidev, cmd_rst, sizeof(cmd_rst));
+    if (size != sizeof(cmd_rst))
+    {
+        LOG_E("Reset error!");
+        ret = -RT_EIO;
+    }
+
+    // 设置页大小512字节
     uint8_t cmd[] = {0x3D, 0x2A, 0x80, 0xA6};
-    rt_size_t size = rt_spi_send(at45db321e_spidev, cmd, sizeof(cmd));
+    size = rt_spi_send(at45db321e_spidev, cmd, sizeof(cmd));
     if (size != sizeof(cmd))
     {
-        LOG_E("Configure “Power of 2” (Binary) Page Size error!");
+        LOG_E("Configure \"Power of 2\" (Binary) Page Size error!");
         ret = -RT_EIO;
     }
 
@@ -205,9 +185,9 @@ static int fal_at45db321e_read(long offset, rt_uint8_t *buf, size_t size)
         }
 
         /* 发送读命令 */
-        uint32_t page = (addr_page/PAGE_SIZE) << 18;
-        uint8_t cmd[] = {0xD2, (uint8_t)((page) >> 16U), (uint8_t)((page) >> 8U), (uint8_t)((page))};
-
+        uint32_t page = (addr_page / PAGE_SIZE) << 9;
+        uint8_t cmd[] = {0xD2, (uint8_t)((page) >> 16U), (uint8_t)((page) >> 8U), (uint8_t)((page)),
+                         (uint8_t)((0)), (uint8_t)((0)), (uint8_t)((0)), (uint8_t)((0))};
         /* 读数据 */
         rt_err_t ret = rt_spi_send_then_recv(at45db321e_spidev, cmd, sizeof(cmd), buf_page, size_page);
         if (ret != RT_EOK)
@@ -248,8 +228,6 @@ static int fal_at45db321e_write(long offset, const rt_uint8_t *buf, size_t size)
     size_t countmax = (size%PAGE_SIZE == 0)?(size/PAGE_SIZE):(size/PAGE_SIZE + 1);
     for (size_t count = 0; count < countmax; count++)
     {
-        at45db321e_writeEnable();
-
         /* 计算页长度 */
         if (size_less >= PAGE_SIZE)
         {
@@ -261,22 +239,30 @@ static int fal_at45db321e_write(long offset, const rt_uint8_t *buf, size_t size)
         }
 
         /* 发送写命令 */
-        uint32_t page = (addr_page/PAGE_SIZE) << 18;
-        uint8_t cmd[] = {0x88, (uint8_t)((page) >> 16U), (uint8_t)((page) >> 8U), (uint8_t)((page))};
+        uint32_t page = (addr_page / PAGE_SIZE) << 9;
+        uint8_t cmd[] = {0x87, (uint8_t)((page) >> 16U), (uint8_t)((page) >> 8U), (uint8_t)((page))};
 
-        /* 写数据 */
+        /* 向buffer(sram)中写数据 */
         rt_err_t ret = rt_spi_send_then_send(at45db321e_spidev, cmd, sizeof(cmd), buf_page, size_page);
         if (ret != RT_EOK)
         {
-            LOG_E("write data error %d!", ret);
+            LOG_E("write buffer error!");
             return -RT_EIO;
         }
+
+        /* 将buffer(sram)中的数据写入到mem中 */
+        cmd[0] = 0x89;
+        ret = rt_spi_send(at45db321e_spidev, cmd, sizeof(cmd));
+        if (ret != sizeof(cmd))
+        {
+            LOG_E("buffer to mem error!");
+            return -RT_EIO;
+        }
+        at45db321e_wait_busy();
+
         addr_page += PAGE_SIZE;
         buf_page += PAGE_SIZE;
         size_less -= PAGE_SIZE;
-
-        at45db321e_writeDisable();
-        at45db321e_wait_busy();
     }
 
     LOG_HEX("write", 16, (uint8_t *)buf, (size > 64)?(64):(size));
@@ -290,24 +276,22 @@ static int fal_at45db321e_erase(long offset, size_t size)
     rt_uint32_t addr = at45db321e_flash.addr + offset;
     if ((addr + size) > at45db321e_flash.addr + at45db321e_flash.len)
     {
-        LOG_E("erase outrange flash size! addr is (0x%p)", (void*)(addr + size));
+        LOG_E("erase outrange flash size! addr is (0x%p)", (void *)(addr + size));
         return -RT_EINVAL;
     }
     if (size < 1)
     {
-//        LOG_W("erase size %d! addr is (0x%p)", size, (void*)(addr + size));
+        // LOG_W("erase size %d! addr is (0x%p)", size, (void *)(addr + size));
         return 0;
     }
 
     uint32_t addr_blk = addr;
-    size_t countmax = (size%at45db321e_flash.blk_size == 0)?(size/at45db321e_flash.blk_size):(size/at45db321e_flash.blk_size + 1);
+    size_t countmax = (size % at45db321e_flash.blk_size == 0) ? (size / at45db321e_flash.blk_size) : (size / at45db321e_flash.blk_size + 1);
     for (size_t count = 0; count < countmax; count++)
     {
-        at45db321e_writeEnable();
-
         /* 发送擦命令 */
-        uint32_t page = (addr_blk/PAGE_SIZE) << 18;
-        uint8_t cmd[] = {0x50, (uint8_t)((page) >> 16U), (uint8_t)((page) >> 8U), (uint8_t)((page))};
+        uint32_t page = (addr_blk / PAGE_SIZE) << 9;
+        uint8_t cmd[] = {0x81, (uint8_t)((page) >> 16U), (uint8_t)((page) >> 8U), (uint8_t)((page))};
 
         /* 擦数据 */
         rt_err_t ret = rt_spi_send(at45db321e_spidev, cmd, sizeof(cmd));
@@ -318,11 +302,10 @@ static int fal_at45db321e_erase(long offset, size_t size)
         }
         addr_blk += at45db321e_flash.blk_size;
 
-        at45db321e_writeDisable();
         at45db321e_wait_busy();
     }
 
-    LOG_D("erase (0x%p) %d", (void*)(addr), size);
+    LOG_D("erase (0x%p) %d", (void *)(addr), size);
 
     return size;
 }
