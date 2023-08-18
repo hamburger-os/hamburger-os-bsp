@@ -448,7 +448,7 @@ extern uint8_t g_ECU_DevCode;
 
 #define RUANJIANBANBENBUYIZHI    ( WENBENTISHI & 0x01 )
 
-#define GANG_YA_PRESSURE_DVALUE  (10u) //压力差值，单位kPa
+#define GANG_YA_PRESSURE_DVALUE  (160)  //压力差值，单位kPa  10 * 16  比例系数为16
 
 /* public type definition ---------------------------------------------------------------------- */
 

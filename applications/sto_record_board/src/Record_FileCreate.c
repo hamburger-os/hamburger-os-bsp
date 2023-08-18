@@ -1320,13 +1320,27 @@ static void Get_Gonggongxinxi(void)
 //    LOG_I("重联车标志：%x",CHONGLIANCHE);
 //    LOG_I("牵引制动力记录值：%d",(s_file_public.ch_qianyinzhidong[0] + ((uint16_t)s_file_public.ch_qianyinzhidong[1] << 8)));
 #endif
+    uint16_t licheguanyali_new = 0;
+    uint16_t zhidonggangyali_new = 0;
+    uint16_t junfenggangyali_new = 0;
 
-    s_file_public.ch_liecheguanyali[0] = LIECHEGUANYALI;
-    s_file_public.ch_liecheguanyali[1] = (*(&LIECHEGUANYALI + 1));
-    s_file_public.ch_zhidonggangyali[0] = ZHIDONGGANGYALI;
-    s_file_public.ch_zhidonggangyali[1] = (*(&ZHIDONGGANGYALI + 1));
-    s_file_public.ch_junfenggangyali[0] = JUNFENGGANGYALI;
-    s_file_public.ch_junfenggangyali[1] = (*(&JUNFENGGANGYALI + 1));
+    licheguanyali_new   = ((uint16_t) (*(&LIECHEGUANYALI + 1)) << 8u) + (uint16_t)LIECHEGUANYALI;
+    zhidonggangyali_new = ((uint16_t) (*(&ZHIDONGGANGYALI + 1)) << 8u) + (uint16_t)ZHIDONGGANGYALI;
+    junfenggangyali_new = ((uint16_t) (*(&JUNFENGGANGYALI + 1)) << 8u) + (uint16_t)JUNFENGGANGYALI;
+
+    licheguanyali_new   = licheguanyali_new << 4;
+    zhidonggangyali_new = zhidonggangyali_new << 4;
+    junfenggangyali_new = junfenggangyali_new << 4;
+
+    s_file_public.ch_liecheguanyali[0] = (uint8_t)licheguanyali_new;
+    s_file_public.ch_liecheguanyali[1] = (uint8_t)(licheguanyali_new >> 8);
+
+    s_file_public.ch_zhidonggangyali[0] = (uint8_t)zhidonggangyali_new;
+    s_file_public.ch_zhidonggangyali[1] = (uint8_t)(zhidonggangyali_new >> 8);
+
+    s_file_public.ch_junfenggangyali[0] = (uint8_t)junfenggangyali_new;
+    s_file_public.ch_junfenggangyali[1] = (uint8_t)(junfenggangyali_new >> 8);
+
     rt_memcpy (s_file_public.ch_chaizhuandianliu, &CHAIZHUANDIANLIU, 2u);
 }
 
@@ -1363,12 +1377,27 @@ static void Update_gongyoucanshu(void)
     }
     C_gongzuomoshi = GONGZUOMOSHI;
 
-    C_liecheguanyali[0] = LIECHEGUANYALI;
-    C_liecheguanyali[1] = (*(&LIECHEGUANYALI + 1));
-    C_zhidonggangyali[0] = ZHIDONGGANGYALI;
-    C_zhidonggangyali[1] = (*(&ZHIDONGGANGYALI + 1));
-    C_jungangyali[0] = JUNFENGGANGYALI;
-    C_jungangyali[1] = (*(&JUNFENGGANGYALI + 1));
+    uint16_t licheguanyali_new = 0;
+    uint16_t zhidonggangyali_new = 0;
+    uint16_t junfenggangyali_new = 0;
+
+    licheguanyali_new   = ((uint16_t) (*(&LIECHEGUANYALI + 1)) << 8u) + (uint16_t)LIECHEGUANYALI;
+    zhidonggangyali_new = ((uint16_t) (*(&ZHIDONGGANGYALI + 1)) << 8u) + (uint16_t)ZHIDONGGANGYALI;
+    junfenggangyali_new = ((uint16_t) (*(&JUNFENGGANGYALI + 1)) << 8u) + (uint16_t)JUNFENGGANGYALI;
+
+    licheguanyali_new   = licheguanyali_new << 4;
+    zhidonggangyali_new = zhidonggangyali_new << 4;
+    junfenggangyali_new = junfenggangyali_new << 4;
+
+    C_liecheguanyali[0] = (uint8_t)licheguanyali_new;
+    C_liecheguanyali[1] = (uint8_t)(licheguanyali_new >> 8);
+
+    C_zhidonggangyali[0] = (uint8_t)zhidonggangyali_new;
+    C_zhidonggangyali[1] = (uint8_t)(zhidonggangyali_new >> 8);
+
+    C_jungangyali[0] = (uint8_t)junfenggangyali_new;
+    C_jungangyali[1] = (uint8_t)(junfenggangyali_new >> 8);
+
     rt_memcpy (C_jichexinhao, &JICHEXINHAO, 2u);
 }
 /*****************************************************************************************
@@ -2753,11 +2782,15 @@ static void RecordingTrainPipePressureMessage(void)
     liecheguanyali_New = ((uint16_t) (*(&LIECHEGUANYALI + 1)) << 8u) + (uint16_t)LIECHEGUANYALI;
     liecheguanyali_Old = (uint16_t) (C_liecheguanyali[1] << 8) + (uint16_t)C_liecheguanyali[0];
 
+    liecheguanyali_New   = liecheguanyali_New << 4;
+
     if (GANG_YA_PRESSURE_DVALUE <= abs(liecheguanyali_New - liecheguanyali_Old))
     {
 //        LOG_I("列车管压力：%d --- %d", liecheguanyali_Old, liecheguanyali_New);
-        C_liecheguanyali[0] = LIECHEGUANYALI;
-        C_liecheguanyali[1] = (*(&LIECHEGUANYALI + 1));
+
+        C_liecheguanyali[0] = (uint8_t)liecheguanyali_New;
+        C_liecheguanyali[1] = (uint8_t)(liecheguanyali_New >> 8);
+
         WriteFileContantPkt(0xA2, 0x01, g_ZK_DevCode, C_liecheguanyali, 0u);
     } /* end if */
 } /* end function RecordingTrainPipePressureMessage */
@@ -2774,10 +2807,11 @@ static void RecordingBrakeCylinderPressureMessage(void)
     zhidonggangyali_New = ((uint16_t) (*(&ZHIDONGGANGYALI + 1)) << 8u) + (uint16_t)ZHIDONGGANGYALI;
     zhidonggangyali_Old = (uint16_t) (C_zhidonggangyali[1] << 8) + (uint16_t)C_zhidonggangyali[0];
 
+    zhidonggangyali_New   = zhidonggangyali_New << 4;
     if (GANG_YA_PRESSURE_DVALUE <= abs(zhidonggangyali_New - zhidonggangyali_Old))
     {
-        C_zhidonggangyali[0] = ZHIDONGGANGYALI;
-        C_zhidonggangyali[1] = (*(&ZHIDONGGANGYALI + 1));
+        C_zhidonggangyali[0] = (uint8_t)zhidonggangyali_New;
+        C_zhidonggangyali[1] = (uint8_t)(zhidonggangyali_New >> 8);
 
 //        LOG_I("制动缸压力：%d --- %d", zhidonggangyali_Old, zhidonggangyali_New);
         WriteFileContantPkt(0xA2, 0x02, g_ZK_DevCode, C_zhidonggangyali, 0u);
@@ -2817,12 +2851,13 @@ static void RecordingEqualizReservoirPressureMessage(void)
 
     jungangyali_New =  ((uint16_t) (*(&JUNFENGGANGYALI + 1)) << 8u) + (uint16_t)JUNFENGGANGYALI;
     jungangyali_Old = (uint16_t) (C_jungangyali[1] << 8) + (uint16_t)C_jungangyali[0];
+    jungangyali_New = jungangyali_New << 4;
 
     /* 均缸压力变化大于10kPa */
     if (GANG_YA_PRESSURE_DVALUE <= abs(jungangyali_New - jungangyali_Old))
     {
-        C_jungangyali[0] = (*(&JUNFENGGANGYALI + 1));
-        C_jungangyali[1] = JUNFENGGANGYALI;
+        C_jungangyali[0] = (uint8_t)jungangyali_New;
+        C_jungangyali[1] = (uint8_t)(jungangyali_New >> 8);
 //        LOG_I("均缸压力：%d --- %d", jungangyali_Old, jungangyali_New);
         WriteFileContantPkt(0xA2, 0x04, g_ZK_DevCode, C_jungangyali, 0u);
     } /* end if */

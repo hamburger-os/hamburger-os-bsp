@@ -52,7 +52,7 @@
 #define DIR_FILE_PATH_NAME    "/mnt/emmc/dir"
 #define LATEST_DIR_NAME_FILE_PATH_NAME    "/mnt/emmc"
 #define LATEST_TMP_NAME_FILE_PATH_NAME    "/mnt/fram"
-#define TARGET_DIR_NAME "/mnt/udisk/ud0p0/SW_Record"     /* U盘中保存语音文件的路径 */
+#define TARGET_DIR_NAME "/mnt/udisk/ud0p0/SW_Record"     /* U盘中保存记录文件的路径 */
 #define UPGRADE_FILE_NAME "/mnt/udisk/ud0p0/rtthread.rbl" /* 升级文件 */
 
 #define RECORD_TEMP_FILE_PATH_NAME "/mnt/fram/record" //记录临时内容的文件路径  只记录几包很少的数据
@@ -61,6 +61,12 @@
 #define LATEST_TEMP_FILE_NAME      "latest_tmpname.conf"
 
 #define NEW_DIR_FILE_NAME_CONF "latest_dirname.conf"         /* 存放最新文件名的配置文件名称 */
+
+#define TARGET_LOG_DIR_NAME "/mnt/udisk/ud0p0/SW_RecordLog"     /* U盘中保存记录文件的路径 */
+#define LOG_FILE_NAME_0 "/mnt/emmc/ulog/file.log"
+#define LOG_FILE_NAME_1 "/mnt/emmc/ulog/file_0.log"
+#define LOG_FILE_0_TARGET_NAME "/mnt/udisk/ud0p0/SW_RecordLog/file.log"     /* U盘中保存日志文件的路径 */
+#define LOG_FILE_1_TARGET_NAME "/mnt/udisk/ud0p0/SW_RecordLog/file_0.log"     /* U盘中保存日志文件的路径 */
 
 typedef struct _S_CURRENT_FILE_INFO S_CURRENT_FILE_INFO;
 

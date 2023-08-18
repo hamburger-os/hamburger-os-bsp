@@ -45,7 +45,6 @@ rt_err_t DataHandleInit(S_DATA_HANDLE *p_data_handle)
         {
             return -RT_ERROR;
         }
-        LOG_I("is_init");
     }
 
     return RT_EOK;
@@ -99,7 +98,7 @@ void ETHToCanDataHandle(S_DATA_HANDLE *p_data_handle, uint8_t *pbuf, uint16_t da
         send_len += s_can_frame->len + 5;
         if (send_len > p_can_PACK->datalen)
         {
-            LOG_E("can len error!!!\r\n");
+            LOG_E("can len error");
             break;
         }
 
@@ -116,7 +115,7 @@ void ETHToCanDataHandle(S_DATA_HANDLE *p_data_handle, uint8_t *pbuf, uint16_t da
         ret = rt_mq_send(p_data_handle->can_data_mq, (const void *)&can_tmp, sizeof(CAN_FRAME));
         if(ret != RT_EOK)
         {
-            LOG_E("can data mq send error %d\r\n", ret);
+            LOG_E("can data mq send error %d", ret);
         }
         else
         {
@@ -277,7 +276,7 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
             if ((0x01U == can_tmp.no_u8) && (can_tmp.data_u8[2] == 0x55U))
             {
 //                reset_ksz8895_enable = 1u;  //TODO(mingzhao)
-                LOG_I("xsq2 reset ksz8895.....\r\n");
+                LOG_I("xsq2 reset ksz8895.....");
             } /* end if */
             /* 28-September-2018, by Liang Zhen. */
             if (0x00U == can_tmp.no_u8)

@@ -128,11 +128,10 @@ static sint32_t copy_file(const char *from, const char *to)
 
 /*******************************************************
  *
- * @brief  转储文件到U盘.如果mode为0,只是复制文件到U盘;mode为1,先复制文件到U盘,再备份文件.
+ * @brief  转储文件到U盘
  *
  * @param  *src: 目录文件在板子上的存储路径.
  * @param  *target: U盘中保存日志文件的路径.
- * @param  mode: 转储的方式; mode为0,只复制未转存过的文件到U盘; mode为1,将所有文件复制到U盘.
  * @retval 0:成功 非0:失败
  *
  *******************************************************/
@@ -242,7 +241,7 @@ static sint32_t store_file(const char *src, const char *target, E_CopyMode mode)
 
 /*******************************************************
  *
- * @brief  将语音文件自动转储到U盘中
+ * @brief  将文件自动转储到U盘中
  *
  * @param  mode: 拷贝模式, 拷贝全部文件或者拷贝最新文件.
  * @retval sint32_t 0:成功 -1:失败
@@ -256,7 +255,7 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
     uint32_t save_flie_size = 0;
 
     /* 建立U盘目录 */
-    create_dir(TARGET_DIR_NAME);     /* 在U盘目录中建立语音文件目录 */
+    create_dir(TARGET_DIR_NAME);     /* 在U盘目录中建立日志文件目录 */
 
     /* step1: 查看所有文件的大小 */
     /* U盘的剩余空间大小 */
@@ -311,30 +310,19 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
         return (sint32_t)-1;
     }
 
-#if 0
     /* step3:转储日志文件 */
-    /* 搜索"yysj/目录"下面的所有文件, 把语音文件分别复制到U盘, 并把文件移动到bak子目录中 */
-    log_print(LOG_INFO, "开始转储、移动yysj/目录下的文件. \n");
-    if (store_file(YUYIN_PATH_NAME, TARGET_DIR_NAME, BACKUP))
+    create_dir(TARGET_LOG_DIR_NAME);
+    if (access(LOG_FILE_NAME_0, F_OK) == 0)
     {
-        log_print(LOG_ERROR, "转储失败.\n");
-        event_push_queue(EVENT_DUMP_FAIL);
-        return (sint32_t)-1;
+        LOG_I("转储日志0");
+        copy_file(LOG_FILE_NAME_0, LOG_FILE_0_TARGET_NAME);
     }
 
-    /* step4:转储日志文件 */
-    /* 增加转储日志文件的功能, 如果发现有日志文件, 则复制到U盘 */
-    snprintf(logname, sizeof(logname),
-             "%s/LY05C_%d-%d.log",
-             LOG_FILE_PATH,
-             g_locomotive_type,
-             g_locomotive_id);
-    if (stat(logname, &stat_l) == 0)
+    if (access(LOG_FILE_NAME_1, F_OK) == 0)
     {
-        log_print(LOG_ERROR, "转储日志.\n");
-        copy_file(logname, logname);
+        LOG_I("转储日志1");
+        copy_file(LOG_FILE_NAME_1, LOG_FILE_1_TARGET_NAME);
     }
-#endif
 
     LOG_I("转储完成");
 

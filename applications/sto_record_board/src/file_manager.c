@@ -69,7 +69,7 @@ sint32_t fm_free_fram_space(S_FILE_MANAGER *fm)
         ret = create_file(full_path);
         if(ret < 0)
         {
-            LOG_E("crea %s error", full_path);
+            LOG_E("creat %s error", full_path);
             return ret;
         }
         ret = FMWriteLatestInfo(LATEST_TMP_NAME_FILE_PATH_NAME, LATEST_TEMP_FILE_NAME, (const void *) &fm->latest_tmp_file_info, sizeof(S_LATEST_TMP_FILE_INFO));
@@ -554,7 +554,7 @@ static sint32_t FMInitLatestFile(S_FILE_MANAGER *fm)
         if(LATEST_DIR_FILE_HEAD_FLAG != latest_info->head_flag)
         {
             /* 如果不是文件头,则为错误状态. */
-            LOG_E("error, 不是文件头");
+            LOG_E("file head error");
             return -1;
         }
         else
