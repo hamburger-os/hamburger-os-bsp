@@ -13,7 +13,7 @@
 #include "fal_cfg.h"
 
 #define DBG_TAG "at45db321e"
-#define DBG_LVL DBG_LOG
+#define DBG_LVL DBG_INFO
 #include <rtdbg.h>
 
 #include "drv_spi.h"
@@ -67,30 +67,12 @@ static rt_err_t at45db321e_readDeviceID(uint8_t *id)
 static rt_err_t at45db321e_writeEnable(void)
 {
     rt_err_t ret = RT_EOK;
-
-    //    uint8_t cmd[] = {0x06};
-    //    rt_size_t size = rt_spi_send(at45db321e_spidev, cmd, sizeof(cmd));
-    //    if (size != sizeof(cmd))
-    //    {
-    //        LOG_E("write enable error %d!", ret);
-    //        ret = -RT_EIO;
-    //    }
-
     return ret;
 }
 
 static rt_err_t at45db321e_writeDisable(void)
 {
     rt_err_t ret = RT_EOK;
-
-    //    uint8_t cmd[] = {0x04};
-    //    rt_size_t size = rt_spi_send(at45db321e_spidev, cmd, sizeof(cmd));
-    //    if (size != sizeof(cmd))
-    //    {
-    //        LOG_E("write disable error %d!", ret);
-    //        ret = -RT_EIO;
-    //    }
-
     return ret;
 }
 
@@ -114,7 +96,7 @@ static void at45db321e_wait_busy(void)
     }
 
     LOG_HEX("wait", 16, value, 2);
-    LOG_E("wait 0x%x %d ms", value[0], rt_tick_get() - tick);
+    LOG_D("wait 0x%x %d ms", value[0], rt_tick_get() - tick);
 }
 
 static int at45db321e_spi_device_init(void)
@@ -191,7 +173,7 @@ static int fal_at45db321e_read(long offset, rt_uint8_t *buf, size_t size)
     }
     if (size < 1)
     {
-        LOG_W("read size %d! addr is (0x%p)", size, (void *)(addr + size));
+        // LOG_W("read size %d! addr is (0x%p)", size, (void *)(addr + size));
         return 0;
     }
 
@@ -228,7 +210,7 @@ static int fal_at45db321e_read(long offset, rt_uint8_t *buf, size_t size)
         buf_page += PAGE_SIZE;
         size_less -= PAGE_SIZE;
     }
-    LOG_HEX("read", 16, buf, (size > 64) ? (64) : (size));
+    // LOG_HEX("read", 16, buf, (size > 64) ? (64) : (size));
     LOG_D("read (0x%p) %d", (void *)(addr), size);
 
     return size;
