@@ -168,9 +168,9 @@ static void norflash_hard_reset(void)
     rt_base_t pin = rt_pin_get(NORFLASH_RST);
     rt_pin_mode(pin, PIN_MODE_OUTPUT);
     rt_pin_write(pin, PIN_LOW);
-    rt_thread_delay(10);
+    rt_thread_delay(1);
     rt_pin_write(pin, PIN_HIGH);
-    rt_thread_delay(10);
+    rt_thread_delay(1);
 }
 
 static int fal_nor_init(void)
