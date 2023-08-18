@@ -23,7 +23,7 @@ SelftestlUserData selftest_userdata = {
         {BSP_GPIO_TABLE_GPIO8       , BSP_GPIO_TABLE_SPI2_CS1   },
         {BSP_GPIO_TABLE_GPIO4       , BSP_GPIO_TABLE_GPIO7      },
         {BSP_GPIO_TABLE_SPI1_CS1    , BSP_GPIO_TABLE_SPI1_CS2   },
-        {BSP_GPIO_TABLE_SPI2_CS2    , BSP_GPIO_TABLE_GPIO2      }},
+        {BSP_GPIO_TABLE_PWM2        , BSP_GPIO_TABLE_GPIO2      }},
     .key_devname = BSP_GPIO_TABLE_PWM3,
     .fs_path = {
         "/mnt/fram",
@@ -32,6 +32,12 @@ SelftestlUserData selftest_userdata = {
         "/mnt/nor",
         "/mnt/emmc",
         "/mnt/udisk/ud0p0"},
+    .i2c_devname = "eeprom",
+    .wav_path = "/usr/5s_8000_2ch.wav",
+    .uart_devname = {
+        {BSP_DEV_TABLE_UART2        , BSP_DEV_TABLE_UART2       },
+        {BSP_DEV_TABLE_UART3        , BSP_DEV_TABLE_UART4       },
+        {BSP_DEV_TABLE_UART4        , BSP_DEV_TABLE_UART3       }},
 };
 
 #if 0 //运行Gui-Guider创建的app
@@ -59,12 +65,21 @@ static void selftest_thread_entry(void* parameter)
     LOG_I("startup...");
 
     //gpio
-    selftest_gpio_init(puserdata);
     selftest_gpio_test(puserdata);
     //filesysterm
     selftest_fs_test(puserdata);
+    //i2c
+    selftest_i2c_test(puserdata);
+    //i2s
+    selftest_i2s_test(puserdata);
+    //uart
+    selftest_uart_test(puserdata);
 
     LOG_I("end.");
+    while(1)
+    {
+        rt_thread_delay(1000);
+    }
 }
 
 static int selftest_init(void)

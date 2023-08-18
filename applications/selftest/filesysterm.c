@@ -19,7 +19,7 @@
 #include <sys/stat.h>
 #include <sys/statfs.h>
 
-#define DBG_TAG "fs"
+#define DBG_TAG "file"
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
@@ -131,7 +131,7 @@ void selftest_fs_test(SelftestlUserData *puserdata)
         read_run = TEST_LEN * TEST_COUNT / (run_end - run_start) * RT_TICK_PER_SECOND;
         rt_thread_delay(10);
 
-        LOG_D("'%s' size : %d KB, rd : %d - %d KB/s, wr : %d - %d KB/s"
+        LOG_D("'%32s' size : %d KB, rd : %4d - %4d KB/s, wr : %4d - %4d KB/s"
                 , path, TEST_LEN * TEST_COUNT / 1024
                 , read_run / 1024, read_speed / 1024
                 , write_run / 1024, write_speed / 1024);

@@ -15,14 +15,24 @@ typedef struct
     char *gpio_devname[6][2];
     char *key_devname;
     char *fs_path[6];
+    char *i2c_devname;
+    char *wav_path;
+    char *uart_devname[3][2];
 
     rt_base_t gpio_pin[6][2];
     rt_base_t key_pin;
+    struct fal_partition *i2c_dev;
+    rt_device_t uart_dev[3][2];
 } SelftestlUserData;
 
-void selftest_gpio_init(SelftestlUserData *puserdata);
 void selftest_gpio_test(SelftestlUserData *puserdata);
 
 void selftest_fs_test(SelftestlUserData *puserdata);
+
+void selftest_i2c_test(SelftestlUserData *puserdata);
+
+void selftest_i2s_test(SelftestlUserData *puserdata);
+
+void selftest_uart_test(SelftestlUserData *puserdata);
 
 #endif /* APPLICATIONS_SELFTEST_SELFTEST_H_ */

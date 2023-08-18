@@ -10,6 +10,9 @@ src     = Split('''
                 selftest.c
                 gpio.c
                 filesysterm.c
+                i2c.c
+                i2s.c
+                uart.c
                 ''')
 src     += Glob('gui/generated/*.c');
 src     += Glob('gui/generated/guider_fonts/*.c');

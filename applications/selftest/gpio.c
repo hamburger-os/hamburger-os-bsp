@@ -18,34 +18,22 @@
 #include <rtdbg.h>
 
 static char * error_log1[] = {
-    "PWM1 ----> GPIO1",
-    "GPIO5 ----> GPIO6",
-    "GPIO8 ----> SPI2_CS1",
-    "GPIO4 ----> GPIO7",
-    "SPI1_CS1 ----> SPI1_CS2",
-    "SPI2_CS2 ----> GPIO2",
+    "PWM1       ----> GPIO1     ",
+    "GPIO5      ----> GPIO6     ",
+    "GPIO8      ----> SPI2_CS1  ",
+    "GPIO4      ----> GPIO7     ",
+    "SPI1_CS1   ----> SPI1_CS2  ",
+    "PWM2       ----> GPIO2     ",
 };
 
 static char * error_log2[] = {
-    "PWM1 <---- GPIO1",
-    "GPIO5 <---- GPIO6",
-    "GPIO8 <---- SPI2_CS1",
-    "GPIO4 <---- GPIO7",
-    "SPI1_CS1 <---- SPI1_CS2",
-    "SPI2_CS2 <---- GPIO2",
+    "PWM1       <---- GPIO1     ",
+    "GPIO5      <---- GPIO6     ",
+    "GPIO8      <---- SPI2_CS1  ",
+    "GPIO4      <---- GPIO7     ",
+    "SPI1_CS1   <---- SPI1_CS2  ",
+    "PWM2       <---- GPIO2     ",
 };
-
-void selftest_gpio_init(SelftestlUserData *puserdata)
-{
-    for (int x = 0; x<6; x++)
-    {
-        puserdata->gpio_pin[x][0] = rt_pin_get(puserdata->gpio_devname[x][0]);
-        rt_pin_mode(puserdata->gpio_pin[x][0], PIN_MODE_OUTPUT);
-
-        puserdata->gpio_pin[x][1] = rt_pin_get(puserdata->gpio_devname[x][1]);
-        rt_pin_mode(puserdata->gpio_pin[x][1], PIN_MODE_INPUT);
-    }
-}
 
 void selftest_gpio_test(SelftestlUserData *puserdata)
 {
