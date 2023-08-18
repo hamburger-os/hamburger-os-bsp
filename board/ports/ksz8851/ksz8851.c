@@ -732,6 +732,7 @@ int ks_start_xmit(struct rt_fmc_eth_port *ps_ks, struct pbuf *p)
     return framelength;
 }
 
+#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
 /**
  * ks_start_xmit_link_layer - 链路层发送数据包
  * @skb     : The buffer to transmit
@@ -764,7 +765,7 @@ int32_t ks_start_xmit_link_layer(struct rt_fmc_eth_port *ps_ks, S_LEP_BUF *ps_le
 
     return retv_i32;
 }
-
+#endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
 static unsigned long const ethernet_polynomial = 0x04c11db7U;
 static unsigned long ether_gen_crc(int length, uint8_t *data)
 {
