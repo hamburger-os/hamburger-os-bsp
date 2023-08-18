@@ -43,6 +43,13 @@ static struct rt_fmc_eth_port fmc_eth_port[] = {
         .hw_addr_cmd = (volatile void *)ETH1_CMD,
         .hw_addr = (volatile void *)(ETH1_CMD - 2),
         .NE = ETH1_NE,
+#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
+#ifdef BSP_USE_ETH1_LINK_LAYER
+        .link_layer_enable = 1,
+#else
+        .link_layer_enable = 0,
+#endif
+#endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
     },
 #endif
 #ifdef BSP_USE_ETH2
@@ -51,6 +58,13 @@ static struct rt_fmc_eth_port fmc_eth_port[] = {
         .hw_addr_cmd = (volatile void *)ETH2_CMD,
         .hw_addr = (volatile void *)(ETH2_CMD - 2),
         .NE = ETH2_NE,
+#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
+#ifdef BSP_USE_ETH2_LINK_LAYER
+        .link_layer_enable = 1,
+#else
+        .link_layer_enable = 0,
+#endif
+#endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
     },
 #endif
 #ifdef BSP_USE_ETH3
@@ -59,6 +73,13 @@ static struct rt_fmc_eth_port fmc_eth_port[] = {
         .hw_addr_cmd = (volatile void *)ETH3_CMD,
         .hw_addr = (volatile void *)(ETH3_CMD - 2),
         .NE = ETH3_NE,
+#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
+#ifdef BSP_USE_ETH3_LINK_LAYER
+        .link_layer_enable = 1,
+#else
+        .link_layer_enable = 0,
+#endif
+#endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
     },
 #endif
 };
@@ -219,6 +240,7 @@ static rt_err_t fmc_eth_close(rt_device_t dev)
     return RT_EOK;
 }
 
+#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
 static rt_size_t fmc_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t size)
 {
     struct rt_fmc_eth_port *fmc_eth = dev->user_data;
@@ -239,7 +261,7 @@ static rt_size_t fmc_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_si
       }
 
       /* step3：提取包数据 */
-      memcpy(buffer, fmc_eth->link_layer_buf.prx_rptr->buf, read_size);
+      rt_memcpy(buffer, fmc_eth->link_layer_buf.prx_rptr->buf, read_size);
 
       /* step4：释放接收接收缓冲区 */
       lep_if_release_rptr(&fmc_eth->link_layer_buf);
@@ -265,7 +287,7 @@ static rt_size_t fmc_eth_write(rt_device_t dev, rt_off_t pos, const void *buffer
     {
         tx_size = size;
     }
-    memcpy(fmc_eth->link_layer_buf.tx_buf.buf, buffer, tx_size);
+    rt_memcpy(fmc_eth->link_layer_buf.tx_buf.buf, buffer, tx_size);
     fmc_eth->link_layer_buf.tx_buf.len = tx_size;
 
     if (ks_start_xmit_link_layer(fmc_eth, &fmc_eth->link_layer_buf.tx_buf) != 0)
@@ -276,6 +298,8 @@ static rt_size_t fmc_eth_write(rt_device_t dev, rt_off_t pos, const void *buffer
 
     return tx_size;
 }
+
+#endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
 
 static rt_err_t fmc_eth_control(rt_device_t dev, int cmd, void *args)
 {
@@ -342,6 +366,7 @@ struct pbuf *fmc_eth_rx(rt_device_t dev)
     rt_mutex_take(&fmc_eth->eth_mux, RT_WAITING_FOREVER);
 
     p = ks_irq(fmc_eth);
+#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
     if(dev->rx_indicate != NULL)
     {
         if(0 != p->len)
@@ -353,7 +378,7 @@ struct pbuf *fmc_eth_rx(rt_device_t dev)
             {
                 ps_lep_buf->flag |= LEP_RBF_RV;
                 ps_lep_buf->len = p->len;
-                memcpy(ps_lep_buf->buf, p->payload, p->len);
+                rt_memcpy(ps_lep_buf->buf, p->payload, p->len);
                 fmc_eth->link_layer_buf.prx_wptr = ps_lep_buf->pnext;          /* 接收位置指针指向下一个位置 */
 
                 dev->rx_indicate(dev, p->len);
@@ -364,6 +389,7 @@ struct pbuf *fmc_eth_rx(rt_device_t dev)
             }
         }
     }
+#endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
 
 #ifdef BSP_USING_KSZ8851_RX_DUMP
     if (p != NULL)
@@ -422,19 +448,27 @@ static int rt_fmc_eth_init(void)
         fmc_eth_device.port[i].parent.parent.init = fmc_eth_init;
         fmc_eth_device.port[i].parent.parent.open = fmc_eth_open;
         fmc_eth_device.port[i].parent.parent.close = fmc_eth_close;
-        fmc_eth_device.port[i].parent.parent.read = fmc_eth_read;
-        fmc_eth_device.port[i].parent.parent.write = fmc_eth_write;
         fmc_eth_device.port[i].parent.parent.control = fmc_eth_control;
         fmc_eth_device.port[i].parent.parent.user_data = &fmc_eth_device.port[i];
 
         fmc_eth_device.port[i].parent.eth_rx = fmc_eth_rx;
         fmc_eth_device.port[i].parent.eth_tx = fmc_eth_tx;
 
-        state = lep_eth_if_init(&fmc_eth_device.port[i].link_layer_buf);
-        if(state != RT_EOK)
+#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
+
+        fmc_eth_device.port[i].parent.parent.read = fmc_eth_read;
+        fmc_eth_device.port[i].parent.parent.write = fmc_eth_write;
+
+        if(fmc_eth_device.port[i].link_layer_enable)
         {
-            return state;
+            state = lep_eth_if_init(&fmc_eth_device.port[i].link_layer_buf);
+            if(state != RT_EOK)
+            {
+                LOG_E("device %s init linklayer faild: %d", fmc_eth_device.port[i].dev_name, state);
+                return state;
+            }
         }
+#endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
         /* register eth device */
         state = eth_device_init(&(fmc_eth_device.port[i].parent), fmc_eth_device.port[i].dev_name);
         if (RT_EOK == state)

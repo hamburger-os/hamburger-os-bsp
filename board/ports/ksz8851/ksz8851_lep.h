@@ -14,9 +14,9 @@
 #include <rtthread.h>
 #include <rtdevice.h>
 
-#define LEP_MAC_PKT_MAX_LEN   (1536U)              /* 链路层最大数据包长度 */
+#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
 
-#define LEP_RX_BUF_NUM    (50)
+#define LEP_MAC_PKT_MAX_LEN   (1536U)              /* 链路层最大数据包长度 */
 
 #define LEP_RBF_TV        (1U)
 #define LEP_RBF_RV        (2U)
@@ -42,5 +42,7 @@ rt_err_t lep_eth_if_init(S_ETH_IF *ps_eth_if);
 S_LEP_BUF *lep_get_free_buf(S_ETH_IF *ps_eth_if);
 S_LEP_BUF *lep_if_is_received(const S_ETH_IF *ps_eth_if);
 void lep_if_release_rptr(S_ETH_IF *ps_eth_if);
+
+#endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
 
 #endif /* BOARD_PORTS_KSZ8851_KSZ8851_LEP_H_ */

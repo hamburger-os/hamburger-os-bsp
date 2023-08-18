@@ -3082,23 +3082,23 @@ menu "Onboard Peripheral Drivers"
                 bool "Enable ETH port 1"
                 default n
 	        
-            if BSP_USE_ETH1
-            	config ETH1_NE
-                    hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
-                    default (0x4)
-            
-                config ETH1_CMD
-                    hex "Set the cmd address, default: NE3 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE3 - 1)) | (1 << (A0 + 1))))"
-                    default (0x68000002)
-                
-                config ETH1_RST
-                    string "Set the GPIO of the reset pin, default: PG.14"
-                    default "PG.14"
-                
-                config ETH1_ISR
-                    string "Set the GPIO of the isr pin, default: PH.2"
-                    default "PH.2"
-            endif
+                if BSP_USE_ETH1
+                  	config ETH1_NE
+                          hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
+                          default (0x4)
+                  
+                    config ETH1_CMD
+                        hex "Set the cmd address, default: NE3 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE3 - 1)) | (1 << (A0 + 1))))"
+                        default (0x68000002)
+                    
+                    config ETH1_RST
+                        string "Set the GPIO of the reset pin, default: PG.14"
+                        default "PG.14"
+                    
+                    config ETH1_ISR
+                        string "Set the GPIO of the isr pin, default: PH.2"
+                        default "PH.2"
+                endif
 
             menuconfig BSP_USE_ETH2
                 bool "Enable ETH port 2"
@@ -3120,29 +3120,51 @@ menu "Onboard Peripheral Drivers"
                     config ETH2_ISR
                         string "Set the GPIO of the isr pin, default: PH.3"
                         default "PH.3"
-	        	endif
+      	        endif
           
             menuconfig BSP_USE_ETH3
                 bool "Enable ETH port 3"
                 default n
             
-            if BSP_USE_ETH3
-                config ETH3_NE
-                    hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
-                    default (0x2)
-                
-                config ETH3_CMD
-                    hex "Set the cmd address, default: NE2 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE2 - 1)) | (1 << (A0 + 1))))"
-                    default (0x64000002)
-                      
-                config ETH3_RST
-                    string "Set the GPIO of the reset pin, default: PA.0"
-                    default "PA.0"
+                if BSP_USE_ETH3
+                    config ETH3_NE
+                        hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
+                        default (0x2)
                     
-                config ETH3_ISR
-                    string "Set the GPIO of the isr pin, default: PA.1"
-                    default "PA.1"
-            endif
+                    config ETH3_CMD
+                        hex "Set the cmd address, default: NE2 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE2 - 1)) | (1 << (A0 + 1))))"
+                        default (0x64000002)
+                          
+                    config ETH3_RST
+                        string "Set the GPIO of the reset pin, default: PA.0"
+                        default "PA.0"
+                        
+                    config ETH3_ISR
+                        string "Set the GPIO of the isr pin, default: PA.1"
+                        default "PA.1"
+                endif
+          
+            menuconfig BSP_USE_LINK_LAYER_COMMUNICATION
+                bool "Enable Link Layer Communication"
+                default n
+            
+                if BSP_USE_LINK_LAYER_COMMUNICATION
+                    config BSP_LINK_LAYER_RX_BUF_NUM
+                        int "set link layer rx buf num, default: 10"
+                        default 10
+                        
+                    config BSP_USE_ETH1_LINK_LAYER
+                        bool "enable eth1 link layer communication"
+                        default n
+                        
+                    config BSP_USE_ETH2_LINK_LAYER
+                        bool "enable eth2 link layer communication"
+                        default n
+                        
+                    config BSP_USE_ETH3_LINK_LAYER
+                        bool "enable eth3 link layer communication"
+                        default n
+                endif
         endif
         
     menuconfig BSP_USING_ETH

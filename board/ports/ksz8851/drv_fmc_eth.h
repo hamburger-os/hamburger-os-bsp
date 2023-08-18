@@ -83,7 +83,10 @@ struct rt_fmc_eth_port
     uint8_t frm_cnt_u8; /** QMU接收缓冲区中接收到的帧数 */
     FRAME_HEAD frame_head[KSZ_MAX_RFRM_THD];
 
-    S_ETH_IF link_layer_buf;
+#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
+    rt_bool_t link_layer_enable;  /** 链路层使能标志 **/
+    S_ETH_IF link_layer_buf;     /** 链路层缓冲区 **/
+#endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
 };
 
 void fmc_eth_memcpy(void *DstAddress, void *SrcAddress, uint32_t DataLength);
