@@ -12,7 +12,7 @@
 
 #include <rtthread.h>
 
-#define ETH_MANAGE_CHANNEL_MAX 0x03U
+#define ETH_MANAGE_CHANNEL_MAX 0x02U
 
 typedef enum {
     ETHManageChannel1 = 0x00U,
@@ -23,7 +23,6 @@ typedef enum {
 
 void ETHManageTX(ETHManageChannel channel, const void *buffer, rt_uint16_t size);
 void ETHManageSetRXCallback(ETHManageChannel ch, rt_err_t (*rx_ind)(rt_device_t dev,rt_size_t size));
-void ETHManageInit(void);
 
 void ETHManageTestThreadInit(void);
 

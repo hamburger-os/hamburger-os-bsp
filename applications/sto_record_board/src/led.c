@@ -32,22 +32,22 @@ void LedCtrlInit(void)
 {
   led_ctrl.pin_index[ERR_LED] = rt_pin_get(LED_CTRL_ERR_NAME);
   rt_pin_mode(led_ctrl.pin_index[ERR_LED], PIN_MODE_OUTPUT);
-  rt_pin_write(led_ctrl.pin_index[ERR_LED], PIN_LOW);
+  rt_pin_write(led_ctrl.pin_index[ERR_LED], PIN_HIGH);
 
-  led_ctrl.pin_index[SELF_LED] = rt_pin_get(LED_CTRL_SELF_NAME);
-  rt_pin_mode(led_ctrl.pin_index[SELF_LED], PIN_MODE_OUTPUT);
-  rt_pin_write(led_ctrl.pin_index[SELF_LED], PIN_LOW);
+  led_ctrl.pin_index[USB_LED] = rt_pin_get(LED_CTRL_SELF_NAME);
+  rt_pin_mode(led_ctrl.pin_index[USB_LED], PIN_MODE_OUTPUT);
+  rt_pin_write(led_ctrl.pin_index[USB_LED], PIN_HIGH);
 
   led_ctrl.pin_index[DUMP_LED] = rt_pin_get(LED_CTRL_DUMP_NAME);
   rt_pin_mode(led_ctrl.pin_index[DUMP_LED], PIN_MODE_OUTPUT);
-  rt_pin_write(led_ctrl.pin_index[DUMP_LED], PIN_LOW);
+  rt_pin_write(led_ctrl.pin_index[DUMP_LED], PIN_HIGH);
 
   led_ctrl.pin_index[ETH_LED] = rt_pin_get(LED_CTRL_ETH_NAME);
   rt_pin_mode(led_ctrl.pin_index[ETH_LED], PIN_MODE_OUTPUT);
-  rt_pin_write(led_ctrl.pin_index[ETH_LED], PIN_LOW);
+  rt_pin_write(led_ctrl.pin_index[ETH_LED], PIN_HIGH);
 
   led_ctrl.pin_index[CAN_LED] = rt_pin_get(LED_CTRL_CAN_NAME);
   rt_pin_mode(led_ctrl.pin_index[CAN_LED], PIN_MODE_OUTPUT);
-  rt_pin_write(led_ctrl.pin_index[CAN_LED], PIN_LOW);
+  rt_pin_write(led_ctrl.pin_index[CAN_LED], PIN_HIGH);
 }
 

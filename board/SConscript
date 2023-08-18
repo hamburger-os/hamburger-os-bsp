@@ -216,6 +216,7 @@ if GetDepend(['BSP_USING_USBH_STM32']):
 if GetDepend(['BSP_USING_KSZ8851']):
     src += Glob('ports/ksz8851/drv_fmc_eth.c')
     src += Glob('ports/ksz8851/ksz8851.c')
+    src += Glob('ports/ksz8851/ksz8851_lep.c')
     path += [cwd + '/ports/ksz8851']
  
 if GetDepend(['BSP_USING_MAX31826']):
@@ -265,6 +266,9 @@ if GetDepend(['BSP_USING_LTC186X']):
     
 if GetDepend(['BSP_USING_GNSS']):
     src += Glob('ports/drv_gnss.c')
+    
+if GetDepend(['BSP_USING_KSZ8794']):
+    src += Glob('ports/drv_ksz8794.c')
 
 group = DefineGroup('Drivers', src, depend = [''], CPPPATH = path, CPPDEFINES = CPPDEFINES)
 
