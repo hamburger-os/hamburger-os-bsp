@@ -103,6 +103,14 @@ struct mount_fs
 
 static const struct mount_fs _mount_fs[] =
 {
+#ifdef BSP_USING_SDCARD
+    {RT_NULL            , BLK_SDCARD        , "tmp"             },
+#endif
+
+#ifdef BSP_USING_USB
+    {RT_NULL            , BLK_USBH_UDISK    , "tmp"             },
+#endif
+
 #ifdef BSP_USING_FM25xx
     {BLK_FRAM           , BLK_FRAM          , FM25xx_FS         },
 #endif
@@ -133,14 +141,6 @@ static const struct mount_fs _mount_fs[] =
 
 #ifdef BSP_USING_EMMC
     {EMMC_DEV_NAME      , BLK_EMMC          , EMMC_FS           },
-#endif
-
-#ifdef BSP_USING_SDCARD
-    {RT_NULL            , BLK_SDCARD        , "tmp"             },
-#endif
-
-#ifdef BSP_USING_USB
-    {RT_NULL            , BLK_USBH_UDISK    , "tmp"             },
 #endif
 };
 
@@ -255,4 +255,4 @@ static int rt_dfs_init(void)
     return ret;
 }
 /* 导出到自动初始化 */
-INIT_ENV_EXPORT(rt_dfs_init);
+INIT_COMPONENT_EXPORT(rt_dfs_init);

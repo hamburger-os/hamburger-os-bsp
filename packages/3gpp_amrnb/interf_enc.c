@@ -801,6 +801,7 @@ int Encoder_Interface_Encode(void *st, enum Mode mode, Word16 *speech,
    return 500;
 #endif
 }
+RTM_EXPORT(Encoder_Interface_Encode);
 
 /*
  * Encoder_Interface_init
@@ -832,6 +833,7 @@ void *Encoder_Interface_init(int dtx)
    s->dtx = dtx;
    return s;
 }
+RTM_EXPORT(Encoder_Interface_init);
 
 /*
  * DecoderInterfaceExit
@@ -856,3 +858,4 @@ void Encoder_Interface_exit(void *state)
    free(s);
    state = NULL;
 }
+RTM_EXPORT(Encoder_Interface_exit);

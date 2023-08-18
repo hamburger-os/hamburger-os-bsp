@@ -149,13 +149,14 @@ static void fsrw_thread_entry(void* parameter)
         read_run = ptest->len * ptest->count / (run_end - run_start) * RT_TICK_PER_SECOND;
         rt_thread_delay(10);
 
-        LOG_D("thread fsrw round %d size : %d KB, rd : %d - %d KB/s, wr : %d - %d KB/s"
+        LOG_D("thread fsrw round %d size : %6d KB, rd : %6d - %6d KB/s, wr : %6d - %6d KB/s"
                 , round++, ptest->len * ptest->count / 1024
                 , read_run / 1024, read_speed / 1024
                 , write_run / 1024, write_speed / 1024);
     }
 
-    end: fsrw_thread = RT_NULL;
+end:
+    fsrw_thread = RT_NULL;
     rt_free(write_data);
     rt_free(read_data);
     LOG_D("fsrw test end.");

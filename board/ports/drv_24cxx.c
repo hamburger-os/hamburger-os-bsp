@@ -13,7 +13,7 @@
 #include "fal_cfg.h"
 
 #define DBG_TAG "24cxx"
-#define DBG_LVL DBG_LOG
+#define DBG_LVL DBG_INFO
 #include <rtdbg.h>
 
 #if defined(RT_USING_FAL) || defined(PKG_USING_FAL)
@@ -209,7 +209,7 @@ static int fal_eeprom_init(void)
         return -RT_EIO;
     }
 
-    AT24CXX_Check();
+    ret = AT24CXX_Check();
     return ret;
 }
 static int fal_eeprom_read(long offset, rt_uint8_t *buf, size_t size)
@@ -222,14 +222,14 @@ static int fal_eeprom_read(long offset, rt_uint8_t *buf, size_t size)
     }
     if (size < 1)
     {
-        LOG_W("read size %d! addr is (0x%p)", size, (void*)(addr + size));
-        return -RT_EINVAL;
+//        LOG_W("read size %d! addr is (0x%p)", size, (void*)(addr + size));
+        return 0;
     }
 
     AT24CXX_ReadBytes(addr, buf, size);
 
-//    LOG_HEX("rd", 16, buf, size);
-//    LOG_D("fal_eeprom_read (0x%p) %d", (void*)(addr), size);
+    LOG_HEX("rd", 16, buf, size);
+    LOG_D("read (0x%p) %d", (void*)(addr), size);
     return size;
 }
 static int fal_eeprom_write(long offset, const rt_uint8_t *buf, size_t size)
@@ -242,14 +242,14 @@ static int fal_eeprom_write(long offset, const rt_uint8_t *buf, size_t size)
     }
     if (size < 1)
     {
-        LOG_W("write size %d! addr is (0x%p)", size, (void*)(addr + size));
-        return -RT_EINVAL;
+//        LOG_W("write size %d! addr is (0x%p)", size, (void*)(addr + size));
+        return 0;
     }
 
     AT24CXX_WriteBytes(addr, (uint8_t *)buf, size);
 
-//    LOG_HEX("wr", 16, (rt_uint8_t *)buf, size);
-//    LOG_D("fal_eeprom_write (0x%p) %d", (void*)(addr), size);
+    LOG_HEX("wr", 16, (rt_uint8_t *)buf, size);
+    LOG_D("write (0x%p) %d", (void*)(addr), size);
     return size;
 }
 static int fal_eeprom_erase(long offset, size_t size)
@@ -258,14 +258,14 @@ static int fal_eeprom_erase(long offset, size_t size)
 
     if ((addr + size) > hg24cxx_eeprom.addr + hg24cxx_eeprom.len)
     {
-        LOG_E("read outrange flash size! addr is (0x%p)", (void*)(addr + size));
+        LOG_E("erase outrange flash size! addr is (0x%p)", (void*)(addr + size));
         return -RT_EINVAL;
     }
 
     if (size < 1)
     {
-        LOG_W("read size %d! addr is (0x%p)", size, (void*)(addr + size));
-        return -RT_EINVAL;
+//        LOG_W("read size %d! addr is (0x%p)", size, (void*)(addr + size));
+        return 0;
     }
 
     return size;
