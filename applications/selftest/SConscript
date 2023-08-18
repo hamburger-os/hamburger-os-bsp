@@ -13,6 +13,7 @@ src     = Split('''
                 i2c.c
                 i2s.c
                 uart.c
+                can.c
                 ''')
 src     += Glob('gui/generated/*.c');
 src     += Glob('gui/generated/guider_fonts/*.c');

@@ -38,6 +38,9 @@ SelftestlUserData selftest_userdata = {
         {BSP_DEV_TABLE_UART2        , BSP_DEV_TABLE_UART2       },
         {BSP_DEV_TABLE_UART3        , BSP_DEV_TABLE_UART4       },
         {BSP_DEV_TABLE_UART4        , BSP_DEV_TABLE_UART3       }},
+    .can_devname = {
+        {BSP_DEV_TABLE_CAN1         , BSP_DEV_TABLE_CAN2        },
+        {BSP_DEV_TABLE_CAN2         , BSP_DEV_TABLE_CAN1        }},
 };
 
 #if 0 //运行Gui-Guider创建的app
@@ -74,6 +77,8 @@ static void selftest_thread_entry(void* parameter)
     selftest_i2s_test(puserdata);
     //uart
     selftest_uart_test(puserdata);
+    //can
+    selftest_can_test(puserdata);
 
     LOG_I("end.");
     while(1)
@@ -88,7 +93,7 @@ static int selftest_init(void)
     rt_thread_t thread = rt_thread_create( "selftest",
                                             selftest_thread_entry,
                                             &selftest_userdata,
-                                            4096,
+                                            2048,
                                             RT_THREAD_PRIORITY_MAX-2,
                                             10);
     if ( thread != RT_NULL)
