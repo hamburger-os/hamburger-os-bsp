@@ -20,12 +20,11 @@
 
 /*
   * @brief  初始化网口数据缓冲区.
-  * @param  none
-  * @retval none;
+  * @param  ps_eth_if 缓冲区指针
+  * @retval rt_err_t;
   */
 rt_err_t lep_eth_if_init(S_ETH_IF *ps_eth_if)
 {
-  uint32_t i;
 
   if(NULL == ps_eth_if)
   {
@@ -34,84 +33,68 @@ rt_err_t lep_eth_if_init(S_ETH_IF *ps_eth_if)
 
   memset((void *)ps_eth_if, 0, sizeof(S_ETH_IF));
 
-  ps_eth_if->rx_buf = rt_malloc(sizeof(S_LEP_BUF) * BSP_LINK_LAYER_RX_BUF_NUM);
-  if(NULL == ps_eth_if->rx_buf)
+  /* 1.申请接收缓冲区空间 */
+  ps_eth_if->rx_head = rt_malloc(sizeof(S_LEP_BUF));
+  if(NULL == ps_eth_if->rx_head)
   {
-      LOG_E("malloc size %d error", sizeof(S_LEP_BUF) * BSP_LINK_LAYER_RX_BUF_NUM);
+      LOG_E("malloc size %d error", sizeof(S_LEP_BUF));
       return -RT_EEMPTY;
   }
 
-  memset((void *)ps_eth_if->rx_buf, 0, sizeof(S_LEP_BUF) * BSP_LINK_LAYER_RX_BUF_NUM);
+  /* 2.接收缓冲区清零 */
+  memset((void *)ps_eth_if->rx_head, 0, sizeof(S_LEP_BUF));
 
-  for (i= 0U; i<(BSP_LINK_LAYER_RX_BUF_NUM-1U); i++)
+  ps_eth_if->rx_head->flag = LEP_RBF_HEAD;
+  /* 3.初始化链表 */
+  rt_list_init(&ps_eth_if->rx_head->list);
+  if(rt_list_isempty(&ps_eth_if->rx_head->list))
   {
-    ps_eth_if->rx_buf[i].pnext = &ps_eth_if->rx_buf[i+1];
+      LOG_I("rx_list init ok");
   }
-  ps_eth_if->rx_buf[i].pnext = &ps_eth_if->rx_buf[0];
-  ps_eth_if->prx_rptr = &ps_eth_if->rx_buf[0];
-  ps_eth_if->prx_wptr = &ps_eth_if->rx_buf[0];
+  else
+  {
+      LOG_E("rx_list init error");
+      return -RT_EEMPTY;
+  }
 
   return RT_EOK;
 }
+/*
+  * @brief  清除网口数据缓冲区，释放缓冲区.
+  * @param  ps_eth_if 缓冲区指针
+  * @retval rt_err_t;
+  */
+rt_err_t lep_eth_if_clear(S_ETH_IF *ps_eth_if)
+{
+    S_LEP_BUF *p_s_LepBuf = RT_NULL;
+    rt_list_t *list_pos = NULL;
+    rt_list_t *list_next = NULL;
 
-/*
-  * @brief  lep_if_is_received
-  * @param  none
-  * @retval none
-  */
-S_LEP_BUF *lep_if_is_received(const S_ETH_IF *ps_eth_if)
-{
-  if ((ps_eth_if->prx_rptr->flag & LEP_RBF_RV) != 0U)
-  {
-    return ps_eth_if->prx_rptr;
-  }
-  else
-  {
-    return NULL;
-  }
-}
-/*
-  * @brief  释放一个接收缓冲区
-  * @param  none
-  * @retval none
-  */
-void lep_if_release_rptr( S_ETH_IF *ps_eth_if)
-{
-  ps_eth_if->prx_rptr->flag &= ~LEP_RBF_RV;
-  /* if (ps_eth_if->prx_rptr != ps_eth_if->prx_wptr)*/
-  ps_eth_if->prx_rptr = ps_eth_if->prx_rptr->pnext;
-}
+    if(NULL == ps_eth_if)
+    {
+        return -RT_EEMPTY;
+    }
+    if(NULL == ps_eth_if->rx_head)
+    {
+        LOG_I("rx_head error");
+        return -RT_EEMPTY;
+    }
 
-/*
-  * @brief  取空闲缓冲区指针.
-  * @param  *ps_eth_if: 网口数据缓冲区控制结构指针
-  * @retval =NULL_ 无空闲缓冲区 !=NULL_ 空闲的缓冲区
-  */
-S_LEP_BUF *lep_get_free_buf( S_ETH_IF *ps_eth_if)
-{
-  if (ps_eth_if != NULL && (ps_eth_if->prx_wptr != NULL))
-  {
-    if ((ps_eth_if->prx_wptr->flag & LEP_RBF_RV) == 0U)
+    rt_list_for_each_safe(list_pos, list_next, &ps_eth_if->rx_head->list)
     {
-      return ps_eth_if->prx_wptr;
+        p_s_LepBuf = rt_list_entry(list_pos, struct tagLEP_BUF, list);
+        if (p_s_LepBuf != RT_NULL)
+        {
+            if ((p_s_LepBuf->flag & LEP_RBF_RV) != 0U)
+            {
+                rt_list_remove(list_pos);
+                /* 释放接收接收缓冲区 */
+                rt_free(p_s_LepBuf);
+            }
+        }
     }
-    else if((LEP_RBF_RV==ps_eth_if->prx_wptr->flag & LEP_RBF_RV)
-      &&(ps_eth_if->prx_rptr==ps_eth_if->prx_wptr))
-    {
-      /* 接收缓冲区满，抛弃最先接收的*/
-      lep_if_release_rptr(ps_eth_if);
-      return ps_eth_if->prx_wptr;
-    }
-    else
-    {
-        /* nothing*/
-    }
-  }
-  else
-  {
-    /* nothing*/
-  }
-  return NULL;
+    LOG_I("lep_eth_if_clear ok");
+    return RT_EOK;
 }
 
 #endif /* BSP_USE_LINK_LAYER_COMMUNICATION */

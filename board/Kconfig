@@ -3149,10 +3149,6 @@ menu "Onboard Peripheral Drivers"
                 default n
             
                 if BSP_USE_LINK_LAYER_COMMUNICATION
-                    config BSP_LINK_LAYER_RX_BUF_NUM
-                        int "set link layer rx buf num, default: 10"
-                        default 10
-                        
                     config BSP_USE_ETH1_LINK_LAYER
                         bool "enable eth1 link layer communication"
                         default n

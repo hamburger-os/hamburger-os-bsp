@@ -73,7 +73,8 @@ static rt_err_t ETH0RXChannel1Callback(rt_device_t dev, rt_size_t size)
     uint32_t rx_size;
     rt_err_t ret = RT_EOK;
 
-    if(size != 0)
+    rx_size = size;
+    if(rx_size != 0)
     {
         ret = rt_mq_send(eth0_thread.size_mq, (const void *)&rx_size, sizeof(uint32_t));
         if(ret != RT_EOK)
@@ -116,7 +117,8 @@ static rt_err_t ETH1RXChannel1Callback(rt_device_t dev, rt_size_t size)
     uint32_t rx_size;
     rt_err_t ret = RT_EOK;
 
-    if(size != 0)
+    rx_size = size;
+    if(rx_size != 0)
     {
         ret = rt_mq_send(eth1_thread.size_mq, (const void *)&rx_size, sizeof(uint32_t));
         if(ret != RT_EOK)
