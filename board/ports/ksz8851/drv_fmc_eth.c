@@ -258,6 +258,10 @@ static rt_size_t fmc_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_si
       else
       {
           read_size = fmc_eth->link_layer_buf.prx_rptr->len;
+          if (read_size > size)
+          {
+              read_size = size;
+          }
       }
 
       /* step3：提取包数据 */
@@ -367,26 +371,27 @@ struct pbuf *fmc_eth_rx(rt_device_t dev)
 
     p = ks_irq(fmc_eth);
 #ifdef BSP_USE_LINK_LAYER_COMMUNICATION
-    if(dev->rx_indicate != NULL)
+    if(p != NULL)
     {
-        if(0 != p->len)
+        S_LEP_BUF *ps_lep_buf = RT_NULL;
+
+        ps_lep_buf = lep_get_free_buf(&fmc_eth->link_layer_buf);
+        if(RT_NULL != ps_lep_buf)
         {
-            S_LEP_BUF *ps_lep_buf = RT_NULL;
+            ps_lep_buf->flag |= LEP_RBF_RV;
+            ps_lep_buf->len = p->len;
+            rt_memcpy(ps_lep_buf->buf, p->payload, p->len);
+            /* 接收位置指针指向下一个位置 */
+            fmc_eth->link_layer_buf.prx_wptr = ps_lep_buf->pnext;
 
-            ps_lep_buf = lep_get_free_buf(&fmc_eth->link_layer_buf);
-            if(RT_NULL != ps_lep_buf)
+            if(dev->rx_indicate != NULL)
             {
-                ps_lep_buf->flag |= LEP_RBF_RV;
-                ps_lep_buf->len = p->len;
-                rt_memcpy(ps_lep_buf->buf, p->payload, p->len);
-                fmc_eth->link_layer_buf.prx_wptr = ps_lep_buf->pnext;          /* 接收位置指针指向下一个位置 */
-
                 dev->rx_indicate(dev, p->len);
             }
-            else
-            {
-                LOG_E("ps_lep_buf rx null");
-            }
+        }
+        else
+        {
+            LOG_E("ps_lep_buf rx null");
         }
     }
 #endif /* BSP_USE_LINK_LAYER_COMMUNICATION */

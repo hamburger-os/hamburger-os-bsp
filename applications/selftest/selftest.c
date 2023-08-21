@@ -41,6 +41,9 @@ SelftestlUserData selftest_userdata = {
     .can_devname = {
         {BSP_DEV_TABLE_CAN1         , BSP_DEV_TABLE_CAN2        },
         {BSP_DEV_TABLE_CAN2         , BSP_DEV_TABLE_CAN1        }},
+    .eth_devname = {
+        {"e0"                       , "e1"                      },
+        {"e1"                       , "e0"                      }},
 };
 
 #if 0 //运行Gui-Guider创建的app
@@ -79,6 +82,8 @@ static void selftest_thread_entry(void* parameter)
     selftest_uart_test(puserdata);
     //can
     selftest_can_test(puserdata);
+    //eth
+    selftest_eth_test(puserdata);
 
     LOG_I("end.");
     while(1)
@@ -93,7 +98,7 @@ static int selftest_init(void)
     rt_thread_t thread = rt_thread_create( "selftest",
                                             selftest_thread_entry,
                                             &selftest_userdata,
-                                            2048,
+                                            4096,
                                             RT_THREAD_PRIORITY_MAX-2,
                                             10);
     if ( thread != RT_NULL)
