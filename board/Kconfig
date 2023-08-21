@@ -3055,6 +3055,7 @@ menu "Onboard Peripheral Drivers"
         select RT_USING_LWIP
         select RT_USING_POSIX_FS
         select RT_USING_POSIX_SOCKET
+        select PKG_USING_FLASHDB_PORT
         default n
         
         if BSP_USING_KSZ8851

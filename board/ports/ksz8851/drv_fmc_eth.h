@@ -24,8 +24,6 @@
 extern "C" {
 #endif
 
-#define MAX_ADDR_LEN 6
-
 #define ETH_RXBUF_SIZE 2000
 #define ETH_TXBUF_SIZE 1516
 
@@ -52,7 +50,7 @@ struct rt_fmc_eth_port
     struct eth_device parent;
 
     /* interface address info, hw address */
-    uint8_t dev_addr[MAX_ADDR_LEN];
+    uint8_t mac[6];
     char *dev_name;
     struct rt_mutex eth_mux;    /** 接收发送互斥信号量 */
 

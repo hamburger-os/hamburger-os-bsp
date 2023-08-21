@@ -17,10 +17,10 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-#define PACKAGE_SIZE 64 //链路层包最短64字节
 union LinkLayerPackDef
 {
-    uint8_t data[PACKAGE_SIZE];
+    //链路层包最短64字节
+    uint8_t data[64];
 
     struct
     {
@@ -44,7 +44,7 @@ void selftest_eth_test(SelftestlUserData *puserdata)
         .frame.mac_src = {0xF8,0x09,0xA4,0x00,0x23,0x01},
         .frame.data = {1,2,3,4,5,6,7,8},
     };
-    union LinkLayerPackDef data_rd;
+    union LinkLayerPackDef data_rd = {0};
     uint16_t data_rd_len = 0;
 
     for (int i = 0; i<2; i++)
@@ -63,6 +63,7 @@ void selftest_eth_test(SelftestlUserData *puserdata)
     for (int i = 0; i<2; i++)
     {
         rt_device_read(puserdata->eth_dev[i][1], 0, &data_rd, sizeof(union LinkLayerPackDef));
+        rt_device_read(puserdata->eth_dev[i][1], 0, &data_rd, sizeof(union LinkLayerPackDef));
         rt_device_write(puserdata->eth_dev[i][0], 0, &data_wr, sizeof(union LinkLayerPackDef));
         rt_thread_delay(100);
 
@@ -79,6 +80,7 @@ void selftest_eth_test(SelftestlUserData *puserdata)
         else
         {
             LOG_E("%s error!", error_log[i]);
+            LOG_HEX("wr", 16, (uint8_t *)&data_wr, sizeof(union LinkLayerPackDef));
             LOG_HEX("rd", 16, (uint8_t *)&data_rd, sizeof(union LinkLayerPackDef));
         }
     }

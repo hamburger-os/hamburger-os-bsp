@@ -88,7 +88,7 @@ static int kvdb_init(void)
     return RT_EOK;
 }
 /* 导出到自动初始化 */
-INIT_ENV_EXPORT(kvdb_init);
+INIT_COMPONENT_EXPORT(kvdb_init);
 #endif
 
 size_t kvdb_get_blob(const char *key, fdb_blob_t blob)

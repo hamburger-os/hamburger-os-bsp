@@ -314,7 +314,7 @@ static rt_err_t fmc_eth_control(rt_device_t dev, int cmd, void *args)
         /* get mac address */
         if (args)
         {
-            SMEMCPY(args, fmc_eth->dev_addr, 6);
+            SMEMCPY(args, fmc_eth->mac, 6);
         }
         else
         {
@@ -442,13 +442,13 @@ static int rt_fmc_eth_init(void)
     for (int i = 0; i < sizeof(fmc_eth_port) / sizeof(struct rt_fmc_eth_port); i++)
     {
         /* OUI 00-80-E1 STMICROELECTRONICS.前三个字节为厂商ID */
-        fmc_eth_device.port[i].dev_addr[0] = 0xfc;
-        fmc_eth_device.port[i].dev_addr[1] = 0x3f;
-        fmc_eth_device.port[i].dev_addr[2] = 0xab;
+        fmc_eth_device.port[i].mac[0] = 0xF8;
+        fmc_eth_device.port[i].mac[1] = 0x09;
+        fmc_eth_device.port[i].mac[2] = 0xA4;
         /* generate MAC addr from 96bit unique ID (only for test). */
-        fmc_eth_device.port[i].dev_addr[3] = *(uint8_t *)(UID_BASE + 2 + i);
-        fmc_eth_device.port[i].dev_addr[4] = *(uint8_t *)(UID_BASE + 1 + i);
-        fmc_eth_device.port[i].dev_addr[5] = *(uint8_t *)(UID_BASE + 0 + i);
+        fmc_eth_device.port[i].mac[3] = *(uint8_t *)(UID_BASE + 2 + i);
+        fmc_eth_device.port[i].mac[4] = *(uint8_t *)(UID_BASE + 1 + i);
+        fmc_eth_device.port[i].mac[5] = *(uint8_t *)(UID_BASE + 0 + i);
 
         fmc_eth_device.port[i].parent.parent.init = fmc_eth_init;
         fmc_eth_device.port[i].parent.parent.open = fmc_eth_open;
@@ -490,6 +490,21 @@ static int rt_fmc_eth_init(void)
     return state;
 }
 INIT_DEVICE_EXPORT(rt_fmc_eth_init);
+
+/* Config the lwip device */
+extern void netdev_set_if(char* netdev_name, char* ip_addr, char* gw_addr, char* nm_addr);
+static int rt_fmc_lwip_init(void)
+{
+    rt_err_t state = RT_EOK;
+
+    for (int i = 0; i < sizeof(fmc_eth_port) / sizeof(struct rt_fmc_eth_port); i++)
+    {
+        netdev_set_if(fmc_eth_device.port[i].dev_name, "192.168.1.11", "192.168.1.1", "255.255.255.0");
+    }
+
+    return state;
+}
+INIT_ENV_EXPORT(rt_fmc_lwip_init);
 
 #include <netdev.h>       /* 当需要网卡操作是，需要包含这两个头文件 */
 

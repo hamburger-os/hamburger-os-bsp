@@ -930,7 +930,7 @@ void ks_set_mac(struct rt_fmc_eth_port *ps_ks, uint8_t *p_data)
 
     for (i = 0; i < 6; i++)
     {
-        ps_ks->dev_addr[i] = p_data[i];
+        ps_ks->mac[i] = p_data[i];
     }
 
     if (ps_ks->b_enabled)
@@ -1044,7 +1044,7 @@ static int32_t ks_hw_init(struct rt_fmc_eth_port *ps_ks)
     ps_ks->all_mcast_u16 = 0;
     ps_ks->mcast_lst_size_u16 = 0;
 
-    ks_set_mac(ps_ks, ps_ks->dev_addr);
+    ks_set_mac(ps_ks, ps_ks->mac);
     return 0;
 }
 
