@@ -9,7 +9,6 @@
  */
 #include "sto_record_board.h"
 #include "led.h"
-#include "eth_manage.h"
 #include "board_info.h"
 #include "usb.h"
 #include "eth_thread.h"
@@ -35,7 +34,6 @@ static void STORecordBoardInit(void)
 
     /* thread */
     ETHThreadInit();
-//    ETHManageTestThreadInit();
     FileThreadInit();
     usb_init();
 }

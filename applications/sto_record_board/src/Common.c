@@ -123,12 +123,14 @@
    ------------------------------------------------------------------------------------------
    | hzj and Lunzm    |10-January-2020         |V1.0.2.10          |zengjiazhukong6Atouchuan|
    ------------------------------------------------------------------------------------------
+   | Zhao Ming        |21-August-2023          |V1.0.2.10          |Add SWOS2               |
+   ------------------------------------------------------------------------------------------
 */
 
-uint8_t Version[4] = { 0x01U, 0x00U, 0x03U, 0x1EU };
+uint8_t Version[4] = { 0x02U, 0x00U, 0x00U, 0x00U };
 
 /* 版本日期 */
-uint16_t Verdate = ( FIRMWARE_YEAR << 9u ) + ( FIRMWARE_MONTH << 5u ) + FIRMWARE_DAY;
+//uint16_t Verdate = ( FIRMWARE_YEAR << 9u ) + ( FIRMWARE_MONTH << 5u ) + FIRMWARE_DAY;
 
 uint8_t ID = 0x00u;
 
@@ -142,22 +144,10 @@ uint32_t ZK2ZJ_time = 0;
 uint32_t XSQ1ZJ_time = 0;
 uint32_t XSQ2ZJ_time = 0;
 uint32_t JCTXZJ_time = 0;
-
-//uint32_t CAN0_time   = 0u, CAN1_time   = 0u, MCPCAN0_time = 0u, MCPCAN1_time = 0u;
-//
-//uint32_t I_CAN0_time = 0u, I_CAN1_time = 0u, E_CAN0_time  = 0u, E_CAN1_time  = 0u;
-//uint32_t ZK1ZJ_time  = 0u, ZK2ZJ_time  = 0u, JCTXZJ_time  = 0u, JCJKZJ_time  = 0u;
-//uint32_t JLZJ_time   = 0u, XSQ1ZJ_time = 0u, XSQ2ZJ_time  = 0u, SK1ZJ_time   = 0u;
-//uint32_t SK2ZJ_time  = 0u, WJJKZJ_time = 0u, SKZJ_time    = 0u, XSQZJ_time   = 0u;
-//uint32_t SYSHEART_time = 0u;
-
 //CAN_FRAME SelfCheck_txMailbox = { 0u };
 
 uint16_t ERROR_FLAG = 0u;
-//TODO(mingzhao)
-//sArrayList *p_can0_recv_list = NULL, *p_can1_recv_list = NULL;
-//
-//sArrayList *i_can0_recv_list = NULL, *i_can1_recv_list = NULL;
+
 
 #if 0
 /*******************************************************************************************

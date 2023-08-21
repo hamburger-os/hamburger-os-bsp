@@ -62,7 +62,7 @@ rt_err_t rx_safe_layer_check(S_DATA_HANDLE * data_handle, uint8_t *pBuf, uint8_t
                     }
                     else
                     {
-                        LOG_E("safe_layer_check CRC2 err !\r\n");
+                        LOG_E("safe_layer_check CRC2 err !");
 #if 0   //TODO(mingzhao)
                         set_CrcErr_state(from_chl);
 #endif
@@ -70,7 +70,7 @@ rt_err_t rx_safe_layer_check(S_DATA_HANDLE * data_handle, uint8_t *pBuf, uint8_t
                 }
                 else
                 {
-                    LOG_E("safe_layer_check CRC1 err !\r\n");
+                    LOG_E("safe_layer_check CRC1 err !");
 #if 0   //TODO(mingzhao)
                     set_CrcErr_state(from_chl);
 #endif
@@ -78,7 +78,7 @@ rt_err_t rx_safe_layer_check(S_DATA_HANDLE * data_handle, uint8_t *pBuf, uint8_t
             }
             else
             {
-                LOG_E("safe_layer_check LEN err 0x%x !\r\n", pSafe_layer->lenth);
+                LOG_E("safe_layer_check len err 0x%x !", pSafe_layer->lenth);
             }
         }
         else

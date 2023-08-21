@@ -232,12 +232,48 @@ static rt_err_t fmc_eth_init(rt_device_t dev)
 
 static rt_err_t fmc_eth_open(rt_device_t dev, rt_uint16_t oflag)
 {
+#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
+    struct rt_fmc_eth_port *fmc_eth = dev->user_data;
+
+    if(NULL == fmc_eth)
+    {
+        return -RT_EEMPTY;
+    }
+
+    if(fmc_eth->link_layer_enable)
+    {
+        return lep_eth_if_clear(&fmc_eth->link_layer_buf);
+    }
+    else
+    {
+        return RT_EOK;
+    }
+#else
     return RT_EOK;
+#endif
 }
 
 static rt_err_t fmc_eth_close(rt_device_t dev)
 {
+#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
+    struct rt_fmc_eth_port *fmc_eth = dev->user_data;
+
+    if(NULL == fmc_eth)
+    {
+        return -RT_EEMPTY;
+    }
+
+    if(fmc_eth->link_layer_enable)
+    {
+        return lep_eth_if_clear(&fmc_eth->link_layer_buf);
+    }
+    else
+    {
+        return RT_EOK;
+    }
+#else
     return RT_EOK;
+#endif
 }
 
 #ifdef BSP_USE_LINK_LAYER_COMMUNICATION
@@ -246,33 +282,39 @@ static rt_size_t fmc_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_si
     struct rt_fmc_eth_port *fmc_eth = dev->user_data;
     rt_uint16_t read_size = 0;
     S_LEP_BUF *p_s_LepBuf = RT_NULL;
+    rt_list_t *list_pos = NULL;
+    rt_list_t *list_next = NULL;
 
-    p_s_LepBuf = lep_if_is_received(&fmc_eth->link_layer_buf);
-    if (p_s_LepBuf != RT_NULL)
+    /* step1：遍历链表 */
+    rt_list_for_each_safe(list_pos, list_next, &fmc_eth->link_layer_buf.rx_head->list)
     {
-      /* step2：获取接收包数据长度 */
-      if(fmc_eth->link_layer_buf.prx_rptr->len > LEP_MAC_PKT_MAX_LEN)
-      {
-          read_size = LEP_MAC_PKT_MAX_LEN;
-      }
-      else
-      {
-          read_size = fmc_eth->link_layer_buf.prx_rptr->len;
-          if (read_size > size)
-          {
-              read_size = size;
-          }
-      }
+        p_s_LepBuf = rt_list_entry(list_pos, struct tagLEP_BUF, list);
+        if (p_s_LepBuf != RT_NULL)
+        {
+            if ((p_s_LepBuf->flag & LEP_RBF_RV) != 0U)
+            {
+                /* step2：获取接收包数据长度 */
+                if(p_s_LepBuf->len > LEP_MAC_PKT_MAX_LEN)
+                {
+                    read_size = LEP_MAC_PKT_MAX_LEN;
+                }
+                else
+                {
+                    read_size = p_s_LepBuf->len;
+                    if (read_size > size)
+                    {
+                        read_size = size;
+                    }
+                }
 
-      /* step3：提取包数据 */
-      rt_memcpy(buffer, fmc_eth->link_layer_buf.prx_rptr->buf, read_size);
-
-      /* step4：释放接收接收缓冲区 */
-      lep_if_release_rptr(&fmc_eth->link_layer_buf);
-    }
-    else
-    {
-      /* nothing */
+                /* step3：提取包数据 */
+                rt_memcpy(buffer, p_s_LepBuf->buf, read_size);
+                rt_list_remove(list_pos);
+                /* step4：释放接收接收缓冲区 */
+                rt_free(p_s_LepBuf);
+                return read_size;
+            }
+        }
     }
     return read_size;
 }
@@ -375,15 +417,14 @@ struct pbuf *fmc_eth_rx(rt_device_t dev)
     {
         S_LEP_BUF *ps_lep_buf = RT_NULL;
 
-        ps_lep_buf = lep_get_free_buf(&fmc_eth->link_layer_buf);
+        ps_lep_buf = rt_malloc(sizeof(S_LEP_BUF));
         if(RT_NULL != ps_lep_buf)
         {
+            ps_lep_buf->flag = 0;
             ps_lep_buf->flag |= LEP_RBF_RV;
             ps_lep_buf->len = p->len;
             rt_memcpy(ps_lep_buf->buf, p->payload, p->len);
-            /* 接收位置指针指向下一个位置 */
-            fmc_eth->link_layer_buf.prx_wptr = ps_lep_buf->pnext;
-
+            rt_list_insert_before(&fmc_eth->link_layer_buf.rx_head->list, &ps_lep_buf->list);
             if(dev->rx_indicate != NULL)
             {
                 dev->rx_indicate(dev, p->len);
