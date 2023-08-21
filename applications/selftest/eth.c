@@ -63,7 +63,6 @@ void selftest_eth_test(SelftestlUserData *puserdata)
     for (int i = 0; i<2; i++)
     {
         rt_device_read(puserdata->eth_dev[i][1], 0, &data_rd, sizeof(union LinkLayerPackDef));
-        rt_device_read(puserdata->eth_dev[i][1], 0, &data_rd, sizeof(union LinkLayerPackDef));
         rt_device_write(puserdata->eth_dev[i][0], 0, &data_wr, sizeof(union LinkLayerPackDef));
         rt_thread_delay(100);
 

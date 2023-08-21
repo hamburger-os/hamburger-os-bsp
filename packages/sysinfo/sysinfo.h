@@ -12,7 +12,7 @@
 
 struct __attribute__ ((packed)) SysInfoDef
 {
-    uint32_t    version;
+    uint16_t     version;
     uint8_t     SN[20];
     uint32_t    cpu_id[3];
     float       cpu_temp;

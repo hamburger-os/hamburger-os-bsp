@@ -12,7 +12,8 @@
 
 #include <time.h>
 #include <unistd.h>
-#include <flashdb.h>
+
+#include "flashdb_port.h"
 
 #define DBG_TAG "fdb"
 #define DBG_LVL DBG_INFO
@@ -98,12 +99,28 @@ size_t kvdb_get_blob(const char *key, fdb_blob_t blob)
 }
 RTM_EXPORT(kvdb_get_blob);
 
+size_t kvdb_get(const char *key, char *value)
+{
+    /* get the KV value */
+    char *pvalue = fdb_kv_get(&kvdb, key);
+    rt_strcpy(value, pvalue);
+    return rt_strlen(value);
+}
+RTM_EXPORT(kvdb_get);
+
 fdb_err_t kvdb_set_blob(const char *key, fdb_blob_t blob)
 {
     /* change the KV's value */
     return fdb_kv_set_blob(&kvdb, key, blob);
 }
 RTM_EXPORT(kvdb_set_blob);
+
+fdb_err_t kvdb_set(const char *key, char *value)
+{
+    /* change the KV's value */
+    return fdb_kv_set(&kvdb, key, value);
+}
+RTM_EXPORT(kvdb_set);
 
 #ifdef FLASHDB_PORT_USING_TSDB
 static struct fdb_tsdb tsdb;

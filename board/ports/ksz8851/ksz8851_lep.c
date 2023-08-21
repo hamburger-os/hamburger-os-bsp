@@ -15,7 +15,7 @@
 #include <string.h>
 
 #define DBG_TAG "ksz8851_lep"
-#define DBG_LVL DBG_LOG
+#define DBG_LVL DBG_INFO
 #include <rtdbg.h>
 
 /*
@@ -31,7 +31,7 @@ rt_err_t lep_eth_if_init(S_ETH_IF *ps_eth_if)
       return -RT_EEMPTY;
   }
 
-  memset((void *)ps_eth_if, 0, sizeof(S_ETH_IF));
+  rt_memset((void *)ps_eth_if, 0, sizeof(S_ETH_IF));
 
   /* 1.申请接收缓冲区空间 */
   ps_eth_if->rx_head = rt_malloc(sizeof(S_LEP_BUF));
@@ -42,14 +42,14 @@ rt_err_t lep_eth_if_init(S_ETH_IF *ps_eth_if)
   }
 
   /* 2.接收缓冲区清零 */
-  memset((void *)ps_eth_if->rx_head, 0, sizeof(S_LEP_BUF));
+  rt_memset((void *)ps_eth_if->rx_head, 0, sizeof(S_LEP_BUF));
 
   ps_eth_if->rx_head->flag = LEP_RBF_HEAD;
   /* 3.初始化链表 */
   rt_list_init(&ps_eth_if->rx_head->list);
   if(rt_list_isempty(&ps_eth_if->rx_head->list))
   {
-      LOG_I("rx_list init ok");
+      LOG_D("rx_list init ok");
   }
   else
   {
@@ -76,7 +76,7 @@ rt_err_t lep_eth_if_clear(S_ETH_IF *ps_eth_if)
     }
     if(NULL == ps_eth_if->rx_head)
     {
-        LOG_I("rx_head error");
+        LOG_E("rx_head error");
         return -RT_EEMPTY;
     }
 
@@ -93,7 +93,7 @@ rt_err_t lep_eth_if_clear(S_ETH_IF *ps_eth_if)
             }
         }
     }
-    LOG_I("lep_eth_if_clear ok");
+    LOG_D("lep_eth_if_clear ok");
     return RT_EOK;
 }
 

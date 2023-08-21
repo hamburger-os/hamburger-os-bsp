@@ -12,8 +12,8 @@
 #ifdef BSP_USING_KSZ8851
 #include <drv_config.h>
 #include "drv_fmc_eth.h"
-#include <netif/ethernetif.h>
 #include "ksz8851.h"
+#include "flashdb_port.h"
 
 #include <string.h>
 
@@ -501,7 +501,6 @@ static int rt_fmc_eth_init(void)
         fmc_eth_device.port[i].parent.eth_tx = fmc_eth_tx;
 
 #ifdef BSP_USE_LINK_LAYER_COMMUNICATION
-
         fmc_eth_device.port[i].parent.parent.read = fmc_eth_read;
         fmc_eth_device.port[i].parent.parent.write = fmc_eth_write;
 
@@ -533,15 +532,29 @@ static int rt_fmc_eth_init(void)
 INIT_DEVICE_EXPORT(rt_fmc_eth_init);
 
 /* Config the lwip device */
-extern void netdev_set_if(char* netdev_name, char* ip_addr, char* gw_addr, char* nm_addr);
+char *ip_key[] = {"e0_ip", "e1_ip", "e2_ip"};
+char *gw_key[] = {"e0_gw", "e1_gw", "e2_gw"};
+char *mask_key[] = {"e0_mask", "e1_mask", "e2_mask"};
+
+static void netdev_set_if(char* netdev_name, char* ip_addr, char* gw_addr, char* nm_addr);
 static int rt_fmc_lwip_init(void)
 {
     rt_err_t state = RT_EOK;
 
+#if !LWIP_DHCP
+    char ip_addr[16] = {0};
+    char gw_addr[16] = {0};
+    char nm_addr[16] = {0};
+
     for (int i = 0; i < sizeof(fmc_eth_port) / sizeof(struct rt_fmc_eth_port); i++)
     {
-        netdev_set_if(fmc_eth_device.port[i].dev_name, "192.168.1.11", "192.168.1.1", "255.255.255.0");
+        kvdb_get(ip_key[i], ip_addr);
+        kvdb_get(gw_key[i], gw_addr);
+        kvdb_get(mask_key[i], nm_addr);
+
+        netdev_set_if(fmc_eth_device.port[i].dev_name, ip_addr, gw_addr, nm_addr);
     }
+#endif
 
     return state;
 }
