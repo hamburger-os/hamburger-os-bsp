@@ -13,105 +13,11 @@
 #define COMMON_H
 
 #include "board.h"
-
 #include "data_handle.h"
 
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-
-
-#define JUDGE_COUNTER 3
-#define OUT_TIME	2000
-#define SELFCHECK_TIME 500
-
-
-extern uint8_t Version[4];
-extern uint16_t Verdate;
-extern uint8_t ID;
-
-extern uint32_t SK1ZJ_time;
-extern uint32_t SK2ZJ_time;
-extern uint32_t JCJKZJ_time;
-extern uint32_t ZK1ZJ_time;
-extern uint32_t ZK2ZJ_time;
-extern uint32_t XSQ1ZJ_time;
-extern uint32_t XSQ2ZJ_time;
-extern uint32_t JCTXZJ_time;
-
-//extern uint32_t CAN0_time,CAN1_time,MCPCAN0_time,MCPCAN1_time;
-//extern CAN_FRAME SelfCheck_txMailbox;
-extern uint16_t ERROR_FLAG;
-
-//extern uint32_t I_CAN0_time, I_CAN1_time, E_CAN0_time, E_CAN1_time;
-//extern uint32_t ZK1ZJ_time,  ZK2ZJ_time,  JCTXZJ_time, JCJKZJ_time, JLZJ_time;
-//extern uint32_t XSQ1ZJ_time, XSQ2ZJ_time, SK1ZJ_time,  SK2ZJ_time,  WJJKZJ_time;
-//extern uint32_t SKZJ_time,   XSQZJ_time,  SYSHEART_time;
-
-//TODO(mingzhao)
-//extern sArrayList *i_can0_recv_list;
-//extern sArrayList  *i_can1_recv_list;
-//
-//extern sArrayList *p_can0_recv_list;
-//extern sArrayList  *p_can1_recv_list;
-
-///* UART BUFFER */
-//typedef struct
-//{
-//	uint8_t buf[100];
-//	uint8_t read_pos;
-//	uint8_t write_pos;
-//	uint8_t size;
-//}UART_BUF;
-
-//TODO(mingzhao)
-///* Operation_interface */
-//typedef struct
-//{
-//	BoardType Board_Name;
-//
-//	/* Relevant Board Interface */
-//	void (*Board_DataInit)(void);
-//	void (*Board_InterruptInit)(void);
-//	void (*Board_Device_Init)(void);
-//	void (*Board_MainApp)(void);
-//
-//	/* Relevant Interrupt Handle Interface */
-//	/* TIMER */
-//	void (*TC0_IrqHandle)(void);
-//	void (*TC1_IrqHandle)(void);
-//	/* CAN */
-//	void (*CAN0_IrqHandle)(void);
-//	void (*CAN1_IrqHandle)(void);
-//	void  (*MCP_CAN0_IrqHandle)(void);
-//	void  (*MCP_CAN1_IrqHandle)(void);
-//	void (*SPI0_IrqHandle)(void);
-//	void (*SPI1_IrqHandle)(void);
-//	void (*USART1_IrqHandle)(void);
-//	void (*USART2_IrqHandle)(void);
-//	void	(*UART0_IrqHandle)(void);
-//	void	(*UART1_IrqHandle)(void);
-//	/* RS485 */
-//	void (*RS485a_IrqHandle)(void);
-//	void (*RS485b_IrqHandle)(void);
-//	void (*RS485c_IrqHandle)(void);
-//	/* ETH */
-//	void (*ETH_IrqHandle)(void);
-//	/* USB */
-//	void (*USB_IrqHandle)(void);
-//	/* DMA */
-//	void (*DMA_IrqHandle)(void);
-//
-//	/* task process flag */
-//	void (*TASK_Handler_Periodic)(void);
-//}Board_Interface;
-
-
-/* The following macro definition was created by Liang Zhen, 22-November-2017. ================= */
-/* public macro definition --------------------------------------------------------------------- */
-/* The priority of train interface board. */
-//#define PRIORITY_TRAIN_SELFCHECK         ( 0x90u )
-//#define PRIORITY_TRAIN_STATE_INFO        ( 0x91u )
 
 /* Firmware date. */
 /* ------------------------------------------------------------------------------------------
@@ -230,12 +136,30 @@ extern uint16_t ERROR_FLAG;
    | Liang Zhen       | 18-February-2019        | Used for application.                     |
    ------------------------------------------------------------------------------------------
    | Liang Zhen       | 19-April-2019           | Used for application.                     |
+   ------------------------------------------------------------------------------------------
+   | Zhao Ming        |21-August-2023          |V1.0.2.10          |Add SWOS2               |
+   ------------------------------------------------------------------------------------------
    --------------------------------------------------------------------------------------- */
-#define FIRMWARE_YEAR                    ( 19U )
 
-#define FIRMWARE_MONTH                   ( 4U )
 
-#define FIRMWARE_DAY                     ( 19U )
+
+#define JUDGE_COUNTER 3
+#define OUT_TIME    2000
+#define SELFCHECK_TIME 500
+
+extern uint8_t Version[4];
+//extern uint16_t Verdate;
+extern uint8_t ID;
+extern uint16_t ERROR_FLAG;
+
+extern uint32_t SK1ZJ_time;
+extern uint32_t SK2ZJ_time;
+extern uint32_t JCJKZJ_time;
+extern uint32_t ZK1ZJ_time;
+extern uint32_t ZK2ZJ_time;
+extern uint32_t XSQ1ZJ_time;
+extern uint32_t XSQ2ZJ_time;
+extern uint32_t JCTXZJ_time;
 
 
 /* The following type definition was created by Liang Zhen, 15-November-2017. ================== */

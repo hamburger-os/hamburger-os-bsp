@@ -20,10 +20,11 @@
 
 #define LEP_RBF_TV        (1U)
 #define LEP_RBF_RV        (2U)
+#define LEP_RBF_HEAD      (3U)
 
 typedef struct tagLEP_BUF /* 接收缓冲区 */
 {
-    struct tagLEP_BUF *pnext; /* 下一个 */
+    rt_list_t list; /* 链表 */
     uint16_t len; /* 长度 */
     uint16_t flag; /* 收发标志位 */
     uint8_t buf[LEP_MAC_PKT_MAX_LEN]; /* 1536 */
@@ -31,17 +32,13 @@ typedef struct tagLEP_BUF /* 接收缓冲区 */
 
 typedef struct eth_interface /* 接收环形缓冲区，应用程序维护 */
 {
-    S_LEP_BUF *prx_rptr; /* 接收缓冲区读位置指针 */
-    S_LEP_BUF *prx_wptr; /* 接收缓冲区写位置指针 */
-    S_LEP_BUF *rx_buf;
     S_LEP_BUF tx_buf;
+    S_LEP_BUF *rx_head;
 } S_ETH_IF;
 
 /* Exported function prototypes ----------------------------------------------*/
 rt_err_t lep_eth_if_init(S_ETH_IF *ps_eth_if);
-S_LEP_BUF *lep_get_free_buf(S_ETH_IF *ps_eth_if);
-S_LEP_BUF *lep_if_is_received(const S_ETH_IF *ps_eth_if);
-void lep_if_release_rptr(S_ETH_IF *ps_eth_if);
+rt_err_t lep_eth_if_clear(S_ETH_IF *ps_eth_if);
 
 #endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
 
