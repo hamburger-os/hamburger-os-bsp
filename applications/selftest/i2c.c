@@ -59,8 +59,8 @@ void selftest_i2c_test(SelftestlUserData *puserdata)
         else
         {
             LOG_E("eeprom read write error!");
-//            LOG_HEX("data1", 16, data_rd1, 8);
-//            LOG_HEX("data2", 16, data_rd2, 8);
+            LOG_HEX("data1", 16, data_rd1, 8);
+            LOG_HEX("data2", 16, data_rd2, 8);
         }
     }
     else

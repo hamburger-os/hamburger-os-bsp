@@ -89,21 +89,24 @@ void sysinfo_get(struct SysInfoDef *info)
     }
 }
 
-static void sysinfo_show(int argc, char *argv[])
+void sysinfo_show(void)
 {
-    struct SysInfoDef info;
+    struct SysInfoDef info = {0};
     sysinfo_get(&info);
 
-    rt_kprintf("- systerm info:\n");
-    rt_kprintf("----------------------------------------------------------------\n");
-    rt_kprintf("- cpu id      : 0x%08X %08X %08X\n", info.cpu_id[0], info.cpu_id[1], info.cpu_id[2]);
-    rt_kprintf("- cpu temp    : %d.%02d ℃ \n", (int32_t)info.cpu_temp, abs((int32_t)((info.cpu_temp - (int32_t)info.cpu_temp) * 100)));
-    rt_kprintf("----------------------------------------------------------------\n");
-    rt_kprintf("- chip id     : 0x%02X %02X %02X %02X %02X %02X %02X %02X\n", info.chip_id[0], info.chip_id[1], info.chip_id[2], info.chip_id[3], info.chip_id[4], info.chip_id[5], info.chip_id[6], info.chip_id[7]);
-    rt_kprintf("- chip temp   : %d.%02d ℃ \n", (int32_t)info.chip_temp, abs((int32_t)((info.chip_temp - (int32_t)info.chip_temp) * 100)));
-    rt_kprintf("- times       : %d s\n", info.times);
-    rt_kprintf("- count       : %d\n", info.count);
-    rt_kprintf("----------------------------------------------------------------\n");
+    LOG_D("- systerm info:");
+    LOG_D("----------------------------------------------------------------");
+    LOG_D("- version     : 0x%08X", info.version);
+    LOG_HEX("     - SN          ", 16, info.SN, sizeof(info.SN));
+    LOG_D("----------------------------------------------------------------");
+    LOG_D("- cpu id      : 0x%08X %08X %08X", info.cpu_id[0], info.cpu_id[1], info.cpu_id[2]);
+    LOG_D("- cpu temp    : %d.%02d ℃ ", (int32_t)info.cpu_temp, abs((int32_t)((info.cpu_temp - (int32_t)info.cpu_temp) * 100)));
+    LOG_D("----------------------------------------------------------------");
+    LOG_D("- chip id     : 0x%02X %02X %02X %02X %02X %02X %02X %02X", info.chip_id[0], info.chip_id[1], info.chip_id[2], info.chip_id[3], info.chip_id[4], info.chip_id[5], info.chip_id[6], info.chip_id[7]);
+    LOG_D("- chip temp   : %d.%02d ℃ ", (int32_t)info.chip_temp, abs((int32_t)((info.chip_temp - (int32_t)info.chip_temp) * 100)));
+    LOG_D("- times       : %d s", info.times);
+    LOG_D("- count       : %d", info.count);
+    LOG_D("----------------------------------------------------------------");
 }
 
 #ifdef RT_USING_FINSH

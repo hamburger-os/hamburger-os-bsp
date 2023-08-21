@@ -12,16 +12,17 @@
 
 struct __attribute__ ((packed)) SysInfoDef
 {
-    uint16_t    version;
+    uint32_t    version;
+    uint8_t     SN[20];
     uint32_t    cpu_id[3];
     float       cpu_temp;
     uint8_t     chip_id[8];
     float       chip_temp;
     uint32_t    times;
     uint16_t    count;
-    uint8_t     mac[3][6];
 };
 
 void sysinfo_get(struct SysInfoDef *info);
+void sysinfo_show(void);
 
 #endif /* PACKAGES_SYSINFO_H_ */

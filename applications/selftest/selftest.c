@@ -11,9 +11,10 @@
 #include <rtdevice.h>
 
 #include "selftest.h"
+#include "sysinfo.h"
 
 #define DBG_TAG "selftest"
-#define DBG_LVL DBG_INFO
+#define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
 SelftestlUserData selftest_userdata = {
@@ -70,6 +71,8 @@ static void selftest_thread_entry(void* parameter)
 
     LOG_I("startup...");
 
+    //系统信息
+    sysinfo_show();
     //gpio
     selftest_gpio_test(puserdata);
     //filesysterm
