@@ -97,7 +97,7 @@ void sysinfo_show(void)
     LOG_D("- systerm info:");
     LOG_D("----------------------------------------------------------------");
     LOG_D("- version     : 0x%08X", info.version);
-    LOG_HEX("     - SN          ", 16, info.SN, sizeof(info.SN));
+    LOG_HEX("     - SN          ", 8, info.SN, sizeof(info.SN));
     LOG_D("----------------------------------------------------------------");
     LOG_D("- cpu id      : 0x%08X %08X %08X", info.cpu_id[0], info.cpu_id[1], info.cpu_id[2]);
     LOG_D("- cpu temp    : %d.%02d ℃ ", (int32_t)info.cpu_temp, abs((int32_t)((info.cpu_temp - (int32_t)info.cpu_temp) * 100)));

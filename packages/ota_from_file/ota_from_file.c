@@ -51,15 +51,23 @@ enum
     PartNotExist,
 };
 
+enum
+{
+    MODE_DOWNLOAD = 0,
+    MODE_FACTORY,
+};
+
 struct ota_from_file_ops
 {
     int fd;
     uint8_t devsta;//存储设备连接状态
     rt_device_t dev;//存储设备
     char* devname;
-    const char* partition;
-    const struct fal_partition * part;
-    char *path;
+
+    const char* part_name[2];
+    const struct fal_partition * part[2];
+    const char *path[2];
+
     uint8_t updatesta;//升级状态
     uint8_t* cmprs_buf;
     uint8_t* file_buf;
@@ -69,8 +77,8 @@ struct ota_from_file_ops
 
 static struct ota_from_file_ops ota_from_file = {
     .devname = OTA_FROM_FILE_DEVNAME,
-    .partition = OTA_FROM_FILE_DOWNLOAD_PART_NAME,
-    .path = OTA_FROM_FILE_FIRMWARE_PATH,
+    .part_name = {OTA_FROM_FILE_DOWNLOAD_PART_NAME, OTA_FROM_FILE_FACTORY_PART_NAME},
+    .path = {OTA_FROM_FILE_DOWNLOAD_PATH, OTA_FROM_FILE_FACTORY_PATH},
 };
 
 typedef struct {
@@ -254,7 +262,7 @@ static int ota_fw_info_cmp(fw_info_t *fw_info, fw_info_t *part_fw_info)
     return(0);
 }
 
-static int ota_on_begin(struct ota_from_file_ops *ops)
+static int ota_on_begin(struct ota_from_file_ops *ops, uint8_t mode)
 {
     struct stat buf;
     fstat(ops->fd, &buf);
@@ -272,22 +280,21 @@ static int ota_on_begin(struct ota_from_file_ops *ops)
         return -RT_ERROR;
     }
 
-    /* Get download partition information and erase download partition data */
-    if ((ops->part = fal_partition_find(ops->partition)) == RT_NULL)
+    /* Get partition information and erase partition data */
+    if ((ops->part[mode] = fal_partition_find(ops->part_name[mode])) == RT_NULL)
     {
-        LOG_E("Firmware download failed! Partition (%s) find error!", ops->partition);
+        LOG_E("Partition (%s) find error!", ops->part_name[mode]);
         return -RT_ERROR;
     }
-
-    if (ops->update_file_total_size > ops->part->len)
+    if (ops->update_file_total_size > ops->part[mode]->len)
     {
-        LOG_E("Firmware is too large! File size (%d), '%s' partition size (%d)", ops->update_file_total_size, ops->partition, ops->part->len);
+        LOG_E("Firmware is too large! File size (%d), '%s' partition size (%d)", ops->update_file_total_size, ops->part_name[mode], ops->part[mode]->len);
         return -RT_ERROR;
     }
 
     fw_info_t part_fw_info;
-    ota_fw_info_read(ops->part, &part_fw_info);
-    if (ota_fw_sign_check(ops->part, &part_fw_info))
+    ota_fw_info_read(ops->part[mode], &part_fw_info);
+    if (ota_fw_sign_check(ops->part[mode], &part_fw_info))
     {
         ota_from_file_handle(OTA_HANDLE_LOADED);
         LOG_D("Last firmware has been loaded.");
@@ -303,10 +310,10 @@ static int ota_on_begin(struct ota_from_file_ops *ops)
         ota_fw_info_show(&fw_info);
         LOG_I("Start erase. Size (%d)", ops->update_file_total_size);
 
-        /* erase DL section */
-        if (fal_partition_erase(ops->part, 0, ops->update_file_total_size) < 0)
+        /* erase section */
+        if (fal_partition_erase(ops->part[mode], 0, ops->update_file_total_size) < 0)
         {
-            LOG_E("Firmware download failed! Partition (%s) erase error!", ops->part->name);
+            LOG_E("Partition (%s) erase failed!", ops->part[mode]->name);
             return -RT_ERROR;
         }
 
@@ -321,19 +328,19 @@ static int ota_on_begin(struct ota_from_file_ops *ops)
     return -RT_ERROR;
 }
 
-static int ota_on_data(struct ota_from_file_ops *ops, uint32_t len)
+static int ota_on_data(struct ota_from_file_ops *ops, uint32_t len, uint8_t mode)
 {
-    /* write data of application to DL partition  */
-    if (fal_partition_write(ops->part, ops->update_file_cur_size, ops->file_buf, len) < 0)
+    /* write data of application to partition  */
+    if (fal_partition_write(ops->part[mode], ops->update_file_cur_size, ops->file_buf, len) < 0)
     {
         rt_kprintf("\n");
-        LOG_E("Firmware download failed! Partition (%s) write data 0x%x error!", ops->part->name, ops->update_file_cur_size);
+        LOG_E("Firmware program failed! Partition (%s) write data 0x%x error!", ops->part[mode]->name, ops->update_file_cur_size);
         return -RT_ERROR;
     }
-    if (fal_partition_read(ops->part, ops->update_file_cur_size, ops->cmprs_buf, len) < 0)
+    if (fal_partition_read(ops->part[mode], ops->update_file_cur_size, ops->cmprs_buf, len) < 0)
     {
         rt_kprintf("\n");
-        LOG_E("Firmware download failed! Partition (%s) read data 0x%x error!", ops->part->name, ops->update_file_cur_size);
+        LOG_E("Firmware program failed! Partition (%s) read data 0x%x error!", ops->part[mode]->name, ops->update_file_cur_size);
         return -RT_ERROR;
     }
     if (rt_memcmp(ops->file_buf, ops->cmprs_buf, len) != 0)
@@ -341,7 +348,7 @@ static int ota_on_data(struct ota_from_file_ops *ops, uint32_t len)
         rt_kprintf("\n");
         LOG_HEX("write", 16, ops->file_buf, len);
         LOG_HEX("read ", 16, ops->cmprs_buf, len);
-        LOG_E("Firmware download failed! Partition (%s) check data 0x%x %d error!", ops->part->name, ops->update_file_cur_size, len);
+        LOG_E("Firmware program failed! Partition (%s) check data 0x%x %d error!", ops->part[mode]->name, ops->update_file_cur_size, len);
         return -RT_ERROR;
     }
 
@@ -374,64 +381,73 @@ static void ota_thread_entry(void* parameter)
 
         if (ops->devsta == 1 && ops->updatesta == ReadyToUpdate)
         {
-            if (access(ops->path, 0) == 0)
+            uint8_t is_reboot = 0;
+            for(uint8_t mode = MODE_DOWNLOAD; mode <= MODE_FACTORY; mode ++)
             {
-                LOG_D("firmware '%s' is exisit", ops->path);
-                ops->fd = open(ops->path, O_RDONLY);
-                if (ota_on_begin(ops) == RT_EOK)
+                if (access(ops->path[mode], 0) == 0)
                 {
-                    ota_from_file_handle(OTA_HANDLE_START);
-                    LOG_I("Start programming ...");
-                    rt_size_t length = 1;
-                    lseek(ops->fd, 0, SEEK_SET);
-                    while (length > 0)
+                    LOG_D("firmware '%s' is exisit", ops->path[mode]);
+                    ops->fd = open(ops->path[mode], O_RDONLY);
+                    if (ota_on_begin(ops, mode) == RT_EOK)
                     {
-                        rt_memset(ops->file_buf, 0, OTA_FILE_BUF_LEN);
-                        length = read(ops->fd, ops->file_buf, OTA_FILE_BUF_LEN);
+                        ota_from_file_handle(OTA_HANDLE_START);
+                        LOG_I("Start programming ...");
+                        rt_size_t length = 1;
+                        lseek(ops->fd, 0, SEEK_SET);
+                        while (length > 0)
+                        {
+                            rt_memset(ops->file_buf, 0, OTA_FILE_BUF_LEN);
+                            length = read(ops->fd, ops->file_buf, OTA_FILE_BUF_LEN);
+                            if (length < 1)
+                            {
+                                break;
+                            }
+                            if (ota_on_data(ops, length, mode) != RT_EOK)
+                            {
+                                break;
+                            }
+                            rt_kprintf(".");
+                        }
                         if (length < 1)
+                            rt_kprintf("\n");
+
+                        if (ops->update_file_total_size == ops->update_file_cur_size)
                         {
-                            break;
+                            ota_from_file_handle(OTA_HANDLE_FINISH);
+                            LOG_D("Download firmware to flash success.");
+
+                            is_reboot ++;
                         }
-                        if (ota_on_data(ops, length) != RT_EOK)
+                        else
                         {
-                            break;
+                            /* wait some time for terminal response finish */
+                            rt_thread_mdelay(1000);
+                            LOG_E("Update firmware fail %d/%d.", ops->update_file_cur_size, ops->update_file_total_size);
                         }
-                        rt_kprintf(".");
-                    }
-                    if (length < 1)
-                        rt_kprintf("\n");
-
-                    if (ops->update_file_total_size == ops->update_file_cur_size)
-                    {
-                        ota_from_file_handle(OTA_HANDLE_FINISH);
-                        LOG_D("Download firmware to flash success.");
-                        LOG_I("System now will restart...");
-
-                        /* wait some time for terminal response finish */
-                        rt_thread_mdelay(200);
-
-                        /* Reset the device, Start new firmware */
-                        rt_hw_cpu_reset();
-                        /* wait some time for terminal response finish */
-                        rt_thread_mdelay(200);
                     }
                     else
                     {
-                        /* wait some time for terminal response finish */
-                        rt_thread_mdelay(1000);
-                        LOG_E("Update firmware fail %d/%d.", ops->update_file_cur_size, ops->update_file_total_size);
+                        ops->updatesta = PartNotExist;
                     }
+                    close(ops->fd);
                 }
                 else
                 {
-                    ops->updatesta = PartNotExist;
+                    LOG_D("firmware '%s' not exisit", ops->path[mode]);
+                    ops->updatesta = FileNotExist;
                 }
-                close(ops->fd);
             }
-            else
+            if (is_reboot > 0)
             {
-                LOG_D("firmware '%s' not exisit", ops->path);
-                ops->updatesta = FileNotExist;
+                LOG_I("System now will restart...");
+
+                /* wait some time for terminal response finish */
+                rt_thread_mdelay(200);
+
+                /* Reset the device, Start new firmware */
+                rt_hw_cpu_reset();
+                /* wait some time for terminal response finish */
+                rt_thread_mdelay(200);
             }
         }
     }
