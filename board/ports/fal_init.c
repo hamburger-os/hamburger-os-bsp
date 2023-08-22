@@ -91,6 +91,13 @@ static int rt_fal_init(void)
     }
 #endif
 
+#ifdef BSP_USING_MAX31826
+    if (fal_blk_device_create(BLK_MAX31826) == NULL)
+    {
+        LOG_E("Failed to creat blk %s!", BLK_MAX31826);
+    }
+#endif
+
 #ifdef BSP_USING_ROOTFS
     for (int i = 0; i < (sizeof(fal_rootfs)/sizeof(char *)); i++)
     {
