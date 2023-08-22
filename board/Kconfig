@@ -3444,7 +3444,7 @@ menu "Onboard Peripheral Drivers"
             
             config BSP_KSZ8794_SPI_SPEED
               int "Set the rate of spi, default: (40 * 1000 *1000)"
-              default (40000000)
+              default (25000000)
               
             config BSP_KSZ8794_IRQ_PIN
               string "Set the pin of the chip irq, default: PI.4"

@@ -253,6 +253,20 @@ static void Ksz8794TestRun(void)
     LOG_I("2read %x", recievebuffer[0]);
 }
 
+#define KSZ8794_Port1_Status1           0x19
+#define KSZ8794_Port1_Status2           0x1E
+#define KSZ8794_Port1_Status3           0x1F
+static void Ksz8794TestStatus(void)
+{
+    uint8_t ksz8794_StateBuf[3][3];
+
+    rt_device_read(p_ksz8794_dev, KSZ8794_Port1_Status1, &ksz8794_StateBuf[0][0], 1);
+    rt_device_read(p_ksz8794_dev, KSZ8794_Port1_Status2, &ksz8794_StateBuf[0][1], 1);
+    rt_device_read(p_ksz8794_dev, KSZ8794_Port1_Status3, &ksz8794_StateBuf[0][2], 1);
+    LOG_I("KSZ8794_SW3_Port1_Status: Status1=%2x,  Status2=%2x, Status3=%2x\r\n", \
+                      ksz8794_StateBuf[0][0], ksz8794_StateBuf[0][1], ksz8794_StateBuf[0][2]);
+}
+
 static void KSZ8794Test(int argc, char **argv)
 {
 
@@ -262,6 +276,7 @@ static void KSZ8794Test(int argc, char **argv)
         rt_kprintf("       ksz8794test --init\n");
         rt_kprintf("       ksz8794test --start\n");
         rt_kprintf("       ksz8794test --close\n");
+        rt_kprintf("       ksz8794test --status\n");
     }
     else
     {
@@ -277,12 +292,17 @@ static void KSZ8794Test(int argc, char **argv)
         {
             rt_device_close(p_ksz8794_dev);
         }
+        else if(rt_strcmp(argv[1], "--status") == 0)
+        {
+            Ksz8794TestStatus();
+        }
         else
         {
             rt_kprintf("Usage: ksz8794test [cmd]\n");
             rt_kprintf("       ksz8794test --init\n");
             rt_kprintf("       ksz8794test --start\n");
             rt_kprintf("       ksz8794test --close\n");
+            rt_kprintf("       ksz8794test --status\n");
         }
     }
 }
