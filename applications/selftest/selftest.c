@@ -75,6 +75,8 @@ static void selftest_thread_entry(void* parameter)
     sysinfo_show();
     //gpio
     selftest_gpio_test(puserdata);
+    //key
+    selftest_key_test(puserdata);
     //filesysterm
     selftest_fs_test(puserdata);
     //i2c
@@ -87,6 +89,8 @@ static void selftest_thread_entry(void* parameter)
     selftest_can_test(puserdata);
     //eth
     selftest_eth_test(puserdata);
+    //tcpip
+    selftest_tcpip_test(puserdata);
 
     LOG_I("end.");
     while(1)

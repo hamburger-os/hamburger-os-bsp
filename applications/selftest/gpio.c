@@ -39,6 +39,9 @@ void selftest_gpio_test(SelftestlUserData *puserdata)
 {
     for (int x = 0; x<6; x++)
     {
+        puserdata->gpio_pin[x][0] = rt_pin_get(puserdata->gpio_devname[x][0]);
+        puserdata->gpio_pin[x][1] = rt_pin_get(puserdata->gpio_devname[x][1]);
+
         rt_pin_mode(puserdata->gpio_pin[x][0], PIN_MODE_OUTPUT);
         rt_pin_write(puserdata->gpio_pin[x][0], PIN_HIGH);
 
@@ -64,5 +67,7 @@ void selftest_gpio_test(SelftestlUserData *puserdata)
         {
             LOG_D("%s pass", error_log2[x]);
         }
+
+        rt_pin_mode(puserdata->gpio_pin[x][1], PIN_MODE_INPUT);
     }
 }
