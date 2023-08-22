@@ -127,6 +127,7 @@ int wavplayer_play(char *uri)
 
     return result;
 }
+RTM_EXPORT(wavplayer_play);
 
 int wavplayer_stop(void)
 {
@@ -144,6 +145,7 @@ int wavplayer_stop(void)
 
     return result;
 }
+RTM_EXPORT(wavplayer_stop);
 
 int wavplayer_pause(void)
 {
@@ -161,6 +163,7 @@ int wavplayer_pause(void)
 
     return result;
 }
+RTM_EXPORT(wavplayer_pause);
 
 int wavplayer_resume(void)
 {
@@ -178,6 +181,7 @@ int wavplayer_resume(void)
 
     return result;
 }
+RTM_EXPORT(wavplayer_resume);
 
 int wavplayer_volume_set(int volume)
 {
@@ -200,21 +204,25 @@ int wavplayer_volume_set(int volume)
     LOG_D("set volume = %d", volume);
     return rt_device_control(player.device, AUDIO_CTL_CONFIGURE, &caps);
 }
+RTM_EXPORT(wavplayer_volume_set);
 
 int wavplayer_volume_get(void)
 {
     return player.volume;
 }
+RTM_EXPORT(wavplayer_volume_get);
 
 int wavplayer_state_get(void)
 {
     return player.state;
 }
+RTM_EXPORT(wavplayer_state_get);
 
 char *wavplayer_uri_get(void)
 {
     return player.uri;
 }
+RTM_EXPORT(wavplayer_uri_get);
 
 static rt_err_t wavplayer_open(struct wavplayer *player)
 {

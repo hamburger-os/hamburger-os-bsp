@@ -88,6 +88,7 @@ void sysinfo_get(struct SysInfoDef *info)
         LOG_E("ds1682 read error!");
     }
 }
+RTM_EXPORT(sysinfo_get);
 
 void sysinfo_show(void)
 {
@@ -108,6 +109,7 @@ void sysinfo_show(void)
     LOG_D("- count       : %d", info.count);
     LOG_D("----------------------------------------------------------------");
 }
+RTM_EXPORT(sysinfo_show);
 
 #ifdef RT_USING_FINSH
 #include <finsh.h>
