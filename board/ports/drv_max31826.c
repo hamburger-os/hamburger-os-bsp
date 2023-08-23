@@ -11,6 +11,7 @@
 
 #ifdef BSP_USING_MAX31826
 #include "sensor.h"
+#include "fal.h"
 
 #define DBG_TAG "max31826"
 #define DBG_LVL DBG_INFO
@@ -28,7 +29,6 @@
 #endif  /* MAX31826_USING_IO */
 
 /* ***************************MAX31826 DEFININS****************************************/
-#define MAX31826_EEPROM_SIZE                (0x80U)             /*  EEPROM容量，单位:字节 */
 
 #define MAX31826_CMD_READ_ROM               ((rt_uint8_t)0x33)
 #define MAX31826_CMD_SKIP_ROM               ((rt_uint8_t)0xCC)
@@ -42,6 +42,7 @@
 #define MAX31826_EEPROM_LINE_LEN            ((rt_uint8_t)8)          /*  EEPROM行长度 */
 #define MAX31826_READ_MEMORY                ((rt_uint8_t)0xF0)       /*  读EEPROM数据 */
 #define MAX31826_PROG_EEPROM                ((rt_uint8_t)0xA5)       /*  编程EEPROM */
+#define MAX31826_CMD_TOKEN ((rt_uint8_t)0xA5)
 
 #define WIRE_RST_TIMEOUT                    (60*480)            /* 复位访问超时阈值 */
 #define WIRE_RD_TIMEOUT                     (60*80)             /* 读访问超时阈值 */
@@ -51,6 +52,19 @@
 #define BD_HW_INF_ADDR                      (0)                 /*  板卡信息起始地址 */
 #define DEV_HW_INF_ADDR                     (0x10)              /*  整机信息起始地址 */
 
+static int fal_max31826_init(void);
+static int fal_max31826_read(long offset, rt_uint8_t *buf, size_t size);
+static int fal_max31826_write(long offset, const rt_uint8_t *buf, size_t size);
+static int fal_max31826_erase(long offset, size_t size);
+
+const struct fal_flash_dev max31826_flash = {
+    .name = "max31826",
+    .addr = MAX31826_START_ADRESS,
+    .len = MAX31826_SIZE_GRANULARITY_TOTAL,
+    .blk_size = MAX31826_BLK_SIZE,
+    .ops = {fal_max31826_init, fal_max31826_read, fal_max31826_write, fal_max31826_erase},
+    .write_gran = 0,
+};
 
 #ifdef MAX31826_USING_I2C_DS2484
 
@@ -97,7 +111,6 @@ static rt_uint8_t crc8_create(rt_uint8_t *data, rt_uint16_t number_of_bytes_in_d
   uint8_t  bit_counter;
   uint8_t  b;
   uint8_t  feedback_bit;
-
 
   crc = CRC8INIT;
   for (loop_count = 0; loop_count != number_of_bytes_in_data; loop_count++)
@@ -198,9 +211,9 @@ static rt_int32_t DEV_MAX31826_Reset1Wire(void)
 
 /*****************************
 函 数 名: DEV_MAX31826_WriteBit
-功    能：MAX31826写入1位
-参    数： -
-返    回： -
+功    能:MAX31826写入1位
+参    数: -
+返    回: -
 ******************************/
 static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
 {
@@ -222,11 +235,9 @@ static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
 
     send_data = sendbit;
     if(ds2484_dev != NULL)
+    if (ds2484_dev->control(ds2484_dev, DS2484_Control_Write_Byte, (void *)&send_data) != RT_EOK)
     {
-      if(ds2484_dev->control(ds2484_dev, DS2484_Control_Write_Byte, (void *)&send_data) != RT_EOK)
-      {
-        LOG_E("MAX31826 write fail.");
-      }
+      LOG_E("MAX31826 write fail.");
     }
     else
     {
@@ -237,9 +248,9 @@ static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
 
 /****************************
 函 数 名: DEV_MAX31826_ReadBit
-功    能：MAX31820读出1位
-参    数： -
-返    回： -
+功    能:MAX31820读出1位
+参    数: -
+返    回: -
 *****************************/
 static rt_uint8_t DEV_MAX31826_ReadBit(void)
 {
@@ -259,7 +270,6 @@ static rt_uint8_t DEV_MAX31826_ReadBit(void)
     rt_hw_us_delay(60);
 
 #endif /* MAX31826_USING_IO */
-
 
 #ifdef MAX31826_USING_I2C_DS2484
     if(ds2484_dev != NULL)
@@ -345,7 +355,7 @@ int Max3182x_ReadTemp(rt_uint16_t * u16p_temp_value)
    *             6     Count_Remain
    *             7     Count_per_C
    *             8     CRC
-  */
+   */
   for(i = 0; i < 9; i++)
   { /* Scratchpad Memory */
     u_DS_mem.a_data[i] = DEV_MAX31826_ReadBit();
@@ -363,13 +373,13 @@ int Max3182x_ReadTemp(rt_uint16_t * u16p_temp_value)
     u16_Temp <<= 8;
     u16_Temp |= (uint16_t)u8_tempL;
   /*
-   *             Temperature calculation for MAX31826 (Family Code 0x28):
-   *             =======================================================
-   *                      bit7   bit6   bit5   bit4   bit3   bit2   bit1   bit0
-   *             LSB      2^3    2^2    2^1    2^0    2^-1   2^-2   2^-3   2^-4
-   *                      bit15  bit14  bit13  bit12  bit3   bit2   bit1   bit0
-   *             MSB      S      S      S      S      S      2^6    2^5    2^4
-  */
+     *             Temperature calculation for MAX31826 (Family Code 0x28):
+     *             =======================================================
+     *                      bit7   bit6   bit5   bit4   bit3   bit2   bit1   bit0
+     *             LSB      2^3    2^2    2^1    2^0    2^-1   2^-2   2^-3   2^-4
+     *                      bit15  bit14  bit13  bit12  bit3   bit2   bit1   bit0
+     *             MSB      S      S      S      S      S      2^6    2^5    2^4
+     */
     if((u8_tempH & 0x80) != 0x00)
     {/* 温度 为负值,取出温度值 */
       u16_Temp = (~(u16_Temp - 1)) & 0xFFF;
@@ -462,7 +472,7 @@ static void DEV_MAX31826_Write1Wire(rt_uint8_t data)
     }
 }
 
-/* crc8计算 ，多项式= x8+x6+x4+x3++x2+x1,0x5E,高位在前*/
+/* crc8计算 ,多项式= x8+x6+x4+x3++x2+x1,0x5E,高位在前*/
 static rt_uint8_t crc8_create(const rt_uint8_t *p_dat_u8, rt_uint16_t len_u16, rt_uint8_t crc_init_val_u8)
 {
     static const rt_uint8_t st_a_crctab8[256] =
@@ -497,7 +507,7 @@ static rt_uint8_t crc8_create(const rt_uint8_t *p_dat_u8, rt_uint16_t len_u16, r
 /****************************************
 功  能:判断max31826是否存在,然后在读取温度值
 参  数:无
-返  回:成功:1   失败：返回其他值
+返  回:成功:1   失败:返回其他值
 *******************************************/
 static rt_uint8_t DEV_MAX31826_ReadAck(void)
 {
@@ -505,7 +515,7 @@ static rt_uint8_t DEV_MAX31826_ReadAck(void)
 
     OUT_DQ();
     CLR_DQ();
-    rt_hw_us_delay(10); /* 短暂延时后拉高，设置为输入，采集温度传感器输出的电平 */
+    rt_hw_us_delay(10); /* 短暂延时后拉高,设置为输入,采集温度传感器输出的电平 */
     SET_DQ();
 
     IN_DQ();
@@ -522,10 +532,9 @@ static rt_uint8_t DEV_MAX31826_ReadAck(void)
     return readbit;
 }
 
-
 /*
  * @brief 读芯片ID
- * @param *id - 存放芯片ID的数据缓冲区指针。
+ * @param *id - 存放芯片ID的数据缓冲区指针.
  */
 static rt_int32_t DEV_MAX31826_ReadID(rt_uint8_t *bufferid)
 {
@@ -533,7 +542,7 @@ static rt_int32_t DEV_MAX31826_ReadID(rt_uint8_t *bufferid)
     rt_uint8_t p_id[8] = {0};
     rt_uint8_t i, *p;
 
-    /* 发送命令 */
+    /* 读ID */
     if(DEV_MAX31826_Reset1Wire())
     {
         DEV_MAX31826_Write1Wire(MAX31826_CMD_READ_ROM);
@@ -546,7 +555,7 @@ static rt_int32_t DEV_MAX31826_ReadID(rt_uint8_t *bufferid)
             *bufferid = *p;
             p++;
             bufferid++;
-            rt_hw_us_delay(100);//此处增加延时后，则可读取成功
+            rt_hw_us_delay(100);//此处增加延时后,则可读取成功
         }
 
         /* 检查结果 */
@@ -627,7 +636,7 @@ static rt_size_t _max31826_polling_get_data(struct rt_sensor_device *sensor, str
         float f32Max31826Tmp = 0.0f;
 
         s32Tmp = DEV_MAX31826_ReadTemp();
-        f32Max31826Tmp = (0.0625f * s32Tmp);//单位：℃
+        f32Max31826Tmp = (0.0625f * s32Tmp);//单位:℃
 
         temperature_x100 = f32Max31826Tmp * 100;
         LOG_D("temp : %d", temperature_x100);
@@ -672,54 +681,267 @@ static rt_err_t max31826_control(struct rt_sensor_device *sensor, int cmd, void 
     return ret;
 }
 
-static struct rt_sensor_ops sensor_ops =
+/*******************************************************
+ *
+ * @brief  向温度传感器内部存储区域写入8个字节数据
+ *
+ * @param  offset: 内部存储区的起始偏移
+ *         buf: 写缓冲区.
+ * @retval 0:成功 -1:失败
+ *
+ *******************************************************/
+int max31826_write_8bytes(rt_uint8_t offset, rt_uint8_t *buf)
 {
-    max31826_fetch_data,
-    max31826_control
-};
+  int e_return = -1;
+  rt_uint8_t i;
+  rt_uint8_t access_buffer[MAX31826_BLK_SIZE+3] = {0};
+
+  /* 将要写入的字节放到数组中  */
+  access_buffer[0] = MAX31826_WRITE_SCRATCHPAD2;
+  access_buffer[1] = offset;
+  rt_memcpy((void *)&access_buffer[2], (void *)buf, (uint16_t)8);
+
+  /* 复位传感器,按照时序进行操作 */
+  DEV_MAX31826_Reset1Wire();
+  DEV_MAX31826_Write1Wire(MAX31826_CMD_SKIP_ROM);
+
+  for (i = (rt_uint8_t)0; i < (rt_uint8_t)MAX31826_BLK_SIZE+3-1; i++)
+  {
+    DEV_MAX31826_Write1Wire(access_buffer[i]);
+  }
+  /* 第十一个字节是传感器输出刚写入的10个字节的CRC */
+  access_buffer[MAX31826_BLK_SIZE+3-1] = DEV_MAX31826_Read1Wire();
+
+  /* 校验序列 */
+  if (crc8_create(access_buffer, (uint16_t)MAX31826_BLK_SIZE+3, 0) == (rt_uint8_t)0)
+  {
+    /* 发送写入命令 */
+    DEV_MAX31826_Reset1Wire();
+    DEV_MAX31826_Write1Wire(MAX31826_CMD_SKIP_ROM);
+    DEV_MAX31826_Write1Wire(MAX31826_CMD_COPY_SCRATCHPAD2);
+    DEV_MAX31826_Write1Wire(MAX31826_CMD_TOKEN);
+    e_return = 0;
+  }
+  else
+  {
+    e_return = -1;
+  }
+  rt_thread_delay(20);/* 20ms */
+  return (e_return);
+}
+
+static int fal_max31826_init(void)
+{
+    LOG_I("check succeed %d byte", max31826_flash.len);
+    /* do nothing */
+    return RT_EOK;
+}
+static int fal_max31826_erase(long offset, size_t size)
+{
+    /* do nothing */
+    return RT_EOK;
+}
+
+
+/*******************************************************
+ *
+ * @brief  读取温度传感器内部存储区
+ *
+ * @param  offset:内部存储区的起始偏移;
+ *         len:读取长度;
+ *         buf:读取到数据存储的缓冲区
+ * @retval 0:成功 -1:失败
+ *
+ *******************************************************/
+int fal_max31826_read(long offset,  rt_uint8_t *buf, size_t len)
+{
+  rt_uint8_t i;
+  printf("fal_max31826_read offset:%d len:%d\n",offset,len );
+
+//  rt_thread_delay(20);
+  /* 复位传感器,按照时序进行操作 */
+  DEV_MAX31826_Reset1Wire();
+  DEV_MAX31826_Write1Wire(MAX31826_CMD_SKIP_ROM);
+  DEV_MAX31826_Write1Wire(MAX31826_READ_MEMORY);
+  DEV_MAX31826_Write1Wire((rt_uint8_t)offset);
+
+  for (i = (rt_uint8_t)0; i < len; i++)
+  {
+    buf[i] = DEV_MAX31826_Read1Wire();
+  }
+//  rt_thread_delay(20);
+  return 0;
+}
+/*******************************************************
+ *
+ * @brief  向温度传感器内部存储区域写入指定长度数据
+ *
+ * @param  offset:内部存储区的起始偏移;
+ *         len:缓冲区长度;
+ *         buf:写缓冲区起始地址
+ * @retval 0:成功 -1:失败
+ *
+ *******************************************************/
+int fal_max31826_write(long offset, const rt_uint8_t *buf, size_t len)
+{
+  rt_uint8_t a_temp_buf[MAX31826_BLK_SIZE];
+  int e_return = -1;
+  rt_uint8_t remain_len, write_len, offset_tmp, error_times = (rt_uint8_t)0;
+
+
+  printf("fal_max31826_write offset:%d len:%d\n",offset,len );
+  /* 起始地址是8的整数倍   */
+  if ((offset % (rt_uint8_t)MAX31826_BLK_SIZE) != (rt_uint8_t)0)
+  {
+    return -1;
+  }
+
+  remain_len = len;
+  offset_tmp = (rt_uint8_t)0;
+  /* 关中断  */
+  while (remain_len > (rt_uint8_t)0)
+  {
+    /* 每次拷贝8个字节 */
+    memset(a_temp_buf, (rt_uint8_t)0, (uint16_t)8);
+    if (remain_len > (rt_uint8_t)MAX31826_BLK_SIZE)
+    {
+      write_len = (rt_uint8_t)MAX31826_BLK_SIZE;
+      memcpy((void *)a_temp_buf, (void *)&buf[offset_tmp], (uint16_t)MAX31826_BLK_SIZE);
+    }
+    else
+    {
+      /* 不足8个字节的补零 */
+      write_len = remain_len;
+      memcpy((void *)a_temp_buf, (void *)&buf[offset_tmp], (uint16_t)write_len);
+    }
+
+    if (max31826_write_8bytes((rt_uint8_t)(offset + offset_tmp), a_temp_buf) == 0/*ok*/)
+    {
+      remain_len = (rt_uint8_t)(remain_len - write_len);
+      offset_tmp = (rt_uint8_t)(offset_tmp + write_len);
+      error_times = (rt_uint8_t)0;
+      e_return = 0;
+      rt_thread_delay(20);
+    }
+    else
+    {
+      error_times++;
+      /* 连续3次写不成功认为失败 */
+      if (error_times > (rt_uint8_t)3)
+      {
+        e_return = -1;
+        break;
+      }
+      else
+      {
+        /* 空 */
+      }
+    }
+  }
+  /* 开中断  */
+  return (e_return);
+}
+
+uint8_t TestTsensor(void)
+{
+#define W_BUFF 128
+  uint8_t a_write_buf[W_BUFF];
+  uint8_t a_read_buf[W_BUFF];
+  uint8_t i, ret = 0;
+  for (i = 0; i < W_BUFF; i++)
+  {
+    a_write_buf[i] = i;
+  }
+  printf("writeTempEERom:\n");
+  for (i = 0; i < W_BUFF; i++)
+  {
+    printf("%x ", a_write_buf[i]);
+  }
+  printf("\n");
+  if (fal_max31826_write((uint8_t)0, a_write_buf, (uint8_t)W_BUFF ) == 0)
+  {
+    for (i = 0; i < W_BUFF; i++)
+    {
+      a_read_buf[i] = 0;
+    }
+    if (fal_max31826_read(00, a_read_buf, W_BUFF ) == 0)
+    {
+      printf("ReadTempEERom:\n");
+      for (i = 0; i < W_BUFF; i++)
+      {
+        printf("%x ", a_read_buf[i]);
+      }
+      printf("\n");
+      if (memcmp(a_write_buf, a_read_buf, W_BUFF) != 0)
+      {
+        ret = 1;
+      }
+    }
+    else
+    {
+      ret = 2;
+    }
+  }
+  else
+  {
+    ret = 3;
+  }
+
+  return ret;
+}
+static struct rt_sensor_ops sensor_ops =
+    {
+        max31826_fetch_data,
+        max31826_control};
 
 static int rt_hw_max31826_init()
 {
-    rt_int8_t result;
-    rt_sensor_t sensor_temp = RT_NULL;
+  rt_int8_t result;
+  rt_sensor_t sensor_temp = RT_NULL;
 
 #ifdef MAX31826_USING_I2C_DS2484
-    if(rt_hw_ds2484_init() != RT_EOK)
-    {
-      return -RT_ERROR;
-    }
-    if(max31826_init_by_ds2484() != RT_EOK)
-    {
-      LOG_E("max31826_init_by_ds2484 fail");
-      return -RT_ERROR;
-    }
+  if (rt_hw_ds2484_init() != RT_EOK)
+  {
+    return -RT_ERROR;
+  }
+  if (max31826_init_by_ds2484() != RT_EOK)
+  {
+    LOG_E("max31826_init_by_ds2484 fail");
+    return -RT_ERROR;
+  }
 #endif /* MAX31826_USING_I2C_DS2484 */
 
-    /* temperature sensor register */
-    sensor_temp = rt_calloc(1, sizeof(struct rt_sensor_device));
-    if (sensor_temp == RT_NULL)
-        return -RT_ERROR;
+  /* temperature sensor register */
+  sensor_temp = rt_calloc(1, sizeof(struct rt_sensor_device));
+  if (sensor_temp == RT_NULL)
+    return -RT_ERROR;
 
-    sensor_temp->info.type       = RT_SENSOR_CLASS_TEMP;
-    sensor_temp->info.vendor     = RT_SENSOR_VENDOR_MAXIM;
-    sensor_temp->info.model      = "max31826";
-    sensor_temp->info.unit       = RT_SENSOR_UNIT_DCELSIUS;
-    sensor_temp->info.intf_type  = RT_SENSOR_INTF_ONEWIRE;
-    sensor_temp->info.range_max  = 125;
-    sensor_temp->info.range_min  = -55;
-    sensor_temp->info.period_min = 150;
+  sensor_temp->info.type = RT_SENSOR_CLASS_TEMP;
+  sensor_temp->info.vendor = RT_SENSOR_VENDOR_MAXIM;
+  sensor_temp->info.model = "max31826";
+  sensor_temp->info.unit = RT_SENSOR_UNIT_DCELSIUS;
+  sensor_temp->info.intf_type = RT_SENSOR_INTF_ONEWIRE;
+  sensor_temp->info.range_max = 125;
+  sensor_temp->info.range_min = -55;
+  sensor_temp->info.period_min = 150;
 
-    sensor_temp->ops = &sensor_ops;
+  sensor_temp->ops = &sensor_ops;
 
-    result = rt_hw_sensor_register(sensor_temp, "max31826", RT_DEVICE_FLAG_RDONLY, RT_NULL);
-    if (result != RT_EOK)
-    {
-        LOG_E("device register err code: %d", result);
-        goto __exit;
-    }
+  result = rt_hw_sensor_register(sensor_temp, "max31826", RT_DEVICE_FLAG_RDONLY, RT_NULL);
+  if (result != RT_EOK)
+  {
+    LOG_E("device register err code: %d", result);
+    goto __exit;
+  }
 
 #ifdef MAX31826_USING_IO
     DEV_MAX31826_ReadTemp();
+    rt_thread_delay(20);
+    TestTsensor();
+    TestTsensor();
+    TestTsensor();
+    TestTsensor();
+    TestTsensor();
 #endif /* MAX31826_USING_IO */
     return RT_EOK;
 

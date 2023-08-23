@@ -3220,33 +3220,41 @@ menu "Onboard Peripheral Drivers"
         default n
         
         if BSP_USING_MAX31826
-          choice
-              prompt "Select io or iic mode"
-              default MAX31826_USING_IO
-              
-              config MAX31826_USING_I2C_DS2484
-                  bool "iic mode(ds2484)"
-                  
-              config MAX31826_USING_IO
-                  bool "io mode"
+			choice
+				prompt "Select io or iic mode"
+				default MAX31826_USING_IO
+			  
+				config MAX31826_USING_I2C_DS2484
+					bool "iic mode(ds2484)"
+			      
+				config MAX31826_USING_IO
+					bool "io mode"
 	        endchoice
 	        
-          if MAX31826_USING_IO
-            config MAX31826_GPIO
-            string "Set the GPIO of the sensor pin, default: PI.8"
-            default "PI.8"
-          endif
+	        config MAX31826_SIZE_GRANULARITY_TOTAL
+                int "Set storage space size, default: (128)"
+                default (128)
+            
+            config MAX31826_BLK_SIZE
+                int "Set the memory block size, default: (8)"
+                default (8)
+	        
+		if MAX31826_USING_IO
+			config MAX31826_GPIO
+				string "Set the GPIO of the sensor pin, default: PI.8"
+				default "PI.8"
+		endif
           
-          if MAX31826_USING_I2C_DS2484
-            config DS2484_I2C_DEV
-              string "Set the i2c device name used, default: i2c2"
-              default "i2c2"
-              
-            config DS2484_I2C_ADD
-              hex "Set the i2c device address, default: 0x18"
-              default (0x18)
-          endif
-        endif
+		if MAX31826_USING_I2C_DS2484
+			config DS2484_I2C_DEV
+				string "Set the i2c device name used, default: i2c2"
+				default "i2c2"
+			  
+			config DS2484_I2C_ADD
+				hex "Set the i2c device address, default: 0x18"
+				default (0x18)
+		endif
+	endif
         
     menuconfig BSP_USING_DS1682
         bool "Enable integrated elapsed-time recorder (DS1682S+)"
