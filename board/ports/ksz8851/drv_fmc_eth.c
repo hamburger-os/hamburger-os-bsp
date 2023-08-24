@@ -13,7 +13,10 @@
 #include <drv_config.h>
 #include "drv_fmc_eth.h"
 #include "ksz8851.h"
+
+#ifdef BSP_USE_KVDB_NET_IF
 #include "flashdb_port.h"
+#endif
 
 #include <string.h>
 
@@ -324,7 +327,7 @@ static rt_size_t fmc_eth_write(rt_device_t dev, rt_off_t pos, const void *buffer
     struct rt_fmc_eth_port *fmc_eth = dev->user_data;
     rt_uint16_t tx_size = 0;
 
-    memset(&fmc_eth->link_layer_buf.tx_buf, 0, sizeof(S_LEP_BUF));
+    rt_memset(&fmc_eth->link_layer_buf.tx_buf, 0, sizeof(S_LEP_BUF));
     if(size > LEP_MAC_PKT_MAX_LEN)
     {
         tx_size = LEP_MAC_PKT_MAX_LEN;
@@ -531,6 +534,7 @@ static int rt_fmc_eth_init(void)
 }
 INIT_DEVICE_EXPORT(rt_fmc_eth_init);
 
+#ifdef BSP_USE_KVDB_NET_IF
 /* Config the lwip device */
 char *ip_key[] = {"e0_ip", "e1_ip", "e2_ip"};
 char *gw_key[] = {"e0_gw", "e1_gw", "e2_gw"};
@@ -560,6 +564,7 @@ static int rt_netdev_set_if_init(void)
     return state;
 }
 INIT_ENV_EXPORT(rt_netdev_set_if_init);
+#endif
 
 #include <netdev.h>       /* 当需要网卡操作是，需要包含这两个头文件 */
 
