@@ -37,6 +37,7 @@ static char * error_log2[] = {
 
 void selftest_gpio_test(SelftestlUserData *puserdata)
 {
+    uint8_t is_error = 0;
     for (int x = 0; x<6; x++)
     {
         puserdata->gpio_pin[x][0] = rt_pin_get(puserdata->gpio_devname[x][0]);
@@ -49,10 +50,7 @@ void selftest_gpio_test(SelftestlUserData *puserdata)
         if (rt_pin_read(puserdata->gpio_pin[x][1]) != PIN_HIGH)
         {
             LOG_E("%s error!", error_log1[x]);
-        }
-        else
-        {
-            LOG_D("%s pass", error_log1[x]);
+            is_error++;
         }
 
         rt_pin_mode(puserdata->gpio_pin[x][1], PIN_MODE_OUTPUT);
@@ -62,12 +60,13 @@ void selftest_gpio_test(SelftestlUserData *puserdata)
         if (rt_pin_read(puserdata->gpio_pin[x][0]) != PIN_HIGH)
         {
             LOG_E("%s error!", error_log2[x]);
-        }
-        else
-        {
-            LOG_D("%s pass", error_log2[x]);
+            is_error++;
         }
 
         rt_pin_mode(puserdata->gpio_pin[x][1], PIN_MODE_INPUT);
+    }
+    if (is_error == 0)
+    {
+        LOG_D("gpio        pass");
     }
 }

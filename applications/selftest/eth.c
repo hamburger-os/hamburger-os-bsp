@@ -33,8 +33,8 @@ union LinkLayerPackDef
 };
 
 static char * error_log[] = {
-    "ETH1      ----> ETH2     ",
-    "ETH2      ----> ETH1     ",
+    "ETH1       ----> ETH2      ",
+    "ETH2       ----> ETH1      ",
 };
 
 void selftest_eth_test(SelftestlUserData *puserdata)

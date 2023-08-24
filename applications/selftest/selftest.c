@@ -13,7 +13,7 @@
 #include "selftest.h"
 #include "sysinfo.h"
 
-#define DBG_TAG "selftest"
+#define DBG_TAG "test"
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
@@ -66,9 +66,12 @@ void lv_user_gui_init(void)
 
 static void selftest_thread_entry(void* parameter)
 {
-    SelftestlUserData *puserdata = (SelftestlUserData *)parameter;
-    rt_thread_delay(5000);
+    while (rt_tick_get() < 10000)
+    {
+        rt_thread_delay(10);
+    }
 
+    SelftestlUserData *puserdata = (SelftestlUserData *)parameter;
     LOG_I("startup...");
 
     //系统信息
@@ -77,19 +80,19 @@ static void selftest_thread_entry(void* parameter)
     sysinfo_get(&info);
     if (info.chip_id[0] != 0 && info.chip_id[0] != 0xff)
     {
-        LOG_D("max31826 pass");
+        LOG_D("max31826    pass");
     }
     else
     {
-        LOG_E("max31826 error!");
+        LOG_E("max31826    error!");
     }
     if (info.times != 0)
     {
-        LOG_D("ds1682   pass");
+        LOG_D("ds1682      pass");
     }
     else
     {
-        LOG_E("ds1682   error!");
+        LOG_E("ds1682      error!");
     }
     //gpio
     selftest_gpio_test(puserdata);

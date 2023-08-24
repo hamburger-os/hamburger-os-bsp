@@ -18,8 +18,8 @@
 #include <rtdbg.h>
 
 static char * error_log[] = {
-    "CAN1      ----> CAN2     ",
-    "CAN2      ----> CAN1     ",
+    "CAN1       ----> CAN2      ",
+    "CAN2       ----> CAN1      ",
 };
 
 void selftest_can_test(SelftestlUserData *puserdata)

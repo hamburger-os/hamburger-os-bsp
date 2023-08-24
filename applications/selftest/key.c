@@ -36,7 +36,7 @@ void selftest_key_test(SelftestlUserData *puserdata)
 {
     puserdata->key_pin = rt_pin_get(puserdata->key_devname);
 
-    LOG_D("pwm voice run...");
+    LOG_I("pwm voice run...");
     rt_pin_mode(puserdata->key_pin, PIN_MODE_OUTPUT);
     key_hz_test(puserdata->key_pin, 262, 1);
     key_hz_test(puserdata->key_pin, 294, 1);
@@ -46,5 +46,5 @@ void selftest_key_test(SelftestlUserData *puserdata)
     key_hz_test(puserdata->key_pin, 440, 1);
     key_hz_test(puserdata->key_pin, 494, 1);
     rt_pin_mode(puserdata->key_pin, PIN_MODE_INPUT);
-    LOG_D("pwm voice end");
+    LOG_I("pwm voice end");
 }
