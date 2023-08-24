@@ -192,6 +192,41 @@ extern "C" {
 #endif /* SPI5_RX_DMA_CONFIG */
 #endif /* BSP_SPI5_RX_USING_DMA */
 
+#ifdef BSP_USING_SPI6
+#ifndef SPI6_BUS_CONFIG
+#define SPI6_BUS_CONFIG                             \
+    {                                               \
+        .Instance = SPI6,                           \
+        .bus_name = "spi6",                         \
+        .irq_type = SPI6_IRQn,                      \
+    }
+#endif /* SPI6_BUS_CONFIG */
+#endif /* BSP_USING_SPI6 */
+
+#ifdef BSP_SPI6_TX_USING_DMA
+#ifndef SPI6_TX_DMA_CONFIG
+#define SPI6_TX_DMA_CONFIG                          \
+    {                                               \
+        .dma_rcc = SPI6_TX_DMA_RCC,                 \
+        .Instance = SPI6_TX_DMA_INSTANCE,           \
+        .dma_irq = SPI6_TX_DMA_IRQ,                 \
+        .request = DMA_REQUEST_SPI6_TX              \
+    }
+#endif /* SPI6_TX_DMA_CONFIG */
+#endif /* BSP_SPI6_TX_USING_DMA */
+
+#ifdef BSP_SPI6_RX_USING_DMA
+#ifndef SPI6_RX_DMA_CONFIG
+#define SPI6_RX_DMA_CONFIG                          \
+    {                                               \
+        .dma_rcc = SPI6_RX_DMA_RCC,                 \
+        .Instance = SPI6_RX_DMA_INSTANCE,           \
+        .dma_irq = SPI6_RX_DMA_IRQ,                 \
+        .request = DMA_REQUEST_SPI6_RX              \
+    }
+#endif /* SPI6_RX_DMA_CONFIG */
+#endif /* BSP_SPI6_RX_USING_DMA */
+
 #ifdef __cplusplus
 }
 #endif
