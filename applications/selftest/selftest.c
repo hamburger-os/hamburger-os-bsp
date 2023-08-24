@@ -73,6 +73,24 @@ static void selftest_thread_entry(void* parameter)
 
     //系统信息
     sysinfo_show();
+    struct SysInfoDef info = {0};
+    sysinfo_get(&info);
+    if (info.chip_id[0] != 0 && info.chip_id[0] != 0xff)
+    {
+        LOG_D("max31826 pass");
+    }
+    else
+    {
+        LOG_E("max31826 error!");
+    }
+    if (info.times != 0)
+    {
+        LOG_D("ds1682 pass");
+    }
+    else
+    {
+        LOG_E("ds1682 error!");
+    }
     //gpio
     selftest_gpio_test(puserdata);
     //key

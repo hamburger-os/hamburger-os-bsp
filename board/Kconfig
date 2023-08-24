@@ -3239,11 +3239,11 @@ menu "Onboard Peripheral Drivers"
         
         if BSP_USING_MAX31826
 			choice
-				prompt "Select io or iic mode"
+				prompt "Select mode"
 				default MAX31826_USING_IO
 			  
 				config MAX31826_USING_I2C_DS2484
-					bool "iic mode(ds2484)"
+					bool "i2c mode(ds2484)"
 			      
 				config MAX31826_USING_IO
 					bool "io mode"
