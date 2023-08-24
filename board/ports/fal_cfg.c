@@ -48,6 +48,10 @@
     extern const struct fal_flash_dev hg24cxx_eeprom;
 #endif
 
+#ifdef BSP_USING_MAX31826
+    extern const struct fal_flash_dev max31826_flash;
+#endif
+
 const struct fal_flash_dev * const device_table[] =
 {
 #ifdef BSP_USING_ON_CHIP_FLASH
@@ -87,6 +91,10 @@ const struct fal_flash_dev * const device_table[] =
 
 #ifdef BSP_USING_EEPROM_24Cxx
     &hg24cxx_eeprom,
+#endif
+
+#ifdef BSP_USING_MAX31826
+    &max31826_flash,
 #endif
 };
 const size_t device_table_len = sizeof(device_table) / sizeof(struct fal_flash_dev *);
@@ -171,6 +179,10 @@ const struct fal_partition partition_table_def[] =
 
 #ifdef BSP_USING_EEPROM_24Cxx
     {FAL_PART_MAGIC_WORD,  BLK_EEPROM, EEPROM_24Cxx_DEV_NAME,                             0, EEPROM_24Cxx_SIZE_GRANULARITY_TOTAL, 0},
+#endif
+
+#ifdef BSP_USING_MAX31826
+    {FAL_PART_MAGIC_WORD,BLK_MAX31826,     MAX31826_DEV_NAME,                             0,     MAX31826_SIZE_GRANULARITY_TOTAL, 0},
 #endif
 };
 const size_t partition_table_def_len = sizeof(partition_table_def) / sizeof(struct fal_partition);

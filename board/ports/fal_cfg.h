@@ -115,6 +115,13 @@ extern "C" {
 #define BLK_EEPROM                     "eeprom"
 #endif
 
+#ifdef BSP_USING_MAX31826
+//max31826定义,无需修改
+#define MAX31826_START_ADRESS           (0)
+#define MAX31826_DEV_NAME               "max31826"
+#define BLK_MAX31826                    "max31826"
+#endif
+
 #ifdef BSP_USING_SDCARD
 //sdcard定义,无需修改
 #define BLK_SDCARD                      "sdcard"
