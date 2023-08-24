@@ -131,6 +131,10 @@ static rt_int32_t DEV_MAX31826_Reset1Wire(void)
     rt_int32_t ret = 0xFF;
 
 #ifdef MAX31826_USING_IO
+    //关中断
+    rt_base_t level;
+    level = rt_hw_interrupt_disable();
+
     OUT_DQ();
     CLR_DQ();
     rt_hw_us_delay(750);
@@ -143,6 +147,9 @@ static rt_int32_t DEV_MAX31826_Reset1Wire(void)
     ret = 1;
     else
     ret = 0;
+
+    //开中断
+    rt_hw_interrupt_enable(level);
 #endif  /* MAX31826_USING_IO */
 
 #ifdef MAX31826_USING_I2C_DS2484
@@ -177,6 +184,10 @@ static rt_int32_t DEV_MAX31826_Reset1Wire(void)
 static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
 {
 #ifdef MAX31826_USING_IO
+    //关中断
+    rt_base_t level;
+    level = rt_hw_interrupt_disable();
+
     OUT_DQ();
     CLR_DQ();
     rt_hw_us_delay(2);
@@ -187,6 +198,9 @@ static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
     rt_hw_us_delay(55);
     SET_DQ();
     rt_hw_us_delay(15);
+
+    //开中断
+    rt_hw_interrupt_enable(level);
 #endif /* MAX31826_USING_IO */
 
 #ifdef MAX31826_USING_I2C_DS2484
@@ -218,6 +232,10 @@ static rt_uint8_t DEV_MAX31826_ReadBit(void)
     rt_uint8_t readbit = 0;
 
 #ifdef MAX31826_USING_IO
+    //关中断
+    rt_base_t level;
+    level = rt_hw_interrupt_disable();
+
     OUT_DQ();
     CLR_DQ();
     rt_hw_us_delay(8);
@@ -228,6 +246,9 @@ static rt_uint8_t DEV_MAX31826_ReadBit(void)
     rt_hw_us_delay(2);
     readbit = GET_DQ();
     rt_hw_us_delay(60);
+
+    //开中断
+    rt_hw_interrupt_enable(level);
 #endif /* MAX31826_USING_IO */
 
 #ifdef MAX31826_USING_I2C_DS2484
@@ -607,7 +628,7 @@ static rt_err_t max31826_control(struct rt_sensor_device *sensor, int cmd, void 
         break;
     }
 
-    LOG_D("max31826_control %d 0x%x", ret, cmd);
+    LOG_D("control %d 0x%x", ret, cmd);
     return ret;
 }
 
@@ -676,40 +697,62 @@ static int fal_max31826_init(void)
     }
 }
 
-int fal_max31826_read(long offset, rt_uint8_t *buf, size_t len)
+int fal_max31826_read(long offset, rt_uint8_t *buf, size_t size)
 {
-    rt_uint8_t i;
-    rt_kprintf("fal_max31826_read offset:%d len:%d\n", offset, len);
+    uint32_t addr = max31826_flash.addr + offset;
+    if (addr + size > max31826_flash.addr + max31826_flash.len)
+    {
+        LOG_E("read outrange flash size! addr is (0x%p)", (void*)(addr + size));
+        return -RT_EINVAL;
+    }
+    if (size < 1)
+    {
+//        LOG_W("read size %d! addr is (0x%p)", size, (void*)(addr + size));
+        return 0;
+    }
 
     /* 复位传感器,按照时序进行操作 */
     DEV_MAX31826_Reset1Wire();
     DEV_MAX31826_Write1Wire(MAX31826_CMD_SKIP_ROM);
     DEV_MAX31826_Write1Wire(MAX31826_READ_MEMORY);
-    DEV_MAX31826_Write1Wire((rt_uint8_t) offset);
+    DEV_MAX31826_Write1Wire((rt_uint8_t) addr);
 
-    for (i = (rt_uint8_t) 0; i < len; i++)
+    for (uint8_t i = 0; i < size; i++)
     {
         buf[i] = DEV_MAX31826_Read1Wire();
     }
-    return 0;
+
+    LOG_HEX("rd", 16, buf, size);
+    LOG_D("read (0x%p) %d", (void*)(addr), size);
+    return size;
 }
 
-int fal_max31826_write(long offset, const rt_uint8_t *buf, size_t len)
+int fal_max31826_write(long offset, const rt_uint8_t *buf, size_t size)
 {
+    uint32_t addr = max31826_flash.addr + offset;
+    if (addr + size > max31826_flash.addr + max31826_flash.len)
+    {
+        LOG_E("write outrange flash size! addr is (0x%p)", (void*)(addr + size));
+        return -RT_EINVAL;
+    }
+    if (addr % 8 != 0)
+    {
+        LOG_E("write addr must be 8-byte alignment (0x%p) %d %d", (void*)(addr), addr % 8, size);
+        return -RT_EINVAL;
+    }
+    if (size < 1)
+    {
+//        LOG_W("write size %d! addr is (0x%p)", size, (void*)(addr + size));
+        return 0;
+    }
+
     rt_uint8_t a_temp_buf[MAX31826_BLK_SIZE];
     int e_return = -1;
     rt_uint8_t remain_len, write_len, offset_tmp, error_times = (rt_uint8_t) 0;
 
-    rt_kprintf("fal_max31826_write offset:%d len:%d\n", offset, len);
-    /* 起始地址是8的整数倍   */
-    if ((offset % (rt_uint8_t) MAX31826_BLK_SIZE) != (rt_uint8_t) 0)
-    {
-        return -1;
-    }
-
-    remain_len = len;
+    remain_len = size;
     offset_tmp = (rt_uint8_t) 0;
-    /* 关中断  */
+
     while (remain_len > (rt_uint8_t) 0)
     {
         /* 每次拷贝8个字节 */
@@ -726,7 +769,7 @@ int fal_max31826_write(long offset, const rt_uint8_t *buf, size_t len)
             rt_memcpy((void *) a_temp_buf, (void *) &buf[offset_tmp], (uint16_t) write_len);
         }
 
-        if (max31826_write_8bytes((rt_uint8_t) (offset + offset_tmp), a_temp_buf) == 0/*ok*/)
+        if (max31826_write_8bytes((rt_uint8_t) (addr + offset_tmp), a_temp_buf) == 0/*ok*/)
         {
             remain_len = (rt_uint8_t) (remain_len - write_len);
             offset_tmp = (rt_uint8_t) (offset_tmp + write_len);
@@ -749,14 +792,33 @@ int fal_max31826_write(long offset, const rt_uint8_t *buf, size_t len)
             }
         }
     }
-    /* 开中断  */
-    return (e_return);
+
+    LOG_HEX("wr", 16, (rt_uint8_t *)buf, size);
+    LOG_D("write (0x%p) %d", (void*)(addr), size);
+    if (e_return == 0)
+    {
+        return size;
+    }
+    return 0;
 }
 
 static int fal_max31826_erase(long offset, size_t size)
 {
-    /* do nothing */
-    return RT_EOK;
+    rt_uint32_t addr = max31826_flash.addr + offset;
+
+    if ((addr + size) > max31826_flash.addr + max31826_flash.len)
+    {
+        LOG_E("erase outrange flash size! addr is (0x%p)", (void*)(addr + size));
+        return -RT_EINVAL;
+    }
+
+    if (size < 1)
+    {
+//        LOG_W("erase size %d! addr is (0x%p)", size, (void*)(addr + size));
+        return 0;
+    }
+
+    return size;
 }
 
 static struct rt_sensor_ops sensor_ops = { max31826_fetch_data, max31826_control };

@@ -85,11 +85,11 @@ static void selftest_thread_entry(void* parameter)
     }
     if (info.times != 0)
     {
-        LOG_D("ds1682 pass");
+        LOG_D("ds1682   pass");
     }
     else
     {
-        LOG_E("ds1682 error!");
+        LOG_E("ds1682   error!");
     }
     //gpio
     selftest_gpio_test(puserdata);
