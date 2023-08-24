@@ -28,8 +28,8 @@ SelftestlUserData selftest_userdata = {
     .key_devname = BSP_GPIO_TABLE_PWM3,
     .fs_path = {
         "/mnt/fram",
-        "/mnt/spiflash",
-        "/mnt/at45db321e",
+        "/mnt/spinor64",
+        "/mnt/spinor4",
         "/mnt/nor",
         "/mnt/emmc",
         "/mnt/udisk/ud0p0"},
@@ -67,7 +67,7 @@ void lv_user_gui_init(void)
 static void selftest_thread_entry(void* parameter)
 {
     SelftestlUserData *puserdata = (SelftestlUserData *)parameter;
-    rt_thread_delay(4000);
+    rt_thread_delay(5000);
 
     LOG_I("startup...");
 
@@ -93,10 +93,6 @@ static void selftest_thread_entry(void* parameter)
     selftest_tcpip_test(puserdata);
 
     LOG_I("end.");
-    while(1)
-    {
-        rt_thread_delay(1000);
-    }
 }
 
 static int selftest_init(void)
@@ -106,7 +102,7 @@ static int selftest_init(void)
                                             selftest_thread_entry,
                                             &selftest_userdata,
                                             4096,
-                                            RT_THREAD_PRIORITY_MAX-2,
+                                            20,
                                             10);
     if ( thread != RT_NULL)
     {

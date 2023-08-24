@@ -537,7 +537,7 @@ char *gw_key[] = {"e0_gw", "e1_gw", "e2_gw"};
 char *mask_key[] = {"e0_mask", "e1_mask", "e2_mask"};
 
 static void netdev_set_if(char* netdev_name, char* ip_addr, char* gw_addr, char* nm_addr);
-static int rt_fmc_lwip_init(void)
+static int rt_netdev_set_if_init(void)
 {
     rt_err_t state = RT_EOK;
 
@@ -553,12 +553,13 @@ static int rt_fmc_lwip_init(void)
         kvdb_get(mask_key[i], nm_addr);
 
         netdev_set_if(fmc_eth_device.port[i].dev_name, ip_addr, gw_addr, nm_addr);
+        LOG_I("netdev %s set if %s %s %s", fmc_eth_device.port[i].dev_name, ip_addr, gw_addr, nm_addr);
     }
 #endif
 
     return state;
 }
-INIT_ENV_EXPORT(rt_fmc_lwip_init);
+INIT_ENV_EXPORT(rt_netdev_set_if_init);
 
 #include <netdev.h>       /* 当需要网卡操作是，需要包含这两个头文件 */
 

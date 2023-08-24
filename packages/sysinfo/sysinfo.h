@@ -22,6 +22,15 @@ struct __attribute__ ((packed)) SysInfoDef
     uint16_t    count;
 };
 
+struct __attribute__ ((packed)) SysInfoFixDef
+{
+    uint16_t        version;
+    uint8_t         SN[20];
+    uint8_t         mac[3][6];
+    uint8_t         reserve[84];
+    uint32_t        crc32;
+};
+
 void sysinfo_get(struct SysInfoDef *info);
 void sysinfo_show(void);
 

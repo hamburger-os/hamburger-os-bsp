@@ -256,6 +256,12 @@ CONFIG_RT_USING_RYM=y
 # end of Wiced WiFi
 
 # CONFIG_PKG_USING_RW007 is not set
+
+#
+# CYW43012 WiFi
+#
+# CONFIG_PKG_USING_WLAN_CYW43012 is not set
+# end of CYW43012 WiFi
 # end of Wi-Fi
 
 # CONFIG_PKG_USING_COAP is not set
@@ -381,7 +387,6 @@ CONFIG_PKG_OTA_DOWNLOADER_VER="latest"
 # LVGL: powerful and easy-to-use embedded GUI library
 #
 # CONFIG_PKG_USING_LVGL is not set
-# CONFIG_PKG_USING_LITTLEVGL2RTT is not set
 # CONFIG_PKG_USING_LV_MUSIC_DEMO is not set
 # CONFIG_PKG_USING_GUI_GUIDER_DEMO is not set
 # end of LVGL: powerful and easy-to-use embedded GUI library
@@ -462,6 +467,7 @@ CONFIG_PKG_OTA_DOWNLOADER_VER="latest"
 # CONFIG_PKG_USING_ARMV7M_DWT_TOOL is not set
 # CONFIG_PKG_USING_VOFA_PLUS is not set
 # CONFIG_PKG_USING_RT_TRACE is not set
+# CONFIG_PKG_USING_ZDEBUG is not set
 # end of tools packages
 
 #
@@ -510,6 +516,8 @@ CONFIG_PKG_RT_KPRINTF_THREADSAFE_VER="latest"
 # end of Micrium: Micrium software products porting for RT-Thread
 
 # CONFIG_PKG_USING_FREERTOS_WRAPPER is not set
+# CONFIG_PKG_USING_LITEOS_SDK is not set
+# CONFIG_PKG_USING_TZ_DATABASE is not set
 # CONFIG_PKG_USING_CAIRO is not set
 # CONFIG_PKG_USING_PIXMAN is not set
 # CONFIG_PKG_USING_PARTITION is not set
@@ -595,6 +603,8 @@ CONFIG_PKG_QBOOT_VER="latest"
 # CONFIG_PKG_USING_AGILE_UPGRADE is not set
 # CONFIG_PKG_USING_FLASH_BLOB is not set
 # CONFIG_PKG_USING_MLIBC is not set
+# CONFIG_PKG_USING_TASK_MSG_BUS is not set
+# CONFIG_PKG_USING_SFDB is not set
 # end of system packages
 
 #
@@ -801,6 +811,7 @@ CONFIG_PKG_QLED_VER="latest"
 # CONFIG_PKG_USING_UKAL is not set
 # CONFIG_PKG_USING_DIGITALCTRL is not set
 # CONFIG_PKG_USING_KISSFFT is not set
+# CONFIG_PKG_USING_CMSIS_DSP is not set
 # end of Signal Processing and Control Algorithm Packages
 
 #
@@ -1068,6 +1079,7 @@ CONFIG_PKG_CRCLIB_VER="v1.02"
 #
 # CONFIG_PKG_USING_ARDUINO_ADAFRUIT_GFX_LIBRARY is not set
 # CONFIG_PKG_USING_ARDUINO_U8G2 is not set
+# CONFIG_PKG_USING_ARDUINO_TFT_ESPI is not set
 # CONFIG_PKG_USING_ARDUINO_ADAFRUIT_ST7735 is not set
 # CONFIG_PKG_USING_ARDUINO_ADAFRUIT_SSD1306 is not set
 # CONFIG_PKG_USING_ARDUINO_ADAFRUIT_ILI9341 is not set
@@ -1257,6 +1269,8 @@ CONFIG_NORFLASH_BUFFER_PROGRAM_MAX=64
 # CONFIG_NORFLASH_ENABLE_TEST is not set
 # CONFIG_BSP_USING_FM25xx is not set
 # CONFIG_BSP_USING_SPI_FLASH is not set
+# CONFIG_BSP_USING_S25FL512 is not set
+# CONFIG_BSP_USING_AT45DB321E is not set
 # CONFIG_BSP_USING_EMMC is not set
 # CONFIG_BSP_USING_SDCARD is not set
 # CONFIG_BSP_USING_KSZ8851 is not set
@@ -1271,6 +1285,7 @@ CONFIG_NORFLASH_BUFFER_PROGRAM_MAX=64
 # CONFIG_BSP_USING_ICCARD_FLASH is not set
 # CONFIG_BSP_USING_LTC186X is not set
 # CONFIG_BSP_USING_GNSS is not set
+# CONFIG_BSP_USING_KSZ8794 is not set
 # end of Onboard Peripheral Drivers
 # end of Hardware Drivers Config
 
@@ -1317,6 +1332,7 @@ CONFIG_NORFLASH_BUFFER_PROGRAM_MAX=64
 #
 # Product Application and Function
 #
+# CONFIG_APP_SELFTEST is not set
 # CONFIG_APP_CABLE_TEST_BENCH is not set
 # CONFIG_APP_COUPLER_CONTROLLER is not set
 # CONFIG_APP_LY_05C is not set

@@ -104,6 +104,9 @@ const struct fal_partition partition_table_def[] =
 #if FLASH_SIZE_FACTORY > 0
     {FAL_PART_MAGIC_WORD,   "factory",        FLASH_DEV_NAME,          FLASH_OFFSET_FACTORY,                  FLASH_SIZE_FACTORY, 0},
 #endif
+#if FLASH_SIZE_KVDB > 0
+    {FAL_PART_MAGIC_WORD,      "kvdb",        FLASH_DEV_NAME,             FLASH_OFFSET_KVDB,                     FLASH_SIZE_KVDB, 0},
+#endif
 #ifdef FLASH_USING_BLK256
     {FAL_PART_MAGIC_WORD,    "onchip",     FLASH_BLK256_NAME,                             0,                   FLASH_BLK256_SIZE, 0},
 #endif
