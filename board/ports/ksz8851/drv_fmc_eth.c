@@ -245,7 +245,7 @@ static rt_err_t fmc_eth_open(rt_device_t dev, rt_uint16_t oflag)
 
     if(fmc_eth->link_layer_enable)
     {
-        return lep_eth_if_clear(&fmc_eth->link_layer_buf);
+        return lep_eth_if_clear(&fmc_eth->link_layer_buf, E_ETH_IF_CLER_MODE_ALL);
     }
     else
     {
@@ -268,7 +268,7 @@ static rt_err_t fmc_eth_close(rt_device_t dev)
 
     if(fmc_eth->link_layer_enable)
     {
-        return lep_eth_if_clear(&fmc_eth->link_layer_buf);
+        return lep_eth_if_clear(&fmc_eth->link_layer_buf, E_ETH_IF_CLER_MODE_ALL);
     }
     else
     {
@@ -315,6 +315,7 @@ static rt_size_t fmc_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_si
                 rt_list_remove(list_pos);
                 /* step4：释放接收接收缓冲区 */
                 rt_free(p_s_LepBuf);
+                fmc_eth->link_layer_buf.rx_lep_buf_num--;
                 return read_size;
             }
         }
@@ -420,22 +421,30 @@ struct pbuf *fmc_eth_rx(rt_device_t dev)
     {
         S_LEP_BUF *ps_lep_buf = RT_NULL;
 
-        ps_lep_buf = rt_malloc(sizeof(S_LEP_BUF));
-        if(RT_NULL != ps_lep_buf)
+        if(fmc_eth->link_layer_buf.rx_lep_buf_num < BSP_LINK_LAYER_RX_BUF_NUM)
         {
-            ps_lep_buf->flag = 0;
-            ps_lep_buf->flag |= LEP_RBF_RV;
-            ps_lep_buf->len = p->len;
-            rt_memcpy(ps_lep_buf->buf, p->payload, p->len);
-            rt_list_insert_before(&fmc_eth->link_layer_buf.rx_head->list, &ps_lep_buf->list);
-            if(dev->rx_indicate != NULL)
+            ps_lep_buf = rt_malloc(sizeof(S_LEP_BUF));
+            if(RT_NULL != ps_lep_buf)
             {
-                dev->rx_indicate(dev, p->len);
+                fmc_eth->link_layer_buf.rx_lep_buf_num++;
+                ps_lep_buf->flag = 0;
+                ps_lep_buf->flag |= LEP_RBF_RV;
+                ps_lep_buf->len = p->len;
+                rt_memcpy(ps_lep_buf->buf, p->payload, p->len);
+                rt_list_insert_before(&fmc_eth->link_layer_buf.rx_head->list, &ps_lep_buf->list);
+                if(dev->rx_indicate != NULL)
+                {
+                    dev->rx_indicate(dev, p->len);
+                }
+            }
+            else
+            {
+                LOG_E("ps_lep_buf rx null");
             }
         }
         else
         {
-            LOG_E("ps_lep_buf rx null");
+            lep_eth_if_clear(&fmc_eth->link_layer_buf, E_ETH_IF_CLER_MODE_ONE);
         }
     }
 #endif /* BSP_USE_LINK_LAYER_COMMUNICATION */

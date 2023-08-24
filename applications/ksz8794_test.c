@@ -25,11 +25,13 @@ static void Ksz8794TestInit(void)
     if (RT_NULL == p_ksz8794_dev)
     {
         LOG_E("ksz8794 find NULL.");
+        return;
     }
 
     if(rt_device_open(p_ksz8794_dev, RT_DEVICE_FLAG_RDWR) != RT_EOK)
     {
         LOG_E("ksz8794 open fail.");
+        return;
     }
 
     LOG_I("ksz8794 open successful");
