@@ -76,6 +76,9 @@ if GetDepend('BSP_USING_DSP_EXAMPLE'):
     
 if GetDepend('BSP_USING_LINK_LAYER_COMM_TEST'):
     src += Glob('linklayer_test.c')
+    
+if GetDepend('BSP_USING_KSZ8794_TEST'):
+    src += Glob('ksz8794_test.c')
         
 group = DefineGroup('Applications', src, depend = [''], CPPPATH = CPPPATH)
 
