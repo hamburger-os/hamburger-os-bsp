@@ -184,6 +184,7 @@ static rt_int32_t DEV_MAX31826_Reset1Wire(void)
         ret = 1;
     else
         ret = 0;
+    rt_hw_us_delay(300);
 #endif  /* MAX31826_USING_IO */
 
 #ifdef MAX31826_USING_I2C_DS2484
@@ -225,7 +226,7 @@ static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
     {
         SET_DQ();
     }
-    rt_hw_us_delay(55);
+    rt_hw_us_delay(65);
     SET_DQ();
     rt_hw_us_delay(15);
 #endif /* MAX31826_USING_IO */
@@ -255,18 +256,20 @@ static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
 static rt_uint8_t DEV_MAX31826_ReadBit(void)
 {
     rt_uint8_t readbit = 0;
+    rt_base_t level;
 
 #ifdef MAX31826_USING_IO
 
     OUT_DQ();
+    level = rt_hw_interrupt_disable();
     CLR_DQ();
-    rt_hw_us_delay(8);
-    SET_DQ();
+
     rt_hw_us_delay(2);
 
     IN_DQ();
     rt_hw_us_delay(2);
     readbit = GET_DQ();
+    rt_hw_interrupt_enable(level);
     rt_hw_us_delay(60);
 
 #endif /* MAX31826_USING_IO */
@@ -756,11 +759,9 @@ static int fal_max31826_erase(long offset, size_t size)
 int fal_max31826_read(long offset,  rt_uint8_t *buf, size_t len)
 {
   rt_uint8_t i;
-  printf("fal_max31826_read offset:%d len:%d\n",offset,len );
-
-//  rt_thread_delay(20);
   /* 复位传感器,按照时序进行操作 */
   DEV_MAX31826_Reset1Wire();
+  rt_thread_delay(20);/* 非常有必要 */
   DEV_MAX31826_Write1Wire(MAX31826_CMD_SKIP_ROM);
   DEV_MAX31826_Write1Wire(MAX31826_READ_MEMORY);
   DEV_MAX31826_Write1Wire((rt_uint8_t)offset);
@@ -769,7 +770,8 @@ int fal_max31826_read(long offset,  rt_uint8_t *buf, size_t len)
   {
     buf[i] = DEV_MAX31826_Read1Wire();
   }
-//  rt_thread_delay(20);
+  DEV_MAX31826_Reset1Wire();
+  LOG_HEX("read:",8, buf,len);
   return 0;
 }
 /*******************************************************
@@ -788,8 +790,6 @@ int fal_max31826_write(long offset, const rt_uint8_t *buf, size_t len)
   int e_return = -1;
   rt_uint8_t remain_len, write_len, offset_tmp, error_times = (rt_uint8_t)0;
 
-
-  printf("fal_max31826_write offset:%d len:%d\n",offset,len );
   /* 起始地址是8的整数倍   */
   if ((offset % (rt_uint8_t)MAX31826_BLK_SIZE) != (rt_uint8_t)0)
   {
@@ -842,53 +842,6 @@ int fal_max31826_write(long offset, const rt_uint8_t *buf, size_t len)
   return (e_return);
 }
 
-uint8_t TestTsensor(void)
-{
-#define W_BUFF 128
-  uint8_t a_write_buf[W_BUFF];
-  uint8_t a_read_buf[W_BUFF];
-  uint8_t i, ret = 0;
-  for (i = 0; i < W_BUFF; i++)
-  {
-    a_write_buf[i] = i;
-  }
-  printf("writeTempEERom:\n");
-  for (i = 0; i < W_BUFF; i++)
-  {
-    printf("%x ", a_write_buf[i]);
-  }
-  printf("\n");
-  if (fal_max31826_write((uint8_t)0, a_write_buf, (uint8_t)W_BUFF ) == 0)
-  {
-    for (i = 0; i < W_BUFF; i++)
-    {
-      a_read_buf[i] = 0;
-    }
-    if (fal_max31826_read(00, a_read_buf, W_BUFF ) == 0)
-    {
-      printf("ReadTempEERom:\n");
-      for (i = 0; i < W_BUFF; i++)
-      {
-        printf("%x ", a_read_buf[i]);
-      }
-      printf("\n");
-      if (memcmp(a_write_buf, a_read_buf, W_BUFF) != 0)
-      {
-        ret = 1;
-      }
-    }
-    else
-    {
-      ret = 2;
-    }
-  }
-  else
-  {
-    ret = 3;
-  }
-
-  return ret;
-}
 static struct rt_sensor_ops sensor_ops =
     {
         max31826_fetch_data,
@@ -936,12 +889,6 @@ static int rt_hw_max31826_init()
 
 #ifdef MAX31826_USING_IO
     DEV_MAX31826_ReadTemp();
-    rt_thread_delay(20);
-    TestTsensor();
-    TestTsensor();
-    TestTsensor();
-    TestTsensor();
-    TestTsensor();
 #endif /* MAX31826_USING_IO */
     return RT_EOK;
 
