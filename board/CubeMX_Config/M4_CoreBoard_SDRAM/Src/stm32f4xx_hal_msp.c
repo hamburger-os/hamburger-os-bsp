@@ -572,8 +572,8 @@ void HAL_LTDC_MspInit(LTDC_HandleTypeDef* hltdc)
   */
     PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_LTDC;
     PeriphClkInitStruct.PLLSAI.PLLSAIN = 432;
-    PeriphClkInitStruct.PLLSAI.PLLSAIR = 4;
-    PeriphClkInitStruct.PLLSAIDivR = RCC_PLLSAIDIVR_8;
+    PeriphClkInitStruct.PLLSAI.PLLSAIR = 6;
+    PeriphClkInitStruct.PLLSAIDivR = RCC_PLLSAIDIVR_4;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
       Error_Handler();

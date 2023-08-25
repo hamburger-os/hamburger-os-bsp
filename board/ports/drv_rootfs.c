@@ -53,7 +53,7 @@ extern void copydir(const char *src, const char *dst);
 
 static void rootfs_thread_entry(void* parameter)
 {
-    char path_dir[128] = {0};
+    char path_dir[256] = {0};
     struct rootfs_ops *ops = (struct rootfs_ops *)parameter;
 
     while(1)

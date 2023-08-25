@@ -17,7 +17,7 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-SelftestlUserData selftest_userdata = {
+static SelftestlUserData selftest_userdata = {
     .gpio_devname = {
         {BSP_GPIO_TABLE_PWM1        , BSP_GPIO_TABLE_GPIO1      },
         {BSP_GPIO_TABLE_GPIO5       , BSP_GPIO_TABLE_GPIO6      },
@@ -66,7 +66,7 @@ void lv_user_gui_init(void)
 
 static void selftest_thread_entry(void* parameter)
 {
-    while (rt_tick_get() < 10000)
+    while (rt_tick_get() < 20000)
     {
         rt_thread_delay(10);
     }

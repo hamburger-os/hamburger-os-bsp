@@ -21,7 +21,6 @@ union LinkLayerPackDef
 {
     //链路层包最短64字节
     uint8_t data[64];
-
     struct
     {
         uint8_t mac_des[6];

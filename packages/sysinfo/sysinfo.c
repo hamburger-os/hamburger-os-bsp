@@ -44,7 +44,7 @@ void sysinfo_get(struct SysInfoDef *info)
     }
     else
     {
-        LOG_E("sensor read error!");
+        LOG_E("cpu temp read error!");
     }
 
     /* 查找单总线MAX31826设备 */

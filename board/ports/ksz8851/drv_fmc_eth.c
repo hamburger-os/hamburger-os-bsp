@@ -522,7 +522,7 @@ static int rt_fmc_eth_init(void)
             if(state != RT_EOK)
             {
                 LOG_E("device %s init linklayer faild: %d", fmc_eth_device.port[i].dev_name, state);
-                return state;
+                state = -RT_ERROR;
             }
         }
 #endif /* BSP_USE_LINK_LAYER_COMMUNICATION */

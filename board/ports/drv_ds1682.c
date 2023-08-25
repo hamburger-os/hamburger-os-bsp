@@ -110,7 +110,7 @@ static rt_err_t rt_ds1682_init(rt_device_t dev)
             return -RT_ERROR;
         }
     }
-    LOG_I("init succeed!");
+    LOG_D("init succeed!");
     return RT_EOK;
 }
 
@@ -164,7 +164,7 @@ static int rt_hw_ds1682_init(void)
         ds1682_device->control = NULL;
         if (rt_device_register(ds1682_device, "ds1682", RT_DEVICE_FLAG_RDWR | RT_DEVICE_FLAG_STANDALONE) == RT_EOK)
         {
-            LOG_I("device created successfully!");
+            LOG_D("device created successfully!");
         }
         else
         {
