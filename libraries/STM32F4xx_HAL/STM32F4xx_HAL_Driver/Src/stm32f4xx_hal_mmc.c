@@ -2376,10 +2376,11 @@ HAL_StatusTypeDef HAL_MMC_ConfigWideBusOperation(MMC_HandleTypeDef *hmmc, uint32
 
   if(errorstate != HAL_MMC_ERROR_NONE)
   {
+      rt_kprintf("%d: %s %s %d 0x%x\n", rt_tick_get(), __FILE__, __FUNCTION__, __LINE__, errorstate);
     /* Clear all the static flags */
     __HAL_MMC_CLEAR_FLAG(hmmc, SDMMC_STATIC_FLAGS);
     hmmc->ErrorCode |= errorstate;
-    return HAL_ERROR;
+//    return HAL_ERROR;
   }
 
   return HAL_OK;

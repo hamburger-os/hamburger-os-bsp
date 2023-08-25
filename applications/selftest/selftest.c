@@ -123,7 +123,7 @@ static int selftest_init(void)
                                             selftest_thread_entry,
                                             &selftest_userdata,
                                             4096,
-                                            20,
+                                            1,
                                             10);
     if ( thread != RT_NULL)
     {

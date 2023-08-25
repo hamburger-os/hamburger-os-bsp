@@ -7,10 +7,11 @@
  * Date           Author       Notes
  * 2021-10-18     Meco Man     The first version
  */
-#include <lvgl.h>
-#include <stdbool.h>
-#include <rtdevice.h>
+
 #include <board.h>
+
+#ifdef PKG_USING_LVGL
+#include <lvgl.h>
 
 #define DRV_DEBUG
 #define LOG_TAG "drv.lv"
@@ -59,3 +60,5 @@ void lv_port_indev_init(void)
     /*Register the driver in LVGL and save the created input device object*/
     touch_indev = lv_indev_drv_register(&indev_drv);
 }
+
+#endif

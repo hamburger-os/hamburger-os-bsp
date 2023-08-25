@@ -72,7 +72,7 @@ INIT_DEVICE_EXPORT(drv_touch_hw_init);
 int drv_touch_env_init(void)
 {
 #ifdef TOUCH_USING_SW
-//    sw_calibration("lcd", "touch");
+   sw_calibration("lcd", "touch");
 #endif
 
 #ifdef TOUCH_USING_XPT2046

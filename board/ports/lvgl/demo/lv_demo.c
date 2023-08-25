@@ -9,7 +9,10 @@
  * 2022-05-10     Meco Man      improve rt-thread initialization process
  */
 #include "board.h"
+
+#ifdef PKG_USING_LVGL
 #include <lvgl.h>
+#endif
 
 #ifdef PKG_LVGL_USING_DEMOS
 #include "lv_demos.h"
@@ -19,6 +22,7 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
+#ifdef PKG_USING_LVGL
 __WEAK void lv_user_gui_init(void)
 {
     LOG_D("lvgl demo start...");
@@ -43,3 +47,4 @@ __WEAK void lv_user_gui_init(void)
 
 #endif
 }
+#endif

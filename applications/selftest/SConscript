@@ -18,10 +18,11 @@ src     = Split('''
                 eth.c
                 tcpip.c
                 ''')
-src     += Glob('gui/generated/*.c');
-src     += Glob('gui/generated/guider_fonts/*.c');
-src     += Glob('gui/generated/images/*.c');
-src     += Glob('gui/custom/*.c');
+if GetDepend(['PKG_USING_LVGL']):
+    src     += Glob('gui/generated/*.c');
+    src     += Glob('gui/generated/guider_fonts/*.c');
+    src     += Glob('gui/generated/images/*.c');
+    src     += Glob('gui/custom/*.c');
 
 CPPDEFINES = ['LV_LVGL_H_INCLUDE_SIMPLE']
 

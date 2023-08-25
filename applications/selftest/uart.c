@@ -90,6 +90,7 @@ void selftest_uart_test(SelftestlUserData *puserdata)
         else
         {
             LOG_E("%s error!", error_log[i]);
+            LOG_HEX("rd", 16, data_rd, 8);
         }
     }
 

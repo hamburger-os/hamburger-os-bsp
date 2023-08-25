@@ -2423,7 +2423,6 @@ menu "Onboard Peripheral Drivers"
         
     menuconfig BSP_USING_LVGL
         bool "Enable LVGL for LCD"
-        select PKG_USING_LVGL
         default n
 
         if BSP_USING_LVGL
@@ -2588,29 +2587,38 @@ menu "Onboard Peripheral Drivers"
             choice
                 prompt "Select demo"
                 default BSP_USING_LVGL_WIDGETS_DEMO
+                
+                config BSP_USING_NO_LVGL_DEMO
+                    bool "Disable demo"
 
                 config BSP_USING_LVGL_WIDGETS_DEMO
                     bool "Enable demo widgets"
+                    select PKG_USING_LVGL
                     select PKG_LVGL_USING_DEMOS
                     
                 config BSP_USING_LVGL_BENCHMARK_DEMO
                     bool "Enable demo benchmark"
+                    select PKG_USING_LVGL
                     select PKG_LVGL_USING_DEMOS
                     
                 config BSP_USING_LVGL_STRESS_DEMO
                     bool "Enable demo stress"
+                    select PKG_USING_LVGL
                     select PKG_LVGL_USING_DEMOS
                     
                 config BSP_USING_LVGL_KEYPAD_AND_ENCODER_DEMO
                     bool "Enable demo keypad and encoder"
+                    select PKG_USING_LVGL
                     select PKG_LVGL_USING_DEMOS
                     
                 config BSP_USING_LVGL_MUSIC_DEMO
                     bool "Enable demo music"
+                    select PKG_USING_LVGL
                     select PKG_LVGL_USING_DEMOS
                     
                 config BSP_USING_LVGL_DEMO
                     bool "Enable demo calendar"
+                    select PKG_USING_LVGL
             endchoice
             
             if BSP_USING_LVGL_WIDGETS_DEMO

@@ -91,12 +91,12 @@ rt_err_t sw_calibration(const char *lcd_name,const char *touch_name)
     rt_device_t lcd = rt_device_find(lcd_name);
     if (lcd == RT_NULL)
     {
-        LOG_E(LOG_TAG " cannot find lcd device named %s", lcd_name);
+        LOG_E(" cannot find lcd device named %s", lcd_name);
         return -RT_ERROR;
     }
     if (rt_device_open(lcd, RT_DEVICE_OFLAG_RDWR) != RT_EOK)
     {
-        LOG_E(LOG_TAG " cannot open lcd device named %s", lcd_name);
+        LOG_E(" cannot open lcd device named %s", lcd_name);
         return -RT_ERROR;
     }
 
@@ -104,7 +104,12 @@ rt_err_t sw_calibration(const char *lcd_name,const char *touch_name)
     rt_device_t touch = rt_device_find(touch_name);
     if (touch == RT_NULL)
     {
-        LOG_E(LOG_TAG " cannot find touch device named %s", touch_name);
+        LOG_E(" cannot find touch device named %s", touch_name);
+        return -RT_ERROR;
+    }
+    if (rt_device_open(touch, RT_DEVICE_OFLAG_RDWR) != RT_EOK)
+    {
+        LOG_E(" cannot open touch device named %s", touch_name);
         return -RT_ERROR;
     }
 
@@ -143,6 +148,8 @@ rt_err_t sw_calibration(const char *lcd_name,const char *touch_name)
     rt_memset(y_raw, 0, sizeof(y_raw));
     while (1)
     {
+        rt_thread_mdelay(10);
+
         struct rt_touch_data read_data;
         rt_memset(&read_data, 0, sizeof(struct rt_touch_data));
         if (rt_device_read((rt_device_t)touch, 0, &read_data, 1) == 1)
@@ -189,7 +196,6 @@ rt_err_t sw_calibration(const char *lcd_name,const char *touch_name)
             }
             rt_device_control(lcd, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);
         }
-        rt_thread_mdelay(10);
     }
     //计算结果
     sw_adjuct.xfac=(float)(lcd_info.width - cross_size*2)/(x_raw[1]-x_raw[0]);//得到xfac
@@ -201,13 +207,15 @@ rt_err_t sw_calibration(const char *lcd_name,const char *touch_name)
     LOG_I(" Calibration result, xfac:%d.%02d, xoff:%d.%02d, yfac:%d.%02d, yoff:%d.%02d"
             , (int)sw_adjuct.xfac, abs((int)((sw_adjuct.xfac - (int)sw_adjuct.xfac) * 100)), (int)sw_adjuct.xoff, abs((int)((sw_adjuct.xoff - (int)sw_adjuct.xoff) * 100))
             , (int)sw_adjuct.yfac, abs((int)((sw_adjuct.yfac - (int)sw_adjuct.yfac) * 100)), (int)sw_adjuct.yoff, abs((int)((sw_adjuct.yoff - (int)sw_adjuct.yoff) * 100)));
+
     rt_device_close(lcd);
+    rt_device_close(touch);
     return RT_EOK;
 }
 
 static rt_size_t sw_touch_readpoint(struct rt_touch_device *touch, void *buf, rt_size_t touch_num)
 {
-    if (touch_num != 0)
+    if (touch_num > 0)
     {
         struct rt_touch_data *result = (struct rt_touch_data *)buf;
 #ifdef RT_TOUCH_PIN_IRQ

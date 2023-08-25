@@ -169,14 +169,14 @@ if GetDepend(['BSP_USING_FMCLCD']):
     src += Glob('ports/drv_fmclcd.c')
     
 if GetDepend(['BSP_USING_LVGL']):
+    path += [cwd + '/ports/lvgl']
     src += Glob('ports/lvgl/lv_port_disp.c')
     src += Glob('ports/lvgl/lv_port_indev.c')
     src += Glob('ports/lvgl/lv_dlsyms.c')
-    path += [cwd + '/ports/lvgl']
+    path += [cwd + '/ports/lvgl/demo']
     src += Glob('ports/lvgl/demo/lv_demo.c')
     src += Glob('ports/lvgl/demo/lv_demo_calendar.c')
-    path += [cwd + '/ports/lvgl/demo']
-        
+
 if GetDepend(['BSP_USING_TOUCH']):
     src += Glob('ports/touch/drv_touch.c')
     if GetDepend(['TOUCH_USING_XPT2046']):

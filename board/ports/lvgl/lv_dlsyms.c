@@ -8,13 +8,10 @@
  * 2023-08-22     lvhan       the first version
  */
 
-#include <rtthread.h>
-#include <rtm.h>
-#include <lvgl.h>
+#include "board.h"
 
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+#ifdef PKG_USING_LVGL
+#include <lvgl.h>
 
 RTM_EXPORT(lv_font_get_glyph_dsc_fmt_txt);
 RTM_EXPORT(lv_font_get_bitmap_fmt_txt);
@@ -87,3 +84,5 @@ RTM_EXPORT(lv_event_get_user_data);
 RTM_EXPORT(lv_disp_load_scr);
 
 RTM_EXPORT(lv_btn_create);
+
+#endif
