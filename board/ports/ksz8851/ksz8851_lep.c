@@ -62,9 +62,10 @@ rt_err_t lep_eth_if_init(S_ETH_IF *ps_eth_if)
 /*
   * @brief  清除网口数据缓冲区，释放缓冲区.
   * @param  ps_eth_if 缓冲区指针
+  * @param  mode 0：释放一包的缓冲区；1：释放全部缓冲区
   * @retval rt_err_t;
   */
-rt_err_t lep_eth_if_clear(S_ETH_IF *ps_eth_if)
+rt_err_t lep_eth_if_clear(S_ETH_IF *ps_eth_if, E_ETH_IF_CLER_MODE mode)
 {
     S_LEP_BUF *p_s_LepBuf = RT_NULL;
     rt_list_t *list_pos = NULL;
@@ -80,20 +81,41 @@ rt_err_t lep_eth_if_clear(S_ETH_IF *ps_eth_if)
         return -RT_EEMPTY;
     }
 
-    rt_list_for_each_safe(list_pos, list_next, &ps_eth_if->rx_head->list)
+    if(0 == E_ETH_IF_CLER_MODE_ONE)
     {
-        p_s_LepBuf = rt_list_entry(list_pos, struct tagLEP_BUF, list);
-        if (p_s_LepBuf != RT_NULL)
+        rt_list_for_each_safe(list_pos, list_next, &ps_eth_if->rx_head->list)
         {
-            if ((p_s_LepBuf->flag & LEP_RBF_RV) != 0U)
+            p_s_LepBuf = rt_list_entry(list_pos, struct tagLEP_BUF, list);
+            if (p_s_LepBuf != RT_NULL)
             {
-                rt_list_remove(list_pos);
-                /* 释放接收接收缓冲区 */
-                rt_free(p_s_LepBuf);
+                if ((p_s_LepBuf->flag & LEP_RBF_RV) != 0U)
+                {
+                    rt_list_remove(list_pos);
+                    /* 释放接收接收缓冲区 */
+                    rt_free(p_s_LepBuf);
+                    ps_eth_if->rx_lep_buf_num--;
+                    return RT_EOK;
+                }
             }
         }
     }
-    LOG_D("lep_eth_if_clear ok");
+    else
+    {
+        rt_list_for_each_safe(list_pos, list_next, &ps_eth_if->rx_head->list)
+        {
+            p_s_LepBuf = rt_list_entry(list_pos, struct tagLEP_BUF, list);
+            if (p_s_LepBuf != RT_NULL)
+            {
+                if ((p_s_LepBuf->flag & LEP_RBF_RV) != 0U)
+                {
+                    rt_list_remove(list_pos);
+                    /* 释放接收接收缓冲区 */
+                    rt_free(p_s_LepBuf);
+                    ps_eth_if->rx_lep_buf_num--;
+                }
+            }
+        }
+    }
     return RT_EOK;
 }
 

@@ -13,7 +13,7 @@
 #include "selftest.h"
 #include "sysinfo.h"
 
-#define DBG_TAG "selftest"
+#define DBG_TAG "test"
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
@@ -28,8 +28,8 @@ SelftestlUserData selftest_userdata = {
     .key_devname = BSP_GPIO_TABLE_PWM3,
     .fs_path = {
         "/mnt/fram",
-        "/mnt/spiflash",
-        "/mnt/at45db321e",
+        "/mnt/spinor64",
+        "/mnt/spinor4",
         "/mnt/nor",
         "/mnt/emmc",
         "/mnt/udisk/ud0p0"},
@@ -66,15 +66,38 @@ void lv_user_gui_init(void)
 
 static void selftest_thread_entry(void* parameter)
 {
-    SelftestlUserData *puserdata = (SelftestlUserData *)parameter;
-    rt_thread_delay(4000);
+    while (rt_tick_get() < 10000)
+    {
+        rt_thread_delay(10);
+    }
 
+    SelftestlUserData *puserdata = (SelftestlUserData *)parameter;
     LOG_I("startup...");
 
     //系统信息
     sysinfo_show();
+    struct SysInfoDef info = {0};
+    sysinfo_get(&info);
+    if (info.chip_id[0] != 0 && info.chip_id[0] != 0xff)
+    {
+        LOG_D("max31826    pass");
+    }
+    else
+    {
+        LOG_E("max31826    error!");
+    }
+    if (info.times != 0)
+    {
+        LOG_D("ds1682      pass");
+    }
+    else
+    {
+        LOG_E("ds1682      error!");
+    }
     //gpio
     selftest_gpio_test(puserdata);
+    //key
+    selftest_key_test(puserdata);
     //filesysterm
     selftest_fs_test(puserdata);
     //i2c
@@ -87,12 +110,10 @@ static void selftest_thread_entry(void* parameter)
     selftest_can_test(puserdata);
     //eth
     selftest_eth_test(puserdata);
+    //tcpip
+    selftest_tcpip_test(puserdata);
 
     LOG_I("end.");
-    while(1)
-    {
-        rt_thread_delay(1000);
-    }
 }
 
 static int selftest_init(void)
@@ -102,7 +123,7 @@ static int selftest_init(void)
                                             selftest_thread_entry,
                                             &selftest_userdata,
                                             4096,
-                                            RT_THREAD_PRIORITY_MAX-2,
+                                            20,
                                             10);
     if ( thread != RT_NULL)
     {

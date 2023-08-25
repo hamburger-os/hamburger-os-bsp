@@ -240,6 +240,7 @@ static int fal_eeprom_write(long offset, const rt_uint8_t *buf, size_t size)
         LOG_E("write outrange flash size! addr is (0x%p)", (void*)(addr + size));
         return -RT_EINVAL;
     }
+
     if (size < 1)
     {
 //        LOG_W("write size %d! addr is (0x%p)", size, (void*)(addr + size));
@@ -264,7 +265,7 @@ static int fal_eeprom_erase(long offset, size_t size)
 
     if (size < 1)
     {
-//        LOG_W("read size %d! addr is (0x%p)", size, (void*)(addr + size));
+//        LOG_W("erase size %d! addr is (0x%p)", size, (void*)(addr + size));
         return 0;
     }
 

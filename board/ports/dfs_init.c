@@ -27,7 +27,7 @@ static const struct romfs_dirent _romfs_root_mnt[] =
     {ROMFS_DIRENT_DIR, "nfs"        , RT_NULL, 0},      //nfs
 #endif
 
-#ifdef BSP_USING_FM25xx
+#ifdef FM25xx_USING_FS
     {ROMFS_DIRENT_DIR, BLK_FRAM     , RT_NULL, 0},      //fram
 #endif
 
@@ -111,7 +111,7 @@ static const struct mount_fs _mount_fs[] =
     {RT_NULL            , BLK_USBH_UDISK    , "tmp"             },
 #endif
 
-#ifdef BSP_USING_FM25xx
+#ifdef FM25xx_USING_FS
     {BLK_FRAM           , BLK_FRAM          , FM25xx_FS         },
 #endif
 

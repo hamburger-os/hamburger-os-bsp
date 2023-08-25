@@ -37,7 +37,7 @@ const struct fal_flash_dev at45db321e_flash =
     .len = AT45DB321E_SIZE_GRANULARITY_TOTAL,
     .blk_size = AT45DB321E_BLK_SIZE,
     .ops = {fal_at45db321e_init, fal_at45db321e_read, fal_at45db321e_write, fal_at45db321e_erase},
-    .write_gran = 0,
+    .write_gran = 1,
 };
 
 static rt_err_t at45db321e_readDeviceID(uint8_t *id)

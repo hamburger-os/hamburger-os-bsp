@@ -27,9 +27,12 @@ typedef struct
     rt_device_t uart_dev[3][2];
     rt_device_t can_dev[2][2];
     rt_device_t eth_dev[2][2];
+    int sock[2][2];
 } SelftestlUserData;
 
 void selftest_gpio_test(SelftestlUserData *puserdata);
+
+void selftest_key_test(SelftestlUserData *puserdata);
 
 void selftest_fs_test(SelftestlUserData *puserdata);
 
@@ -42,5 +45,7 @@ void selftest_uart_test(SelftestlUserData *puserdata);
 void selftest_can_test(SelftestlUserData *puserdata);
 
 void selftest_eth_test(SelftestlUserData *puserdata);
+
+void selftest_tcpip_test(SelftestlUserData *puserdata);
 
 #endif /* APPLICATIONS_SELFTEST_SELFTEST_H_ */

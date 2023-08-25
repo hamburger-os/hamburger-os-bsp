@@ -88,6 +88,7 @@ void sysinfo_get(struct SysInfoDef *info)
         LOG_E("ds1682 read error!");
     }
 }
+RTM_EXPORT(sysinfo_get);
 
 void sysinfo_show(void)
 {
@@ -100,14 +101,15 @@ void sysinfo_show(void)
     LOG_HEX("     - SN          ", 8, info.SN, sizeof(info.SN));
     LOG_D("----------------------------------------------------------------");
     LOG_D("- cpu id      : 0x%08X %08X %08X", info.cpu_id[0], info.cpu_id[1], info.cpu_id[2]);
-    LOG_D("- cpu temp    : %d.%02d (℃) ", (int32_t)info.cpu_temp, abs((int32_t)((info.cpu_temp - (int32_t)info.cpu_temp) * 100)));
+    LOG_D("- cpu temp    : %d.%02d (C) ", (int32_t)info.cpu_temp, abs((int32_t)((info.cpu_temp - (int32_t)info.cpu_temp) * 100)));
     LOG_D("----------------------------------------------------------------");
     LOG_D("- chip id     : 0x%02X %02X %02X %02X %02X %02X %02X %02X", info.chip_id[0], info.chip_id[1], info.chip_id[2], info.chip_id[3], info.chip_id[4], info.chip_id[5], info.chip_id[6], info.chip_id[7]);
-    LOG_D("- chip temp   : %d.%02d (℃) ", (int32_t)info.chip_temp, abs((int32_t)((info.chip_temp - (int32_t)info.chip_temp) * 100)));
+    LOG_D("- chip temp   : %d.%02d (C) ", (int32_t)info.chip_temp, abs((int32_t)((info.chip_temp - (int32_t)info.chip_temp) * 100)));
     LOG_D("- times       : %d s", info.times);
     LOG_D("- count       : %d", info.count);
     LOG_D("----------------------------------------------------------------");
 }
+RTM_EXPORT(sysinfo_show);
 
 #ifdef RT_USING_FINSH
 #include <finsh.h>

@@ -12,6 +12,8 @@
 
 #ifdef BSP_USING_KSZ8794
 
+#include "drv_spi.h"
+
 #define DBG_TAG "ksz8794"
 #define DBG_LVL DBG_INFO
 #include <rtdbg.h>
@@ -43,8 +45,6 @@
 typedef struct {
     struct rt_device      dev;
     struct rt_spi_device  *spidev;
-    char *                spibus;
-    char *                cspin;
     char *                irqpin;
     rt_base_t             irq_pin_index;
     char *                rstpin;
@@ -52,8 +52,6 @@ typedef struct {
 } KSZ8794Dev;
 
 static KSZ8794Dev ksz8794_dev = {
-        .spibus = BSP_KSZ8794_SPI_BUS,
-        .cspin = BSP_KSZ8794_SPI_CS_PIN,
         .irqpin = BSP_KSZ8794_IRQ_PIN,
         .rstpin = BSP_KSZ8794_RST_PIN,
 };
@@ -73,23 +71,16 @@ static rt_err_t ksz8794_read_reg(KSZ8794Dev *ksz8794, uint32_t address, uint8_t 
     send_buf[0] = command >> 8;
     send_buf[1] = command;
 
-    ret = rt_spi_send(ksz8794->spidev, send_buf, 2);
+    ret = rt_spi_send_then_recv(ksz8794->spidev, send_buf, 2, buffer, length);
     if(ret != RT_EOK)
     {
         LOG_E("read reg send error");
         return ret;
     }
-
-    ret = rt_spi_recv(ksz8794->spidev, buffer, length);
-    if(ret != RT_EOK)
-    {
-        LOG_E("read reg recv error");
-        return ret;
-    }
     return ret;
 }
 
-static rt_err_t ksz8794_write_reg(KSZ8794Dev *ksz8794, uint32_t address, uint8_t *buffer, uint32_t length)
+static rt_err_t ksz8794_write_reg(KSZ8794Dev *ksz8794, uint32_t address, const uint8_t *buffer, uint32_t length)
 {
     rt_err_t ret = -RT_ERROR;
 
@@ -104,17 +95,10 @@ static rt_err_t ksz8794_write_reg(KSZ8794Dev *ksz8794, uint32_t address, uint8_t
     send_buf[0] = command >> 8;
     send_buf[1] = command;
 
-    ret = rt_spi_send(ksz8794->spidev, send_buf, 2);
+    ret = rt_spi_send_then_send(ksz8794->spidev, send_buf, 2, buffer, length);
     if(ret != RT_EOK)
     {
-        LOG_E("send command error");
-        return ret;
-    }
-
-    ret = rt_spi_send(ksz8794->spidev, buffer, length);
-    if(ret != RT_EOK)
-    {
-        LOG_E("send data error");
+        LOG_E("send error");
         return ret;
     }
     return ret;
@@ -122,17 +106,49 @@ static rt_err_t ksz8794_write_reg(KSZ8794Dev *ksz8794, uint32_t address, uint8_t
 
 static rt_size_t ksz8794_read (rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t size)
 {
+    KSZ8794Dev *ksz8794_dev = (KSZ8794Dev *)dev;
 
+    if(ksz8794_read_reg(ksz8794_dev, pos, buffer, size) != RT_EOK)
+    {
+        return 0;
+    }
+
+    return size;
 }
 
 static rt_size_t ksz8794_write (rt_device_t dev, rt_off_t pos, const void *buffer, rt_size_t size)
 {
+    KSZ8794Dev *ksz8794_dev = (KSZ8794Dev *)dev;
 
+    if(ksz8794_write_reg(ksz8794_dev, pos, buffer, size) != RT_EOK)
+    {
+        return 0;
+    }
+    return size;
 }
 
-void ksz8794_irq(void *args)
+static rt_err_t ksz8794_open (rt_device_t dev, rt_uint16_t oflag)
 {
+    uint8_t write_buf;
 
+    write_buf = 1;
+    if(ksz8794_write(dev, KSZ8794_CHIPIDSWITCH, (const void *)&write_buf, 1) != 1)
+    {
+        return -RT_ERROR;
+    }
+    return RT_EOK;
+}
+
+static rt_err_t ksz8794_close (rt_device_t dev)
+{
+    uint8_t write_buf;
+
+    write_buf = 0;
+    if(ksz8794_write(dev, KSZ8794_CHIPIDSWITCH, (const void *)&write_buf, 1) != 1)
+    {
+        return -RT_ERROR;
+    }
+    return RT_EOK;
 }
 
 static int rt_hw_ksz8794_init(void)
@@ -143,16 +159,16 @@ static int rt_hw_ksz8794_init(void)
 
     do
     {
-        rt_snprintf(dev_name, RT_NAME_MAX, "%s%d", ksz8794_dev.spibus, dev_num++);
+        rt_snprintf(dev_name, RT_NAME_MAX, "%s%d", BSP_KSZ8794_SPI_BUS, dev_num++);
         if (dev_num == 255)
         {
             return -RT_EIO;
         }
     } while (rt_device_find(dev_name));
 
-    rt_hw_spi_device_attach(ksz8794_dev.spibus, dev_name, rt_pin_get(ksz8794_dev.cspin));
+    rt_hw_spi_device_attach(BSP_KSZ8794_SPI_BUS, (const char *)dev_name, rt_pin_get(BSP_KSZ8794_SPI_CS_PIN));
     ksz8794_dev.spidev = (struct rt_spi_device *)rt_device_find(dev_name);
-    if (ksz8794_dev.spidev == NULL)
+    if (NULL == ksz8794_dev.spidev)
     {
         LOG_E("device %s find error!", dev_name);
         return -RT_EIO;
@@ -160,7 +176,7 @@ static int rt_hw_ksz8794_init(void)
 
     struct rt_spi_configuration cfg = {0};
     cfg.data_width = 8;
-    cfg.mode = RT_SPI_MASTER | RT_SPI_MODE_0 | RT_SPI_MSB;
+    cfg.mode = RT_SPI_MASTER | RT_SPI_MODE_3 | RT_SPI_MSB;
     cfg.max_hz = BSP_KSZ8794_SPI_SPEED;
     ret = rt_spi_configure(ksz8794_dev.spidev, &cfg);
     if (ret != RT_EOK)
@@ -172,7 +188,6 @@ static int rt_hw_ksz8794_init(void)
     //irq pin
     ksz8794_dev.rst_pin_index = rt_pin_get(ksz8794_dev.rstpin);
     rt_pin_mode(ksz8794_dev.rst_pin_index, (rt_base_t)PIN_MODE_INPUT);
-    rt_pin_attach_irq(ksz8794_dev.rst_pin_index, (rt_uint32_t)PIN_IRQ_MODE_RISING_FALLING, ksz8794_irq, NULL);
     rt_pin_irq_enable(ksz8794_dev.rst_pin_index, (rt_uint32_t)PIN_IRQ_ENABLE);
 
     //rst pin
@@ -185,8 +200,8 @@ static int rt_hw_ksz8794_init(void)
     rt_thread_delay(40);
 
     ksz8794_dev.dev.init = RT_NULL;
-    ksz8794_dev.dev.open = RT_NULL;
-    ksz8794_dev.dev.close = RT_NULL;
+    ksz8794_dev.dev.open = ksz8794_open;
+    ksz8794_dev.dev.close = ksz8794_close;
     ksz8794_dev.dev.read = ksz8794_read;
     ksz8794_dev.dev.write = ksz8794_write;
     ksz8794_dev.dev.control = RT_NULL;
