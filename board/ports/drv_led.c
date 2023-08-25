@@ -43,7 +43,9 @@ rt_base_t led_creat(rt_base_t pin, rt_base_t level)
     return -1;
 }
 
-/* 在收发数据或者idle时调用此函数即会产生对应的led运行状态 */
+/* 在收发数据或者idle时 */
+/* 调用此函数即会产生对应的led运行状态 */
+/* 以设置频率闪烁1s, 并至少闪烁1次 */
 void led_execution_phase(rt_base_t index)
 {
     if (index < BSP_LED_MAX && BSP_LED_MAX >= 0)
@@ -117,7 +119,7 @@ static int rt_led_init()
     rt_thread_t tid = rt_thread_create("led",
                             led_thread_entry, RT_NULL,
                             1024,
-                            RT_THREAD_PRIORITY_MAX - 3, 20);
+                            RT_THREAD_PRIORITY_MAX - 2, 10);
 
     /* 如果获得线程控制块，启动这个线程 */
     if (tid != RT_NULL)

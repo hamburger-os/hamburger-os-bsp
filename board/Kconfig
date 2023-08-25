@@ -2166,8 +2166,8 @@ menu "Onboard Peripheral Drivers"
             comment "On: system fault"
             
             config BSP_LED_CYCLE
-                int "Set the flashing cycle of the indicator led, in ms, default: 100"
-                default 100
+                int "Set the flashing cycle of the indicator led, in ms, default: 500"
+                default 500
                 
             config BSP_LED_MAX
                 int "Set the maximum number of supported LED lights, default: 8"
