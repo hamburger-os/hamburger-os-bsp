@@ -230,15 +230,12 @@ static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
 static rt_uint8_t DEV_MAX31826_ReadBit(void)
 {
     rt_uint8_t readbit = 0;
-    rt_base_t level;
 
 #ifdef MAX31826_USING_IO
-    //关中断
     rt_base_t level;
-    level = rt_hw_interrupt_disable();
 
     OUT_DQ();
-    level = rt_hw_interrupt_disable();
+    level = rt_hw_interrupt_disable();/* 关中断*/ 
     CLR_DQ();
 
     rt_hw_us_delay(2);
@@ -246,11 +243,9 @@ static rt_uint8_t DEV_MAX31826_ReadBit(void)
     IN_DQ();
     rt_hw_us_delay(2);
     readbit = GET_DQ();
-    rt_hw_interrupt_enable(level);
+    rt_hw_interrupt_enable(level); /* 开中断 */
     rt_hw_us_delay(60);
 
-    //开中断
-    rt_hw_interrupt_enable(level);
 #endif /* MAX31826_USING_IO */
 
 #ifdef MAX31826_USING_I2C_DS2484
