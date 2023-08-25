@@ -22,6 +22,11 @@
 #define LEP_RBF_RV        (2U)
 #define LEP_RBF_HEAD      (3U)
 
+typedef enum {
+    E_ETH_IF_CLER_MODE_ONE = 0,
+    E_ETH_IF_CLER_MODE_ALL = 1,
+} E_ETH_IF_CLER_MODE;
+
 typedef struct tagLEP_BUF /* 接收缓冲区 */
 {
     rt_list_t list; /* 链表 */
@@ -34,11 +39,12 @@ typedef struct eth_interface /* 接收环形缓冲区，应用程序维护 */
 {
     S_LEP_BUF tx_buf;
     S_LEP_BUF *rx_head;
+    uint32_t rx_lep_buf_num;
 } S_ETH_IF;
 
 /* Exported function prototypes ----------------------------------------------*/
 rt_err_t lep_eth_if_init(S_ETH_IF *ps_eth_if);
-rt_err_t lep_eth_if_clear(S_ETH_IF *ps_eth_if);
+rt_err_t lep_eth_if_clear(S_ETH_IF *ps_eth_if, E_ETH_IF_CLER_MODE mode);
 
 #endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
 

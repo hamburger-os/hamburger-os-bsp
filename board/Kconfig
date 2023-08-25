@@ -3095,6 +3095,12 @@ menu "Onboard Peripheral Drivers"
                 bool "Enable Link Layer Communication"
                 default n
                 
+                if BSP_USE_LINK_LAYER_COMMUNICATION
+                    config BSP_LINK_LAYER_RX_BUF_NUM
+                        int "Set the Link Layer Rx buf, default: 8"
+                        default (8)
+                endif
+                
             config BSP_USE_KVDB_NET_IF
                 bool "Enable kvdb set netdev if"
                 select PKG_USING_FLASHDB_PORT
@@ -3471,7 +3477,7 @@ menu "Onboard Peripheral Drivers"
             
             config BSP_KSZ8794_SPI_SPEED
               int "Set the rate of spi, default: (40 * 1000 *1000)"
-              default (40000000)
+              default (25000000)
               
             config BSP_KSZ8794_IRQ_PIN
               string "Set the pin of the chip irq, default: PI.4"

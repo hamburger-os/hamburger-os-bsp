@@ -213,10 +213,10 @@ static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
         {
             LOG_E("MAX31826 write fail.");
         }
-        else
-        {
-            LOG_E("MAX31826 write ds2484_dev is null.");
-        }
+    }
+    else
+    {
+        LOG_E("MAX31826 write ds2484_dev is null.");
     }
 #endif /* MAX31826_USING_I2C_DS2484 */
 }
