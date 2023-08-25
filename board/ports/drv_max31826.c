@@ -22,7 +22,7 @@
 #define MAX31826_PIN    rt_pin_get(MAX31826_GPIO)
 #define SET_DQ()        rt_pin_write(MAX31826_PIN, PIN_HIGH)
 #define CLR_DQ()        rt_pin_write(MAX31826_PIN, PIN_LOW)
-#define OUT_DQ()        rt_pin_mode(MAX31826_PIN, PIN_MODE_OUTPUT)
+#define OUT_DQ()        rt_pin_mode(MAX31826_PIN, PIN_MODE_OUTPUT_OD)
 #define IN_DQ()         rt_pin_mode(MAX31826_PIN, PIN_MODE_INPUT)
 #define GET_DQ()        rt_pin_read(MAX31826_PIN)
 
@@ -131,10 +131,9 @@ static rt_int32_t DEV_MAX31826_Reset1Wire(void)
     rt_int32_t ret = 0xFF;
 
 #ifdef MAX31826_USING_IO
-    //关中断
     rt_base_t level;
-    level = rt_hw_interrupt_disable();
 
+    level = rt_hw_interrupt_disable();/* 关中断*/
     OUT_DQ();
     CLR_DQ();
     rt_hw_us_delay(750);
@@ -144,12 +143,12 @@ static rt_int32_t DEV_MAX31826_Reset1Wire(void)
     IN_DQ();
     rt_hw_us_delay(200);
     if(GET_DQ() == 0x01)/* 复位之后从机将低电平状态释放 */
-    ret = 1;
+        ret = 1;
     else
-    ret = 0;
+        ret = 0;
+    rt_hw_interrupt_enable(level); /* 开中断 */
+    rt_hw_us_delay(300);
 
-    //开中断
-    rt_hw_interrupt_enable(level);
 #endif  /* MAX31826_USING_IO */
 
 #ifdef MAX31826_USING_I2C_DS2484
@@ -184,10 +183,9 @@ static rt_int32_t DEV_MAX31826_Reset1Wire(void)
 static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
 {
 #ifdef MAX31826_USING_IO
-    //关中断
     rt_base_t level;
-    level = rt_hw_interrupt_disable();
 
+    level = rt_hw_interrupt_disable();/* 关中断*/
     OUT_DQ();
     CLR_DQ();
     rt_hw_us_delay(2);
@@ -195,12 +193,11 @@ static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
     {
         SET_DQ();
     }
-    rt_hw_us_delay(55);
+    rt_hw_us_delay(65);
     SET_DQ();
+    rt_hw_interrupt_enable(level); /* 开中断 */
     rt_hw_us_delay(15);
 
-    //开中断
-    rt_hw_interrupt_enable(level);
 #endif /* MAX31826_USING_IO */
 
 #ifdef MAX31826_USING_I2C_DS2484
@@ -232,23 +229,18 @@ static rt_uint8_t DEV_MAX31826_ReadBit(void)
     rt_uint8_t readbit = 0;
 
 #ifdef MAX31826_USING_IO
-    //关中断
     rt_base_t level;
-    level = rt_hw_interrupt_disable();
 
     OUT_DQ();
+    level = rt_hw_interrupt_disable();/* 关中断*/ 
     CLR_DQ();
-    rt_hw_us_delay(8);
-    SET_DQ();
     rt_hw_us_delay(2);
-
     IN_DQ();
     rt_hw_us_delay(2);
     readbit = GET_DQ();
+    rt_hw_interrupt_enable(level); /* 开中断 */
     rt_hw_us_delay(60);
 
-    //开中断
-    rt_hw_interrupt_enable(level);
 #endif /* MAX31826_USING_IO */
 
 #ifdef MAX31826_USING_I2C_DS2484
@@ -713,6 +705,7 @@ int fal_max31826_read(long offset, rt_uint8_t *buf, size_t size)
 
     /* 复位传感器,按照时序进行操作 */
     DEV_MAX31826_Reset1Wire();
+    rt_thread_delay(20);/* 非常有必要 */
     DEV_MAX31826_Write1Wire(MAX31826_CMD_SKIP_ROM);
     DEV_MAX31826_Write1Wire(MAX31826_READ_MEMORY);
     DEV_MAX31826_Write1Wire((rt_uint8_t) addr);
@@ -721,6 +714,7 @@ int fal_max31826_read(long offset, rt_uint8_t *buf, size_t size)
     {
         buf[i] = DEV_MAX31826_Read1Wire();
     }
+    DEV_MAX31826_Reset1Wire();
 
     LOG_HEX("rd", 16, buf, size);
     LOG_D("read (0x%p) %d", (void*)(addr), size);
