@@ -22,7 +22,7 @@
 #define MAX31826_PIN    rt_pin_get(MAX31826_GPIO)
 #define SET_DQ()        rt_pin_write(MAX31826_PIN, PIN_HIGH)
 #define CLR_DQ()        rt_pin_write(MAX31826_PIN, PIN_LOW)
-#define OUT_DQ()        rt_pin_mode(MAX31826_PIN, PIN_MODE_OUTPUT)
+#define OUT_DQ()        rt_pin_mode(MAX31826_PIN, PIN_MODE_OUTPUT_OD)
 #define IN_DQ()         rt_pin_mode(MAX31826_PIN, PIN_MODE_INPUT)
 #define GET_DQ()        rt_pin_read(MAX31826_PIN)
 
@@ -131,10 +131,9 @@ static rt_int32_t DEV_MAX31826_Reset1Wire(void)
     rt_int32_t ret = 0xFF;
 
 #ifdef MAX31826_USING_IO
-    //关中断
     rt_base_t level;
-    level = rt_hw_interrupt_disable();
 
+    level = rt_hw_interrupt_disable();/* 关中断*/
     OUT_DQ();
     CLR_DQ();
     rt_hw_us_delay(750);
@@ -144,12 +143,12 @@ static rt_int32_t DEV_MAX31826_Reset1Wire(void)
     IN_DQ();
     rt_hw_us_delay(200);
     if(GET_DQ() == 0x01)/* 复位之后从机将低电平状态释放 */
-    ret = 1;
+        ret = 1;
     else
-    ret = 0;
+        ret = 0;
+    rt_hw_interrupt_enable(level); /* 开中断 */
+    rt_hw_us_delay(300);
 
-    //开中断
-    rt_hw_interrupt_enable(level);
 #endif  /* MAX31826_USING_IO */
 
 #ifdef MAX31826_USING_I2C_DS2484
@@ -184,10 +183,9 @@ static rt_int32_t DEV_MAX31826_Reset1Wire(void)
 static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
 {
 #ifdef MAX31826_USING_IO
-    //关中断
     rt_base_t level;
-    level = rt_hw_interrupt_disable();
 
+    level = rt_hw_interrupt_disable();/* 关中断*/
     OUT_DQ();
     CLR_DQ();
     rt_hw_us_delay(2);
@@ -197,10 +195,9 @@ static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
     }
     rt_hw_us_delay(65);
     SET_DQ();
+    rt_hw_interrupt_enable(level); /* 开中断 */
     rt_hw_us_delay(15);
 
-    //开中断
-    rt_hw_interrupt_enable(level);
 #endif /* MAX31826_USING_IO */
 
 #ifdef MAX31826_USING_I2C_DS2484
@@ -237,9 +234,7 @@ static rt_uint8_t DEV_MAX31826_ReadBit(void)
     OUT_DQ();
     level = rt_hw_interrupt_disable();/* 关中断*/ 
     CLR_DQ();
-
     rt_hw_us_delay(2);
-
     IN_DQ();
     rt_hw_us_delay(2);
     readbit = GET_DQ();
