@@ -3,11 +3,6 @@ def GetCPPPATH(BSP_ROOT, RTT_ROOT):
 	CPPPATH=[
 		BSP_ROOT + "/.",
 		BSP_ROOT + "/applications",
-		BSP_ROOT + "/applications/selftest",
-		BSP_ROOT + "/applications/selftest/gui/custom",
-		BSP_ROOT + "/applications/selftest/gui/generated",
-		BSP_ROOT + "/applications/selftest/gui/generated/guider_customer_fonts",
-		BSP_ROOT + "/applications/selftest/gui/generated/guider_fonts",
 		BSP_ROOT + "/board",
 		BSP_ROOT + "/board/CubeMX_Config/H7_CoreBoard_SDRAM/Inc",
 		BSP_ROOT + "/board/ports",
@@ -111,6 +106,7 @@ def GetCPPPATH(BSP_ROOT, RTT_ROOT):
 		BSP_ROOT + "/packages/ota_from_file",
 		BSP_ROOT + "/packages/sysinfo",
 		BSP_ROOT + "/packages/syswatch/inc",
+		BSP_ROOT + "/packages/ulog_back",
 		BSP_ROOT + "/packages/wavplayer",
 		BSP_ROOT + "/packages/wavplayer/inc",
 		RTT_ROOT + "/components/dfs/filesystems/devfs",
@@ -157,6 +153,6 @@ def GetCPPPATH(BSP_ROOT, RTT_ROOT):
 	return CPPPATH
 
 def GetCPPDEFINES():
-	CPPDEFINES=['LFS_CONFIG=lfs_config.h', '_POSIX_C_SOURCE=1', 'STM32H743xx', 'ARM_MATH_CM7', 'USE_HAL_DRIVER', 'RT_USING_LIBC', '__RTTHREAD__', 'RT_USING_NEWLIB', 'LV_LVGL_H_INCLUDE_SIMPLE']
+	CPPDEFINES=['LFS_CONFIG=lfs_config.h', '_POSIX_C_SOURCE=1', 'STM32H743xx', 'ARM_MATH_CM7', 'USE_HAL_DRIVER', 'RT_USING_LIBC', '__RTTHREAD__', 'RT_USING_NEWLIB']
 	return CPPDEFINES
 
