@@ -113,11 +113,19 @@ rt_err_t sw_calibration(const char *lcd_name,const char *touch_name)
         return -RT_ERROR;
     }
 
+    /* 重置校准值 */
+    sw_adjuct.xfac = 1;
+    sw_adjuct.xoff = 0;
+    sw_adjuct.yfac = 1;
+    sw_adjuct.yoff = 0;
+
     /* Get TFT LCD screen information */
-    struct rt_device_graphic_info lcd_info;
+    struct rt_device_graphic_info lcd_info = {0};
     rt_device_control(lcd, RTGRAPHIC_CTRL_GET_INFO, &lcd_info);
 
+__adjust:
     /* clear screen */
+    LOG_I(" lcd (%d, %d)", lcd_info.width, lcd_info.height);
     for (rt_uint32_t y = 0; y < lcd_info.height; ++y)
     {
         const uint32_t white = 0xFFFFFFFF;
@@ -141,11 +149,9 @@ rt_err_t sw_calibration(const char *lcd_name,const char *touch_name)
     rt_device_control(lcd, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);
     LOG_I(" %d point capture (%d, %d)", 0, x0, y0);
 
-    rt_uint16_t x_raw[4];
-    rt_uint16_t y_raw[4];
     rt_uint8_t raw_idx = 0;
-    rt_memset(x_raw, 0, sizeof(x_raw));
-    rt_memset(y_raw, 0, sizeof(y_raw));
+    rt_uint16_t x_raw[4] = {0};
+    rt_uint16_t y_raw[4] = {0};
     while (1)
     {
         rt_thread_mdelay(10);
@@ -196,6 +202,15 @@ rt_err_t sw_calibration(const char *lcd_name,const char *touch_name)
             }
             rt_device_control(lcd, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);
         }
+    }
+    //校验触摸结果
+    if (abs(x_raw[0] - x_raw[3]) > 20 && abs(x_raw[1] - x_raw[2]) > 20
+            && abs(y_raw[0] - y_raw[1]) > 20 && abs(y_raw[2] - y_raw[3]) > 20)
+    {
+        LOG_W(" press warning %d %d %d %d"
+                , abs(x_raw[0] - x_raw[3]), abs(x_raw[1] - x_raw[2])
+                , abs(y_raw[0] - y_raw[1]), abs(y_raw[2] - y_raw[3]));
+//        goto __adjust;
     }
     //计算结果
     sw_adjuct.xfac=(float)(lcd_info.width - cross_size*2)/(x_raw[1]-x_raw[0]);//得到xfac

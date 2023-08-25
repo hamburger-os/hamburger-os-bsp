@@ -21,14 +21,9 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-#ifdef PKG_USING_GUIENGINE
-#include <rtgui/event.h>
-#include <rtgui/rtgui_server.h>
-#elif defined(PKG_USING_LITTLEVGL2RTT)
-#include <littlevgl2rtt.h>
-#elif defined(PKG_USING_LVGL)
+#if defined(PKG_USING_LVGL)
 #include <lvgl.h>
-#endif /* PKG_USING_GUIENGINE */
+#endif /* PKG_USING_LVGL */
 
 static struct _rt_drv_touch drv_touch;
 extern struct rt_touch_ops drv_touch_ops;
@@ -58,6 +53,7 @@ int drv_touch_hw_init(void)
 #ifdef RT_TOUCH_PIN_IRQ
     drv_touch.dev.config.irq_pin.pin = rt_pin_get(TOUCH_IRQ_PIN);
     drv_touch.dev.config.irq_pin.mode = PIN_MODE_INPUT_PULLUP;
+    rt_pin_mode(drv_touch.dev.config.irq_pin.pin, drv_touch.dev.config.irq_pin.mode);
 #endif /* RT_TOUCH_PIN_IRQ */
     drv_touch.dev.ops = &drv_touch_ops;
 
