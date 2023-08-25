@@ -125,6 +125,10 @@ menu "Test functions and examples"
     menuconfig BSP_USING_KSZ8794_TEST
         bool "Enable ksz8794 test"
         default n
+        
+    menuconfig BSP_USING_MCP2517FD_TEST
+        bool "Enable mcp2517fd test"
+        default n
 endmenu
 
 menu "Product Application and Function"

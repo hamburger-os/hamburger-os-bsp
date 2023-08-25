@@ -360,28 +360,28 @@ typedef uint32_t CAN_MSG_TIMESTAMP;
 //! CAN TX Message Object
 typedef union _CAN_TX_MSGOBJ
 {
-  struct
-  {
-    CAN_MSGOBJ_ID id;
-    CAN_TX_MSGOBJ_CTRL ctrl;
-    CAN_MSG_TIMESTAMP timeStamp;
-  } bF;
-  uint32_t word[3];
-  uint8_t byte[12];
+    struct
+    {
+        CAN_MSGOBJ_ID id;
+        CAN_TX_MSGOBJ_CTRL ctrl;
+        CAN_MSG_TIMESTAMP timeStamp;
+    } bF;
+    uint32_t word[3];
+    uint8_t byte[12];
 } CAN_TX_MSGOBJ;
 
 //! CAN RX Message Object
 
 typedef union _CAN_RX_MSGOBJ
 {
-  struct
-  {
-    CAN_MSGOBJ_ID id;
-    CAN_RX_MSGOBJ_CTRL ctrl;
-    CAN_MSG_TIMESTAMP timeStamp;
-  } bF;
-  uint32_t word[3];
-  uint8_t byte[12];
+    struct
+    {
+        CAN_MSGOBJ_ID id;
+        CAN_RX_MSGOBJ_CTRL ctrl;
+        CAN_MSG_TIMESTAMP timeStamp;
+    } bF;
+    uint32_t word[3];
+    uint8_t byte[12];
 } CAN_RX_MSGOBJ;
 
 //! CAN TEF Message Object

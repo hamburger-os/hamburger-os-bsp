@@ -3435,7 +3435,10 @@ menu "Onboard Peripheral Drivers"
         default n
         
         if BSP_USING_MCP2517FD
-        
+          config BSP_MCP2517FD_SPI_SPEED
+              int "Set the rate of spi, default: (20 * 1000 *1000)"
+              default (20000000)
+                  
           menuconfig BSP_USE_MCP2517FD_CAN1
           bool "Enable The MCP2517FD CAN FD Port 1"
           default n
