@@ -33,7 +33,13 @@ menuconfig PKG_USING_SYSINFO
     default n
     
     if PKG_USING_SYSINFO
-    
+        config SYSINFO_PARTNAME
+            string "Set the partition name used, default : max31826"
+            default "max31826"
+            
+        config SYSINFO_PARTSIZE
+            int "Set the partition size, default: 128"
+            default (128)
     endif
 
 menuconfig PKG_USING_ULOG_BACK
