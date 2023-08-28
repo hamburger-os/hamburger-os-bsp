@@ -38,8 +38,6 @@
  */
 int stm32_flash_read(rt_uint32_t addr, rt_uint8_t *buf, size_t size)
 {
-    size_t i;
-
     if ((addr + size) > STM32_FLASH_END_ADDRESS)
     {
         LOG_E("read outrange flash size! addr is (0x%p)", (void *)(addr + size));
@@ -48,14 +46,12 @@ int stm32_flash_read(rt_uint32_t addr, rt_uint8_t *buf, size_t size)
 
     if (size < 1)
     {
-        LOG_W("read size %d! addr is (0x%p)", size, (void*)(addr + size));
-        return -RT_EINVAL;
+//        LOG_W("read size %d! addr is (0x%p)", size, (void*)(addr + size));
+        return 0;
     }
+    LOG_D("read (0x%p) %d", (void*)(addr), size);
 
-    for (i = 0; i < size; i++, buf++, addr++)
-    {
-        *buf = *(rt_uint8_t *) addr;
-    }
+    rt_memcpy((void *)buf, (void *)addr, size);
 
     return size;
 }
@@ -87,15 +83,16 @@ int stm32_flash_write(rt_uint32_t addr, const rt_uint8_t *buf, size_t size)
 
     if(addr % 32 != 0)
     {
-        LOG_E("write addr must be 32-byte alignment (0x%p)", (void*)(addr + size));
+        LOG_E("write addr must be 32-byte alignment (0x%p) %d %d", (void*)(addr), addr % 32, size);
         return -RT_EINVAL;
     }
 
     if (size < 1)
     {
-        LOG_W("write size %d! addr is (0x%p)", size, (void*)(addr + size));
-        return -RT_EINVAL;
+//        LOG_W("write size %d! addr is (0x%p)", size, (void*)(addr + size));
+        return 0;
     }
+    LOG_D("write (0x%p) %d %d", (void*)(addr), addr % 32, size);
 
     HAL_FLASH_Unlock();
     write_addr = (uint32_t)buf;
@@ -165,8 +162,8 @@ int stm32_flash_erase(rt_uint32_t addr, size_t size)
 
     if (size < 1)
     {
-        LOG_W("erase size %d! addr is (0x%p)", size, (void*)(addr + size));
-        return -RT_EINVAL;
+//        LOG_W("erase size %d! addr is (0x%p)", size, (void*)(addr + size));
+        return 0;
     }
     LOG_D("erase start: addr (0x%p), size %d", (void *)addr, size);
 
@@ -210,7 +207,6 @@ int stm32_flash_erase(rt_uint32_t addr, size_t size)
     EraseInitStruct.VoltageRange  = FLASH_VOLTAGE_RANGE_3;
     /* Unlock the Flash to enable the flash control register access */
     HAL_FLASH_Unlock();
-//    SCB_DisableDCache();
 
     if(size_bank1 > 0)
     {
@@ -249,7 +245,6 @@ int stm32_flash_erase(rt_uint32_t addr, size_t size)
 #endif
 
 __exit:
-//    SCB_EnableDCache();
     HAL_FLASH_Lock();
 
     if (result != RT_EOK)
@@ -275,7 +270,7 @@ const struct fal_flash_dev onchip128_flash =
     .len = FLASH_SIZE_TOTAL,
     .blk_size = FLASH_BLK_SIZE,
     .ops = {fal_flash128_init, fal_flash128_read, fal_flash128_write, fal_flash128_erase},
-    .write_gran = 8,
+    .write_gran = 32,
 };
 
 static int fal_flash128_init(void)

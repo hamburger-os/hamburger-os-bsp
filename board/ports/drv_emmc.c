@@ -275,7 +275,7 @@ static void MX_SDIO_MMC_Init(void)
     emmc_obj.hmmc.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_DISABLE;
     emmc_obj.hmmc.Init.BusWide = SDMMC_BUS_WIDE_1B;
     emmc_obj.hmmc.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_DISABLE;
-    emmc_obj.hmmc.Init.ClockDiv = 2;
+    emmc_obj.hmmc.Init.ClockDiv = 1;
     if (HAL_MMC_Init(&emmc_obj.hmmc) != HAL_OK)
     {
         Error_Handler();

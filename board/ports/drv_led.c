@@ -24,6 +24,8 @@ struct LEDConfig
 };
 static struct LEDConfig leds_config[BSP_LED_MAX] = {0};
 
+static uint32_t led_cycle = BSP_LED_CYCLE;
+
 /* 创建一个led设备 */
 rt_base_t led_creat(rt_base_t pin, rt_base_t level)
 {
@@ -43,13 +45,15 @@ rt_base_t led_creat(rt_base_t pin, rt_base_t level)
     return -1;
 }
 
-/* 在收发数据或者idle时调用此函数即会产生对应的led运行状态 */
+/* 在收发数据或者idle时 */
+/* 调用此函数即会产生对应的led运行状态 */
+/* 以设置频率闪烁1s, 并至少闪烁1次 */
 void led_execution_phase(rt_base_t index)
 {
     if (index < BSP_LED_MAX && BSP_LED_MAX >= 0)
     {
         leds_config[index].is_error = 0;
-        leds_config[index].count = 1000/BSP_LED_CYCLE;
+        leds_config[index].count = 1000/led_cycle;
         if (leds_config[index].count == 0)
             leds_config[index].count = 1;
     }
@@ -73,7 +77,7 @@ static void led_thread_entry(void *parameter)
     LOG_I("init succeed.");
     while (1)
     {
-        rt_thread_delay_until(&tick, BSP_LED_CYCLE);
+        rt_thread_delay_until(&tick, led_cycle);
         tick = rt_tick_get();
 
         for (i = 0; i<BSP_LED_MAX; i++)
@@ -117,7 +121,7 @@ static int rt_led_init()
     rt_thread_t tid = rt_thread_create("led",
                             led_thread_entry, RT_NULL,
                             1024,
-                            RT_THREAD_PRIORITY_MAX - 3, 20);
+                            RT_THREAD_PRIORITY_MAX - 2, 10);
 
     /* 如果获得线程控制块，启动这个线程 */
     if (tid != RT_NULL)
@@ -132,5 +136,26 @@ static int rt_led_init()
 }
 /* 导出到自动初始化 */
 INIT_DEVICE_EXPORT(rt_led_init);
+
+/** \brief change sys led delay
+ * \return void
+ *
+ */
+static void change_led_cycle(int argc, char *argv[])
+{
+    if (argc != 2)
+    {
+        rt_kprintf("Usage: change_led_cycle [ms]\n");
+    }
+    else
+    {
+        led_cycle = strtoul(argv[1], NULL, 10);
+    }
+}
+
+#ifdef RT_USING_FINSH
+#include <finsh.h>
+MSH_CMD_EXPORT_ALIAS(change_led_cycle, change_led_cycle, change led cycle: ms.);
+#endif
 
 #endif

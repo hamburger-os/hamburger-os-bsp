@@ -18,19 +18,64 @@
 #define LV_HOR_RES_MAX          LCD_WIDTH
 #define LV_VER_RES_MAX          LCD_HEIGHT
 
-#ifdef PKG_USING_LV_MUSIC_DEMO
-/* music player demo */
-#define LV_USE_DEMO_RTT_MUSIC       1
-#define LV_DEMO_RTT_MUSIC_AUTO_PLAY 1
+/*==================
+* DEMO
+*==================*/
+#ifdef BSP_USING_LVGL_WIDGETS_DEMO
+#  define LV_USE_DEMO_WIDGETS 1
+#ifdef LVGL_WIDGETS_DEMO_SLIDESHOW
+#  define LV_DEMO_WIDGETS_SLIDESHOW 1
+#endif
+#endif
+
+#ifdef BSP_USING_LVGL_BENCHMARK_DEMO
+#  define LV_USE_DEMO_BENCHMARK 1
+#endif
+
+#ifdef BSP_USING_LVGL_STRESS_DEMO
+#  define LV_USE_DEMO_STRESS 1
+#endif
+
+#ifdef BSP_USING_LVGL_KEYPAD_AND_ENCODER_DEMO
+#  define LV_USE_DEMO_KEYPAD_AND_ENCODER 1
+#endif
+
+#ifdef BSP_USING_LVGL_MUSIC_DEMO
+#  define LV_USE_DEMO_MUSIC 1
+#ifdef LVGL_MUSIC_DEMO_SQUARE
+#  define LV_DEMO_MUSIC_SQUARE 1
+#endif
+#ifdef LVGL_MUSIC_DEMO_LANDSCAPE
+#  define LV_DEMO_MUSIC_LANDSCAPE 1
+#endif
+#ifdef LVGL_MUSIC_DEMO_ROUND
+#  define LV_DEMO_MUSIC_ROUND 1
+#endif
+#ifdef LVGL_MUSIC_DEMO_LARGE
+#  define LV_DEMO_MUSIC_LARGE 1
+#endif
+#ifdef LVGL_MUSIC_DEMO_AUTO_PLAY
+#  define LV_DEMO_MUSIC_AUTO_PLAY 1
+#endif
+
 #define LV_FONT_MONTSERRAT_12       1
 #define LV_FONT_MONTSERRAT_16       1
-#define LV_COLOR_SCREEN_TRANSP      1
-#endif /* PKG_USING_LV_MUSIC_DEMO */
+#define LV_FONT_MONTSERRAT_22       1
+#define LV_FONT_MONTSERRAT_32       1
+#endif
 
+/*==================
+* GPU
+*==================*/
 #define LV_USE_GPU                  1   /*Only enables `gpu_fill_cb` and `gpu_blend_cb` in the disp. drv- */
 #define LV_USE_GPU_STM32_DMA2D      0
 /*If enabling LV_USE_GPU_STM32_DMA2D, LV_GPU_DMA2D_CMSIS_INCLUDE must be defined to include path of CMSIS header of target processor
 e.g. "stm32f769xx.h" or "stm32f429xx.h" */
+#ifdef SOC_M4COREBOARD_SDRAM
 #define LV_GPU_DMA2D_CMSIS_INCLUDE  "stm32f429xx.h"
+#endif
+#ifdef SOC_H7COREBOARD_SDRAM
+#define LV_GPU_DMA2D_CMSIS_INCLUDE  "stm32h743xx.h"
+#endif
 
 #endif

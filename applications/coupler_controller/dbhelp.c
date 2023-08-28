@@ -36,8 +36,10 @@ struct DbhelpTable
     uint8_t size;
     uint32_t defaultv;
 };
-static struct DbhelpTable dbhelp_table[] = { { DB_ADDR_KEY, (uint32_t *) &coupler_controller_db.addr,
-        sizeof(coupler_controller_db.addr), 0x02 }, };
+static struct DbhelpTable dbhelp_table[] =
+{
+    { DB_ADDR_KEY, (uint32_t *) &coupler_controller_db.addr, sizeof(coupler_controller_db.addr), 0x02 },
+};
 
 void coupler_controller_dbinit(void)
 {

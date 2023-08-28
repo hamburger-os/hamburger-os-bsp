@@ -44,6 +44,34 @@ static void ctrl_thread_entry(void *parameter)
     while(puserdata->isThreadRun)
     {
         rt_thread_delay(1000);
+        puserdata->status = !rt_pin_read(puserdata->ctrl_pin[CTRL_DI1]);
+        if (puserdata->status == PIN_HIGH)
+        {
+            if (puserdata->mode == MODE_UNHOOKING)
+            {
+                LOG_I("mode : unhooking...");
+            }
+            else if (puserdata->mode != MODE_HOOKED)
+            {
+                LOG_I("mode : hooked.");
+                puserdata->mode = MODE_HOOKED;
+                module_ctrl_open(0);
+            }
+        }
+        else
+        {
+            if (puserdata->mode == MODE_HOOKING)
+            {
+                LOG_I("mode : hooking...");
+            }
+            else if (puserdata->mode != MODE_IDLE)
+            {
+                LOG_I("mode : idle.");
+                puserdata->mode = MODE_IDLE;
+                module_ctrl_open(0);
+                ctrl_air_pressure(0);
+            }
+        }
     }
 }
 
@@ -52,6 +80,7 @@ void ctrl_air_pressure(uint8_t onoff)
     rt_pin_write(coupler_controller_userdata.ctrl_pin[CTRL_DO1], onoff);
     LOG_D("air pressure %d", onoff);
 }
+
 static void air_test(int argc, char **argv)
 {
     if (argc != 2)
@@ -70,7 +99,7 @@ MSH_CMD_EXPORT_ALIAS(air_test, airtest, air_pressure test);
 void coupler_controller_ctrlinit(void)
 {
     /* 创建 ctrl 线程 */
-    rt_thread_t thread = rt_thread_create("ctrl", ctrl_thread_entry, &coupler_controller_userdata, 2048, 26, 10);
+    rt_thread_t thread = rt_thread_create("ctrl", ctrl_thread_entry, &coupler_controller_userdata, 2048, 21, 10);
     /* 创建成功则启动线程 */
     if (thread != RT_NULL)
     {

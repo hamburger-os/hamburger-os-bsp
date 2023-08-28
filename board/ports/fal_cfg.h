@@ -23,6 +23,7 @@ extern "C" {
 #define FLASH_OFFSET_APP                    (FLASH_OFFSET_BOOTLOADER + FLASH_SIZE_BOOTLOADER)
 #define FLASH_OFFSET_DOWNLOAD               (FLASH_OFFSET_APP + FLASH_SIZE_APP)
 #define FLASH_OFFSET_FACTORY                (FLASH_OFFSET_DOWNLOAD + FLASH_SIZE_DOWNLOAD)
+#define FLASH_OFFSET_KVDB                   (FLASH_OFFSET_FACTORY + FLASH_SIZE_FACTORY)
 #define FLASH_START_ADRESS                  (STM32_FLASH_START_ADRESS)
 #define FLASH_BLK_SIZE                      (128 * 1024)
 #define FLASH_DEV_NAME                      "onchip128"
@@ -40,7 +41,7 @@ extern "C" {
 //fm25xx定义,无需修改
 #define FM25xx_START_ADRESS            (0)
 #define FM25xx_DEV_NAME                "fm25xx"
-#define BLK_FRAM                       "fram"
+#define BLK_FRAM                       FM25xx_PARTNAME
 #endif
 
 #ifdef BSP_USING_SPI_FLASH
@@ -50,11 +51,35 @@ extern "C" {
 #define BLK_SPI_FLASH                   "spiflash"
 #endif
 
+#ifdef BSP_USING_S25FL512
+//s25fl512定义,无需修改
+#define S25FL512_START_ADRESS           (0)
+#define S25FL512_DEV_NAME               "s25fl512"
+#define BLK_S25FL512                    "spinor64"
+#endif
+
+#ifdef BSP_USING_AT45DB321E
+//at45db321e定义,无需修改
+#define AT45DB321E_START_ADRESS         (0)
+#define AT45DB321E_DEV_NAME             "at45db321e"
+#define BLK_AT45DB321E                  "spinor4"
+#endif
+
 #ifdef BSP_FMCSRAM_ENABLE_BLK
 //sram定义,无需修改
 #define FMCSRAM_DEV_NAME                "fmc_sram"
 #define BLK_FMCSRAM                     "sram"
 #define FMCSRAM_BLK_SIZE                (512)
+#endif
+
+#ifdef BSP_SDRAM_ENABLE_BLK
+//sdram定义,无需修改
+#define SDRAM_DEV_NAME                  "sdram"
+#define BLK_SDRAM                       "sdram"
+#define SDRAM_BLK_SIZE                  (512)
+#endif
+#ifndef BSP_SDRAM_BLK_SIZE
+#define BSP_SDRAM_BLK_SIZE              (0)
 #endif
 
 #ifdef BSP_USING_NORFLASH
@@ -88,6 +113,13 @@ extern "C" {
 #define EEPROM_24Cxx_START_ADRESS      (0)
 #define EEPROM_24Cxx_DEV_NAME          "24cxx"
 #define BLK_EEPROM                     "eeprom"
+#endif
+
+#ifdef BSP_USING_MAX31826
+//max31826定义,无需修改
+#define MAX31826_START_ADRESS           (0)
+#define MAX31826_DEV_NAME               "max31826"
+#define BLK_MAX31826                    "max31826"
 #endif
 
 #ifdef BSP_USING_SDCARD

@@ -10,7 +10,11 @@
 #ifndef PACKAGES_FLASHDB_PORT_FLASHDB_PORT_H_
 #define PACKAGES_FLASHDB_PORT_FLASHDB_PORT_H_
 
+#include <flashdb.h>
+
 size_t kvdb_get_blob(const char *key, fdb_blob_t blob);
+size_t kvdb_get(const char *key, char *value);
 fdb_err_t kvdb_set_blob(const char *key, fdb_blob_t blob);
+fdb_err_t kvdb_set(const char *key, char *value);
 
 #endif /* PACKAGES_FLASHDB_PORT_FLASHDB_PORT_H_ */

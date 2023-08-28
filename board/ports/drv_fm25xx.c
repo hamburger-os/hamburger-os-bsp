@@ -282,9 +282,9 @@ static rt_err_t fm25xx_writeStatus(union FM25xxStatusDef status)
     return ret;
 }
 
-static char dev_name[RT_NAME_MAX];
 static int fram_spi_device_init(void)
 {
+    char dev_name[RT_NAME_MAX];
     rt_uint8_t dev_num = 0;
     do
     {
@@ -416,83 +416,6 @@ static int fal_fram_erase(long offset, size_t size)
 
     return size;
 }
-
-#ifdef FM25xx_ENABLE_TEST
-static int fram_test(void)
-{
-    rt_err_t ret = RT_EOK;
-    uint32_t testsize = fm25xx_fram.blk_size;
-    LOG_I("fram read write test start...");
-
-    char *tbuf = rt_malloc(testsize);
-    char *rbuf = rt_malloc(testsize);
-    if (tbuf == NULL || rbuf == NULL)
-    {
-        rt_free(tbuf);
-        rt_free(rbuf);
-        LOG_W("Not enough memory to request a block.");
-
-        testsize = 1024;
-        tbuf = rt_malloc(testsize);
-        rbuf = rt_malloc(testsize);
-        if (tbuf == NULL || rbuf == NULL)
-        {
-            rt_free(tbuf);
-            rt_free(rbuf);
-            LOG_E("Not enough memory to complete the test.");
-            return -RT_ERROR;
-        }
-    }
-
-    for(uint32_t i = 0; i<testsize; i+=4)
-    {
-        uint32_t *data32 = (uint32_t *)&tbuf[i];
-        *data32 = i;
-    }
-
-    rt_tick_t tick1, tick2, tick3, tick4;
-    for (uint32_t offset = 0; offset <= fm25xx_fram.len; offset += fm25xx_fram.blk_size * 64)
-    {
-        if (offset == fm25xx_fram.len)
-        {
-            offset -= fm25xx_fram.blk_size;
-        }
-        tick1 = rt_tick_get_millisecond();
-        fal_fram_erase(offset, testsize);
-        tick2 = rt_tick_get_millisecond();
-        fal_fram_write(offset, (uint8_t *)tbuf, testsize);
-        tick3 = rt_tick_get_millisecond();
-        fal_fram_read (offset, (uint8_t *)rbuf, testsize);
-        tick4 = rt_tick_get_millisecond();
-
-        LOG_I("erase %08p %d use %u ms", offset, testsize, tick2 - tick1);
-        LOG_I("write %08p %d use %u ms: %x %x", offset, testsize, tick3 - tick2, *(uint32_t *)&tbuf[0], *(uint32_t *)&tbuf[testsize-4]);
-        LOG_I("read  %08p %d use %u ms: %x %x", offset, testsize, tick4 - tick3, *(uint32_t *)&rbuf[0], *(uint32_t *)&rbuf[testsize-4]);
-
-        if (rt_memcmp(tbuf, rbuf, testsize) != 0)
-        {
-            LOG_E("test %08p %d failed!", offset, testsize);
-            ret = -RT_ERROR;
-        }
-        rt_memset(rbuf, 0, testsize);
-    }
-
-    if (ret == RT_EOK)
-    {
-        LOG_I("fram read write test succsess.");
-    }
-    else
-    {
-        LOG_E("fram read write test failed!");
-    }
-
-    rt_free(tbuf);
-    rt_free(rbuf);
-
-    return ret;
-}
-MSH_CMD_EXPORT(fram_test, fram fm25xx test);
-#endif
 
 #endif
 #endif

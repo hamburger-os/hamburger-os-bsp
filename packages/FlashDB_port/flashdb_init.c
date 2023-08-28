@@ -12,7 +12,8 @@
 
 #include <time.h>
 #include <unistd.h>
-#include <flashdb.h>
+
+#include "flashdb_port.h"
 
 #define DBG_TAG "fdb"
 #define DBG_LVL DBG_INFO
@@ -21,13 +22,22 @@
 #ifdef FLASHDB_PORT_USING_KVDB
 static struct fdb_kvdb kvdb;
 
-static void kvdb_thread_entry(void* parameter)
+static int kvdb_init(void)
 {
     fdb_err_t ret = FDB_NO_ERR;
 
     struct fdb_default_kv_node default_kv_table[] =
     {
-        {"system_version"               , "2.0.0"           },
+        {"system_version"               , "2.0.0"                   },
+        {"e0_ip"                        , "192.168.1.30"            },
+        {"e0_gw"                        , "192.168.1.1"             },
+        {"e0_mask"                      , "255.255.255.0"           },
+        {"e1_ip"                        , "192.168.1.31"            },
+        {"e1_gw"                        , "192.168.1.1"             },
+        {"e1_mask"                      , "255.255.255.0"           },
+        {"e2_ip"                        , "192.168.1.32"            },
+        {"e2_gw"                        , "192.168.1.1"             },
+        {"e2_mask"                      , "255.255.255.0"           },
     };
 
     struct fdb_default_kv default_kv = {0};
@@ -38,7 +48,7 @@ static void kvdb_thread_entry(void* parameter)
     if (ret != FDB_NO_ERR)
     {
         LOG_E("kvdb init failed!");
-        return;
+        return -RT_ERROR;
     }
 
     struct fdb_blob blob = {0};
@@ -60,26 +70,11 @@ static void kvdb_thread_entry(void* parameter)
     /* change the "boot_count" KV's value */
     fdb_kv_set_blob(&kvdb, "boot_count", fdb_blob_make(&blob, &boot_count, sizeof(boot_count)));
     LOG_I("Welcome to the system for the %u time", boot_count);
-}
-
-static int kvdb_init(void)
-{
-    //使用独立线程初始化
-    rt_thread_t kvdb_thread = rt_thread_create( "kvdb",
-                                     kvdb_thread_entry,
-                                     NULL,
-                                     2048,
-                                     18,
-                                     10);
-    if ( kvdb_thread != RT_NULL)
-    {
-        rt_thread_startup(kvdb_thread);
-    }
 
     return RT_EOK;
 }
 /* 导出到自动初始化 */
-INIT_ENV_EXPORT(kvdb_init);
+INIT_COMPONENT_EXPORT(kvdb_init);
 #endif
 
 size_t kvdb_get_blob(const char *key, fdb_blob_t blob)
@@ -89,12 +84,28 @@ size_t kvdb_get_blob(const char *key, fdb_blob_t blob)
 }
 RTM_EXPORT(kvdb_get_blob);
 
+size_t kvdb_get(const char *key, char *value)
+{
+    /* get the KV value */
+    char *pvalue = fdb_kv_get(&kvdb, key);
+    rt_strcpy(value, pvalue);
+    return rt_strlen(value);
+}
+RTM_EXPORT(kvdb_get);
+
 fdb_err_t kvdb_set_blob(const char *key, fdb_blob_t blob)
 {
     /* change the KV's value */
     return fdb_kv_set_blob(&kvdb, key, blob);
 }
 RTM_EXPORT(kvdb_set_blob);
+
+fdb_err_t kvdb_set(const char *key, char *value)
+{
+    /* change the KV's value */
+    return fdb_kv_set(&kvdb, key, value);
+}
+RTM_EXPORT(kvdb_set);
 
 #ifdef FLASHDB_PORT_USING_TSDB
 static struct fdb_tsdb tsdb;

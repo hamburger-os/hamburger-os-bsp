@@ -7,8 +7,10 @@
  * Date           Author       Notes
  * 2021-10-18     Meco Man     The first version
  */
-#include <lvgl.h>
 #include <board.h>
+
+#ifdef PKG_USING_LVGL
+#include <lvgl.h>
 
 #define DRV_DEBUG
 #define LOG_TAG "drv.lv"
@@ -98,3 +100,5 @@ void lv_port_disp_init(void)
     /*Finally register the driver*/
     lv_disp_drv_register(&disp_drv);
 }
+
+#endif

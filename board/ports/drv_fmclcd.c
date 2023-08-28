@@ -15,7 +15,6 @@
 #include <board.h>
 
 #include "lv_conf.h"
-#include "drv_fmclcd.h"
 
 #define DRV_DEBUG
 #define LOG_TAG "drv.lcd"

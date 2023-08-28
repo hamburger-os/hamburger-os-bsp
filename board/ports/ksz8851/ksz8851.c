@@ -732,6 +732,7 @@ int ks_start_xmit(struct rt_fmc_eth_port *ps_ks, struct pbuf *p)
     return framelength;
 }
 
+#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
 /**
  * ks_start_xmit_link_layer - 链路层发送数据包
  * @skb     : The buffer to transmit
@@ -741,7 +742,7 @@ int ks_start_xmit(struct rt_fmc_eth_port *ps_ks, struct pbuf *p)
  * spin_lock_irqsave is required because tx and rx should be mutual exclusive.
  * So while tx is in-progress, prevent IRQ interrupt from happenning.
  */
-int32_t ks_start_xmit_link_layer(struct rt_fmc_eth_port *ps_ks, KSZ_S_LEP_BUF *ps_lep_buf)
+int32_t ks_start_xmit_link_layer(struct rt_fmc_eth_port *ps_ks, S_LEP_BUF *ps_lep_buf)
 {
     int32_t retv_i32 = 0;
 
@@ -764,7 +765,7 @@ int32_t ks_start_xmit_link_layer(struct rt_fmc_eth_port *ps_ks, KSZ_S_LEP_BUF *p
 
     return retv_i32;
 }
-
+#endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
 static unsigned long const ethernet_polynomial = 0x04c11db7U;
 static unsigned long ether_gen_crc(int length, uint8_t *data)
 {
@@ -929,7 +930,7 @@ void ks_set_mac(struct rt_fmc_eth_port *ps_ks, uint8_t *p_data)
 
     for (i = 0; i < 6; i++)
     {
-        ps_ks->dev_addr[i] = p_data[i];
+        ps_ks->mac[i] = p_data[i];
     }
 
     if (ps_ks->b_enabled)
@@ -1043,7 +1044,7 @@ static int32_t ks_hw_init(struct rt_fmc_eth_port *ps_ks)
     ps_ks->all_mcast_u16 = 0;
     ps_ks->mcast_lst_size_u16 = 0;
 
-    ks_set_mac(ps_ks, ps_ks->dev_addr);
+    ks_set_mac(ps_ks, ps_ks->mac);
     return 0;
 }
 

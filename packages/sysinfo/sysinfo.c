@@ -44,13 +44,8 @@ void sysinfo_get(struct SysInfoDef *info)
     }
     else
     {
-        LOG_E("sensor read error!");
+        LOG_E("cpu temp read error!");
     }
-
-    info->flash_size = STM32_FLASH_SIZE/1024;
-    info->sram_size = STM32_SRAM_SIZE/1024;
-    info->sys_clock = HAL_RCC_GetSysClockFreq()/1000000;
-    info->mem_size = memory_info_size()/1024;
 
     /* 查找单总线MAX31826设备 */
     dev = rt_device_find("temp_max31826");
@@ -93,27 +88,28 @@ void sysinfo_get(struct SysInfoDef *info)
         LOG_E("ds1682 read error!");
     }
 }
+RTM_EXPORT(sysinfo_get);
 
-static void sysinfo_show(int argc, char *argv[])
+void sysinfo_show(void)
 {
-    struct SysInfoDef info;
+    struct SysInfoDef info = {0};
     sysinfo_get(&info);
 
-    rt_kprintf("- systerm info:\n");
-    rt_kprintf("----------------------------------------------------------------\n");
-    rt_kprintf("- cpu id      : 0x%08X %08X %08X\n", info.cpu_id[0], info.cpu_id[1], info.cpu_id[2]);
-    rt_kprintf("- cpu temp    : %d.%02d ℃ \n", (int32_t)info.cpu_temp, abs((int32_t)((info.cpu_temp - (int32_t)info.cpu_temp) * 100)));
-    rt_kprintf("- flash size  : %d KB\n", info.flash_size);
-    rt_kprintf("- sram size   : %d KB\n", info.sram_size);
-    rt_kprintf("- memory size : %d KB\n", info.mem_size);
-    rt_kprintf("- sys clock   : %d M\n", info.sys_clock);
-    rt_kprintf("----------------------------------------------------------------\n");
-    rt_kprintf("- chip id     : 0x%02X %02X %02X %02X %02X %02X %02X %02X\n", info.chip_id[0], info.chip_id[1], info.chip_id[2], info.chip_id[3], info.chip_id[4], info.chip_id[5], info.chip_id[6], info.chip_id[7]);
-    rt_kprintf("- chip temp   : %d.%02d ℃ \n", (int32_t)info.chip_temp, abs((int32_t)((info.chip_temp - (int32_t)info.chip_temp) * 100)));
-    rt_kprintf("- times       : %d s\n", info.times);
-    rt_kprintf("- count       : %d\n", info.count);
-    rt_kprintf("----------------------------------------------------------------\n");
+    LOG_D("- systerm info:");
+    LOG_D("----------------------------------------------------------------");
+    LOG_D("- version     : %d", info.version);
+    LOG_HEX("     - SN          ", 8, info.SN, sizeof(info.SN));
+    LOG_D("----------------------------------------------------------------");
+    LOG_D("- cpu id      : 0x%08X %08X %08X", info.cpu_id[0], info.cpu_id[1], info.cpu_id[2]);
+    LOG_D("- cpu temp    : %d.%02d (C) ", (int32_t)info.cpu_temp, abs((int32_t)((info.cpu_temp - (int32_t)info.cpu_temp) * 100)));
+    LOG_D("----------------------------------------------------------------");
+    LOG_D("- chip id     : 0x%02X %02X %02X %02X %02X %02X %02X %02X", info.chip_id[0], info.chip_id[1], info.chip_id[2], info.chip_id[3], info.chip_id[4], info.chip_id[5], info.chip_id[6], info.chip_id[7]);
+    LOG_D("- chip temp   : %d.%02d (C) ", (int32_t)info.chip_temp, abs((int32_t)((info.chip_temp - (int32_t)info.chip_temp) * 100)));
+    LOG_D("- times       : %d s", info.times);
+    LOG_D("- count       : %d", info.count);
+    LOG_D("----------------------------------------------------------------");
 }
+RTM_EXPORT(sysinfo_show);
 
 #ifdef RT_USING_FINSH
 #include <finsh.h>

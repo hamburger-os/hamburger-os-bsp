@@ -26,8 +26,9 @@ CouplerCtrlUserData coupler_controller_userdata = {
     .module_devname = BSP_DEV_TABLE_UART4,
     .adc_devname = "ltc186x",
     .led_devname = {BSP_GPIO_TABLE_GPIO5, BSP_GPIO_TABLE_SPI1_CS2, BSP_GPIO_TABLE_SPI1_CS1, BSP_GPIO_TABLE_SPI1_CS0, BSP_GPIO_TABLE_GPIO4},
-    .ctrl_devname = {"PC.1", "PA.9", BSP_GPIO_TABLE_PWM3, BSP_GPIO_TABLE_PWM4},
+    .ctrl_devname = {BSP_GPIO_TABLE_I2S1_SDO, BSP_GPIO_TABLE_I2S1_CK, BSP_GPIO_TABLE_PWM3, BSP_GPIO_TABLE_PWM4},
     .bat_devname = {BSP_GPIO_TABLE_GPIO3, BSP_GPIO_TABLE_GPIO8},
+    .gnss_devname = "gnss",
 
     .isThreadRun = 1,
 };
@@ -131,15 +132,17 @@ static void process_thread_entry(void *parameter)
                 if(type->hook == 0x1)
                 {
                     //执行挂钩
-                    LOG_I("   cmd: ID_STATION_POLLING execution hooks");
+                    LOG_I("   cmd: ID_STATION_POLLING hooking");
                     module_ctrl_open(1);
+                    puserdata->mode = MODE_HOOKING;
                 }
                 else if (type->hook == 0x2)
                 {
                     //执行摘钩
-                    LOG_I("   cmd: ID_STATION_POLLING Perform unhooking");
+                    LOG_I("   cmd: ID_STATION_POLLING unhooking");
                     module_ctrl_open(1);
                     ctrl_air_pressure(1);
+                    puserdata->mode = MODE_UNHOOKING;
                 }
                 TYPE_CONTROLLER_ACK ack = {
                     .distance_h = puserdata->distance_h,
@@ -147,7 +150,7 @@ static void process_thread_entry(void *parameter)
                     .logo = puserdata->logo,
                     .pressure_1 = puserdata->adc[0],
                     .pressure_2 = puserdata->adc[1],
-                    .put_hook = 0,
+                    .put_hook = puserdata->status,
                     .out_hook = puserdata->out_hook,
                     .reserve = 0x7c7e,
                 };
@@ -354,6 +357,8 @@ static int coupler_controller_init(void)
     coupler_controller_ctrlinit();
     //启动风压adc读取
     coupler_controller_pressureinit();
+    //启动gps数据读取
+    coupler_controller_gnssinit();
     //启动和图像测距模组的通信
     coupler_controller_moduleinit();
     //启动和站防的485总线通信

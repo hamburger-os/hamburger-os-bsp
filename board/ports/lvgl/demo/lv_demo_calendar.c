@@ -1,5 +1,7 @@
-#include <lvgl.h>
 #include <board.h>
+
+#ifdef PKG_USING_LVGL
+#include <lvgl.h>
 
 static void event_handler(lv_event_t * e)
 {
@@ -47,3 +49,5 @@ void lv_demo_calendar(void)
 #endif
     lv_calendar_set_showed_date(calendar, 2021, 10);
 }
+
+#endif

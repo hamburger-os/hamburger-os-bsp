@@ -24,8 +24,20 @@
     extern struct fal_flash_dev spiflash;
 #endif
 
+#ifdef BSP_USING_S25FL512
+    extern struct fal_flash_dev s25fl512_flash;
+#endif
+
+#ifdef BSP_USING_AT45DB321E
+    extern struct fal_flash_dev at45db321e_flash;
+#endif
+
 #ifdef BSP_FMCSRAM_ENABLE_BLK
     extern const struct fal_flash_dev sram_flash;
+#endif
+
+#ifdef BSP_SDRAM_ENABLE_BLK
+    extern const struct fal_flash_dev sdram_flash;
 #endif
 
 #ifdef BSP_USING_NORFLASH
@@ -34,6 +46,10 @@
 
 #ifdef BSP_USING_EEPROM_24Cxx
     extern const struct fal_flash_dev hg24cxx_eeprom;
+#endif
+
+#ifdef BSP_USING_MAX31826
+    extern const struct fal_flash_dev max31826_flash;
 #endif
 
 const struct fal_flash_dev * const device_table[] =
@@ -53,8 +69,20 @@ const struct fal_flash_dev * const device_table[] =
     &spiflash,
 #endif
 
+#ifdef BSP_USING_S25FL512
+    &s25fl512_flash,
+#endif
+
+#ifdef BSP_USING_AT45DB321E
+    &at45db321e_flash,
+#endif
+
 #ifdef BSP_FMCSRAM_ENABLE_BLK
     &sram_flash,
+#endif
+
+#ifdef BSP_SDRAM_ENABLE_BLK
+    &sdram_flash,
 #endif
 
 #ifdef BSP_USING_NORFLASH
@@ -63,6 +91,10 @@ const struct fal_flash_dev * const device_table[] =
 
 #ifdef BSP_USING_EEPROM_24Cxx
     &hg24cxx_eeprom,
+#endif
+
+#ifdef BSP_USING_MAX31826
+    &max31826_flash,
 #endif
 };
 const size_t device_table_len = sizeof(device_table) / sizeof(struct fal_flash_dev *);
@@ -80,6 +112,9 @@ const struct fal_partition partition_table_def[] =
 #if FLASH_SIZE_FACTORY > 0
     {FAL_PART_MAGIC_WORD,   "factory",        FLASH_DEV_NAME,          FLASH_OFFSET_FACTORY,                  FLASH_SIZE_FACTORY, 0},
 #endif
+#if FLASH_SIZE_KVDB > 0
+    {FAL_PART_MAGIC_WORD,      "kvdb",        FLASH_DEV_NAME,             FLASH_OFFSET_KVDB,                     FLASH_SIZE_KVDB, 0},
+#endif
 #ifdef FLASH_USING_BLK256
     {FAL_PART_MAGIC_WORD,    "onchip",     FLASH_BLK256_NAME,                             0,                   FLASH_BLK256_SIZE, 0},
 #endif
@@ -93,8 +128,20 @@ const struct fal_partition partition_table_def[] =
     {FAL_PART_MAGIC_WORD,BLK_SPI_FLASH,   SPI_FLASH_DEV_NAME,                             0,    SPI_FLASH_SIZE_GRANULARITY_TOTAL, 0},
 #endif
 
+#ifdef BSP_USING_S25FL512
+    {FAL_PART_MAGIC_WORD, BLK_S25FL512,    S25FL512_DEV_NAME,                             0,     S25FL512_SIZE_GRANULARITY_TOTAL, 0},
+#endif
+
+#ifdef BSP_USING_AT45DB321E
+    {FAL_PART_MAGIC_WORD, BLK_AT45DB321E, AT45DB321E_DEV_NAME,                            0,   AT45DB321E_SIZE_GRANULARITY_TOTAL, 0},
+#endif
+
 #ifdef BSP_FMCSRAM_ENABLE_BLK
     {FAL_PART_MAGIC_WORD,  BLK_FMCSRAM,     FMCSRAM_DEV_NAME,                             0,                    BSP_FMCSRAM_SIZE, 0},
+#endif
+
+#ifdef BSP_SDRAM_ENABLE_BLK
+    {FAL_PART_MAGIC_WORD,  BLK_SDRAM,     SDRAM_DEV_NAME,                             0,         SDRAM_SIZE - BSP_SDRAM_BLK_SIZE, 0},
 #endif
 
 #ifdef BSP_USING_NORFLASH
@@ -132,6 +179,10 @@ const struct fal_partition partition_table_def[] =
 
 #ifdef BSP_USING_EEPROM_24Cxx
     {FAL_PART_MAGIC_WORD,  BLK_EEPROM, EEPROM_24Cxx_DEV_NAME,                             0, EEPROM_24Cxx_SIZE_GRANULARITY_TOTAL, 0},
+#endif
+
+#ifdef BSP_USING_MAX31826
+    {FAL_PART_MAGIC_WORD,BLK_MAX31826,     MAX31826_DEV_NAME,                             0,     MAX31826_SIZE_GRANULARITY_TOTAL, 0},
 #endif
 };
 const size_t partition_table_def_len = sizeof(partition_table_def) / sizeof(struct fal_partition);

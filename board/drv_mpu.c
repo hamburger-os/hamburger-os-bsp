@@ -26,8 +26,8 @@ static MPU_Region_InitTypeDef mpu_cfg[] =
         .TypeExtField = MPU_TEX_LEVEL0,
         .AccessPermission = MPU_REGION_FULL_ACCESS,
         .DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE,
-        .IsCacheable = MPU_ACCESS_NOT_CACHEABLE,
-        .IsBufferable = MPU_ACCESS_NOT_BUFFERABLE,
+        .IsCacheable = MPU_ACCESS_CACHEABLE,
+        .IsBufferable = MPU_ACCESS_BUFFERABLE,
     },
 #endif
 
@@ -39,8 +39,8 @@ static MPU_Region_InitTypeDef mpu_cfg[] =
         .TypeExtField = MPU_TEX_LEVEL0,
         .AccessPermission = MPU_REGION_FULL_ACCESS,
         .DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE,
-        .IsCacheable = MPU_ACCESS_NOT_CACHEABLE,
-        .IsBufferable = MPU_ACCESS_NOT_BUFFERABLE,
+        .IsCacheable = MPU_ACCESS_CACHEABLE,
+        .IsBufferable = MPU_ACCESS_BUFFERABLE,
     },
 #endif
 
@@ -163,7 +163,7 @@ static MPU_Region_InitTypeDef mpu_cfg[] =
         .BaseAddress = SDRAM_BANK_ADDR,
         .Size = MPU_REGION_SIZE_64MB,
         .SubRegionDisable = 0x0,
-        .TypeExtField = MPU_TEX_LEVEL1,
+        .TypeExtField = MPU_TEX_LEVEL0,
         .AccessPermission = MPU_REGION_FULL_ACCESS,
         .DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE,
         .IsCacheable = MPU_ACCESS_CACHEABLE,

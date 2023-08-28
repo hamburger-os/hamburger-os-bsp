@@ -9,29 +9,42 @@
  * 2022-05-10     Meco Man      improve rt-thread initialization process
  */
 #include "board.h"
+
+#ifdef PKG_USING_LVGL
 #include <lvgl.h>
+#endif
+
+#ifdef PKG_LVGL_USING_DEMOS
+#include "lv_demos.h"
+#endif
 
 #define DBG_TAG "lv_demo"
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
+#ifdef PKG_USING_LVGL
 __WEAK void lv_user_gui_init(void)
 {
     LOG_D("lvgl demo start...");
     /* display demo; you may replace with your LVGL application at here */
-#if LV_USE_DEMO_RTT_MUSIC == 1
+#if defined(BSP_USING_LVGL_WIDGETS_DEMO)
+    lv_demo_widgets();
+#elif defined(BSP_USING_LVGL_BENCHMARK_DEMO)
+    lv_demo_benchmark();
+#elif defined(BSP_USING_LVGL_STRESS_DEMO)
+    lv_demo_stress();
+#elif defined(BSP_USING_LVGL_KEYPAD_AND_ENCODER_DEMO)
+    lv_demo_keypad_encoder();
+#elif defined(BSP_USING_LVGL_MUSIC_DEMO)
+    lv_demo_music();
+#elif defined(BSP_USING_LVGL_RT_MUSIC_DEMO)
     extern void lv_demo_music(void);
     lv_demo_music();
 #elif defined(BSP_USING_LVGL_DEMO)
     extern void lv_demo_calendar(void);
     lv_demo_calendar();
 #else
-    lv_color_t *cbuf = rt_malloc(LV_CANVAS_BUF_SIZE_TRUE_COLOR(LCD_WIDTH, LCD_HEIGHT));
-    extern lv_obj_t * lv_100ask_sketchpad_create(lv_obj_t * parent);
-    lv_obj_t * sketchpad = lv_100ask_sketchpad_create(lv_scr_act());
 
-    lv_canvas_set_buffer(sketchpad, cbuf, LCD_WIDTH, LCD_HEIGHT, LV_IMG_CF_RGB565);
-    lv_obj_center(sketchpad);
-    lv_canvas_fill_bg(sketchpad, lv_palette_lighten(LV_PALETTE_RED, 3), LV_OPA_TRANSP);
 #endif
 }
+#endif

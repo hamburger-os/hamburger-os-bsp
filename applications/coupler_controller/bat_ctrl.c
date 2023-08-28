@@ -42,6 +42,7 @@ static void bat_thread_entry(void *parameter)
             {
                 rt_pin_write(puserdata->bat_pin[BAT_EN], PIN_HIGH);
                 LOG_D("bat enable");
+                puserdata->isThreadRun = 0;//关闭应用线程
                 rt_thread_delay(60 * 1000);
                 rt_pin_write(puserdata->bat_pin[BAT_EN], PIN_LOW);
                 LOG_D("bat disable");
@@ -54,7 +55,7 @@ static void bat_thread_entry(void *parameter)
 void coupler_controller_batinit(void)
 {
     /* 创建 bat 线程 */
-    rt_thread_t thread = rt_thread_create("bat", bat_thread_entry, &coupler_controller_userdata, 2048, 26, 10);
+    rt_thread_t thread = rt_thread_create("bat", bat_thread_entry, &coupler_controller_userdata, 2048, 21, 10);
     /* 创建成功则启动线程 */
     if (thread != RT_NULL)
     {

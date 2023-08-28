@@ -18,11 +18,11 @@
 #include <netif/ethernetif.h>
 #include <lwipopts.h>
 
+#include "ksz8851_lep.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#define MAX_ADDR_LEN 6
 
 #define ETH_RXBUF_SIZE 2000
 #define ETH_TXBUF_SIZE 1516
@@ -31,17 +31,6 @@ extern "C" {
 #define HW_MCAST_SIZE (8)      /** Hash表大小 */
 #define ETH_ALEN (6)           /** 以太网MAC地址字节数 */
 #define KSZ_MAX_RFRM_THD (255) /** 接收帧最大缓冲数阈值 */
-
-#define LEP_MAC_PKT_MAX_LEN      (1516U)//(1536U)
-
-/** 链路层发送数据结构 */
-typedef struct   /* 接收缓冲区 */
-{
-    struct tagLEP_BUF *pnext;   /* 下一个 */
-    rt_uint16_t          len;       /* 长度 */
-    rt_uint16_t          flag;      /* 收发标志位 */
-    rt_uint8_t           buf[LEP_MAC_PKT_MAX_LEN];
-} KSZ_S_LEP_BUF;
 
 /** 数据包头控制信息结构 */
 typedef struct tagFRAME_HEAD
@@ -61,7 +50,7 @@ struct rt_fmc_eth_port
     struct eth_device parent;
 
     /* interface address info, hw address */
-    uint8_t dev_addr[MAX_ADDR_LEN];
+    uint8_t mac[6];
     char *dev_name;
     struct rt_mutex eth_mux;    /** 接收发送互斥信号量 */
 
@@ -92,9 +81,10 @@ struct rt_fmc_eth_port
     uint8_t frm_cnt_u8; /** QMU接收缓冲区中接收到的帧数 */
     FRAME_HEAD frame_head[KSZ_MAX_RFRM_THD];
 
-    KSZ_S_LEP_BUF link_layer_buf_tx;
-    void *link_layer_rx;
-    rt_uint16_t link_layer_rx_len;
+#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
+    rt_bool_t link_layer_enable;  /** 链路层使能标志 **/
+    S_ETH_IF link_layer_buf;     /** 链路层缓冲区 **/
+#endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
 };
 
 void fmc_eth_memcpy(void *DstAddress, void *SrcAddress, uint32_t DataLength);

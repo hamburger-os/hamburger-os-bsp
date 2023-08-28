@@ -235,6 +235,26 @@ menu "On-chip Peripheral Drivers"
             config BSP_GPIO_TABLE_SPI2_MOSI
                 string "Set the SPI2_MOSI pin, default: PF.9"
                 default "PF.9"
+                
+            config BSP_GPIO_TABLE_I2S1_MCK
+                string "Set the I2S1_MCK pin, default: PA.3"
+                default "PA.3"
+                
+            config BSP_GPIO_TABLE_I2S1_SDI
+                string "Set the I2S1_SDI pin, default: PC.2"
+                default "PC.2"
+                
+            config BSP_GPIO_TABLE_I2S1_SDO
+                string "Set the I2S1_SDO pin, default: PC.1"
+                default "PC.1"
+                
+            config BSP_GPIO_TABLE_I2S1_WS
+                string "Set the I2S1_WS pin, default: PB.12"
+                default "PB.12"
+                
+            config BSP_GPIO_TABLE_I2S1_CK
+                string "Set the I2S1_CK pin, default: PA.9"
+                default "PA.9"
         endif
     menuconfig BSP_USING_DEV_TABLE
         bool "Enable core board dev table"
@@ -705,6 +725,10 @@ menu "On-chip Peripheral Drivers"
                 
             config FLASH_SIZE_FACTORY
                 int "Set the flash size of the factory area, default: (0 * 1024)"
+                default (0)
+                
+            config FLASH_SIZE_KVDB
+                int "Set the flash size of the kvdb area, default: (0 * 1024)"
                 default (0)
 	            
 	        config FLASH_USING_BLK256
@@ -2142,8 +2166,8 @@ menu "Onboard Peripheral Drivers"
             comment "On: system fault"
             
             config BSP_LED_CYCLE
-                int "Set the flashing cycle of the indicator led, in ms, default: 100"
-                default 100
+                int "Set the flashing cycle of the indicator led, in ms, default: 500"
+                default 500
                 
             config BSP_LED_MAX
                 int "Set the maximum number of supported LED lights, default: 8"
@@ -2373,11 +2397,32 @@ menu "Onboard Peripheral Drivers"
 	        config SDRAM_MODEREG_WRITEBURST_MODE_SINGLE
 	            hex "Set modereg writeburst mode single, default: 0x0200"
 	            default (0x0200)
+	            
+	        config BSP_SDRAM_ENABLE_BLK
+                bool "Enable the block device"
+                default n
+                
+            config BSP_SDRAM_BLK_SIZE
+                int "Set memory size, default: (8 * 1024 * 1024)"
+                depends on BSP_SDRAM_ENABLE_BLK
+                default (8388608)
+                
+            config BSP_SDRAM_ENABLE_FS
+                bool "Enable the file system"
+                depends on BSP_SDRAM_ENABLE_BLK
+                select RT_USING_DFS
+                select RT_USING_DFS_ROMFS
+                select RT_USING_DFS_ELMFAT
+                default n
+            
+            config BSP_SDRAM_FS
+                string "Set the file system used, default: elm"
+                depends on BSP_SDRAM_ENABLE_FS
+                default "elm"
         endif
         
     menuconfig BSP_USING_LVGL
         bool "Enable LVGL for LCD"
-        select PKG_USING_LVGL
         default n
 
         if BSP_USING_LVGL
@@ -2433,9 +2478,13 @@ menu "Onboard Peripheral Drivers"
                     int "Set lcd vfp, default: 13"
                     default (13)
                     
+                config LCD_USING_RGB2BGR
+                    bool "Enable LCD RGB to BGR mode"
+                    default y
+                    
                 choice
                     prompt "Select lcd backlight"
-                    default LCD_BACKLIGHT_USING_PWM
+                    default LCD_BACKLIGHT_USING_GPIO
     
                     config LCD_BACKLIGHT_USING_PWM
                         bool "Enable BACKLIGHT PWM"
@@ -2446,8 +2495,8 @@ menu "Onboard Peripheral Drivers"
                 
                 if LCD_BACKLIGHT_USING_GPIO
                     config LCD_BKLT_CTL_GPIO
-                        string "Set the GPIO of the BKLT CTL, default: PH.6"
-                        default "PH.6"
+                        string "Set the GPIO of the BKLT CTL, default: PC.6"
+                        default "PC.6"
                 endif
 
                 config BSP_USING_LCD_TEST
@@ -2489,15 +2538,36 @@ menu "Onboard Peripheral Drivers"
             if BSP_USING_TOUCH
                 choice
                     prompt "Select touch driver"
-                    default TOUCH_USING_XPT2046
+                    default TOUCH_USING_SW
+                    
+                    config TOUCH_USING_SW
+                        bool "Enable touch driver sw"
                     
                     config TOUCH_USING_XPT2046
                         bool "Enable touch driver xpt2046"
                 endchoice
                 
                 config TOUCH_IRQ_PIN
-                    string "pin name for the irq pin, default: PB.1"
-                    default "PB.1"
+                    string "pin name for the irq pin, default: PC.14"
+                    default "PC.14"
+                
+                if TOUCH_USING_SW
+                    config TOUCH_SW_SPI_BUS
+                        string "Set the spi bus used, default: spi2"
+                        default "spi2"
+                        
+                    config TOUCH_SW_CS_PIN
+                        string "pin name for the chip select pin, default: PB.12"
+                        default "PB.12"
+                        
+                    config TOUCH_SW_SPI_SPEED
+                        int "Set the rate of spi, default: (2 * 1000 *1000)"
+                        default (2000000)
+                        
+                    config TOUCH_SW_SAMPLE_TIMES
+                        int "Set the number of sampling times, default: (4)"
+                        default (4)
+                endif
                 
                 if TOUCH_USING_XPT2046
                     config TOUCH_XPT2046_SPI_BUS
@@ -2514,9 +2584,70 @@ menu "Onboard Peripheral Drivers"
                 endif
             endif
             
-            config BSP_USING_LVGL_DEMO
-                bool "Enable LVGL demo"
-                default n
+            choice
+                prompt "Select demo"
+                default BSP_USING_LVGL_WIDGETS_DEMO
+                
+                config BSP_USING_NO_LVGL_DEMO
+                    bool "Disable demo"
+
+                config BSP_USING_LVGL_WIDGETS_DEMO
+                    bool "Enable demo widgets"
+                    select PKG_USING_LVGL
+                    select PKG_LVGL_USING_DEMOS
+                    
+                config BSP_USING_LVGL_BENCHMARK_DEMO
+                    bool "Enable demo benchmark"
+                    select PKG_USING_LVGL
+                    select PKG_LVGL_USING_DEMOS
+                    
+                config BSP_USING_LVGL_STRESS_DEMO
+                    bool "Enable demo stress"
+                    select PKG_USING_LVGL
+                    select PKG_LVGL_USING_DEMOS
+                    
+                config BSP_USING_LVGL_KEYPAD_AND_ENCODER_DEMO
+                    bool "Enable demo keypad and encoder"
+                    select PKG_USING_LVGL
+                    select PKG_LVGL_USING_DEMOS
+                    
+                config BSP_USING_LVGL_MUSIC_DEMO
+                    bool "Enable demo music"
+                    select PKG_USING_LVGL
+                    select PKG_LVGL_USING_DEMOS
+                    
+                config BSP_USING_LVGL_DEMO
+                    bool "Enable demo calendar"
+                    select PKG_USING_LVGL
+            endchoice
+            
+            if BSP_USING_LVGL_WIDGETS_DEMO
+                config LVGL_WIDGETS_DEMO_SLIDESHOW
+                    bool "Enable demo widgets slideshow"
+                    default n
+            endif
+            
+            if BSP_USING_LVGL_MUSIC_DEMO
+                config LVGL_MUSIC_DEMO_SQUARE
+                    bool "Enable demo music square"
+                    default y
+                    
+                config LVGL_MUSIC_DEMO_LANDSCAPE
+                    bool "Enable demo music landscape"
+                    default n
+                    
+                config LVGL_MUSIC_DEMO_ROUND
+                    bool "Enable demo music round"
+                    default y
+                    
+                config LVGL_MUSIC_DEMO_LARGE
+                    bool "Enable demo music large"
+                    default n
+                    
+                config LVGL_MUSIC_DEMO_AUTO_PLAY
+                    bool "Enable demo music auto play"
+                    default y
+            endif
         endif
         
     menuconfig BSP_USING_WM8978
@@ -2723,9 +2854,6 @@ menu "Onboard Peripheral Drivers"
 
     menuconfig BSP_USING_FM25xx
         bool "Enable fram FM25xx"
-        select RT_USING_DFS
-        select RT_USING_DFS_ROMFS
-        select PKG_USING_LITTLEFS
         default n
         
         if BSP_USING_FM25xx
@@ -2748,14 +2876,22 @@ menu "Onboard Peripheral Drivers"
             config FM25xx_BLK_SIZE
 	            int "Set the memory block size, default: (512)"
 	            default (512)
+	            
+	        config FM25xx_PARTNAME
+                string "Set the part name, default: fram"
+                default "fram"
+            
+            config FM25xx_USING_FS
+                bool "Enable the file system"
+                select RT_USING_DFS
+                select RT_USING_DFS_ROMFS
+                select PKG_USING_LITTLEFS
+                default y
             
             config FM25xx_FS
 	            string "Set the file system used, default: lfs"
+	            depends on FM25xx_USING_FS
 	            default "lfs"
-	            
-	        config FM25xx_ENABLE_TEST
-                bool "Enable test cmd"
-                default n
         endif
         
     menuconfig BSP_USING_SPI_FLASH
@@ -2795,6 +2931,72 @@ menu "Onboard Peripheral Drivers"
             config SPI_FLASH_ENABLE_TEST
                 bool "Enable test cmd"
                 default n
+        endif
+        
+    menuconfig BSP_USING_S25FL512
+        bool "Enable SPI FLASH (S25FL512)"
+        select RT_USING_DFS
+        select RT_USING_DFS_ROMFS
+        select PKG_USING_LITTLEFS
+        default n
+        
+        if BSP_USING_S25FL512
+            config BSP_S25FL512_SPI_BUS
+                string "Set the spi bus used, default: spi1"
+                default "spi1"
+                
+            config BSP_S25FL512_SPI_CS_PIN
+                string "Set the pin of the chip select, default: PB.14"
+                default "PB.14"
+                
+            config BSP_S25FL512_SPI_SPEED
+                int "Set the rate of spi, default: (40 * 1000 *1000)"
+                default (40000000)
+            
+            config S25FL512_SIZE_GRANULARITY_TOTAL
+                int "Set storage space size, default: (64 * 1024 * 1024)"
+                default (67108864)
+            
+            config S25FL512_BLK_SIZE
+                int "Set the memory block size, default: (262144)"
+                default (262144)
+            
+            config S25FL512_FS
+                string "Set the file system used, default: lfs"
+                default "lfs"
+        endif
+        
+    menuconfig BSP_USING_AT45DB321E
+        bool "Enable SPI FLASH (AT45DB321E)"
+        select RT_USING_DFS
+        select RT_USING_DFS_ROMFS
+        select PKG_USING_LITTLEFS
+        default n
+        
+        if BSP_USING_AT45DB321E
+            config BSP_AT45DB321E_SPI_BUS
+                string "Set the spi bus used, default: spi2"
+                default "spi2"
+                
+            config BSP_AT45DB321E_SPI_CS_PIN
+                string "Set the pin of the chip select, default: PA.15"
+                default "PA.15"
+                
+            config BSP_AT45DB321E_SPI_SPEED
+                int "Set the rate of spi, default: (40 * 1000 *1000)"
+                default (40000000)
+            
+            config AT45DB321E_SIZE_GRANULARITY_TOTAL
+                int "Set storage space size, default: (4 * 1024 * 1024)"
+                default (4194304)
+            
+            config AT45DB321E_BLK_SIZE
+                int "Set the memory block size, default: (4096)"
+                default (4096)
+            
+            config AT45DB321E_FS
+                string "Set the file system used, default: lfs"
+                default "lfs"
         endif
         
     menuconfig BSP_USING_EMMC
@@ -2896,28 +3098,48 @@ menu "Onboard Peripheral Drivers"
             config BSP_USING_KSZ8851_BUSTURNAROUNDDURATION
                 int "Set the BusTurnAroundDuration, default: 8"
                 default (8)
+                
+            config BSP_USE_LINK_LAYER_COMMUNICATION
+                bool "Enable Link Layer Communication"
+                default n
+                
+                if BSP_USE_LINK_LAYER_COMMUNICATION
+                    config BSP_LINK_LAYER_RX_BUF_NUM
+                        int "Set the Link Layer Rx buf, default: 8"
+                        default (8)
+                endif
+                
+            config BSP_USE_KVDB_NET_IF
+                bool "Enable kvdb set netdev if"
+                select PKG_USING_FLASHDB_PORT
+                default y
             
             menuconfig BSP_USE_ETH1
                 bool "Enable ETH port 1"
                 default n
 	        
-            if BSP_USE_ETH1
-            	config ETH1_NE
-                    hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
-                    default (0x4)
-            
-                config ETH1_CMD
-                    hex "Set the cmd address, default: NE3 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE3 - 1)) | (1 << (A0 + 1))))"
-                    default (0x68000002)
-                
-                config ETH1_RST
-                    string "Set the GPIO of the reset pin, default: PG.14"
-                    default "PG.14"
-                
-                config ETH1_ISR
-                    string "Set the GPIO of the isr pin, default: PH.2"
-                    default "PH.2"
-            endif
+                if BSP_USE_ETH1
+                  	config ETH1_NE
+                          hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
+                          default (0x4)
+                  
+                    config ETH1_CMD
+                        hex "Set the cmd address, default: NE3 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE3 - 1)) | (1 << (A0 + 1))))"
+                        default (0x68000002)
+                    
+                    config ETH1_RST
+                        string "Set the GPIO of the reset pin, default: PG.14"
+                        default "PG.14"
+                    
+                    config ETH1_ISR
+                        string "Set the GPIO of the isr pin, default: PH.2"
+                        default "PH.2"
+                        
+                    config BSP_USE_ETH1_LINK_LAYER
+                        bool "Enable Link Layer Communication"
+                        select BSP_USE_LINK_LAYER_COMMUNICATION
+                        default n
+                endif
 
             menuconfig BSP_USE_ETH2
                 bool "Enable ETH port 2"
@@ -2939,29 +3161,39 @@ menu "Onboard Peripheral Drivers"
                     config ETH2_ISR
                         string "Set the GPIO of the isr pin, default: PH.3"
                         default "PH.3"
-	        	endif
+                        
+                    config BSP_USE_ETH2_LINK_LAYER
+                        bool "Enable Link Layer Communication"
+                        select BSP_USE_LINK_LAYER_COMMUNICATION
+                        default n
+      	        endif
           
             menuconfig BSP_USE_ETH3
                 bool "Enable ETH port 3"
                 default n
             
-            if BSP_USE_ETH3
-                config ETH3_NE
-                    hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
-                    default (0x2)
-                
-                config ETH3_CMD
-                    hex "Set the cmd address, default: NE2 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE2 - 1)) | (1 << (A0 + 1))))"
-                    default (0x64000002)
-                      
-                config ETH3_RST
-                    string "Set the GPIO of the reset pin, default: PA.0"
-                    default "PA.0"
+                if BSP_USE_ETH3
+                    config ETH3_NE
+                        hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
+                        default (0x2)
                     
-                config ETH3_ISR
-                    string "Set the GPIO of the isr pin, default: PA.1"
-                    default "PA.1"
-            endif
+                    config ETH3_CMD
+                        hex "Set the cmd address, default: NE2 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE2 - 1)) | (1 << (A0 + 1))))"
+                        default (0x64000002)
+                          
+                    config ETH3_RST
+                        string "Set the GPIO of the reset pin, default: PA.0"
+                        default "PA.0"
+                        
+                    config ETH3_ISR
+                        string "Set the GPIO of the isr pin, default: PA.1"
+                        default "PA.1"
+                        
+                    config BSP_USE_ETH3_LINK_LAYER
+                        bool "Enable Link Layer Communication"
+                        select BSP_USE_LINK_LAYER_COMMUNICATION
+                        default n
+                endif
         endif
         
     menuconfig BSP_USING_ETH
@@ -3020,33 +3252,41 @@ menu "Onboard Peripheral Drivers"
         default n
         
         if BSP_USING_MAX31826
-          choice
-              prompt "Select io or iic mode"
-              default MAX31826_USING_IO
-              
-              config MAX31826_USING_I2C_DS2484
-                  bool "iic mode(ds2484)"
-                  
-              config MAX31826_USING_IO
-                  bool "io mode"
+			choice
+				prompt "Select mode"
+				default MAX31826_USING_IO
+			  
+				config MAX31826_USING_I2C_DS2484
+					bool "i2c mode(ds2484)"
+			      
+				config MAX31826_USING_IO
+					bool "io mode"
 	        endchoice
 	        
-          if MAX31826_USING_IO
-            config MAX31826_GPIO
-            string "Set the GPIO of the sensor pin, default: PI.8"
-            default "PI.8"
-          endif
+	        config MAX31826_SIZE_GRANULARITY_TOTAL
+                int "Set storage space size, default: (128)"
+                default (128)
+            
+            config MAX31826_BLK_SIZE
+                int "Set the memory block size, default: (8)"
+                default (8)
+	        
+		if MAX31826_USING_IO
+			config MAX31826_GPIO
+				string "Set the GPIO of the sensor pin, default: PI.8"
+				default "PI.8"
+		endif
           
-          if MAX31826_USING_I2C_DS2484
-            config DS2484_I2C_DEV
-              string "Set the i2c device name used, default: i2c2"
-              default "i2c2"
-              
-            config DS2484_I2C_ADD
-              hex "Set the i2c device address, default: 0x18"
-              default (0x18)
-          endif
-        endif
+		if MAX31826_USING_I2C_DS2484
+			config DS2484_I2C_DEV
+				string "Set the i2c device name used, default: i2c2"
+				default "i2c2"
+			  
+			config DS2484_I2C_ADD
+				hex "Set the i2c device address, default: 0x18"
+				default (0x18)
+		endif
+	endif
         
     menuconfig BSP_USING_DS1682
         bool "Enable integrated elapsed-time recorder (DS1682S+)"
@@ -3228,6 +3468,32 @@ menu "Onboard Peripheral Drivers"
                 string "Set the pin of the power, default: PC.13"
                 depends on BSP_GNSS_USING_POWER_PIN
                 default "PC.13"
+        endif
+        
+      menuconfig BSP_USING_KSZ8794
+        bool "Enable ksz8794"
+        default n
+        
+        if BSP_USING_KSZ8794
+            config BSP_KSZ8794_SPI_BUS
+              string "Set the spi bus used, default: spi5"
+              default "spi5"
+              
+            config BSP_KSZ8794_SPI_CS_PIN
+              string "Set the pin of the chip select, default: PF.6"
+              default "PF.6"
+            
+            config BSP_KSZ8794_SPI_SPEED
+              int "Set the rate of spi, default: (40 * 1000 *1000)"
+              default (25000000)
+              
+            config BSP_KSZ8794_IRQ_PIN
+              string "Set the pin of the chip irq, default: PI.4"
+              default "PI.4"
+              
+            config BSP_KSZ8794_RST_PIN
+              string "Set the pin of the chip rst, default: PI.7"
+              default "PI.7"
         endif
         
 endmenu

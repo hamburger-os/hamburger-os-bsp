@@ -27,7 +27,7 @@ static const struct romfs_dirent _romfs_root_mnt[] =
     {ROMFS_DIRENT_DIR, "nfs"        , RT_NULL, 0},      //nfs
 #endif
 
-#ifdef BSP_USING_FM25xx
+#ifdef FM25xx_USING_FS
     {ROMFS_DIRENT_DIR, BLK_FRAM     , RT_NULL, 0},      //fram
 #endif
 
@@ -35,8 +35,20 @@ static const struct romfs_dirent _romfs_root_mnt[] =
     {ROMFS_DIRENT_DIR, BLK_SPI_FLASH, RT_NULL, 0},      //spiflash
 #endif
 
+#ifdef BSP_USING_S25FL512
+    {ROMFS_DIRENT_DIR, BLK_S25FL512, RT_NULL, 0},       //S25FL512
+#endif
+
+#ifdef BSP_USING_AT45DB321E
+    {ROMFS_DIRENT_DIR, BLK_AT45DB321E, RT_NULL, 0},       //AT45DB321E
+#endif
+
 #ifdef BSP_FMCSRAM_ENABLE_FS
     {ROMFS_DIRENT_DIR, BLK_FMCSRAM  , RT_NULL, 0},      //sram
+#endif
+
+#ifdef BSP_SDRAM_ENABLE_FS
+    {ROMFS_DIRENT_DIR, BLK_SDRAM  , RT_NULL, 0},        //sdram
 #endif
 
 #ifdef NORFLASH_ENABLE_FS
@@ -91,7 +103,15 @@ struct mount_fs
 
 static const struct mount_fs _mount_fs[] =
 {
-#ifdef BSP_USING_FM25xx
+#ifdef BSP_USING_SDCARD
+    {RT_NULL            , BLK_SDCARD        , "tmp"             },
+#endif
+
+#ifdef BSP_USING_USB
+    {RT_NULL            , BLK_USBH_UDISK    , "tmp"             },
+#endif
+
+#ifdef FM25xx_USING_FS
     {BLK_FRAM           , BLK_FRAM          , FM25xx_FS         },
 #endif
 
@@ -99,8 +119,20 @@ static const struct mount_fs _mount_fs[] =
     {BLK_SPI_FLASH      , BLK_SPI_FLASH     , SPI_FLASH_FS      },
 #endif
 
+#ifdef BSP_USING_S25FL512
+    {BLK_S25FL512       , BLK_S25FL512      , S25FL512_FS       },
+#endif
+
+#ifdef BSP_USING_AT45DB321E
+    {BLK_AT45DB321E     , BLK_AT45DB321E    , AT45DB321E_FS     },
+#endif
+
 #ifdef BSP_FMCSRAM_ENABLE_FS
     {BLK_FMCSRAM        , BLK_FMCSRAM       , BSP_FMCSRAM_FS    },
+#endif
+
+#ifdef BSP_SDRAM_ENABLE_FS
+    {BLK_SDRAM          , BLK_SDRAM         , BSP_SDRAM_FS      },
 #endif
 
 #ifdef NORFLASH_ENABLE_FS
@@ -109,14 +141,6 @@ static const struct mount_fs _mount_fs[] =
 
 #ifdef BSP_USING_EMMC
     {EMMC_DEV_NAME      , BLK_EMMC          , EMMC_FS           },
-#endif
-
-#ifdef BSP_USING_SDCARD
-    {RT_NULL            , BLK_SDCARD        , "tmp"             },
-#endif
-
-#ifdef BSP_USING_USB
-    {RT_NULL            , BLK_USBH_UDISK    , "tmp"             },
 #endif
 };
 
@@ -231,4 +255,4 @@ static int rt_dfs_init(void)
     return ret;
 }
 /* 导出到自动初始化 */
-INIT_ENV_EXPORT(rt_dfs_init);
+INIT_COMPONENT_EXPORT(rt_dfs_init);

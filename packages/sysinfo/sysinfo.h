@@ -12,18 +12,26 @@
 
 struct __attribute__ ((packed)) SysInfoDef
 {
+    uint16_t     version;
+    uint8_t     SN[20];
     uint32_t    cpu_id[3];
     float       cpu_temp;
-    uint32_t    flash_size;//KB
-    uint32_t    sram_size;//KB
-    uint32_t    sys_clock;//M
-    uint32_t    mem_size;//KB
     uint8_t     chip_id[8];
     float       chip_temp;
     uint32_t    times;
     uint16_t    count;
 };
 
+struct __attribute__ ((packed)) SysInfoFixDef
+{
+    uint16_t        version;
+    uint8_t         SN[20];
+    uint8_t         mac[3][6];
+    uint8_t         reserve[84];
+    uint32_t        crc32;
+};
+
 void sysinfo_get(struct SysInfoDef *info);
+void sysinfo_show(void);
 
 #endif /* PACKAGES_SYSINFO_H_ */

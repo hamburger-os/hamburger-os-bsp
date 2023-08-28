@@ -441,7 +441,7 @@ static void telnet_thread(void* parameter)
 }
 
 /* telnet server */
-void telnet_server(void)
+static int telnet_server(void)
 {
     rt_thread_t tid;
 
@@ -453,7 +453,7 @@ void telnet_server(void)
         if (telnet == RT_NULL)
         {
             rt_kprintf("telnet: no memory\n");
-            return;
+            return -RT_ENOMEM;
         }
         /* init ringbuffer */
         ptr = rt_malloc(RX_BUFFER_SIZE);
@@ -464,7 +464,7 @@ void telnet_server(void)
         else
         {
             rt_kprintf("telnet: no memory\n");
-            return;
+            return -RT_ENOMEM;
         }
         ptr = rt_malloc(TX_BUFFER_SIZE);
         if (ptr)
@@ -474,7 +474,7 @@ void telnet_server(void)
         else
         {
             rt_kprintf("telnet: no memory\n");
-            return;
+            return -RT_ENOMEM;
         }
         /* create tx ringbuffer lock */
         telnet->tx_ringbuffer_lock = rt_mutex_create("telnet_tx", RT_IPC_FLAG_FIFO);
@@ -495,6 +495,7 @@ void telnet_server(void)
         rt_kprintf("telnet: server already running\n");
     }
 
+    return RT_EOK;
 }
 
 #ifdef RT_USING_FINSH
@@ -504,4 +505,6 @@ FINSH_FUNCTION_EXPORT(telnet_server, startup telnet server);
 MSH_CMD_EXPORT(telnet_server, startup telnet server)
 #endif /* FINSH_USING_MSH */
 #endif /* RT_USING_FINSH */
+//开机自启telnet
+INIT_APP_EXPORT(telnet_server);
 #endif /* PKG_NETUTILS_TELNET */

@@ -32,6 +32,12 @@ extern void lv_user_gui_init(void);
 
 static rt_thread_t lvgl_thread;
 
+#ifdef rt_align
+rt_align(RT_ALIGN_SIZE)
+#else
+ALIGN(RT_ALIGN_SIZE)
+#endif
+
 #if LV_USE_LOG
 static void lv_rt_log(const char *buf)
 {
@@ -61,7 +67,7 @@ static int lvgl_thread_init(void)
 {
     lvgl_thread = rt_thread_create( "LVGL",
                                     lvgl_thread_entry,
-                                    RT_NULL,
+                                    NULL,
                                     PKG_LVGL_THREAD_STACK_SIZE,
                                     PKG_LVGL_THREAD_PRIO,
                                     10);
@@ -69,8 +75,13 @@ static int lvgl_thread_init(void)
     {
         rt_thread_startup(lvgl_thread);
     }
+    else
+    {
+        LOG_E("Failed to create LVGL thread");
+        return -RT_ENOMEM;
+    }
 
-    return 0;
+    return RT_EOK;
 }
 INIT_ENV_EXPORT(lvgl_thread_init);
 

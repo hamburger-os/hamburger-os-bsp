@@ -15,7 +15,7 @@
 #include "drv_i2s.h"
 
 #define DBG_TAG              "drv.sound"
-#define DBG_LVL              DBG_LOG
+#define DBG_LVL              DBG_INFO
 #include <rtdbg.h>
 
 #define CODEC_I2C_NAME  ADAU1761_I2C_DEV

@@ -159,22 +159,30 @@ if GetDepend(['BSP_USING_FM25xx']):
 if GetDepend(['BSP_USING_SPI_FLASH']):
     src += Glob('ports/drv_spiflash.c')
     
+if GetDepend(['BSP_USING_S25FL512']):
+    src += Glob('ports/drv_S25FL512.c')
+    
+if GetDepend(['BSP_USING_AT45DB321E']):
+    src += Glob('ports/drv_AT45DB321E.c')
+    
 if GetDepend(['BSP_USING_FMCLCD']):
     src += Glob('ports/drv_fmclcd.c')
     
 if GetDepend(['BSP_USING_LVGL']):
+    path += [cwd + '/ports/lvgl']
     src += Glob('ports/lvgl/lv_port_disp.c')
     src += Glob('ports/lvgl/lv_port_indev.c')
-    path += [cwd + '/ports/lvgl']
+    src += Glob('ports/lvgl/lv_dlsyms.c')
+    path += [cwd + '/ports/lvgl/demo']
     src += Glob('ports/lvgl/demo/lv_demo.c')
     src += Glob('ports/lvgl/demo/lv_demo_calendar.c')
-    src += Glob('ports/lvgl/demo/lv_100ask_sketchpad.c')
-    path += [cwd + '/ports/lvgl/demo']
-        
+
 if GetDepend(['BSP_USING_TOUCH']):
     src += Glob('ports/touch/drv_touch.c')
     if GetDepend(['TOUCH_USING_XPT2046']):
         src += Glob('ports/touch/xpt2046.c')
+    if GetDepend(['TOUCH_USING_SW']):
+        src += Glob('ports/touch/sw_touch.c')
     path += [cwd + '/ports/touch']
         
 if GetDepend(['BSP_USING_WM8978']):
@@ -209,6 +217,10 @@ if GetDepend(['BSP_USING_USBH_STM32']):
 if GetDepend(['BSP_USING_KSZ8851']):
     src += Glob('ports/ksz8851/drv_fmc_eth.c')
     src += Glob('ports/ksz8851/ksz8851.c')
+    path += [cwd + '/ports/ksz8851']
+    
+if GetDepend(['BSP_USE_LINK_LAYER_COMMUNICATION']):
+    src += Glob('ports/ksz8851/ksz8851_lep.c')
     path += [cwd + '/ports/ksz8851']
  
 if GetDepend(['BSP_USING_MAX31826']):
@@ -258,6 +270,9 @@ if GetDepend(['BSP_USING_LTC186X']):
     
 if GetDepend(['BSP_USING_GNSS']):
     src += Glob('ports/drv_gnss.c')
+    
+if GetDepend(['BSP_USING_KSZ8794']):
+    src += Glob('ports/drv_ksz8794.c')
 
 group = DefineGroup('Drivers', src, depend = [''], CPPPATH = path, CPPDEFINES = CPPDEFINES)
 

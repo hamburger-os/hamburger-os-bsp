@@ -1,0 +1,3 @@
+config APP_CABLE_TEST_BENCH
+    bool "Enable cable test bench application"
+    default n

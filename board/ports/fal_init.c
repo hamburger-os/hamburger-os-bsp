@@ -47,10 +47,31 @@ static int rt_fal_init(void)
     }
 #endif
 
+#ifdef BSP_USING_S25FL512
+    if (fal_mtd_nor_device_create(BLK_S25FL512) == NULL)
+    {
+        LOG_E("Failed to creat nor %s!", BLK_S25FL512);
+    }
+#endif
+
+#ifdef BSP_USING_AT45DB321E
+    if (fal_mtd_nor_device_create(BLK_AT45DB321E) == NULL)
+    {
+        LOG_E("Failed to creat nor %s!", BLK_AT45DB321E);
+    }
+#endif
+
 #ifdef BSP_FMCSRAM_ENABLE_BLK
     if (fal_blk_device_create(BLK_FMCSRAM) == NULL)
     {
         LOG_E("Failed to creat blk %s!", BLK_FMCSRAM);
+    }
+#endif
+
+#ifdef BSP_SDRAM_ENABLE_BLK
+    if (fal_blk_device_create(BLK_SDRAM) == NULL)
+    {
+        LOG_E("Failed to creat blk %s!", BLK_SDRAM);
     }
 #endif
 
@@ -67,6 +88,13 @@ static int rt_fal_init(void)
     if (fal_blk_device_create(BLK_EEPROM) == NULL)
     {
         LOG_E("Failed to creat blk %s!", BLK_EEPROM);
+    }
+#endif
+
+#ifdef BSP_USING_MAX31826
+    if (fal_blk_device_create(BLK_MAX31826) == NULL)
+    {
+        LOG_E("Failed to creat blk %s!", BLK_MAX31826);
     }
 #endif
 

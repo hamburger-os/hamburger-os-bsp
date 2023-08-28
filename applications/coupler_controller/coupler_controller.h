@@ -10,6 +10,8 @@
 #ifndef APPLICATIONS_COUPLER_CONTROLLER_COUPLER_CONTROLLER_H_
 #define APPLICATIONS_COUPLER_CONTROLLER_COUPLER_CONTROLLER_H_
 
+#include "lwgps/lwgps.h"
+
 enum {
     LED_RUN = 0,
     LED_CAN2,
@@ -25,6 +27,13 @@ enum {
     MCU_DI2,
 };
 
+typedef enum {
+    MODE_IDLE = 0,
+    MODE_HOOKING,
+    MODE_HOOKED,
+    MODE_UNHOOKING,
+}COUPLERMODEDef;
+
 typedef struct
 {
     char *station_devname;
@@ -33,6 +42,7 @@ typedef struct
     char *led_devname[5];
     char *ctrl_devname[4];
     char *bat_devname[2];
+    char *gnss_devname;
 
     rt_device_t station_dev;
     rt_device_t module_dev;
@@ -40,6 +50,7 @@ typedef struct
     rt_base_t led_pin[5];
     rt_base_t ctrl_pin[4];
     rt_base_t bat_pin[2];
+    rt_device_t gnss_dev;
 
     struct rt_messagequeue *rx_station_mq;
     struct rt_messagequeue *process_station_mq;
@@ -47,6 +58,10 @@ typedef struct
     struct rt_messagequeue *rx_module_mq;
     struct rt_messagequeue *process_module_mq;
 
+    //控制器状态
+    COUPLERMODEDef mode;
+    //车钩状态
+    uint8_t status;             //1，挂钩；0，脱钩
     //车钩adc
     uint16_t adc[2];
     //图像测距模块
@@ -56,6 +71,8 @@ typedef struct
     uint8_t logo;               //标识牌
     uint8_t out_hook;           //摘钩状态
     uint32_t timeout;           //回复超时ms
+    //gps数据
+    lwgps_t hgps;
 
     int isThreadRun;
 } CouplerCtrlUserData;
@@ -68,6 +85,7 @@ void coupler_controller_ledinit(void);
 void coupler_controller_ctrlinit(void);
 void coupler_controller_moduleinit(void);
 void coupler_controller_batinit(void);
+void coupler_controller_gnssinit(void);
 
 void set_device_addr(uint8_t addr);
 uint8_t get_device_addr(void);

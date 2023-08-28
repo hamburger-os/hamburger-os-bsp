@@ -244,7 +244,7 @@ int drv_touch_bus_init(struct _rt_drv_touch *config)
     return RT_EOK;
 }
 
-struct rt_touch_ops xpt2046_ops =
+struct rt_touch_ops drv_touch_ops =
 {
     .touch_readpoint = xpt2046_touch_readpoint,
     .touch_control = xpt2046_touch_control,

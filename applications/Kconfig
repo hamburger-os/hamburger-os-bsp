@@ -121,14 +121,17 @@ menu "Test functions and examples"
                 bool "link layer comm channel 3 enable"
                 default n
         endif
+        
+    menuconfig BSP_USING_KSZ8794_TEST
+        bool "Enable ksz8794 test"
+        default n
 endmenu
 
 menu "Product Application and Function"
-    config APP_CABLE_TEST_BENCH
-        bool "Enable cable test bench application"
-        default n
-        
+    source "applications/selftest/Kconfig"
+    source "applications/cable_test_bench/Kconfig"
     source "applications/coupler_controller/Kconfig"
     source "applications/ly_05c/Kconfig"
     source "applications/sto_record_board/Kconfig"
+    
 endmenu

@@ -51,6 +51,7 @@ static void led_thread_entry(void *parameter)
 //        rt_pin_write(puserdata->led_pin[LED_485], !rt_pin_read(puserdata->led_pin[LED_485]));
 //        rt_pin_write(puserdata->led_pin[LED_DIO], !rt_pin_read(puserdata->led_pin[LED_DIO]));
     }
+    rt_pin_write(puserdata->led_pin[LED_RUN], PIN_HIGH);
 }
 
 void coupler_controller_led_toggle(int pin)
@@ -62,7 +63,7 @@ void coupler_controller_led_toggle(int pin)
 void coupler_controller_ledinit(void)
 {
     /* 创建 led 线程 */
-    rt_thread_t thread = rt_thread_create("led", led_thread_entry, &coupler_controller_userdata, 2048, 27, 10);
+    rt_thread_t thread = rt_thread_create("led", led_thread_entry, &coupler_controller_userdata, 2048, 30, 10);
     /* 创建成功则启动线程 */
     if (thread != RT_NULL)
     {

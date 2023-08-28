@@ -50,10 +50,9 @@ static const char *rootfs_dir[] = {
 };
 
 extern void copydir(const char *src, const char *dst);
-
 static void rootfs_thread_entry(void* parameter)
 {
-    char path_dir[128] = {0};
+    char path_dir[256] = {0};
     struct rootfs_ops *ops = (struct rootfs_ops *)parameter;
 
     while(1)
@@ -117,7 +116,7 @@ void delete_line_feed(char *line, char len)
 static int rootfs_init(void)
 {
 #ifdef ROOTFS_USING_SELF_START
-    char line_str[256];
+    char line_str[256] = {0};
     char line_len = 0;
 
     if (access(ROOTFS_SELF_START_PATH, 0) == 0)

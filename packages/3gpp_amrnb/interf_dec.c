@@ -645,6 +645,7 @@ void *Decoder_Interface_init(void)
    Decoder_Interface_reset(s);
    return s;
 }
+RTM_EXPORT(Decoder_Interface_init);
 
 /*
  * Decoder_Interface_exit
@@ -670,6 +671,7 @@ void Decoder_Interface_exit(void *state)
    s = NULL;
    state = NULL;
 }
+RTM_EXPORT(Decoder_Interface_exit);
 
 /*
  * Decoder_Interface_Decode
@@ -939,3 +941,4 @@ void Decoder_Interface_Decode(void *st,
    s->prev_ft = frame_type;
    s->prev_mode = mode;
 }
+RTM_EXPORT(Decoder_Interface_Decode);
