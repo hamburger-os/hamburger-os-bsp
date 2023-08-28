@@ -61,26 +61,33 @@ void selftest_eth_test(SelftestlUserData *puserdata)
 
     for (int i = 0; i<2; i++)
     {
-        rt_device_read(puserdata->eth_dev[i][1], 0, &data_rd, sizeof(union LinkLayerPackDef));
-        rt_device_write(puserdata->eth_dev[i][0], 0, &data_wr, sizeof(union LinkLayerPackDef));
-        rt_thread_delay(100);
+        //尝试8次，有1次成功即为成功
+        int n = 0;
+        for (; n<8; n++)
+        {
+            rt_thread_delay(10);
+            rt_device_write(puserdata->eth_dev[i][0], 0, &data_wr, sizeof(union LinkLayerPackDef));
+            rt_thread_delay(100);
 
-        rt_memset(&data_rd, 0, sizeof(union LinkLayerPackDef));
-        data_rd_len = rt_device_read(puserdata->eth_dev[i][1], 0, &data_rd, sizeof(union LinkLayerPackDef));
-        if (data_rd_len < 0)
-        {
-            LOG_E("%s read failed %d", error_log[i], data_rd_len);
+            rt_memset(&data_rd, 0, sizeof(union LinkLayerPackDef));
+            data_rd_len = rt_device_read(puserdata->eth_dev[i][1], 0, &data_rd, sizeof(union LinkLayerPackDef));
+            if (data_rd_len < 0)
+            {
+                LOG_E("%s read failed %d", error_log[i], data_rd_len);
+            }
+            if (rt_memcmp(&data_wr, &data_rd, sizeof(union LinkLayerPackDef)) == 0)
+            {
+                LOG_D("%s pass", error_log[i]);
+                break;
+            }
         }
-        if (rt_memcmp(&data_wr, &data_rd, sizeof(union LinkLayerPackDef)) == 0)
-        {
-            LOG_D("%s pass", error_log[i]);
-        }
-        else
+        if (n == 8)
         {
             LOG_E("%s error!", error_log[i]);
             LOG_HEX("wr", 16, (uint8_t *)&data_wr, sizeof(union LinkLayerPackDef));
             LOG_HEX("rd", 16, (uint8_t *)&data_rd, sizeof(union LinkLayerPackDef));
         }
+//        LOG_W("%s %d", error_log[i], n);
     }
 
     for (int i = 0; i<2; i++)

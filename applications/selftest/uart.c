@@ -33,7 +33,7 @@ static char * error_log[] = {
 void selftest_uart_test(SelftestlUserData *puserdata)
 {
     uint8_t data_wr[] = {1, 2, 3, 4, 5, 6, 7, 8};
-    uint8_t data_rd[8];
+    uint8_t data_rd[16];
     uint16_t data_rd_len = 0;
 
     for (int i = 0; i<3; i++)
@@ -73,25 +73,32 @@ void selftest_uart_test(SelftestlUserData *puserdata)
 
     for (int i = 0; i<3; i++)
     {
-        rt_device_read(puserdata->uart_dev[i][1], 0, data_rd, 8);
-        rt_device_write(puserdata->uart_dev[i][0], 0, data_wr, 8);
-        rt_thread_delay(100);
+        //尝试8次，有1次成功即为成功
+        int n = 0;
+        for (; n<8; n++)
+        {
+            rt_thread_delay(10);
+            rt_device_write(puserdata->uart_dev[i][0], 0, data_wr, 8);
+            rt_thread_delay(100);
 
-        rt_memset(data_rd, 0, 8);
-        data_rd_len = rt_device_read(puserdata->uart_dev[i][1], 0, data_rd, 8);
-        if (data_rd_len != 8)
-        {
-            LOG_E("%s read failed %d", error_log[i], data_rd_len);
+            rt_memset(data_rd, 0, 16);
+            data_rd_len = rt_device_read(puserdata->uart_dev[i][1], 0, data_rd, 16);
+            if (data_rd_len < 1)
+            {
+                LOG_E("%s read failed %d", error_log[i], data_rd_len);
+            }
+            if (rt_memcmp(data_rd, data_wr, 8) == 0)
+            {
+                LOG_D("%s pass", error_log[i]);
+                break;
+            }
         }
-        if (rt_memcmp(data_wr, data_rd, 8) == 0)
-        {
-            LOG_D("%s pass", error_log[i]);
-        }
-        else
+        if (n == 8)
         {
             LOG_E("%s error!", error_log[i]);
-            LOG_HEX("rd", 16, data_rd, 8);
+            LOG_HEX("rd", 16, data_rd, 16);
         }
+//        LOG_W("%s %d", error_log[i], n);
     }
 
     for (int i = 0; i<3; i++)

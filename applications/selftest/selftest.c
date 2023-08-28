@@ -72,6 +72,7 @@ static void selftest_thread_entry(void* parameter)
     }
 
     SelftestlUserData *puserdata = (SelftestlUserData *)parameter;
+
     LOG_I("startup...");
 
     //系统信息
