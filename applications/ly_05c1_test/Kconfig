@@ -1,0 +1,3 @@
+config APP_LY_05C1_TEST
+    bool "Enable LY-05C1 test application"
+    default n
