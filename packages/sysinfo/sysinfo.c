@@ -416,10 +416,10 @@ static void sysinfo_cmd(int argc, char *argv[])
             rt_kprintf("Usage: sysinfo [cmd]\n");
             rt_kprintf("       sysinfo --show\n");
             rt_kprintf("       sysinfo --fixshow\n");
-            rt_kprintf("       sysinfo --set [version] SN [data]\n");
-            rt_kprintf("           example : sysinfo --set 0 SN 0xFFFFFFFF 0xFFFFFFFF 0xFFFFFFFF 0xFFFFFFFF 0xFFFFFFFF\n");
-            rt_kprintf("       sysinfo --set [version] MAC [dev id] [data]\n");
-            rt_kprintf("           example : sysinfo --set 0 MAC 0 f8 09 a4 32 5d 3e\n");
+            rt_kprintf("       sysinfo --set SN [version] [data]\n");
+            rt_kprintf("           example : sysinfo --set SN 0 0xFFFFFFFF 0xFFFFFFFF 0xFFFFFFFF 0xFFFFFFFF 0xFFFFFFFF\n");
+            rt_kprintf("       sysinfo --set MAC [version] [dev id] [data]\n");
+            rt_kprintf("           example : sysinfo --set MAC 0 0 f8 09 a4 32 5d 3e\n");
         }
     }
 }
