@@ -191,7 +191,7 @@ static int create_fs_aux_info(struct fs_aux_info *aux_info,
     ext4_dbg(DEBUG_MKFS, DBG_INFO "create_fs_aux_info\n");
     ext4_dbg(DEBUG_MKFS, DBG_NONE "first_data_block: %"PRIu32"\n",
             aux_info->first_data_block);
-    ext4_dbg(DEBUG_MKFS, DBG_NONE "len_blocks: %"PRIu32"\n",
+    ext4_dbg(DEBUG_MKFS, DBG_NONE "len_blocks: %"PRIu64"\n",
             aux_info->len_blocks);
     ext4_dbg(DEBUG_MKFS, DBG_NONE "inode_table_blocks: %"PRIu32"\n",
             aux_info->inode_table_blocks);
@@ -778,7 +778,7 @@ int ext4_mkfs(struct ext4_fs *fs, struct ext4_blockdev *bd,
     info->bg_desc_reserve_blocks = 0;
 
     ext4_dbg(DEBUG_MKFS, DBG_INFO "Creating filesystem with parameters:\n");
-    ext4_dbg(DEBUG_MKFS, DBG_NONE "Size: %"PRIx32"\n", info->len);
+    ext4_dbg(DEBUG_MKFS, DBG_NONE "Size: %"PRIu64"\n", info->len);
     ext4_dbg(DEBUG_MKFS, DBG_NONE "Block size: %"PRIu32"\n",
             info->block_size);
     ext4_dbg(DEBUG_MKFS, DBG_NONE "Blocks per group: %"PRIu32"\n",

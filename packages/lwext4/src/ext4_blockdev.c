@@ -103,10 +103,7 @@ int ext4_block_init(struct ext4_blockdev *bdev)
     /*Low level block init*/
     rc = bdev->bdif->open(bdev);
     if (rc != EOK)
-    {
-        rt_kprintf("%s %s %d\n", __FILE__, __FUNCTION__, __LINE__);
         return rc;
-    }
 
     bdev->bdif->ph_refctr = 1;
     return EOK;

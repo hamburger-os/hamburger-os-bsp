@@ -150,6 +150,7 @@ static const struct mount_fs _mount_rootfs[] =
     {"bin"           , "bin"          , "lfs"         },
     {"etc"           , "etc"          , "lfs"         },
     {"lib"           , "lib"          , "lfs"         },
+    {RT_NULL         , "proc"         , "tmp"         },
     {"usr"           , "usr"          , "lfs"         },
 };
 #endif
@@ -165,20 +166,16 @@ static int rt_dfs_init(void)
     ret = dfs_mount(RT_NULL, "/", "rom", 0, &(romfs_root));
     if (ret != 0)
     {
-        LOG_E("rom mount to '/' failed!");
+        LOG_E("root (rom) mount to '/' failed!");
         return -RT_ERROR;
+    }
+    else
+    {
+        LOG_I("root (rom) mount to '/' succeed!");
     }
 #endif
 
 #ifdef BSP_USING_ROOTFS
-    /* 挂载 tmpfs */
-    ret = dfs_mount(RT_NULL, "/proc", "tmp", 0, NULL);
-    if (ret != 0)
-    {
-        LOG_E("tmp mount to '/proc' failed!");
-        return -RT_ERROR;
-    }
-
     for (int i = 0; i < (sizeof(_mount_rootfs)/sizeof(struct mount_fs)); i++)
     {
         node = _mount_rootfs[i];
@@ -187,7 +184,7 @@ static int rt_dfs_init(void)
         rt_sprintf(blk_dir, "/%s", node.blk_name);
         if (dfs_mount(node.dev_name, blk_dir, node.fs, 0, 0) == 0)
         {
-            LOG_I("dev %s mount to %s succeed!", node.dev_name, blk_dir);
+            LOG_I("%s (%s) mount to '%s' succeed!", node.dev_name, node.fs, blk_dir);
         }
         else
         {
@@ -195,7 +192,7 @@ static int rt_dfs_init(void)
             ret = dfs_mkfs(node.fs, node.dev_name);
             if (ret != 0)
             {
-                LOG_E("dev %s mkfs %s failed %d!", node.dev_name, node.fs, ret);
+                LOG_E("%s mkfs (%s) failed %d!", node.dev_name, node.fs, ret);
                 ret = -RT_ERROR;
             }
             else
@@ -204,11 +201,11 @@ static int rt_dfs_init(void)
                 ret = dfs_mount(node.dev_name, blk_dir, node.fs, 0, 0);
                 if (ret == 0)
                 {
-                    LOG_W("dev %s mkfs %s mount to %s succeed!", node.dev_name, node.fs, blk_dir);
+                    LOG_W("%s mkfs (%s) mount to '%s' succeed!", node.dev_name, node.fs, blk_dir);
                 }
                 else
                 {
-                    LOG_E("dev %s mkfs %s mount to %s failed %d!", node.dev_name, node.fs, blk_dir, ret);
+                    LOG_E("%s mkfs (%s) mount to '%s' failed %d!", node.dev_name, node.fs, blk_dir, ret);
                     ret = -RT_ERROR;
                 }
             }
@@ -224,7 +221,7 @@ static int rt_dfs_init(void)
         rt_sprintf(blk_dir, "/mnt/%s", node.blk_name);
         if (dfs_mount(node.dev_name, blk_dir, node.fs, 0, 0) == 0)
         {
-            LOG_I("dev %s mount to %s succeed!", node.dev_name, blk_dir);
+            LOG_I("%s (%s) mount to '%s' succeed!", node.dev_name, node.fs, blk_dir);
         }
         else
         {
@@ -232,7 +229,7 @@ static int rt_dfs_init(void)
             ret = dfs_mkfs(node.fs, node.dev_name);
             if (ret != 0)
             {
-                LOG_E("dev %s mkfs %s failed %d!", node.dev_name, node.fs, ret);
+                LOG_E("%s mkfs (%s) failed %d!", node.dev_name, node.fs, ret);
                 ret = -RT_ERROR;
             }
             else
@@ -241,11 +238,11 @@ static int rt_dfs_init(void)
                 ret = dfs_mount(node.dev_name, blk_dir, node.fs, 0, 0);
                 if (ret == 0)
                 {
-                    LOG_W("dev %s mkfs %s mount to %s succeed!", node.dev_name, node.fs, blk_dir);
+                    LOG_W("%s mkfs (%s) mount to '%s' succeed!", node.dev_name, node.fs, blk_dir);
                 }
                 else
                 {
-                    LOG_E("dev %s mkfs %s mount to %s failed %d!", node.dev_name, node.fs, blk_dir, ret);
+                    LOG_E("%s mkfs (%s) mount to '%s' failed %d!", node.dev_name, node.fs, blk_dir, ret);
                     ret = -RT_ERROR;
                 }
             }

@@ -332,15 +332,11 @@ int ext4_mount(struct ext4_blockdev *bd, const char *mount_point,
 
     r = ext4_block_init(bd);
     if (r != EOK)
-    {
-        rt_kprintf("%s %s %d\n", __FILE__, __FUNCTION__, __LINE__);
         return r;
-    }
 
     r = ext4_fs_init(&mp->fs, bd, read_only);
     if (r != EOK) {
         ext4_block_fini(bd);
-        rt_kprintf("%s %s %d\n", __FILE__, __FUNCTION__, __LINE__);
         return r;
     }
 
@@ -351,7 +347,6 @@ int ext4_mount(struct ext4_blockdev *bd, const char *mount_point,
     r = ext4_bcache_init_dynamic(bc, CONFIG_BLOCK_DEV_CACHE_SIZE, bsize);
     if (r != EOK) {
         ext4_block_fini(bd);
-        rt_kprintf("%s %s %d\n", __FILE__, __FUNCTION__, __LINE__);
         return r;
     }
 
@@ -364,7 +359,6 @@ int ext4_mount(struct ext4_blockdev *bd, const char *mount_point,
         ext4_bcache_cleanup(bc);
         ext4_block_fini(bd);
         ext4_bcache_fini_dynamic(bc);
-        rt_kprintf("%s %s %d\n", __FILE__, __FUNCTION__, __LINE__);
         return r;
     }
 

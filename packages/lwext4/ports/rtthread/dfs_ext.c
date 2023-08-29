@@ -88,18 +88,14 @@ static int dfs_ext_mount(struct dfs_filesystem *fs, unsigned long rwflag, const 
 
     /* create dfs ext4 block device */
     dbd = dfs_ext4_blockdev_create(fs->dev_id);
-    if (!dbd)
-    {
-        ext4_dbg(DEBUG_DFS_EXT, "mount blockdev_create error!\n");
-        return -RT_ERROR;
-    }
+    if (!dbd) return -RT_ERROR;
 
     bd = &dbd->bd;
     rc = ext4_mount(bd, fs->path, false);
     if (rc != RT_EOK)
     {
         dfs_ext4_blockdev_destroy(dbd);
-        ext4_dbg(DEBUG_DFS_EXT, "mount error %d!\n", rc);
+        rc = -rc;
     }
     else
     {
@@ -113,7 +109,7 @@ static int dfs_ext_mount(struct dfs_filesystem *fs, unsigned long rwflag, const 
 
 static int dfs_ext_unmount(struct dfs_filesystem *fs)
 {
-    int rc = 0;
+    int rc = -RT_ERROR;
     struct dfs_ext4_blockdev *dbd = NULL;
 
     dbd = (struct dfs_ext4_blockdev *)fs->data;
@@ -122,26 +118,25 @@ static int dfs_ext_unmount(struct dfs_filesystem *fs)
         char *mp = fs->path; /*mount point */
 
         rc = ext4_umount(mp);
-        if (rc == RT_EOK)
+        if (rc == 0)
         {
             dfs_ext4_blockdev_destroy(dbd);
         }
         else
         {
-            ext4_dbg(DEBUG_DFS_EXT, "umount error %d!\n", rc);
+            rc = -rc;
         }
     }
     else
     {
         rc = -RT_EINVAL;
-        ext4_dbg(DEBUG_DFS_EXT, "umount dev error!\n");
     }
     return rc;
 }
 
 static int dfs_ext_mkfs(rt_device_t devid)
 {
-    int rc = 0;
+    int rc;
     static struct ext4_fs fs;
     static struct ext4_mkfs_info info =
     {
@@ -158,11 +153,7 @@ static int dfs_ext_mkfs(rt_device_t devid)
 
     /* create dfs ext4 block device */
     dbd = dfs_ext4_blockdev_create(devid);
-    if (!dbd)
-    {
-        ext4_dbg(DEBUG_DFS_EXT, "mkfs blockdev_create error!\n");
-        return -RT_ERROR;
-    }
+    if (!dbd) return -RT_ERROR;
 
     /* get ext4 block device */
     bd = &dbd->bd;
@@ -170,15 +161,13 @@ static int dfs_ext_mkfs(rt_device_t devid)
     /* try to open device */
     rt_device_open(devid, RT_DEVICE_OFLAG_RDWR);
     rc = ext4_mkfs(&fs, bd, &info, F_SET_EXT4);
-    if (rc != RT_EOK)
-    {
-        /* no matter what, unregister */
-        dfs_ext4_blockdev_destroy(dbd);
-        ext4_dbg(DEBUG_DFS_EXT, "mkfs error %d!\n", rc);
-    }
 
+    /* no matter what, unregister */
+    dfs_ext4_blockdev_destroy(dbd);
     /* close device */
     rt_device_close(devid);
+
+    rc = -rc;
     return rc;
 }
 
@@ -190,14 +179,14 @@ static int dfs_ext_statfs(struct dfs_filesystem *fs, struct statfs *buf)
     error = ext4_get_sblock(fs->path, &sb);
     if (error != RT_EOK)
     {
-        ext4_dbg(DEBUG_DFS_EXT, "get_sblock error!\n");
         return -error;
     }
 
     buf->f_bsize = ext4_sb_get_block_size(sb);
     buf->f_blocks = ext4_sb_get_blocks_cnt(sb);
     buf->f_bfree = ext4_sb_get_free_blocks_cnt(sb);
-    ext4_dbg(DEBUG_DFS_EXT, "%d %d %d\n", buf->f_bsize, buf->f_blocks, buf->f_bfree);
+    //TODO this is not accurate, because it is free blocks available to unprivileged user, but ...
+//    buf->f_bavail = buf->f_bfree;
     return error;
 
 }
