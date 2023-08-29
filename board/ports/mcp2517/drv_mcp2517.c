@@ -22,6 +22,7 @@
 #define APP_TX_FIFO CAN_FIFO_CH2
 // Receive Channels
 #define APP_RX_FIFO CAN_FIFO_CH1
+#define MAX_TXQUEUE_ATTEMPTS 50
 
 typedef enum {
 #ifdef BSP_USE_MCP2517FD_CAN1
@@ -142,6 +143,28 @@ const uint16_t crc16_table[256] = {
     0x8213, 0x0216, 0x021C, 0x8219, 0x0208, 0x820D, 0x8207, 0x0202
 };
 
+static rt_err_t can_spi_drv_transfer_data(MCP2517_Dev *mcp2517_dev,
+                                            const void *send_buf,
+                                            void *recv_buf,
+                                            rt_size_t length)
+{
+#if 0
+    return rt_spi_send_then_recv(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, length, mcp2517_dev->spi_rx_buffer, length);
+#else
+    uint32_t result = 0;
+
+    result = rt_spi_transfer(mcp2517_dev->spi_dev, send_buf, recv_buf, length);
+    if(0 == result)
+    {
+        return -RT_ERROR;
+    }
+    else
+    {
+        return RT_EOK;
+    }
+#endif
+}
+
 //DRV_CANFDSPI_ReadByte
 static rt_err_t can_spi_read_byte(MCP2517_Dev *mcp2517_dev, uint16_t address, uint8_t *rxd)
 {
@@ -157,11 +180,13 @@ static rt_err_t can_spi_read_byte(MCP2517_Dev *mcp2517_dev, uint16_t address, ui
     mcp2517_dev->spi_tx_buffer[1] = (uint8_t) (address & 0xFF);
     mcp2517_dev->spi_tx_buffer[2] = 0;
 
-    ret = rt_spi_transfer(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, 3);
+//    ret = rt_spi_send_then_recv(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, 3, mcp2517_dev->spi_rx_buffer, 3);
+    // ret = rt_spi_transfer(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, 3);
+    ret = can_spi_drv_transfer_data(mcp2517_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, 3);
 
     // Update data
     *rxd = mcp2517_dev->spi_rx_buffer[2];
-
+    LOG_I("spi rx buf %d %d %d", mcp2517_dev->spi_rx_buffer[0], mcp2517_dev->spi_rx_buffer[1] ,mcp2517_dev->spi_rx_buffer[2]);
     return ret;
 }
 
@@ -180,7 +205,9 @@ static rt_err_t can_spi_write_byte(MCP2517_Dev *mcp2517_dev, uint16_t address, u
     mcp2517_dev->spi_tx_buffer[1] = (uint8_t) (address & 0xFF);
     mcp2517_dev->spi_tx_buffer[2] = txd;
 
-    ret = rt_spi_transfer(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, 3);
+//    ret = rt_spi_send_then_recv(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, 3, mcp2517_dev->spi_rx_buffer, 3);
+    // ret = rt_spi_transfer(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, 3);
+    ret = can_spi_drv_transfer_data(mcp2517_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, 3);
     return ret;
 }
 
@@ -200,7 +227,9 @@ static rt_err_t can_spi_read_word(MCP2517_Dev *mcp2517_dev, uint16_t address, ui
     mcp2517_dev->spi_tx_buffer[0] = (uint8_t) ((cINSTRUCTION_READ << 4) + ((address >> 8) & 0xF));
     mcp2517_dev->spi_tx_buffer[1] = (uint8_t) (address & 0xFF);
 
-    ret = rt_spi_transfer(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, 6);
+//    ret = rt_spi_send_then_recv(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, 6, mcp2517_dev->spi_rx_buffer, 6);
+    // ret = rt_spi_transfer(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, 6);
+    ret = can_spi_drv_transfer_data(mcp2517_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, 6);
     if (ret != RT_EOK)
     {
         return ret;
@@ -238,7 +267,9 @@ static rt_err_t can_spi_write_word(MCP2517_Dev *mcp2517_dev, uint16_t address, u
         mcp2517_dev->spi_tx_buffer[i + 2] = (uint8_t) ((txd >> (i * 8)) & 0xFF);
     }
 
-    ret = rt_spi_transfer(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, 6);
+//    ret = rt_spi_send_then_recv(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, 6, mcp2517_dev->spi_rx_buffer, 6);
+    // ret = rt_spi_transfer(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, 6);
+    ret = can_spi_drv_transfer_data(mcp2517_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, 6);
 
     return ret;
 }
@@ -259,7 +290,9 @@ static rt_err_t can_spi_read_half_word(MCP2517_Dev *mcp2517_dev, uint16_t addres
     mcp2517_dev->spi_tx_buffer[0] = (uint8_t) ((cINSTRUCTION_READ << 4) + ((address >> 8) & 0xF));
     mcp2517_dev->spi_tx_buffer[1] = (uint8_t) (address & 0xFF);
 
-    ret = rt_spi_transfer(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, 4);
+//    ret = rt_spi_send_then_recv(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, 4, mcp2517_dev->spi_rx_buffer, 4);
+    // ret = rt_spi_transfer(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, 4);
+    ret = can_spi_drv_transfer_data(mcp2517_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, 4);
     if (ret != RT_EOK)
     {
         return ret;
@@ -296,7 +329,9 @@ static rt_err_t can_spi_write_half_word(MCP2517_Dev *mcp2517_dev, uint16_t addre
         mcp2517_dev->spi_tx_buffer[i + 2] = (uint8_t) ((txd >> (i * 8)) & 0xFF);
     }
 
-    ret = rt_spi_transfer(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, 4);
+//    ret = rt_spi_send_then_recv(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, 4, mcp2517_dev->spi_rx_buffer, 4);
+    // ret = rt_spi_transfer(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, 4);
+    ret = can_spi_drv_transfer_data(mcp2517_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, 4);
 
     return ret;
 }
@@ -323,7 +358,9 @@ static rt_err_t can_spi_read_byte_array(MCP2517_Dev *mcp2517_dev, uint16_t addre
         mcp2517_dev->spi_tx_buffer[i] = 0;
     }
 
-    ret = rt_spi_transfer(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, transfer_size);
+//    ret = rt_spi_send_then_recv(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, transfer_size, mcp2517_dev->spi_rx_buffer, transfer_size);
+    // ret = rt_spi_transfer(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, transfer_size);
+    ret = can_spi_drv_transfer_data(mcp2517_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, transfer_size);
 
     // Update data
     for (i = 0; i < nBytes; i++)
@@ -356,7 +393,9 @@ static rt_err_t can_spi_write_byte_array(MCP2517_Dev *mcp2517_dev, uint16_t addr
         mcp2517_dev->spi_tx_buffer[i] = txd[i - 2];
     }
 
-    ret = rt_spi_transfer(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, transfer_size);
+//    ret = rt_spi_send_then_recv(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, transfer_size, mcp2517_dev->spi_rx_buffer, transfer_size);
+    // ret = rt_spi_transfer(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, transfer_size);
+    ret = can_spi_drv_transfer_data(mcp2517_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, transfer_size);
 
     return ret;
 }
@@ -383,7 +422,9 @@ static rt_err_t can_spi_read_word_array(MCP2517_Dev *mcp2517_dev, uint16_t addre
         mcp2517_dev->spi_tx_buffer[i] = 0;
     }
 
-    ret = rt_spi_transfer(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, transfer_size);
+//    ret = rt_spi_send_then_recv(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, transfer_size, mcp2517_dev->spi_rx_buffer, transfer_size);
+    // ret = rt_spi_transfer(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, transfer_size);
+    ret = can_spi_drv_transfer_data(mcp2517_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, transfer_size);
     if (ret != RT_EOK)
     {
         return ret;
@@ -432,7 +473,9 @@ static rt_err_t can_spi_write_word_array(MCP2517_Dev *mcp2517_dev, uint16_t addr
         }
     }
 
-    ret = rt_spi_transfer(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, transfer_size);
+//    ret = rt_spi_send_then_recv(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, transfer_size, mcp2517_dev->spi_rx_buffer, transfer_size);
+    // ret = rt_spi_transfer(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, transfer_size);
+    ret = can_spi_drv_transfer_data(mcp2517_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, transfer_size);
     return ret;
 }
 
@@ -1268,7 +1311,7 @@ static rt_err_t can_spi_transmit_channel_event_get(MCP2517_Dev *mcp2517_dev, CAN
 
     // Update data
     *flags = (CAN_TX_FIFO_EVENT) (ciFifoSta.byte[0] & CAN_TX_FIFO_ALL_EVENTS);
-
+    LOG_I("can_spi_transmit_channel_event_get %d", *flags);
     return ret;
 }
 
@@ -1506,6 +1549,7 @@ static rt_err_t can_spi_ecc_enable(MCP2517_Dev *mcp2517_dev)
     // Read
     ret = can_spi_read_byte(mcp2517_dev, cREGADDR_ECCCON, &d);
     if (ret != RT_EOK) {
+        LOG_E("can spi ecc enable read error");
         return ret;
     }
 
@@ -1515,6 +1559,7 @@ static rt_err_t can_spi_ecc_enable(MCP2517_Dev *mcp2517_dev)
     // Write
     ret = can_spi_write_byte(mcp2517_dev, cREGADDR_ECCCON, d);
     if (ret != RT_EOK) {
+        LOG_E("can spi ecc enable write error");
         return ret;
     }
 
@@ -2495,11 +2540,15 @@ static rt_err_t mcp2517_can_spi_reset(MCP2517_Dev *mcp2517_dev)
     mcp2517_dev->spi_tx_buffer[0] = (uint8_t) (cINSTRUCTION_RESET << 4);
     mcp2517_dev->spi_tx_buffer[1] = 0;
 
-    ret = rt_spi_transfer(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, 2);
+//    ret = rt_spi_send_then_recv(mcp2517_dev->spi_dev, mcp2517_dev->spi_tx_buffer, 2, mcp2517_dev->spi_rx_buffer, 2);
+    ret = can_spi_drv_transfer_data(mcp2517_dev, mcp2517_dev->spi_tx_buffer, mcp2517_dev->spi_rx_buffer, 2);
+    LOG_I("mcp2517_can_spi_reset %d %d", mcp2517_dev->spi_rx_buffer[0], mcp2517_dev->spi_rx_buffer[1]);
     return ret;
 }
 
-static rt_err_t mcp2517_init(rt_device_t dev)
+//static rt_err_t mcp2517_init(rt_device_t dev)
+
+static rt_err_t mcp2517_open (rt_device_t dev, rt_uint16_t oflag)
 {
     rt_err_t ret = -RT_ERROR;
 
@@ -2522,39 +2571,63 @@ static rt_err_t mcp2517_init(rt_device_t dev)
     CAN_TX_FIFO_CONFIG txConfig;
     CAN_RX_FIFO_CONFIG rxConfig;
 
+//    rt_thread_delay(1000);
+//    rt_thread_delay(1000);
     /* 芯片内部复位 */
     ret = mcp2517_can_spi_reset(mcp2517_dev);
     if(ret != RT_EOK)
     {
-        LOG_D("can spi reset error!");
+        LOG_E("can spi reset error!");
         return ret;
     }
 
-    for(int i = 0; i < 10000; i++) {};
+//    for(int i = 0; i < 10000; i++) {};
+//    rt_thread_delay(1000);
+//    rt_thread_delay(1000);
 
     /* enable ECC and initialize RAM */
     can_spi_ecc_enable(mcp2517_dev);
-    can_spi_ram_init(mcp2517_dev, 0xff);
+    ret = can_spi_ram_init(mcp2517_dev, 0xff);
+    if(ret != RT_EOK)
+    {
+        LOG_E("can_spi_ram_init error!");
+        return ret;
+    }
 
     /* Configure device */
     can_spi_configure_object_reset(&config);
     config.IsoCrcEnable = 1;
     config.StoreInTEF = 0;
     config.BitRateSwitchDisable = 1;
-    can_spi_configure(mcp2517_dev, &config);
+    ret = can_spi_configure(mcp2517_dev, &config);
+    if(ret != RT_EOK)
+    {
+        LOG_E("can_spi_configure error!");
+        return ret;
+    }
 
     /* Setup TX FIFO */
     can_spi_transmit_channel_configure_object_reset(&txConfig);
     txConfig.FifoSize = 7;
     txConfig.PayLoadSize = CAN_PLSIZE_64;
     txConfig.TxPriority = 1;
-    can_spi_transmit_channel_configure(mcp2517_dev, APP_TX_FIFO, &txConfig);
+    ret = can_spi_transmit_channel_configure(mcp2517_dev, APP_TX_FIFO, &txConfig);
+    if(ret != RT_EOK)
+    {
+        LOG_E("can_spi_transmit_channel_configure error!");
+        return ret;
+    }
 
     /* Setup RX FIFO */
     can_spi_receive_channel_configure_object_reset(&rxConfig);
     rxConfig.FifoSize = 7;
     rxConfig.PayLoadSize = CAN_PLSIZE_64;
-    can_spi_receive_channel_configure(mcp2517_dev, APP_RX_FIFO, &rxConfig);
+    ret = can_spi_receive_channel_configure(mcp2517_dev, APP_RX_FIFO, &rxConfig);
+    if(ret != RT_EOK)
+    {
+        LOG_E("can_spi_receive_channel_configure error!");
+        return ret;
+    }
 
     /* Setup RX Filter */
     fObj.word = 0;
@@ -2562,7 +2635,12 @@ static rt_err_t mcp2517_init(rt_device_t dev)
     fObj.bF.SID = 0x000;
     fObj.bF.EXIDE = 0;
     fObj.bF.EID = 0x00;
-    can_spi_filter_object_configure(mcp2517_dev, CAN_FILTER0, &fObj.bF);
+    ret = can_spi_filter_object_configure(mcp2517_dev, CAN_FILTER0, &fObj.bF);
+    if(ret != RT_EOK)
+    {
+        LOG_E("can_spi_filter_object_configure error!");
+        return ret;
+    }
 
     /* Setup RX Mask */
     mObj.word = 0;
@@ -2570,23 +2648,58 @@ static rt_err_t mcp2517_init(rt_device_t dev)
     mObj.bF.MSID = 0x000;
     mObj.bF.MIDE = 0;     /* 支持扩展帧 */
     mObj.bF.MEID = 0x0;
-    can_spi_filter_mask_configure(mcp2517_dev, CAN_FILTER0, &mObj.bF);
+    ret = can_spi_filter_mask_configure(mcp2517_dev, CAN_FILTER0, &mObj.bF);
+    if(ret != RT_EOK)
+    {
+        LOG_E("can_spi_filter_mask_configure error!");
+        return ret;
+    }
 
     /* Link FIFO and Filter */
-    can_spi_filter_to_fifo_link(mcp2517_dev, CAN_FILTER0, APP_RX_FIFO, true);
+    ret = can_spi_filter_to_fifo_link(mcp2517_dev, CAN_FILTER0, APP_RX_FIFO, true);
+    if(ret != RT_EOK)
+    {
+        LOG_E("can_spi_filter_to_fifo_link error!");
+        return ret;
+    }
 
     /* Setup Bit Time 设置波特率 */
-    can_spi_bit_time_configure(mcp2517_dev, CAN_500K_2M, CAN_SSP_MODE_AUTO, CAN_SYSCLK_40M);
+    ret = can_spi_bit_time_configure(mcp2517_dev, CAN_500K_2M, CAN_SSP_MODE_AUTO, CAN_SYSCLK_40M);
+    if(ret != RT_EOK)
+    {
+        LOG_E("can_spi_bit_time_configure error!");
+        return ret;
+    }
 
     /* Setup Transmit and Receive Interrupts */
-    can_spi_gpio_mode_configure(mcp2517_dev, GPIO_MODE_INT, GPIO_MODE_INT);
-    can_spi_receive_channel_event_enable(mcp2517_dev, APP_RX_FIFO, CAN_RX_FIFO_ALL_EVENTS);
+    ret = can_spi_gpio_mode_configure(mcp2517_dev, GPIO_MODE_INT, GPIO_MODE_INT);
+    if(ret != RT_EOK)
+    {
+        LOG_E("can_spi_gpio_mode_configure error!");
+        return ret;
+    }
+    ret = can_spi_receive_channel_event_enable(mcp2517_dev, APP_RX_FIFO, CAN_RX_FIFO_ALL_EVENTS);
+    if(ret != RT_EOK)
+    {
+        LOG_E("can_spi_gpio_mode_configure error!");
+        return ret;
+    }
     //  DRV_CANFDSPI_ModuleEventEnable(cps, CAN_TX_EVENT | CAN_RX_EVENT);
-    can_spi_module_event_enable(mcp2517_dev, CAN_RX_EVENT);
+    ret = can_spi_module_event_enable(mcp2517_dev, CAN_RX_EVENT);
+    if(ret != RT_EOK)
+    {
+        LOG_E("can_spi_module_event_enable error!");
+        return ret;
+    }
 
     // Select Normal Mode
     /* CAN  CANFD 都支持 */
-    can_spi_operation_mode_select(mcp2517_dev, CAN_NORMAL_MODE);
+    ret = can_spi_operation_mode_select(mcp2517_dev, CAN_NORMAL_MODE);
+    if(ret != RT_EOK)
+    {
+        LOG_E("can_spi_operation_mode_select error!");
+        return ret;
+    }
 
     return ret;
 }
@@ -2621,15 +2734,81 @@ static rt_size_t mcp2517_write (rt_device_t dev, rt_off_t pos, const void *buffe
     {
         return 0;
     }
+
+    if(NULL == buffer || 0 == size)
+    {
+        return 0;
+    }
+
+    CAN_TX_MSGOBJ txObj_tmp = {0U};
+    rt_can_msg_t can_msg = (rt_can_msg_t)buffer;
+    static uint8_t txd_tmp[MAX_DATA_BYTES];
+    uint8_t attempts = MAX_TXQUEUE_ATTEMPTS;
+    CAN_TX_FIFO_EVENT txFlags_tmp = {0U};
+    CAN_ERROR_STATE errorFlags_tmp;
+    uint8_t tec_tmp, rec_tmp;
+
+    txObj_tmp.word[0] = 0;
+    txObj_tmp.word[1] = 1;
+    if(can_msg->id <= 0x7FFU)
+    {
+        /* 标准帧 */
+        txObj_tmp.bF.id.SID = can_msg->id;
+        txObj_tmp.bF.ctrl.IDE = 0;
+    }
+    else
+    {
+        /* 扩展帧 */
+        txObj_tmp.bF.id.SID = (can_msg->id >> 18) & 0X7FFU;
+        txObj_tmp.bF.id.EID = can_msg->id & 0X3FFFFU;
+        txObj_tmp.bF.ctrl.IDE = 1;
+    }
+
+    txObj_tmp.bF.ctrl.BRS = 1;  /* 数据区加速 */
+    txObj_tmp.bF.ctrl.DLC = can_spi_data_bytes_to_dlc(can_msg->len);
+    txObj_tmp.bF.ctrl.FDF = 1;
+    txObj_tmp.bF.ctrl.ESI = 0;
+    txObj_tmp.bF.ctrl.SEQ = 2;
+
+    // Configure message data
+    for (uint8_t i = 0; i < can_msg->len; i++)
+    {
+        txd_tmp[i] = can_msg->data[i] ;
+    }
+
+    // Check if FIFO is not full
+    do
+    {
+//        rt_thread_delay(100);
+        can_spi_transmit_channel_event_get(mcp2517_dev, APP_TX_FIFO, &txFlags_tmp);
+        LOG_I("tx channel state %d", txFlags_tmp);
+        if (attempts == 0)
+        {
+            for(int i = 0; i < 10000; i++);
+//            rt_thread_delay(100);
+            can_spi_error_count_state_get(mcp2517_dev, &tec_tmp, &rec_tmp, &errorFlags_tmp);
+//            LOG_E("error state %d", errorFlags_tmp);
+            return 0;
+        }
+        attempts--;
+    } while (!(txFlags_tmp & CAN_TX_FIFO_NOT_FULL_EVENT));
+
+
+    // Load message and transmit
+    uint8_t n = can_spi_dlc_to_data_bytes(txObj_tmp.bF.ctrl.DLC);
+    LOG_I("send n %d, dlc %d", n, txObj_tmp.bF.ctrl.DLC);
+    can_spi_transmit_channel_load(mcp2517_dev, APP_TX_FIFO, &txObj_tmp, txd_tmp, n, true);
+    return n;
 }
 
 static void mcp2517_spi_irq_callback(void *param)
 {
-    if(NULL == param)
-    {
-        return;
-    }
+//    if(NULL == param)
+//    {
+//        return;
+//    }
 
+    LOG_I("mcp2517 irq 1");
     MCP2517_Dev *mcp2517_dev = NULL;
 
     mcp2517_dev = (MCP2517_Dev *)param;
@@ -2674,7 +2853,6 @@ static rt_err_t rt_hw_mcp2517_init(void)
             LOG_D("can port %d %s dev %d attach cs %d pin error", i, mcp2517_can_port[i].spi_name, dev_name, mcp2517_can_port[i].spi_irq_pin_index);
             return -RT_ERROR;
         }
-        LOG_I("222");
 
         /* find device */
         mcp2517_can_port[i].spi_dev = (struct rt_spi_device *)rt_device_find(dev_name);
@@ -2688,6 +2866,7 @@ static rt_err_t rt_hw_mcp2517_init(void)
         struct rt_spi_configuration cfg = {0};
         cfg.data_width = 8;
         cfg.mode = RT_SPI_MASTER | RT_SPI_MODE_3 | RT_SPI_MSB;
+//        cfg.mode = RT_SPI_MASTER | RT_SPI_MODE_0 | RT_SPI_MSB;
         cfg.max_hz = BSP_MCP2517FD_SPI_SPEED;
         ret = rt_spi_configure(mcp2517_can_port[i].spi_dev, &cfg);
         if (ret != RT_EOK)
@@ -2699,20 +2878,21 @@ static rt_err_t rt_hw_mcp2517_init(void)
         /* set irq pin */
         rt_pin_mode(mcp2517_can_port[i].spi_irq_pin_index, PIN_MODE_INPUT_PULLUP);
         rt_pin_attach_irq(mcp2517_can_port[i].spi_irq_pin_index, PIN_IRQ_MODE_FALLING, mcp2517_spi_irq_callback, (void *)&mcp2517_can_port[i]);
+        rt_pin_irq_enable(mcp2517_can_port[i].spi_irq_pin_index, PIN_IRQ_ENABLE);
 
         /* set user data */
         mcp2517_can_port[i].dev.user_data = &mcp2517_can_port[i];
 
         /* set device ops */
-        mcp2517_can_port[i].dev.init = mcp2517_init;
-        mcp2517_can_port[i].dev.open = NULL;
+        mcp2517_can_port[i].dev.init = NULL;
+        mcp2517_can_port[i].dev.open = mcp2517_open;
         mcp2517_can_port[i].dev.close = NULL;
         mcp2517_can_port[i].dev.read = mcp2517_read;
         mcp2517_can_port[i].dev.write = mcp2517_write;
         mcp2517_can_port[i].dev.control = NULL;
 
         /* register mcp2517fd device */
-        if(rt_device_register(&mcp2517_can_port[i].dev, "ksz8794", RT_DEVICE_FLAG_RDWR) == RT_EOK)
+        if(rt_device_register(&mcp2517_can_port[i].dev, mcp2517_can_port[i].dev_name, RT_DEVICE_FLAG_RDWR) == RT_EOK)
         {
             LOG_I("register success");
         }
