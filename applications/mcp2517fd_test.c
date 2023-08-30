@@ -57,7 +57,8 @@ static void MCP2517FDTestOpen(s_mcp2517fd_test *mcp2517_device)
 static void MCP2517FDTestThreadEntry(void *arg)
 {
     uint8_t i = 0;
-    struct rt_can_msg msg = {0};
+    struct rt_can_msg tx_msg = {0};
+    struct rt_can_msg rx_msg = {0};
     rt_size_t size = 0;
 
 //    for(i = 0; i < sizeof(mcp2517fd_test) / sizeof(s_mcp2517fd_test); i++)
@@ -67,16 +68,26 @@ static void MCP2517FDTestThreadEntry(void *arg)
 
     MCP2517FDTestOpen(&mcp2517fd_test[0]);
 
-    msg.id = 0x00031001;
-    msg.ide = RT_CAN_EXTID;
-    msg.rtr = RT_CAN_DTR;
-    msg.len = sizeof(msg.data);
-    memset(msg.data, 0x11, sizeof(msg.data));
-
+    tx_msg.id = 0x00031001;
+    tx_msg.ide = RT_CAN_EXTID;
+    tx_msg.rtr = RT_CAN_DTR;
+    tx_msg.len = sizeof(tx_msg.data);
+    memset(tx_msg.data, 0x11, sizeof(tx_msg.data));
 
     while(1)
     {
-        size = rt_device_write(mcp2517fd_test[0].dev, 0, &msg, sizeof(msg));
+#if 0
+        size = rt_device_write(mcp2517fd_test[0].dev, 0, &tx_msg, sizeof(tx_msg));
+#else
+        size = rt_device_read(mcp2517fd_test[0].dev, 0, &rx_msg, sizeof(struct rt_can_msg));
+        if(sizeof(struct rt_can_msg) == size)
+        {
+            LOG_I("rx size %d, data %x %x %x %x %x %x %x %x len = %d",
+                        size, rx_msg.data[0],rx_msg.data[1], rx_msg.data[2],rx_msg.data[3],
+                        rx_msg.data[4],rx_msg.data[5], rx_msg.data[6],rx_msg.data[7], rx_msg.len);
+        }
+        memset(&rx_msg, 0x00, sizeof(struct rt_can_msg));
+#endif
         rt_thread_mdelay(100);
     }
 }
