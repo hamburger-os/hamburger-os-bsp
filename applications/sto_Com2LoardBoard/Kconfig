@@ -1,0 +1,3 @@
+config APP_STO_COM_2_LOARD_BOART
+    bool "Enable STO-COM_2_LOARD-BOARD application"
+    default n

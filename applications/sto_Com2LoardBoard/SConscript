@@ -1,0 +1,16 @@
+# RT-Thread building script for bridge
+
+import rtconfig
+from building import *
+
+cwd     = GetCurrentDir()
+CPPPATH = [cwd, cwd + '/inc']
+
+src =  Split('''
+    sto_com2LoardBoard.c
+    '''
+    )
+
+group = DefineGroup('sto_Com2LoardBoard', src, depend = ['APP_STO_COM_2_LOARD_BOART'], CPPPATH = CPPPATH)
+
+Return('group')
