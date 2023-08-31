@@ -10,7 +10,7 @@
 #include <rtthread.h>
 #include <rtdevice.h>
 
-#define DBG_TAG "STOCom2LoardBoard"
+#define DBG_TAG "STOComBoard"
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
@@ -44,9 +44,9 @@ static int BoardInitThreadInit(void)
     return -RT_ERROR;
 }
 
-static void STOCom2LoardBoardInit(void)
+static void STOComBoardInit(void)
 {
     BoardInitThreadInit();
 }
 
-INIT_APP_EXPORT(STOCom2LoardBoardInit);
+INIT_APP_EXPORT(STOComBoardInit);

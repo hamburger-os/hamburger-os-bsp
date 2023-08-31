@@ -67,6 +67,14 @@ menu "On-chip Peripheral Drivers"
                 config SOC_H7_STO_COM_2_LOARD_BOARD
                     bool "Select STO H7 com 2 loard board"
                     select SOC_SERIES_STM32H7
+    
+                config SOC_H7_STO_COM_1_LOARD_BOARD
+                    bool "Select STO H7 com 1 loard board"
+                    select SOC_SERIES_STM32H7
+    
+                config SOC_H7_STO_COM_CHILD_BOARD
+                    bool "Select STO H7 com child board"
+                    select SOC_SERIES_STM32H7
 
             endchoice
             

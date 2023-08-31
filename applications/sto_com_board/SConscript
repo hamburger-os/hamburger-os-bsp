@@ -7,10 +7,10 @@ cwd     = GetCurrentDir()
 CPPPATH = [cwd, cwd + '/inc']
 
 src =  Split('''
-    sto_com2LoardBoard.c
+    sto_com_board.c
     '''
     )
 
-group = DefineGroup('sto_Com2LoardBoard', src, depend = ['APP_STO_COM_2_LOARD_BOART'], CPPPATH = CPPPATH)
+group = DefineGroup('sto_com_board', src, depend = ['APP_STO_COM_BOARD'], CPPPATH = CPPPATH)
 
 Return('group')

@@ -1,0 +1,3 @@
+config APP_STO_COM_BOARD
+    bool "Enable STO-COM-BOARD application"
+    default n
