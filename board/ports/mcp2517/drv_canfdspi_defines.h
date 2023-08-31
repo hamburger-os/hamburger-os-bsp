@@ -11,61 +11,58 @@
 #define BOARD_PORTS_MCP2517_DRV_CANFDSPI_DEFINES_H_
 
 /*******************************************************************************
-   CAN FD SPI Driver: API Defines Header File
+ CAN FD SPI Driver: API Defines Header File
 
-  Company:
-    Microchip Technology Inc.
+ Company:
+ Microchip Technology Inc.
 
-  File Name:
-    drv_canfdspi_defines.h
+ File Name:
+ drv_canfdspi_defines.h
 
-  Summary:
-    This header file contains object declarations used in the API.
-    This also contains device specific defines.
+ Summary:
+ This header file contains object declarations used in the API.
+ This also contains device specific defines.
 
-  Description:
-    None.
+ Description:
+ None.
  *******************************************************************************/
 
 //DOM-IGNORE-BEGIN
 /*******************************************************************************
-Copyright (c) 2018 Microchip Technology Inc. and its subsidiaries.
+ Copyright (c) 2018 Microchip Technology Inc. and its subsidiaries.
 
-Subject to your compliance with these terms, you may use Microchip software and
-any derivatives exclusively with Microchip products. It is your responsibility
-to comply with third party license terms applicable to your use of third party
-software (including open source software) that may accompany Microchip software.
+ Subject to your compliance with these terms, you may use Microchip software and
+ any derivatives exclusively with Microchip products. It is your responsibility
+ to comply with third party license terms applicable to your use of third party
+ software (including open source software) that may accompany Microchip software.
 
-THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES, WHETHER EXPRESS,
-IMPLIED OR STATUTORY, APPLY TO THIS SOFTWARE, INCLUDING ANY IMPLIED WARRANTIES
-OF NON-INFRINGEMENT, MERCHANTABILITY, AND FITNESS FOR A PARTICULAR PURPOSE.
+ THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES, WHETHER EXPRESS,
+ IMPLIED OR STATUTORY, APPLY TO THIS SOFTWARE, INCLUDING ANY IMPLIED WARRANTIES
+ OF NON-INFRINGEMENT, MERCHANTABILITY, AND FITNESS FOR A PARTICULAR PURPOSE.
 
-IN NO EVENT WILL MICROCHIP BE LIABLE FOR ANY INDIRECT, SPECIAL, PUNITIVE,
-INCIDENTAL OR CONSEQUENTIAL LOSS, DAMAGE, COST OR EXPENSE OF ANY KIND WHATSOEVER
-RELATED TO THE SOFTWARE, HOWEVER CAUSED, EVEN IF MICROCHIP HAS BEEN ADVISED OF
-THE POSSIBILITY OR THE DAMAGES ARE FORESEEABLE. TO THE FULLEST EXTENT ALLOWED
-BY LAW, MICROCHIP'S TOTAL LIABILITY ON ALL CLAIMS IN ANY WAY RELATED TO
-THIS SOFTWARE WILL NOT EXCEED THE AMOUNT OF FEES, IF ANY, THAT YOU HAVE PAID
-DIRECTLY TO MICROCHIP FOR THIS SOFTWARE.
+ IN NO EVENT WILL MICROCHIP BE LIABLE FOR ANY INDIRECT, SPECIAL, PUNITIVE,
+ INCIDENTAL OR CONSEQUENTIAL LOSS, DAMAGE, COST OR EXPENSE OF ANY KIND WHATSOEVER
+ RELATED TO THE SOFTWARE, HOWEVER CAUSED, EVEN IF MICROCHIP HAS BEEN ADVISED OF
+ THE POSSIBILITY OR THE DAMAGES ARE FORESEEABLE. TO THE FULLEST EXTENT ALLOWED
+ BY LAW, MICROCHIP'S TOTAL LIABILITY ON ALL CLAIMS IN ANY WAY RELATED TO
+ THIS SOFTWARE WILL NOT EXCEED THE AMOUNT OF FEES, IF ANY, THAT YOU HAVE PAID
+ DIRECTLY TO MICROCHIP FOR THIS SOFTWARE.
  *******************************************************************************/
 //DOM-IGNORE-END
-
 // *****************************************************************************
 // *****************************************************************************
 // Section: Included Files
-
 #include <stdint.h>
 #include <stdbool.h>
 
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
-extern "C" {
+extern "C"
+{
 #endif
 // DOM-IGNORE-END
 #define DRV_CANFDSPI_INDEX_0  0
 #define DRV_CANFDSPI_INDEX_1  1
-
-
 
 // *****************************************************************************
 // *****************************************************************************
@@ -83,7 +80,8 @@ extern "C" {
 
 //! CAN FIFO Channels
 
-typedef enum {
+typedef enum
+{
     CAN_FIFO_CH0,   // CAN_TXQUEUE_CH0
     CAN_FIFO_CH1,
     CAN_FIFO_CH2,
@@ -124,7 +122,8 @@ typedef enum {
 
 //! CAN Filter Channels
 
-typedef enum {
+typedef enum
+{
     CAN_FILTER0,
     CAN_FILTER1,
     CAN_FILTER2,
@@ -160,10 +159,10 @@ typedef enum {
     CAN_FILTER_TOTAL,
 } CAN_FILTER;
 
-
 //! CAN Operation Modes
 
-typedef enum {
+typedef enum
+{
     CAN_NORMAL_MODE = 0x00,
     CAN_SLEEP_MODE = 0x01,
     CAN_INTERNAL_LOOPBACK_MODE = 0x02,
@@ -177,7 +176,8 @@ typedef enum {
 
 //! Transmit Bandwidth Sharing
 
-typedef enum {
+typedef enum
+{
     CAN_TXBWS_NO_DELAY,
     CAN_TXBWS_2,
     CAN_TXBWS_4,
@@ -195,7 +195,8 @@ typedef enum {
 
 //! Wake-up Filter Time
 
-typedef enum {
+typedef enum
+{
     CAN_WFT00,
     CAN_WFT01,
     CAN_WFT10,
@@ -204,7 +205,8 @@ typedef enum {
 
 //! Data Byte Filter Number
 
-typedef enum {
+typedef enum
+{
     CAN_DNET_FILTER_DISABLE = 0,
     CAN_DNET_FILTER_SIZE_1_BIT,
     CAN_DNET_FILTER_SIZE_2_BIT,
@@ -228,7 +230,8 @@ typedef enum {
 
 //! FIFO Payload Size
 
-typedef enum {
+typedef enum
+{
     CAN_PLSIZE_8,
     CAN_PLSIZE_12,
     CAN_PLSIZE_16,
@@ -241,69 +244,75 @@ typedef enum {
 
 //! CAN Configure
 
-typedef struct _CAN_CONFIG {
-    uint32_t DNetFilterCount : 5;
-    uint32_t IsoCrcEnable : 1;
-    uint32_t ProtocolExpectionEventDisable : 1;
-    uint32_t WakeUpFilterEnable : 1;
-    uint32_t WakeUpFilterTime : 2;
-    uint32_t BitRateSwitchDisable : 1;
-    uint32_t RestrictReTxAttempts : 1;
-    uint32_t EsiInGatewayMode : 1;
-    uint32_t SystemErrorToListenOnly : 1;
-    uint32_t StoreInTEF : 1;
-    uint32_t TXQEnable : 1;
-    uint32_t TxBandWidthSharing : 4;
+typedef struct _CAN_CONFIG
+{
+    uint32_t DNetFilterCount :5;
+    uint32_t IsoCrcEnable :1;
+    uint32_t ProtocolExpectionEventDisable :1;
+    uint32_t WakeUpFilterEnable :1;
+    uint32_t WakeUpFilterTime :2;
+    uint32_t BitRateSwitchDisable :1;
+    uint32_t RestrictReTxAttempts :1;
+    uint32_t EsiInGatewayMode :1;
+    uint32_t SystemErrorToListenOnly :1;
+    uint32_t StoreInTEF :1;
+    uint32_t TXQEnable :1;
+    uint32_t TxBandWidthSharing :4;
 } CAN_CONFIG;
 
 //! CAN Transmit Channel Configure
 
-typedef struct _CAN_TX_FIFO_CONFIG {
-    uint32_t RTREnable : 1;
-    uint32_t TxPriority : 5;
-    uint32_t TxAttempts : 2;
-    uint32_t FifoSize : 5;
-    uint32_t PayLoadSize : 3;
+typedef struct _CAN_TX_FIFO_CONFIG
+{
+    uint32_t RTREnable :1;
+    uint32_t TxPriority :5;
+    uint32_t TxAttempts :2;
+    uint32_t FifoSize :5;
+    uint32_t PayLoadSize :3;
 } CAN_TX_FIFO_CONFIG;
 
 //! CAN Transmit Queue Configure
 
-typedef struct _CAN_TX_QUEUE_CONFIG {
-    uint32_t TxPriority : 5;
-    uint32_t TxAttempts : 2;
-    uint32_t FifoSize : 5;
-    uint32_t PayLoadSize : 3;
+typedef struct _CAN_TX_QUEUE_CONFIG
+{
+    uint32_t TxPriority :5;
+    uint32_t TxAttempts :2;
+    uint32_t FifoSize :5;
+    uint32_t PayLoadSize :3;
 } CAN_TX_QUEUE_CONFIG;
 
 //! CAN Receive Channel Configure
 
-typedef struct _CAN_RX_FIFO_CONFIG {
-    uint32_t RxTimeStampEnable : 1;
-    uint32_t FifoSize : 5;
-    uint32_t PayLoadSize : 3;
+typedef struct _CAN_RX_FIFO_CONFIG
+{
+    uint32_t RxTimeStampEnable :1;
+    uint32_t FifoSize :5;
+    uint32_t PayLoadSize :3;
 } CAN_RX_FIFO_CONFIG;
 
 //! CAN Transmit Event FIFO Configure
 
-typedef struct _CAN_TEF_CONFIG {
-    uint32_t TimeStampEnable : 1;
-    uint32_t FifoSize : 5;
+typedef struct _CAN_TEF_CONFIG
+{
+    uint32_t TimeStampEnable :1;
+    uint32_t FifoSize :5;
 } CAN_TEF_CONFIG;
 
 /* CAN Message Objects */
 
 //! CAN Message Object ID
-
-typedef struct _CAN_MSGOBJ_ID {
-    uint32_t SID : 11;
-    uint32_t EID : 18;
-    uint32_t SID11 : 1;
-    uint32_t unimplemented1 : 2;
+typedef struct _CAN_MSGOBJ_ID
+{
+    uint32_t SID :11;
+    uint32_t EID :18;
+    uint32_t SID11 :1;
+    uint32_t unimplemented1 :2;
 } CAN_MSGOBJ_ID;
 
 //! CAN Data Length Code
 
-typedef enum {
+typedef enum
+{
     MCP_CAN_DLC_0,
     MCP_CAN_DLC_1,
     MCP_CAN_DLC_2,
@@ -326,32 +335,33 @@ typedef enum {
 
 typedef struct _CAN_TX_MSGOBJ_CTRL
 {
-    uint32_t DLC : 4;   //数据长度
-    uint32_t IDE : 1;   //帧类型：标准帧/扩展帧
-    uint32_t RTR : 1;   //数据帧/远程帧
-    uint32_t BRS : 1;   //速率切换
-    uint32_t FDF : 1;   //FD模式/传统模式
-    uint32_t ESI : 1;
+    uint32_t DLC :4;   //数据长度
+    uint32_t IDE :1;   //帧类型：标准帧/扩展帧
+    uint32_t RTR :1;   //数据帧/远程帧
+    uint32_t BRS :1;   //速率切换
+    uint32_t FDF :1;   //FD模式/传统模式
+    uint32_t ESI :1;
 #ifdef BSP_USING_MCP2517FD
     uint32_t SEQ : 7;
     uint32_t unimplemented1 : 16;
 #else
-    uint32_t SEQ : 23;
+    uint32_t SEQ :23;
 #endif
 } CAN_TX_MSGOBJ_CTRL;
 
 //! CAN RX Message Object Control
 
-typedef struct _CAN_RX_MSGOBJ_CTRL {
-    uint32_t DLC : 4;
-    uint32_t IDE : 1;
-    uint32_t RTR : 1;
-    uint32_t BRS : 1;
-    uint32_t FDF : 1;
-    uint32_t ESI : 1;
-    uint32_t unimplemented1 : 2;
-    uint32_t FilterHit : 5;
-    uint32_t unimplemented2 : 16;
+typedef struct _CAN_RX_MSGOBJ_CTRL
+{
+    uint32_t DLC :4;
+    uint32_t IDE :1;
+    uint32_t RTR :1;
+    uint32_t BRS :1;
+    uint32_t FDF :1;
+    uint32_t ESI :1;
+    uint32_t unimplemented1 :2;
+    uint32_t FilterHit :5;
+    uint32_t unimplemented2 :16;
 } CAN_RX_MSGOBJ_CTRL;
 
 //! CAN Message Time Stamp
@@ -386,9 +396,11 @@ typedef union _CAN_RX_MSGOBJ
 
 //! CAN TEF Message Object
 
-typedef union _CAN_TEF_MSGOBJ {
+typedef union _CAN_TEF_MSGOBJ
+{
 
-    struct {
+    struct
+    {
         CAN_MSGOBJ_ID id;
         CAN_TX_MSGOBJ_CTRL ctrl;
         CAN_MSG_TIMESTAMP timeStamp;
@@ -399,27 +411,30 @@ typedef union _CAN_TEF_MSGOBJ {
 
 //! CAN Filter Object ID
 
-typedef struct _CAN_FILTEROBJ_ID {
-    uint32_t SID : 11;
-    uint32_t EID : 18;
-    uint32_t SID11 : 1;
-    uint32_t EXIDE : 1;
-    uint32_t unimplemented1 : 1;
+typedef struct _CAN_FILTEROBJ_ID
+{
+    uint32_t SID :11;
+    uint32_t EID :18;
+    uint32_t SID11 :1;
+    uint32_t EXIDE :1;
+    uint32_t unimplemented1 :1;
 } CAN_FILTEROBJ_ID;
 
 //! CAN Mask Object ID
 
-typedef struct _CAN_MASKOBJ_ID {
-    uint32_t MSID : 11;
-    uint32_t MEID : 18;
-    uint32_t MSID11 : 1;
-    uint32_t MIDE : 1;
-    uint32_t unimplemented1 : 1;
+typedef struct _CAN_MASKOBJ_ID
+{
+    uint32_t MSID :11;
+    uint32_t MEID :18;
+    uint32_t MSID11 :1;
+    uint32_t MIDE :1;
+    uint32_t unimplemented1 :1;
 } CAN_MASKOBJ_ID;
 
 //! CAN RX FIFO Status
 
-typedef enum {
+typedef enum
+{
     CAN_RX_FIFO_EMPTY = 0,
     CAN_RX_FIFO_STATUS_MASK = 0x0F,
     CAN_RX_FIFO_NOT_EMPTY = 0x01,
@@ -430,7 +445,8 @@ typedef enum {
 
 //! CAN TX FIFO Status
 
-typedef enum {
+typedef enum
+{
     CAN_TX_FIFO_FULL = 0,
     CAN_TX_FIFO_STATUS_MASK = 0x1F7,
     CAN_TX_FIFO_NOT_FULL = 0x01,
@@ -445,7 +461,8 @@ typedef enum {
 
 //! CAN TEF FIFO Status
 
-typedef enum {
+typedef enum
+{
     CAN_TEF_FIFO_EMPTY = 0,
     CAN_TEF_FIFO_STATUS_MASK = 0x0F,
     CAN_TEF_FIFO_NOT_EMPTY = 0x01,
@@ -456,7 +473,8 @@ typedef enum {
 
 //! CAN Module Event (Interrupts)
 
-typedef enum {
+typedef enum
+{
     CAN_NO_EVENT = 0,
     CAN_ALL_EVENTS = 0xFF1F,
     CAN_TX_EVENT = 0x0001,
@@ -477,7 +495,8 @@ typedef enum {
 
 //! CAN TX FIFO Event (Interrupts)
 
-typedef enum {
+typedef enum
+{
     CAN_TX_FIFO_NO_EVENT = 0,
     CAN_TX_FIFO_ALL_EVENTS = 0x17,
     CAN_TX_FIFO_NOT_FULL_EVENT = 0x01,
@@ -488,7 +507,8 @@ typedef enum {
 
 //! CAN RX FIFO Event (Interrupts)
 
-typedef enum {
+typedef enum
+{
     CAN_RX_FIFO_NO_EVENT = 0,
     CAN_RX_FIFO_ALL_EVENTS = 0x0F,
     CAN_RX_FIFO_NOT_EMPTY_EVENT = 0x01,
@@ -499,7 +519,8 @@ typedef enum {
 
 //! CAN TEF FIFO Event (Interrupts)
 
-typedef enum {
+typedef enum
+{
     CAN_TEF_FIFO_NO_EVENT = 0,
     CAN_TEF_FIFO_ALL_EVENTS = 0x0F,
     CAN_TEF_FIFO_NOT_EMPTY_EVENT = 0x01,
@@ -615,69 +636,76 @@ typedef enum
 
 typedef enum
 {
-    GPIO_PIN0=1,
-    GPIO_PIN1=2
+    GPIO_PIN0 = 1,
+    GPIO_PIN1 = 2
 } GPIO_PIN_POS;
 
 //! GPIO Pin Modes
 
-typedef enum {
+typedef enum
+{
     GPIO_MODE_INT,
     GPIO_MODE_GPIO
 } GPIO_PIN_MODE;
 
 //! GPIO Pin Directions
 
-typedef enum {
+typedef enum
+{
     GPIO_OUTPUT,
     GPIO_INPUT
 } GPIO_PIN_DIRECTION;
 
 //! GPIO Open Drain Mode
 
-typedef enum {
+typedef enum
+{
     GPIO_PUSH_PULL,
     GPIO_OPEN_DRAIN
 } GPIO_OPEN_DRAIN_MODE;
 
 //! GPIO Pin State
 
-typedef enum {
+typedef enum
+{
     GPIO_LOW,
     GPIO_HIGH
 } GPIO_PIN_STATE;
 
 //! Clock Output Mode
 
-typedef enum {
+typedef enum
+{
     GPIO_CLKO_CLOCK,
     GPIO_CLKO_SOF
 } GPIO_CLKO_MODE;
 
 //! CAN Bus Diagnostic flags
 
-typedef struct _CAN_BUS_DIAG_FLAGS {
-    uint32_t NBIT0_ERR : 1;
-    uint32_t NBIT1_ERR : 1;
-    uint32_t NACK_ERR : 1;
-    uint32_t NFORM_ERR : 1;
-    uint32_t NSTUFF_ERR : 1;
-    uint32_t NCRC_ERR : 1;
-    uint32_t unimplemented1 : 1;
-    uint32_t TXBO_ERR : 1;
-    uint32_t DBIT0_ERR : 1;
-    uint32_t DBIT1_ERR : 1;
-    uint32_t unimplemented2 : 1;
-    uint32_t DFORM_ERR : 1;
-    uint32_t DSTUFF_ERR : 1;
-    uint32_t DCRC_ERR : 1;
-    uint32_t ESI : 1;
-    uint32_t DLC_MISMATCH : 1;
+typedef struct _CAN_BUS_DIAG_FLAGS
+{
+    uint32_t NBIT0_ERR :1;
+    uint32_t NBIT1_ERR :1;
+    uint32_t NACK_ERR :1;
+    uint32_t NFORM_ERR :1;
+    uint32_t NSTUFF_ERR :1;
+    uint32_t NCRC_ERR :1;
+    uint32_t unimplemented1 :1;
+    uint32_t TXBO_ERR :1;
+    uint32_t DBIT0_ERR :1;
+    uint32_t DBIT1_ERR :1;
+    uint32_t unimplemented2 :1;
+    uint32_t DFORM_ERR :1;
+    uint32_t DSTUFF_ERR :1;
+    uint32_t DCRC_ERR :1;
+    uint32_t ESI :1;
+    uint32_t DLC_MISMATCH :1;
 } CAN_BUS_DIAG_FLAGS;
 
 //! CAN Bus Diagnostic Error Counts
 
-typedef struct _CAN_BUS_ERROR_COUNT {
+typedef struct _CAN_BUS_ERROR_COUNT
+{
     uint8_t NREC;
     uint8_t NTEC;
     uint8_t DREC;
@@ -686,9 +714,11 @@ typedef struct _CAN_BUS_ERROR_COUNT {
 
 //! CAN BUS DIAGNOSTICS
 
-typedef union _CAN_BUS_DIAGNOSTIC {
+typedef union _CAN_BUS_DIAGNOSTIC
+{
 
-    struct {
+    struct
+    {
         CAN_BUS_ERROR_COUNT errorCount;
         uint16_t errorFreeMsgCount;
         CAN_BUS_DIAG_FLAGS flag;
@@ -700,7 +730,8 @@ typedef union _CAN_BUS_DIAGNOSTIC {
 //! TXREQ Channel Bits
 // Multiple channels can be or'ed together
 
-typedef enum {
+typedef enum
+{
     CAN_TXREQ_CH0 = 0x00000001,
     CAN_TXREQ_CH1 = 0x00000002,
     CAN_TXREQ_CH2 = 0x00000004,
@@ -740,27 +771,30 @@ typedef enum {
 
 //! Oscillator Control
 
-typedef struct _CAN_OSC_CTRL {
-    uint32_t PllEnable : 1;
-    uint32_t OscDisable : 1;
-    uint32_t SclkDivide : 1;
-    uint32_t ClkOutDivide : 2;
+typedef struct _CAN_OSC_CTRL
+{
+    uint32_t PllEnable :1;
+    uint32_t OscDisable :1;
+    uint32_t SclkDivide :1;
+    uint32_t ClkOutDivide :2;
 #ifndef BSP_USING_MCP2517FD
-    uint32_t LowPowerModeEnable : 1;
+    uint32_t LowPowerModeEnable :1;
 #endif
 } CAN_OSC_CTRL;
 
 //! Oscillator Status
 
-typedef struct _CAN_OSC_STATUS {
-    uint32_t PllReady : 1;
-    uint32_t OscReady : 1;
-    uint32_t SclkReady : 1;
+typedef struct _CAN_OSC_STATUS
+{
+    uint32_t PllReady :1;
+    uint32_t OscReady :1;
+    uint32_t SclkReady :1;
 } CAN_OSC_STATUS;
 
 //! ICODE
 
-typedef enum {
+typedef enum
+{
     CAN_ICODE_FIFO_CH0,
     CAN_ICODE_FIFO_CH1,
     CAN_ICODE_FIFO_CH2,
@@ -810,8 +844,9 @@ typedef enum {
 
 //! RXCODE
 
-typedef enum {
-    CAN_RXCODE_FIFO_CH1=1,
+typedef enum
+{
+    CAN_RXCODE_FIFO_CH1 = 1,
     CAN_RXCODE_FIFO_CH2,
     CAN_RXCODE_FIFO_CH3,
     CAN_RXCODE_FIFO_CH4,
@@ -849,7 +884,8 @@ typedef enum {
 
 //! TXCODE
 
-typedef enum {
+typedef enum
+{
     CAN_TXCODE_FIFO_CH0,
     CAN_TXCODE_FIFO_CH1,
     CAN_TXCODE_FIFO_CH2,
@@ -889,7 +925,8 @@ typedef enum {
 
 //! System Clock Selection
 
-typedef enum {
+typedef enum
+{
     CAN_SYSCLK_40M,
     CAN_SYSCLK_20M,
     CAN_SYSCLK_10M
@@ -897,12 +934,12 @@ typedef enum {
 
 //! CLKO Divide
 
-typedef enum {
+typedef enum
+{
     OSC_CLKO_DIV1,
     OSC_CLKO_DIV2,
     OSC_CLKO_DIV4,
     OSC_CLKO_DIV10
 } OSC_CLKO_DIVIDE;
-
 
 #endif /* BOARD_PORTS_MCP2517_DRV_CANFDSPI_DEFINES_H_ */

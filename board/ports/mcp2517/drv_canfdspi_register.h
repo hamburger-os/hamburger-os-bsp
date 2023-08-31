@@ -11,57 +11,55 @@
 #define BOARD_PORTS_MCP2517_DRV_CANFDSPI_REGISTER_H_
 
 /*******************************************************************************
-  CAN FD SPI Driver: Register Header File
+ CAN FD SPI Driver: Register Header File
 
-  Company:
-    Microchip Technology Inc.
+ Company:
+ Microchip Technology Inc.
 
-  File Name:
-    drv_canfdspi_register.h
+ File Name:
+ drv_canfdspi_register.h
 
-  Summary:
-    This header file contains SPI instruction defines, register address defines,
-    register structures, and reset values of registers.
+ Summary:
+ This header file contains SPI instruction defines, register address defines,
+ register structures, and reset values of registers.
 
-  Description:
-    This file is used by the API.
+ Description:
+ This file is used by the API.
  *******************************************************************************/
 
 //DOM-IGNORE-BEGIN
 /*******************************************************************************
-Copyright (c) 2018 Microchip Technology Inc. and its subsidiaries.
+ Copyright (c) 2018 Microchip Technology Inc. and its subsidiaries.
 
-Subject to your compliance with these terms, you may use Microchip software and
-any derivatives exclusively with Microchip products. It is your responsibility
-to comply with third party license terms applicable to your use of third party
-software (including open source software) that may accompany Microchip software.
+ Subject to your compliance with these terms, you may use Microchip software and
+ any derivatives exclusively with Microchip products. It is your responsibility
+ to comply with third party license terms applicable to your use of third party
+ software (including open source software) that may accompany Microchip software.
 
-THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES, WHETHER EXPRESS,
-IMPLIED OR STATUTORY, APPLY TO THIS SOFTWARE, INCLUDING ANY IMPLIED WARRANTIES
-OF NON-INFRINGEMENT, MERCHANTABILITY, AND FITNESS FOR A PARTICULAR PURPOSE.
+ THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES, WHETHER EXPRESS,
+ IMPLIED OR STATUTORY, APPLY TO THIS SOFTWARE, INCLUDING ANY IMPLIED WARRANTIES
+ OF NON-INFRINGEMENT, MERCHANTABILITY, AND FITNESS FOR A PARTICULAR PURPOSE.
 
-IN NO EVENT WILL MICROCHIP BE LIABLE FOR ANY INDIRECT, SPECIAL, PUNITIVE,
-INCIDENTAL OR CONSEQUENTIAL LOSS, DAMAGE, COST OR EXPENSE OF ANY KIND WHATSOEVER
-RELATED TO THE SOFTWARE, HOWEVER CAUSED, EVEN IF MICROCHIP HAS BEEN ADVISED OF
-THE POSSIBILITY OR THE DAMAGES ARE FORESEEABLE. TO THE FULLEST EXTENT ALLOWED
-BY LAW, MICROCHIP'S TOTAL LIABILITY ON ALL CLAIMS IN ANY WAY RELATED TO
-THIS SOFTWARE WILL NOT EXCEED THE AMOUNT OF FEES, IF ANY, THAT YOU HAVE PAID
-DIRECTLY TO MICROCHIP FOR THIS SOFTWARE.
+ IN NO EVENT WILL MICROCHIP BE LIABLE FOR ANY INDIRECT, SPECIAL, PUNITIVE,
+ INCIDENTAL OR CONSEQUENTIAL LOSS, DAMAGE, COST OR EXPENSE OF ANY KIND WHATSOEVER
+ RELATED TO THE SOFTWARE, HOWEVER CAUSED, EVEN IF MICROCHIP HAS BEEN ADVISED OF
+ THE POSSIBILITY OR THE DAMAGES ARE FORESEEABLE. TO THE FULLEST EXTENT ALLOWED
+ BY LAW, MICROCHIP'S TOTAL LIABILITY ON ALL CLAIMS IN ANY WAY RELATED TO
+ THIS SOFTWARE WILL NOT EXCEED THE AMOUNT OF FEES, IF ANY, THAT YOU HAVE PAID
+ DIRECTLY TO MICROCHIP FOR THIS SOFTWARE.
  *******************************************************************************/
 //DOM-IGNORE-END
-
 // *****************************************************************************
 // *****************************************************************************
 // Section: Included Files
-
 #include "drv_canfdspi_defines.h"
 
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
-extern "C" {
+extern "C"
+{
 #endif
 // DOM-IGNORE-END
-
 
 // *****************************************************************************
 // *****************************************************************************
@@ -146,12 +144,11 @@ extern "C" {
 
 // *****************************************************************************
 //! General 32-bit Register
-
-typedef union _REG_t {
+typedef union _REG_t
+{
     uint8_t byte[4];
     uint32_t word;
-} REG_t;
-
+}REG_t;
 
 // *****************************************************************************
 // *****************************************************************************
@@ -159,10 +156,11 @@ typedef union _REG_t {
 
 // *****************************************************************************
 //! CAN Control Register
+typedef union _REG_CiCON
+{
 
-typedef union _REG_CiCON {
-
-    struct {
+    struct
+    {
         uint32_t DNetFilterCount : 5;
         uint32_t IsoCrcEnable : 1;
         uint32_t ProtocolExceptionEventDisable : 1;
@@ -181,34 +179,38 @@ typedef union _REG_CiCON {
         uint32_t RequestOpMode : 3;
         uint32_t AbortAllTx : 1;
         uint32_t TxBandWidthSharing : 4;
-    } bF;
+    }bF;
     uint32_t word;
     uint8_t byte[4];
-} REG_CiCON;
+}REG_CiCON;
 
 // *****************************************************************************
 //! Nominal Bit Time Configuration Register
 
-typedef union _REG_CiNBTCFG {
+typedef union _REG_CiNBTCFG
+{
 
-    struct {
+    struct
+    {
         uint32_t SJW : 7;
         uint32_t unimplemented1 : 1;
         uint32_t TSEG2 : 7;
         uint32_t unimplemented2 : 1;
         uint32_t TSEG1 : 8;
         uint32_t BRP : 8;
-    } bF;
+    }bF;
     uint32_t word;
     uint8_t byte[4];
-} REG_CiNBTCFG;
+}REG_CiNBTCFG;
 
 // *****************************************************************************
 //! Data Bit Time Configuration Register
 
-typedef union _REG_CiDBTCFG {
+typedef union _REG_CiDBTCFG
+{
 
-    struct {
+    struct
+    {
         uint32_t SJW : 4;
         uint32_t unimplemented1 : 4;
         uint32_t TSEG2 : 4;
@@ -216,17 +218,19 @@ typedef union _REG_CiDBTCFG {
         uint32_t TSEG1 : 5;
         uint32_t unimplemented3 : 3;
         uint32_t BRP : 8;
-    } bF;
+    }bF;
     uint32_t word;
     uint8_t byte[4];
-} REG_CiDBTCFG;
+}REG_CiDBTCFG;
 
 // *****************************************************************************
 //! Transmitter Delay Compensation Register
 
-typedef union _REG_CiTDC {
+typedef union _REG_CiTDC
+{
 
-    struct {
+    struct
+    {
         uint32_t TDCValue : 6;
         uint32_t unimplemented1 : 2;
         uint32_t TDCOffset : 7;
@@ -236,33 +240,37 @@ typedef union _REG_CiTDC {
         uint32_t SID11Enable : 1;
         uint32_t EdgeFilterEnable : 1;
         uint32_t unimplemented4 : 6;
-    } bF;
+    }bF;
     uint32_t word;
     uint8_t byte[4];
-} REG_CiTDC;
+}REG_CiTDC;
 
 // *****************************************************************************
 //! Time Stamp Configuration Register
 
-typedef union _REG_CiTSCON {
+typedef union _REG_CiTSCON
+{
 
-    struct {
+    struct
+    {
         uint32_t TBCPrescaler : 10;
         uint32_t unimplemented1 : 6;
         uint32_t TBCEnable : 1;
         uint32_t TimeStampEOF : 1;
         uint32_t unimplemented2 : 14;
-    } bF;
+    }bF;
     uint32_t word;
     uint8_t byte[4];
-} REG_CiTSCON;
+}REG_CiTSCON;
 
 // *****************************************************************************
 //! Interrupt Vector Register
 
-typedef union _REG_CiVEC {
+typedef union _REG_CiVEC
+{
 
-    struct {
+    struct
+    {
         uint32_t ICODE : 7;
         uint32_t unimplemented1 : 1;
         uint32_t FilterHit : 5;
@@ -271,15 +279,16 @@ typedef union _REG_CiVEC {
         uint32_t unimplemented3 : 1;
         uint32_t RXCODE : 7;
         uint32_t unimplemented4 : 1;
-    } bF;
+    }bF;
     uint32_t word;
     uint8_t byte[4];
-} REG_CiVEC;
+}REG_CiVEC;
 
 // *****************************************************************************
 //! Interrupt Flags
 
-typedef struct _CAN_INT_FLAGS {
+typedef struct _CAN_INT_FLAGS
+{
     uint32_t TXIF : 1;
     uint32_t RXIF : 1;
     uint32_t TBCIF : 1;
@@ -295,12 +304,13 @@ typedef struct _CAN_INT_FLAGS {
     uint32_t CERRIF : 1;
     uint32_t WAKIF : 1;
     uint32_t IVMIF : 1;
-} CAN_INT_FLAGS;
+}CAN_INT_FLAGS;
 
 // *****************************************************************************
 //! Interrupt Enables
 
-typedef struct _CAN_INT_ENABLES {
+typedef struct _CAN_INT_ENABLES
+{
     uint32_t TXIE : 1;
     uint32_t RXIE : 1;
     uint32_t TBCIE : 1;
@@ -316,45 +326,51 @@ typedef struct _CAN_INT_ENABLES {
     uint32_t CERRIE : 1;
     uint32_t WAKIE : 1;
     uint32_t IVMIE : 1;
-} CAN_INT_ENABLES;
+}CAN_INT_ENABLES;
 
 // *****************************************************************************
 //! Interrupt Register
 
-typedef union _REG_CiINT {
+typedef union _REG_CiINT
+{
 
-    struct {
+    struct
+    {
         CAN_INT_FLAGS IF;
         CAN_INT_ENABLES IE;
-    } bF;
+    }bF;
     uint32_t word;
     uint8_t byte[4];
-} REG_CiINT;
+}REG_CiINT;
 
 // *****************************************************************************
 //! Interrupt Flag Register
 
-typedef union _REG_CiINTFLAG {
+typedef union _REG_CiINTFLAG
+{
     CAN_INT_FLAGS IF;
     uint16_t word;
     uint8_t byte[2];
-} REG_CiINTFLAG;
+}REG_CiINTFLAG;
 
 // *****************************************************************************
 //! Interrupt Enable Register
 
-typedef union _REG_CiINTENABLE {
+typedef union _REG_CiINTENABLE
+{
     CAN_INT_ENABLES IE;
     uint16_t word;
     uint8_t byte[2];
-} REG_CiINTENABLE;
+}REG_CiINTENABLE;
 
 // *****************************************************************************
 //! Transmit/Receive Error Count Register
 
-typedef union _REG_CiTREC {
+typedef union _REG_CiTREC
+{
 
-    struct {
+    struct
+    {
         uint32_t RxErrorCount : 8;
         uint32_t TxErrorCount : 8;
         uint32_t ErrorStateWarning : 1;
@@ -364,32 +380,36 @@ typedef union _REG_CiTREC {
         uint32_t TxErrorStatePassive : 1;
         uint32_t TxErrorStateBusOff : 1;
         uint32_t unimplemented1 : 10;
-    } bF;
+    }bF;
     uint32_t word;
     uint8_t byte[4];
-} REG_CiTREC;
+}REG_CiTREC;
 
 // *****************************************************************************
 //! Diagnostic Register 0
 
-typedef union _REG_CiBDIAG0 {
+typedef union _REG_CiBDIAG0
+{
 
-    struct {
+    struct
+    {
         uint32_t NRxErrorCount : 8;
         uint32_t NTxErrorCount : 8;
         uint32_t DRxErrorCount : 8;
         uint32_t DTxErrorCount : 8;
-    } bF;
+    }bF;
     uint32_t word;
     uint8_t byte[4];
-} REG_CiBDIAG0;
+}REG_CiBDIAG0;
 
 // *****************************************************************************
 //! Diagnostic Register 1
 
-typedef union _REG_CiBDIAG1 {
+typedef union _REG_CiBDIAG1
+{
 
-    struct {
+    struct
+    {
         uint32_t ErrorFreeMsgCount : 16;
 
         uint32_t NBit0Error : 1;
@@ -408,17 +428,19 @@ typedef union _REG_CiBDIAG1 {
         uint32_t DCRCError : 1;
         uint32_t ESI : 1;
         uint32_t unimplemented2 : 1;
-    } bF;
+    }bF;
     uint32_t word;
     uint8_t byte[4];
-} REG_CiBDIAG1;
+}REG_CiBDIAG1;
 
 // *****************************************************************************
 //! Transmit Event FIFO Control Register
 
-typedef union _REG_CiTEFCON {
+typedef union _REG_CiTEFCON
+{
 
-    struct {
+    struct
+    {
         uint32_t TEFNEIE : 1;
         uint32_t TEFHFIE : 1;
         uint32_t TEFFULIE : 1;
@@ -432,33 +454,37 @@ typedef union _REG_CiTEFCON {
         uint32_t unimplemented4 : 13;
         uint32_t FifoSize : 5;
         uint32_t unimplemented5 : 3;
-    } bF;
+    }bF;
     uint32_t word;
     uint8_t byte[4];
-} REG_CiTEFCON;
+}REG_CiTEFCON;
 
 // *****************************************************************************
 //! Transmit Event FIFO Status Register
 
-typedef union _REG_CiTEFSTA {
+typedef union _REG_CiTEFSTA
+{
 
-    struct {
+    struct
+    {
         uint32_t TEFNotEmptyIF : 1;
         uint32_t TEFHalfFullIF : 1;
         uint32_t TEFFullIF : 1;
         uint32_t TEFOVIF : 1;
         uint32_t unimplemented1 : 28;
-    } bF;
+    }bF;
     uint32_t word;
     uint8_t byte[4];
-} REG_CiTEFSTA;
+}REG_CiTEFSTA;
 
 // *****************************************************************************
 //! Transmit Queue Control Register
 
-typedef union _REG_CiTXQCON {
+typedef union _REG_CiTXQCON
+{
 
-    struct {
+    struct
+    {
         uint32_t TxNotFullIE : 1;
         uint32_t unimplemented1 : 1;
         uint32_t TxEmptyIE : 1;
@@ -475,17 +501,19 @@ typedef union _REG_CiTXQCON {
         uint32_t unimplemented5 : 1;
         uint32_t FifoSize : 5;
         uint32_t PayLoadSize : 3;
-    } txBF;
+    }txBF;
     uint32_t word;
     uint8_t byte[4];
-} REG_CiTXQCON;
+}REG_CiTXQCON;
 
 // *****************************************************************************
 //! Transmit Queue Status Register
 
-typedef union _REG_CiTXQSTA {
+typedef union _REG_CiTXQSTA
+{
 
-    struct {
+    struct
+    {
         uint32_t TxNotFullIF : 1;
         uint32_t unimplemented1 : 1;
         uint32_t TxEmptyIF : 1;
@@ -496,18 +524,20 @@ typedef union _REG_CiTXQSTA {
         uint32_t TxAborted : 1;
         uint32_t FifoIndex : 5;
         uint32_t unimplemented3 : 19;
-    } txBF;
+    }txBF;
     uint32_t word;
     uint8_t byte[4];
-} REG_CiTXQSTA;
+}REG_CiTXQSTA;
 
 // *****************************************************************************
 //! FIFO Control Register
 
-typedef union _REG_CiFIFOCON {
+typedef union _REG_CiFIFOCON
+{
     // Receive FIFO
 
-    struct {
+    struct
+    {
         uint32_t RxNotEmptyIE : 1;
         uint32_t RxHalfFullIE : 1;
         uint32_t RxFullIE : 1;
@@ -522,11 +552,12 @@ typedef union _REG_CiFIFOCON {
         uint32_t unimplemented4 : 13;
         uint32_t FifoSize : 5;
         uint32_t PayLoadSize : 3;
-    } rxBF;
+    }rxBF;
 
     // Transmit FIFO
 
-    struct {
+    struct
+    {
         uint32_t TxNotFullIE : 1;
         uint32_t TxHalfFullIE : 1;
         uint32_t TxEmptyIE : 1;
@@ -544,18 +575,20 @@ typedef union _REG_CiFIFOCON {
         uint32_t unimplemented4 : 1;
         uint32_t FifoSize : 5;
         uint32_t PayLoadSize : 3;
-    } txBF;
+    }txBF;
     uint32_t word;
     uint8_t byte[4];
-} REG_CiFIFOCON;
+}REG_CiFIFOCON;
 
 // *****************************************************************************
 //! FIFO Status Register
 
-typedef union _REG_CiFIFOSTA {
+typedef union _REG_CiFIFOSTA
+{
     // Receive FIFO
 
-    struct {
+    struct
+    {
         uint32_t RxNotEmptyIF : 1;
         uint32_t RxHalfFullIF : 1;
         uint32_t RxFullIF : 1;
@@ -563,11 +596,12 @@ typedef union _REG_CiFIFOSTA {
         uint32_t unimplemented1 : 4;
         uint32_t FifoIndex : 5;
         uint32_t unimplemented2 : 19;
-    } rxBF;
+    }rxBF;
 
     // Transmit FIFO
 
-    struct {
+    struct
+    {
         uint32_t TxNotFullIF : 1;
         uint32_t TxHalfFullIF : 1;
         uint32_t TxEmptyIF : 1;
@@ -578,55 +612,60 @@ typedef union _REG_CiFIFOSTA {
         uint32_t TxAborted : 1;
         uint32_t FifoIndex : 5;
         uint32_t unimplemented2 : 19;
-    } txBF;
+    }txBF;
     uint32_t word;
     uint8_t byte[4];
-} REG_CiFIFOSTA;
+}REG_CiFIFOSTA;
 
 // *****************************************************************************
 //! FIFO User Address Register
 
-typedef union _REG_CiFIFOUA {
+typedef union _REG_CiFIFOUA
+{
 
-    struct {
+    struct
+    {
         uint32_t UserAddress : 12;
         uint32_t unimplemented1 : 20;
-    } bF;
+    }bF;
     uint32_t word;
     uint8_t byte[4];
-} REG_CiFIFOUA;
+}REG_CiFIFOUA;
 
 // *****************************************************************************
 //! Filter Control Register
 
-typedef union _REG_CiFLTCON_BYTE {
+typedef union _REG_CiFLTCON_BYTE
+{
 
-    struct {
+    struct
+    {
         uint32_t BufferPointer : 5;
         uint32_t unimplemented1 : 2;
         uint32_t Enable : 1;
-    } bF;
+    }bF;
     uint8_t byte;
-} REG_CiFLTCON_BYTE;
+}REG_CiFLTCON_BYTE;
 
 // *****************************************************************************
 //! Filter Object Register
 
-typedef union _REG_CiFLTOBJ {
+typedef union _REG_CiFLTOBJ
+{
     CAN_FILTEROBJ_ID bF;
     uint32_t word;
     uint8_t byte[4];
-} REG_CiFLTOBJ;
+}REG_CiFLTOBJ;
 
 // *****************************************************************************
 //! Mask Object Register
 
-typedef union _REG_CiMASK {
+typedef union _REG_CiMASK
+{
     CAN_MASKOBJ_ID bF;
     uint32_t word;
     uint8_t byte[4];
-} REG_CiMASK;
-
+}REG_CiMASK;
 
 // *****************************************************************************
 // *****************************************************************************
@@ -634,12 +673,11 @@ typedef union _REG_CiMASK {
 
 // *****************************************************************************
 //! Oscillator Control Register
-
 typedef union _REG_OSC
 {
 
     struct
-        {
+    {
         uint32_t PllEnable : 1;
         uint32_t unimplemented1 : 1;
         uint32_t OscDisable : 1;
@@ -657,10 +695,10 @@ typedef union _REG_OSC
         uint32_t unimplemented5 : 1;
         uint32_t SclkReady : 1;
         uint32_t unimplemented6 : 19;
-    } bF;
+    }bF;
     uint32_t word;
     uint8_t byte[4];
-} REG_OSC;
+}REG_OSC;
 
 // *****************************************************************************
 //! I/O Control Register
@@ -669,7 +707,7 @@ typedef union _REG_IOCON
 {
 
     struct
-        {
+    {
         uint32_t TRIS0 : 1;
         uint32_t TRIS1 : 1;
         uint32_t unimplemented1 : 2;
@@ -691,10 +729,10 @@ typedef union _REG_IOCON
         uint32_t SOFOutputEnable : 1;
         uint32_t INTPinOpenDrain : 1;
         uint32_t unimplemented6 : 1;
-    } bF;
+    }bF;
     uint32_t word;
     uint8_t byte[4];
-} REG_IOCON;
+}REG_IOCON;
 
 // *****************************************************************************
 //! CRC Regsiter
@@ -702,7 +740,7 @@ typedef union _REG_IOCON
 typedef union _REG_CRC
 {
     struct
-        {
+    {
         uint32_t CRCVal : 16;
         uint32_t CRCERRIF : 1;
         uint32_t FERRIF : 1;
@@ -710,10 +748,10 @@ typedef union _REG_CRC
         uint32_t CRCERRIE : 1;
         uint32_t FERRIE : 1;
         uint32_t unimplemented2 : 6;
-    } bF;
+    }bF;
     uint32_t word;
     uint8_t byte[4];
-} REG_CRC;
+}REG_CRC;
 
 // *****************************************************************************
 //! ECC Control Register
@@ -722,51 +760,54 @@ typedef union _REG_ECCCON
 {
 
     struct
-        {
+    {
         uint32_t EccEn : 1;
         uint32_t SECIE : 1;
         uint32_t DEDIE : 1;
         uint32_t unimplemented1 : 5;
         uint32_t Parity : 7;
         uint32_t unimplemented2 : 17;
-    } bF;
+    }bF;
     uint32_t word;
     uint8_t byte[4];
-} REG_ECCCON;
+}REG_ECCCON;
 
 // *****************************************************************************
 //! ECC Status Register
 
-typedef union _REG_ECCSTA {
+typedef union _REG_ECCSTA
+{
 
-    struct {
+    struct
+    {
         uint32_t unimplemented1 : 1;
         uint32_t SECIF : 1;
         uint32_t DEDIF : 1;
         uint32_t unimplemented2 : 13;
         uint32_t ErrorAddress : 12;
         uint32_t unimplemented3 : 4;
-    } bF;
+    }bF;
     uint32_t word;
     uint8_t byte[4];
-} REG_ECCSTA;
+}REG_ECCSTA;
 
 // *****************************************************************************
 //! DEVID Register
 
 #ifndef BSP_USING_MCP2517FD
-typedef union _REG_DEVID {
+typedef union _REG_DEVID
+{
 
-    struct {
+    struct
+    {
         uint32_t REV : 4;
         uint32_t DEV : 4;
         uint32_t unimplemented : 24;
-    } bF;
+    }bF;
     uint32_t word;
     uint8_t byte[4];
-} REG_DEVID;
+}REG_DEVID;
 #endif
-
 
 // *****************************************************************************
 // *****************************************************************************
@@ -776,7 +817,8 @@ typedef union _REG_DEVID {
 /* CAN FD Controller */
 
 // Control Register Reset Values up to FIFOs
-static const uint32_t canControlResetValues[] = {
+static const uint32_t canControlResetValues[] =
+{
     /* Address 0x000 to 0x00C */
     0x04980760, 0x003E0F0F, 0x000E0303, 0x00021000,
     /* Address 0x010 to 0x01C */
@@ -790,7 +832,8 @@ static const uint32_t canControlResetValues[] = {
 };
 
 // FIFO Register Reset Values
-static const uint32_t canFifoResetValues[] = {
+static const uint32_t canFifoResetValues[] =
+{
     0x00600400, 0x00000000, 0x00000000
 };
 
@@ -798,7 +841,8 @@ static const uint32_t canFifoResetValues[] = {
 static const uint32_t canFilterControlResetValue = 0x00000000;
 
 // Filter and Mask Object Reset Values
-static const uint32_t canFilterObjectResetValues[] = {
+static const uint32_t canFilterObjectResetValues[] =
+{
     0x00000000, 0x00000000
 };
 
@@ -806,10 +850,10 @@ static const uint32_t canFilterObjectResetValues[] = {
 /* MCP25xxFD */
 
 #if defined(BSP_USING_MCP2517FD) || defined(BSP_USING_MCP2517FD)
-static const uint32_t mcp25xxfdControlResetValues[] = {
+static const uint32_t mcp25xxfdControlResetValues[] =
+{
     0x00000460, 0x00000003, 0x00000000, 0x00000000, 0x00000000
 };
 #endif
-
 
 #endif /* BOARD_PORTS_MCP2517_DRV_CANFDSPI_REGISTER_H_ */
