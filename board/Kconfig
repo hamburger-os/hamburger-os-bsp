@@ -3438,6 +3438,26 @@ menu "Onboard Peripheral Drivers"
           config BSP_MCP2517FD_SPI_SPEED
               int "Set the rate of spi, default: (20 * 1000 *1000)"
               default (20000000)
+              
+          config BSP_MCP2517FD_RX_THREAD_PRIORITY
+              int "Set mcp2517fd rx thread priority, default: (13)"
+              default (13)
+              
+          config BSP_MCP2517FD_RX_THREAD_STACK_SIZE
+              int "Set mcp2517fd rx thread timeslice, default: (1024)"
+              default (1024)
+              
+          config BSP_MCP2517FD_RX_THREAD_TIMESLICE
+              int "Set mcp2517fd rx thread timeslice, default: (5)"
+              default (5)
+              
+          config BSP_MCP2517FD_RX_EVENT_MSG_QUEUE_MAX_NUM
+              int "Set mcp2517fd rx mq num, default: (100)"
+              default (100)
+              
+          config BSP_MCP2517FD_RX_BUF_NUM
+              int "Set mcp2517fd rx buf num, default: (100)"
+              default (100)
                   
           menuconfig BSP_USE_MCP2517FD_CAN1
           bool "Enable The MCP2517FD CAN FD Port 1"

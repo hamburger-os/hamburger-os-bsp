@@ -23,18 +23,31 @@
 typedef struct {
     rt_device_t dev;
     const char *device_name;
+    struct rt_semaphore rx_sem;
+    uint8_t thread_is_run;
 } s_mcp2517fd_test;
 
 static s_mcp2517fd_test mcp2517fd_test[] = {
     {
         .device_name = "mcp2517fd1",
+        .thread_is_run = 1,
     },
     {
         .device_name = "mcp2517fd2",
+        .thread_is_run = 1,
     },
 };
 
 static rt_thread_t mcp2517fd_thread = RT_NULL;
+
+/* 接收数据回调函数 */
+static rt_err_t mcp2517fd_can_rx_call(rt_device_t dev, rt_size_t size)
+{
+    /* CAN 接收到数据后产生中断，调用此回调函数，然后发送接收信号量 */
+    rt_sem_release(&mcp2517fd_test[0].rx_sem);
+
+    return RT_EOK;
+}
 
 static void MCP2517FDTestOpen(s_mcp2517fd_test *mcp2517_device)
 {
@@ -52,14 +65,19 @@ static void MCP2517FDTestOpen(s_mcp2517fd_test *mcp2517_device)
     }
 
     LOG_I("%s open successful", mcp2517_device->device_name);
+
+    /* 设置接收回调函数 */
+    rt_device_set_rx_indicate(mcp2517_device->dev, mcp2517fd_can_rx_call);
+
+    /* 初始化 CAN 接收信号量 */
+    rt_sem_init(&mcp2517_device->rx_sem, "rx_sem", 0, RT_IPC_FLAG_FIFO);
 }
 
 static void MCP2517FDTestThreadEntry(void *arg)
 {
     uint8_t i = 0;
-    struct rt_can_msg tx_msg = {0};
-    struct rt_can_msg rx_msg = {0};
-    rt_size_t size = 0;
+    rt_err_t result = RT_EOK;
+    struct rt_can_msg rxmsg = {0};
 
 //    for(i = 0; i < sizeof(mcp2517fd_test) / sizeof(s_mcp2517fd_test); i++)
 //    {
@@ -68,26 +86,32 @@ static void MCP2517FDTestThreadEntry(void *arg)
 
     MCP2517FDTestOpen(&mcp2517fd_test[0]);
 
-    tx_msg.id = 0x00031001;
-    tx_msg.ide = RT_CAN_EXTID;
-    tx_msg.rtr = RT_CAN_DTR;
-    tx_msg.len = sizeof(tx_msg.data);
-    memset(tx_msg.data, 0x11, sizeof(tx_msg.data));
-
-    while(1)
+    while(mcp2517fd_test[0].thread_is_run)
     {
-#if 0
-        size = rt_device_write(mcp2517fd_test[0].dev, 0, &tx_msg, sizeof(tx_msg));
-#else
-        size = rt_device_read(mcp2517fd_test[0].dev, 0, &rx_msg, sizeof(struct rt_can_msg));
-        if(sizeof(struct rt_can_msg) == size)
+        /* 阻塞等待接收信号量 */
+        result = rt_sem_take(&mcp2517fd_test[0].rx_sem, 1000);
+        if (result == RT_EOK)
         {
-            LOG_I("rx size %d, data %x %x %x %x %x %x %x %x len = %d",
-                        size, rx_msg.data[0],rx_msg.data[1], rx_msg.data[2],rx_msg.data[3],
-                        rx_msg.data[4],rx_msg.data[5], rx_msg.data[6],rx_msg.data[7], rx_msg.len);
+            /* 从 CAN 读取一帧数据 */
+            if (rt_device_read(mcp2517fd_test[0].dev, 0, &rxmsg, sizeof(struct rt_can_msg)) == sizeof(rxmsg))
+            {
+                LOG_D("read %x %d %d %d", rxmsg.id, rxmsg.ide, rxmsg.rtr, rxmsg.len);
+            }
+            else
+            {
+                LOG_E("read %x %d %d %d", rxmsg.id, rxmsg.ide, rxmsg.rtr, rxmsg.len);
+            }
+            /* echo写回 */
+            if (rt_device_write(mcp2517fd_test[0].dev, 0, &rxmsg, sizeof(rxmsg)) == sizeof(rxmsg))
+            {
+                LOG_D("write %x %d %d %d", rxmsg.id, rxmsg.ide, rxmsg.rtr, rxmsg.len);
+                LOG_HEX("write", 16, rxmsg.data, 8);
+            }
+            else
+            {
+                LOG_E("write %x %d %d %d", rxmsg.id, rxmsg.ide, rxmsg.rtr, rxmsg.len);
+            }
         }
-        memset(&rx_msg, 0x00, sizeof(struct rt_can_msg));
-#endif
         rt_thread_mdelay(100);
     }
 }
@@ -111,6 +135,7 @@ static void MCP2517FDTest(int argc, char **argv)
                                                     MCP2517FD_THREAD_STACK_SIZE, MCP2517FD_THREAD_PRIORITY, MCP2517FD_THREAD_TIMESLICE);
                 if(mcp2517fd_thread != NULL)
                 {
+                    mcp2517fd_test[0].thread_is_run = 1;
                     rt_thread_startup(mcp2517fd_thread);
                 }
                 else
@@ -141,6 +166,10 @@ static void MCP2517FDTest(int argc, char **argv)
                 LOG_W("thread already delete!");
             }
             mcp2517fd_thread = RT_NULL;
+            mcp2517fd_test[0].thread_is_run = 0;
+            rt_sem_detach(&mcp2517fd_test[0].rx_sem);
+            rt_device_close(mcp2517fd_test[0].dev);
+            LOG_D("mcp2157fd test stop");
         }
         else
         {
