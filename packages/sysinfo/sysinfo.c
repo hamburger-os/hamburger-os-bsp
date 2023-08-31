@@ -112,7 +112,10 @@ void sysinfo_show(void)
     LOG_D("- systerm info:");
     LOG_D("----------------------------------------------------------------");
     LOG_D("- version     : %s", info.version);
-    LOG_HEX("     - SN          ", 8, info.SN, sizeof(info.SN));
+    LOG_D("- type        : 0x%x", info.type);
+    char SN_str[sizeof(info.SN) + 1] = {0};
+    rt_memcpy(SN_str, info.SN, sizeof(info.SN));
+    LOG_D("- SN          : %s", SN_str);
     LOG_D("----------------------------------------------------------------");
     LOG_D("- cpu id      : 0x%08X %08X %08X", info.cpu_id[0], info.cpu_id[1], info.cpu_id[2]);
     LOG_D("- cpu temp    : %d.%02d (C) ", (int32_t)info.cpu_temp, abs((int32_t)((info.cpu_temp - (int32_t)info.cpu_temp) * 100)));
@@ -330,7 +333,10 @@ void sysinfofix_show(void)
             LOG_D("- systerm info fix:");
             LOG_D("----------------------------------------------------------------");
             LOG_D("- version     : %d", pinfofix->version);
-            LOG_HEX("     - SN          ", 8, pinfofix->SN, sizeof(pinfofix->SN));
+            LOG_D("- type        : 0x%x", pinfofix->type);
+            char SN_str[sizeof(pinfofix->SN) + 1] = {0};
+            rt_memcpy(SN_str, pinfofix->SN, sizeof(pinfofix->SN));
+            LOG_D("- SN          : %s", SN_str);
             LOG_D("----------------------------------------------------------------");
             LOG_HEX("     - MAC         ", 6, (uint8_t *)pinfofix->mac, 18);
             LOG_D("----------------------------------------------------------------");
@@ -346,8 +352,10 @@ static void sysinfo_cmd(int argc, char *argv[])
         rt_kprintf("Usage: sysinfo [cmd]\n");
         rt_kprintf("       sysinfo --show\n");
         rt_kprintf("       sysinfo --fixshow\n");
+        rt_kprintf("       sysinfo --set TYPE [version] [data]\n");
+        rt_kprintf("           example : sysinfo --set TYPE 0 0xFFFFFFFF\n");
         rt_kprintf("       sysinfo --set SN [version] [data]\n");
-        rt_kprintf("           example : sysinfo --set SN 0 0xFFFFFFFF 0xFFFFFFFF 0xFFFFFFFF 0xFFFFFFFF 0xFFFFFFFF\n");
+        rt_kprintf("           example : sysinfo --set SN 0 2023100112300100\n");
         rt_kprintf("       sysinfo --set MAC [version] [dev id] [data]\n");
         rt_kprintf("           example : sysinfo --set MAC 0 0 f8 09 a4 32 5d 3e\n");
     }
@@ -361,7 +369,7 @@ static void sysinfo_cmd(int argc, char *argv[])
         {
             sysinfofix_show();
         }
-        else if (rt_strcmp(argv[1], "--set") == 0 && rt_strcmp(argv[2], "SN") == 0 && argc >= 9)
+        else if (rt_strcmp(argv[1], "--set") == 0 && rt_strcmp(argv[2], "TYPE") == 0 && argc == 5)
         {
             uint16_t version = strtoul(argv[3], NULL, 10);
             if (version == 0)//解析为v0
@@ -369,13 +377,26 @@ static void sysinfo_cmd(int argc, char *argv[])
                 struct SysInfoFixV0Def infofix = {0};
                 sysinfofix_get(&infofix);
                 infofix.version = version;
-                uint32_t *SN32 = (uint32_t *)&infofix.SN;
-                SN32[0] = strtoul(argv[4], NULL, 16);
-                SN32[1] = strtoul(argv[5], NULL, 16);
-                SN32[2] = strtoul(argv[6], NULL, 16);
-                SN32[3] = strtoul(argv[7], NULL, 16);
-                SN32[4] = strtoul(argv[8], NULL, 16);
-                sysinfofix_set(&infofix);
+                infofix.type = strtoul(argv[4], NULL, 16);
+                if (sysinfofix_set(&infofix) == 0)
+                {
+                    rt_kprintf("set succeed.\n");
+                }
+                else
+                {
+                    rt_kprintf("set failed.\n");
+                }
+            }
+        }
+        else if (rt_strcmp(argv[1], "--set") == 0 && rt_strcmp(argv[2], "SN") == 0 && argc == 5)
+        {
+            uint16_t version = strtoul(argv[3], NULL, 10);
+            if (version == 0)//解析为v0
+            {
+                struct SysInfoFixV0Def infofix = {0};
+                sysinfofix_get(&infofix);
+                infofix.version = version;
+                rt_memcpy(infofix.SN, argv[4], sizeof(infofix.SN));
                 if (sysinfofix_set(&infofix) == 0)
                 {
                     rt_kprintf("set succeed.\n");
@@ -416,8 +437,10 @@ static void sysinfo_cmd(int argc, char *argv[])
             rt_kprintf("Usage: sysinfo [cmd]\n");
             rt_kprintf("       sysinfo --show\n");
             rt_kprintf("       sysinfo --fixshow\n");
+            rt_kprintf("       sysinfo --set TYPE [version] [data]\n");
+            rt_kprintf("           example : sysinfo --set TYPE 0 0xFFFFFFFF\n");
             rt_kprintf("       sysinfo --set SN [version] [data]\n");
-            rt_kprintf("           example : sysinfo --set SN 0 0xFFFFFFFF 0xFFFFFFFF 0xFFFFFFFF 0xFFFFFFFF 0xFFFFFFFF\n");
+            rt_kprintf("           example : sysinfo --set SN 0 2023100112300100\n");
             rt_kprintf("       sysinfo --set MAC [version] [dev id] [data]\n");
             rt_kprintf("           example : sysinfo --set MAC 0 0 f8 09 a4 32 5d 3e\n");
         }

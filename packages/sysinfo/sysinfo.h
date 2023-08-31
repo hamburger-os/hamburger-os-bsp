@@ -13,7 +13,8 @@
 struct __attribute__ ((packed)) SysInfoDef
 {
     uint8_t     version[22];    //系统版本号
-    uint8_t     SN[20];         //核心板编号
+    uint32_t    type;           //设备类型
+    uint8_t     SN[16];         //设备编号,16个字符的条形码
     uint32_t    cpu_id[3];
     float       cpu_temp;
     uint8_t     chip_id[8];
@@ -26,7 +27,8 @@ struct __attribute__ ((packed)) SysInfoDef
 struct __attribute__ ((packed)) SysInfoFixV0Def
 {
     uint16_t        version;        //参数版本号:0
-    uint8_t         SN[20];         //核心板编号
+    uint32_t        type;           //设备类型
+    uint8_t         SN[16];         //设备编号,16个字符的条形码
     uint8_t         mac[3][6];      //mac地址
     uint8_t         reserve[84];    //保留位，需保证数据结构整体为128字节
     uint32_t        crc32;          //校验值
