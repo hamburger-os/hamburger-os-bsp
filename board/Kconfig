@@ -3566,7 +3566,7 @@ menu "Onboard Peripheral Drivers"
         endif
         
       menuconfig BSP_USING_KSZ8794
-        bool "Enable The ksz8794 is ethernet switch with gigabit RGMII/MII/RMII interface"
+        bool "Enable The KSZ8794 is ethernet switch with gigabit RGMII/MII/RMII interface"
         default n
         
         if BSP_USING_KSZ8794
