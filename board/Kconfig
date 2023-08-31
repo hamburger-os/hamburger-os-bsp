@@ -3438,6 +3438,125 @@ menu "Onboard Peripheral Drivers"
                 default (50000)
         endif
         
+    menuconfig BSP_USING_MCP2517FD
+        bool "Enable The MCP2517FD CAN FD Controller"
+        default n
+        
+        if BSP_USING_MCP2517FD
+          config BSP_MCP2517FD_SPI_SPEED
+              int "Set the rate of spi, default: (20 * 1000 *1000)"
+              default (20000000)
+              
+          config BSP_MCP2517FD_RX_THREAD_PRIORITY
+              int "Set mcp2517fd rx thread priority, default: (13)"
+              default (13)
+              
+          config BSP_MCP2517FD_RX_THREAD_STACK_SIZE
+              int "Set mcp2517fd rx thread timeslice, default: (1024)"
+              default (1024)
+              
+          config BSP_MCP2517FD_RX_THREAD_TIMESLICE
+              int "Set mcp2517fd rx thread timeslice, default: (5)"
+              default (5)
+              
+          config BSP_MCP2517FD_RX_EVENT_MSG_QUEUE_MAX_NUM
+              int "Set mcp2517fd rx mq num, default: (10)"
+              default (10)
+              
+          config BSP_MCP2517FD_RX_BUF_NUM
+              int "Set mcp2517fd rx buf num, default: (10)"
+              default (10)
+                  
+          menuconfig BSP_USE_MCP2517FD_CAN1
+          bool "Enable The MCP2517FD CAN FD Port 1"
+          default n
+          
+          if BSP_USE_MCP2517FD_CAN1
+              config BSP_MCP2517FD_CAN1_SPI_BUS
+                  string "Set the spi bus used, default: spi2"
+                  default "spi2"
+                  
+              config BSP_MCP2517FD_CAN1_SPI_BUS_DEV
+                  string "Set the spi dev name, default: spi20"
+                  default "spi20"
+                  
+              config BSP_MCP2517FD_CAN1_CS_PIN
+                  string "Set the pin of the chip select, default: PH.15"
+                  default "PH.15"
+                  
+              config BSP_MCP2517FD_CAN1_INT_PIN
+                  string "Set the pin of the chip int, default: PI.0"
+                  default "PI.0"
+          endif
+        
+          menuconfig BSP_USE_MCP2517FD_CAN2
+          bool "Enable The MCP2517FD CAN FD Port 2"
+          default n
+          
+          if BSP_USE_MCP2517FD_CAN2
+              config BSP_MCP2517FD_CAN2_SPI_BUS
+                  string "Set the spi bus used, default: spi2"
+                  default "spi2"
+                  
+              config BSP_MCP2517FD_CAN2_SPI_BUS_DEV
+                  string "Set the spi dev name, default: spi21"
+                  default "spi21"
+                  
+              config BSP_MCP2517FD_CAN2_CS_PIN
+                  string "Set the pin of the chip select, default: PH.14"
+                  default "PH.14"
+                  
+              config BSP_MCP2517FD_CAN2_INT_PIN
+                  string "Set the pin of the chip int, default: PH.13"
+                  default "PH.13"
+          endif
+        
+          menuconfig BSP_USE_MCP2517FD_CAN3
+          bool "Enable The MCP2517FD CAN FD Port 3"
+          default n
+          
+          if BSP_USE_MCP2517FD_CAN3
+              config BSP_MCP2517FD_CAN3_SPI_BUS
+                  string "Set the spi bus used, default: spi6"
+                  default "spi6"
+                  
+              config BSP_MCP2517FD_CAN3_SPI_BUS_DEV
+                  string "Set the spi dev name, default: spi60"
+                  default "spi60"
+                  
+              config BSP_MCP2517FD_CAN3_CS_PIN
+                  string "Set the pin of the chip select, default: PH.11"
+                  default "PH.11"
+                  
+              config BSP_MCP2517FD_CAN3_INT_PIN
+                  string "Set the pin of the chip int, default: PH.12"
+                  default "PH.12"
+          endif
+        
+          menuconfig BSP_USE_MCP2517FD_CAN4
+          bool "Enable The MCP2517FD CAN FD Port 4"
+          default n
+          
+          if BSP_USE_MCP2517FD_CAN4
+              config BSP_MCP2517FD_CAN4_SPI_BUS
+                  string "Set the spi bus used, default: spi6"
+                  default "spi6"
+                  
+              config BSP_MCP2517FD_CAN4_SPI_BUS_DEV
+                  string "Set the spi dev name, default: spi61"
+                  default "spi61"
+                  
+              config BSP_MCP2517FD_CAN4_CS_PIN
+                  string "Set the pin of the chip select, default: PH.10"
+                  default "PH.10"
+                  
+              config BSP_MCP2517FD_CAN4_INT_PIN
+                  string "Set the pin of the chip int, default: PH.9"
+                  default "PH.9"
+          endif
+        
+        endif
+        
     menuconfig BSP_USING_GNSS
         bool "Enable GNSS with uart"
         select PKG_USING_LWGPS

@@ -79,6 +79,9 @@ if GetDepend('BSP_USING_LINK_LAYER_COMM_TEST'):
     
 if GetDepend('BSP_USING_KSZ8794_TEST'):
     src += Glob('ksz8794_test.c')
+    
+if GetDepend('BSP_USING_MCP2517FD_TEST'):
+    src += Glob('mcp2517fd_test.c')
         
 group = DefineGroup('Applications', src, depend = [''], CPPPATH = CPPPATH)
 
