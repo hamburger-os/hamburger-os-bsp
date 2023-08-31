@@ -3468,10 +3468,6 @@ menu "Onboard Peripheral Drivers"
                   string "Set the spi bus used, default: spi2"
                   default "spi2"
                   
-              config BSP_MCP2517FD_CAN1_SPI_BUS_DEV
-                  string "Set the spi dev name, default: spi20"
-                  default "spi20"
-                  
               config BSP_MCP2517FD_CAN1_CS_PIN
                   string "Set the pin of the chip select, default: PH.15"
                   default "PH.15"
@@ -3489,10 +3485,6 @@ menu "Onboard Peripheral Drivers"
               config BSP_MCP2517FD_CAN2_SPI_BUS
                   string "Set the spi bus used, default: spi2"
                   default "spi2"
-                  
-              config BSP_MCP2517FD_CAN2_SPI_BUS_DEV
-                  string "Set the spi dev name, default: spi21"
-                  default "spi21"
                   
               config BSP_MCP2517FD_CAN2_CS_PIN
                   string "Set the pin of the chip select, default: PH.14"
@@ -3512,10 +3504,6 @@ menu "Onboard Peripheral Drivers"
                   string "Set the spi bus used, default: spi6"
                   default "spi6"
                   
-              config BSP_MCP2517FD_CAN3_SPI_BUS_DEV
-                  string "Set the spi dev name, default: spi60"
-                  default "spi60"
-                  
               config BSP_MCP2517FD_CAN3_CS_PIN
                   string "Set the pin of the chip select, default: PH.11"
                   default "PH.11"
@@ -3533,10 +3521,6 @@ menu "Onboard Peripheral Drivers"
               config BSP_MCP2517FD_CAN4_SPI_BUS
                   string "Set the spi bus used, default: spi6"
                   default "spi6"
-                  
-              config BSP_MCP2517FD_CAN4_SPI_BUS_DEV
-                  string "Set the spi dev name, default: spi61"
-                  default "spi61"
                   
               config BSP_MCP2517FD_CAN4_CS_PIN
                   string "Set the pin of the chip select, default: PH.10"
@@ -3582,7 +3566,7 @@ menu "Onboard Peripheral Drivers"
         endif
         
       menuconfig BSP_USING_KSZ8794
-        bool "Enable ksz8794"
+        bool "Enable The ksz8794 is ethernet switch with gigabit RGMII/MII/RMII interface"
         default n
         
         if BSP_USING_KSZ8794
