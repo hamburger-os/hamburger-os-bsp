@@ -3075,8 +3075,14 @@ static rt_size_t mcp2517_write (rt_device_t dev, rt_off_t pos, const void *buffe
 
     // Load message and transmit
     uint8_t n = can_spi_dlc_to_data_bytes(txObj_tmp.bF.ctrl.DLC);
-    can_spi_transmit_channel_load(mcp2517_dev, APP_TX_FIFO, &txObj_tmp, txd_tmp, n, true);
-    return n;
+    if(can_spi_transmit_channel_load(mcp2517_dev, APP_TX_FIFO, &txObj_tmp, txd_tmp, n, true) == RT_EOK)
+    {
+        return sizeof(struct rt_can_msg);
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 static rt_err_t mcp2517_control(rt_device_t dev, int cmd, void *args)

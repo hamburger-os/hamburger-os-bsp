@@ -276,6 +276,7 @@ if GetDepend(['BSP_USING_KSZ8794']):
   
 if GetDepend(['BSP_USING_MCP2517FD']):
     src += Glob('ports/mcp2517/drv_mcp2517.c')
+    path += [cwd + '/ports/mcp2517']
 
 group = DefineGroup('Drivers', src, depend = [''], CPPPATH = path, CPPDEFINES = CPPDEFINES)
 
