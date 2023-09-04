@@ -16,6 +16,8 @@
 #include "public.h"
 #include "sysinfo.h"
 
+#define SYSINFOFIX_VERSION      0
+
 void sysinfo_get(struct SysInfoDef *info)
 {
     memset(info, 0, sizeof(struct SysInfoDef));
@@ -296,12 +298,16 @@ int main(int argc, char *argv[])
         pPrintf("Usage: sysinfo [cmd]\n");
         pPrintf("       sysinfo --show\n");
         pPrintf("       sysinfo --fixshow\n");
-        pPrintf("       sysinfo --set TYPE [version] [data]\n");
-        pPrintf("           example : sysinfo --set TYPE 0 0xFFFFFFFF\n");
-        pPrintf("       sysinfo --set SN [version] [data]\n");
-        pPrintf("           example : sysinfo --set SN 0 2023100112300100\n");
-        pPrintf("       sysinfo --set MAC [version] [dev id] [data]\n");
-        pPrintf("           example : sysinfo --set MAC 0 0 f8 09 a4 32 5d 3e\n");
+        pPrintf("       sysinfo --get TYPE\n");
+        pPrintf("       sysinfo --set TYPE [data]\n");
+        pPrintf("           example : sysinfo --set TYPE 0xFFFFFFFF\n");
+        pPrintf("       sysinfo --get SN\n");
+        pPrintf("       sysinfo --set SN [data]\n");
+        pPrintf("           example : sysinfo --set SN 2023100112300100\n");
+        pPrintf("       sysinfo --get MAC [dev id]\n");
+        pPrintf("           example : sysinfo --get MAC 0\n");
+        pPrintf("       sysinfo --set MAC [dev id] [data]\n");
+        pPrintf("           example : sysinfo --set MAC 0 f8 09 a4 32 5d 3e\n");
     }
     else
     {
@@ -313,15 +319,23 @@ int main(int argc, char *argv[])
         {
             sysinfofix_show();
         }
-        else if (strcmp(argv[1], "--set") == 0 && strcmp(argv[2], "TYPE") == 0 && argc == 5)
+        else if (strcmp(argv[1], "--get") == 0 && strcmp(argv[2], "TYPE") == 0 && argc == 3)
         {
-            uint16_t version = strtoul(argv[3], NULL, 10);
-            if (version == 0)//解析为v0
+            if (SYSINFOFIX_VERSION >= 0)
             {
                 struct SysInfoFixV0Def infofix = {0};
                 sysinfofix_get(&infofix);
-                infofix.version = version;
-                infofix.type = strtoul(argv[4], NULL, 16);
+                pPrintf("0x%x", infofix.type);
+            }
+        }
+        else if (strcmp(argv[1], "--set") == 0 && strcmp(argv[2], "TYPE") == 0 && argc == 4)
+        {
+            if (SYSINFOFIX_VERSION >= 0)
+            {
+                struct SysInfoFixV0Def infofix = {0};
+                sysinfofix_get(&infofix);
+                infofix.version = SYSINFOFIX_VERSION;
+                infofix.type = strtoul(argv[3], NULL, 16);
                 if (sysinfofix_set(&infofix) == 0)
                 {
                     pPrintf("set succeed.\n");
@@ -332,15 +346,25 @@ int main(int argc, char *argv[])
                 }
             }
         }
-        else if (strcmp(argv[1], "--set") == 0 && strcmp(argv[2], "SN") == 0 && argc == 5)
+        else if (strcmp(argv[1], "--get") == 0 && strcmp(argv[2], "SN") == 0 && argc == 3)
         {
-            uint16_t version = strtoul(argv[3], NULL, 10);
-            if (version == 0)//解析为v0
+            if (SYSINFOFIX_VERSION >= 0)
             {
                 struct SysInfoFixV0Def infofix = {0};
                 sysinfofix_get(&infofix);
-                infofix.version = version;
-                memcpy(infofix.SN, argv[4], sizeof(infofix.SN));
+                char SN_str[sizeof(infofix.SN) + 1] = {0};
+                memcpy(SN_str, infofix.SN, sizeof(infofix.SN));
+                pPrintf("%s", SN_str);
+            }
+        }
+        else if (strcmp(argv[1], "--set") == 0 && strcmp(argv[2], "SN") == 0 && argc == 4)
+        {
+            if (SYSINFOFIX_VERSION >= 0)
+            {
+                struct SysInfoFixV0Def infofix = {0};
+                sysinfofix_get(&infofix);
+                infofix.version = SYSINFOFIX_VERSION;
+                memcpy(infofix.SN, argv[3], sizeof(infofix.SN));
                 if (sysinfofix_set(&infofix) == 0)
                 {
                     pPrintf("set succeed.\n");
@@ -351,21 +375,30 @@ int main(int argc, char *argv[])
                 }
             }
         }
-        else if (strcmp(argv[1], "--set") == 0 && strcmp(argv[2], "MAC") == 0 && argc == 11)
+        else if (strcmp(argv[1], "--get") == 0 && strcmp(argv[2], "MAC") == 0 && argc == 4)
         {
-            uint16_t version = strtoul(argv[3], NULL, 10);
-            uint16_t dev_id = strtoul(argv[4], NULL, 10);
-            if (version == 0)//解析为v0
+            if (SYSINFOFIX_VERSION >= 0)
             {
+                uint16_t dev_id = strtoul(argv[3], NULL, 10);
                 struct SysInfoFixV0Def infofix = {0};
                 sysinfofix_get(&infofix);
-                infofix.version = version;
-                infofix.mac[dev_id][0] = strtoul(argv[5], NULL, 16);
-                infofix.mac[dev_id][1] = strtoul(argv[6], NULL, 16);
-                infofix.mac[dev_id][2] = strtoul(argv[7], NULL, 16);
-                infofix.mac[dev_id][3] = strtoul(argv[8], NULL, 16);
-                infofix.mac[dev_id][4] = strtoul(argv[9], NULL, 16);
-                infofix.mac[dev_id][5] = strtoul(argv[10], NULL, 16);
+                pLOG_HEX("", 6, (uint8_t *)infofix.mac[dev_id], 6);
+            }
+        }
+        else if (strcmp(argv[1], "--set") == 0 && strcmp(argv[2], "MAC") == 0 && argc == 10)
+        {
+            if (SYSINFOFIX_VERSION >= 0)
+            {
+                uint16_t dev_id = strtoul(argv[3], NULL, 10);
+                struct SysInfoFixV0Def infofix = {0};
+                sysinfofix_get(&infofix);
+                infofix.version = SYSINFOFIX_VERSION;
+                infofix.mac[dev_id][0] = strtoul(argv[4], NULL, 16);
+                infofix.mac[dev_id][1] = strtoul(argv[5], NULL, 16);
+                infofix.mac[dev_id][2] = strtoul(argv[6], NULL, 16);
+                infofix.mac[dev_id][3] = strtoul(argv[7], NULL, 16);
+                infofix.mac[dev_id][4] = strtoul(argv[8], NULL, 16);
+                infofix.mac[dev_id][5] = strtoul(argv[9], NULL, 16);
                 if (sysinfofix_set(&infofix) == 0)
                 {
                     pPrintf("set succeed.\n");
@@ -381,12 +414,16 @@ int main(int argc, char *argv[])
             pPrintf("Usage: sysinfo [cmd]\n");
             pPrintf("       sysinfo --show\n");
             pPrintf("       sysinfo --fixshow\n");
-            pPrintf("       sysinfo --set TYPE [version] [data]\n");
-            pPrintf("           example : sysinfo --set TYPE 0 0xFFFFFFFF\n");
-            pPrintf("       sysinfo --set SN [version] [data]\n");
-            pPrintf("           example : sysinfo --set SN 0 2023100112300100\n");
-            pPrintf("       sysinfo --set MAC [version] [dev id] [data]\n");
-            pPrintf("           example : sysinfo --set MAC 0 0 f8 09 a4 32 5d 3e\n");
+            pPrintf("       sysinfo --get TYPE\n");
+            pPrintf("       sysinfo --set TYPE [data]\n");
+            pPrintf("           example : sysinfo --set TYPE 0xFFFFFFFF\n");
+            pPrintf("       sysinfo --get SN\n");
+            pPrintf("       sysinfo --set SN [data]\n");
+            pPrintf("           example : sysinfo --set SN 2023100112300100\n");
+            pPrintf("       sysinfo --get MAC [dev id]\n");
+            pPrintf("           example : sysinfo --get MAC 0\n");
+            pPrintf("       sysinfo --set MAC [dev id] [data]\n");
+            pPrintf("           example : sysinfo --set MAC 0 f8 09 a4 32 5d 3e\n");
         }
     }
 
