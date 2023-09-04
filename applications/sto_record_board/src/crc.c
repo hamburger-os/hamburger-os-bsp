@@ -235,29 +235,29 @@ static uint16_t crc16_create(const uint8_t * p_dat_u8, uint16_t len, uint16_t cr
 *******************************************************************************************/
 uint16_t Common_CRC16(uint8_t* pData, uint32_t nLength)
 {
-	uint32_t k;
-	uint16_t crc = 0U;
-	
-  /* 30-August-2018, by Liang Zhen. */
-  #if 0
-	if ( nLength > 0xffffU )
-  #else
-  if ( ( NULL == pData ) || ( 0U == nLength ) )
-  #endif
-	{
-		k = 0x17U;
-		return ( 0U );
-	} /* end if */
-	
-	while ( nLength > 0u )
-	{
-		k   = ( crc ^ *pData ) & 0xffU;
-		crc = ( crc >> 8u ) ^ crctab16[ k ];
-		nLength--;
-		pData++;
-	} /* end while */
-  
-	return ( ~crc );
+    uint32_t k;
+    uint16_t crc = 0U;
+
+    /* 30-August-2018, by Liang Zhen. */
+#if 0
+    if ( nLength > 0xffffU )
+#else
+    if (( NULL == pData) || (0U == nLength))
+#endif
+    {
+        k = 0x17U;
+        return (0U);
+    } /* end if */
+
+    while (nLength > 0u)
+    {
+        k = (crc ^ *pData) & 0xffU;
+        crc = (crc >> 8u) ^ crctab16[k];
+        nLength--;
+        pData++;
+    } /* end while */
+
+    return (~crc);
 }
 
 /****************************************************************************************/

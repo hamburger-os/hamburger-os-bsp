@@ -1,0 +1,302 @@
+/*
+ * Copyright (c) 2006-2021, RT-Thread Development Team
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Change Logs:
+ * Date           Author       Notes
+ * 2023-09-01     zm       the first version
+ */
+#include "power_msg.h"
+#include "board.h"
+
+#define DBG_TAG "power msg"
+#define DBG_LVL DBG_LOG
+#include <rtdbg.h>
+
+#include <string.h>
+
+#include <rtthread.h>
+
+#include "crc.h"
+
+#define POWER_MSG_THREAD_PRIORITY         11
+#define POWER_MSG_THREAD_STACK_SIZE       (1024)
+#define POWER_MSG_THREAD_TIMESLICE        5
+
+S_POWER_CAN_FRAME *power_can_frame;
+static S_POWER_MSG power_msg;
+
+/* 接收数据回调函数 */
+static rt_err_t PowerMsgCanRxCall(rt_device_t dev, rt_size_t size)
+{
+    /* CAN 接收到数据后产生中断，调用此回调函数，然后发送接收信号量 */
+    rt_sem_release(&power_msg.rx_sem);
+
+    return RT_EOK;
+}
+
+static rt_err_t PowerMsgInit(S_POWER_MSG *msg)
+{
+    if(RT_NULL == msg)
+    {
+        return -RT_ERROR;
+    }
+
+    rt_memset(msg, 0, sizeof(S_POWER_MSG));
+
+    /* 查找 CAN 设备 */
+    msg->can_dev = rt_device_find(POWER_MSG_CAN_DEV_NAME);
+    if (msg->can_dev != NULL)
+    {
+        /* 设置 CAN 通信的默认波特率 */
+        if (rt_device_control(msg->can_dev, RT_CAN_CMD_SET_BAUD, (void *)CAN500kBaud) != RT_EOK)
+        {
+            LOG_E("set baud error!");
+            return -RT_ERROR;
+        }
+        /* 设置 CAN 的工作模式为正常工作模式 */
+        if (rt_device_control(msg->can_dev, RT_CAN_CMD_SET_MODE, (void *)RT_CAN_MODE_NORMAL) != RT_EOK)
+        {
+            LOG_E("set mode error!");
+            return -RT_ERROR;
+        }
+
+        /* 以中断接收及发送方式打开 CAN 设备 */
+        if (rt_device_open(msg->can_dev, RT_DEVICE_FLAG_INT_TX | RT_DEVICE_FLAG_INT_RX) != RT_EOK)
+        {
+            LOG_E("open %s error", POWER_MSG_CAN_DEV_NAME);
+            return -RT_ERROR;
+        }
+
+        /* 设置接收回调函数 */
+        rt_device_set_rx_indicate(msg->can_dev, PowerMsgCanRxCall);
+
+        /* 初始化 CAN 接收信号量 */
+        rt_sem_init(&power_msg.rx_sem, "can_rx_sem", 0, RT_IPC_FLAG_FIFO);
+
+//        /* 初始化数据队列 */
+//        msg->data_mq = rt_mq_create("power data queue", sizeof(S_POWER_CAN_FRAME), POWER_MSG_CAN_DATA_MQ_MAX_NUM, RT_IPC_FLAG_FIFO);
+//        if(RT_NULL == msg->data_mq)
+//        {
+//            LOG_E("create power mq error");
+//            return -RT_ERROR;
+//        }
+
+        msg->mutex = rt_mutex_create("power mutex", RT_IPC_FLAG_PRIO);
+        if(NULL == msg->mutex)
+        {
+            LOG_E("mutex creat error");
+            return -RT_ERROR;
+        }
+
+        return RT_EOK;
+
+    }
+    else
+    {
+        LOG_E("find %s error", POWER_MSG_CAN_DEV_NAME);
+        return -RT_EIO;
+    }
+}
+
+//static void PowerMsgCheckCRC(S_POWER_CAN_FRAME *msg)
+//{
+//    Common_CRC16(msg->data_u8, msg->length_u8);
+//
+//}
+
+static void RecordingPower24VSelfCheckMessage(void)
+{
+    static uint8_t last_24_v_a[4] = { 0x00U, 0x00U, 0x00U, 0x00U};
+    uint16_t new_24v_v = 0, old_24v_v = 0;
+    uint16_t new_24v_a = 0, old_24v_a = 0;
+
+    rt_mutex_take(power_msg.mutex, RT_WAITING_FOREVER);
+
+    new_24v_v =  ((uint16_t) (*(&POWER_CAN_0_24V_V + 1)) << 8u) + (uint16_t)POWER_CAN_0_24V_V;
+    old_24v_v = (uint16_t) (last_24_v_a[1] << 8) + (uint16_t)last_24_v_a[0];
+
+    new_24v_a =  ((uint16_t) (*(&POWER_CAN_0_24V_A + 1)) << 8u) + (uint16_t)POWER_CAN_0_24V_A;
+    old_24v_a = (uint16_t) (last_24_v_a[3] << 8) + (uint16_t)last_24_v_a[2];
+
+    /* 电压电流都是按实际的扩大了100
+     * 实际相差0.1V则记录
+     *  */
+    if(10 <= abs(new_24v_v - old_24v_v) || 10 <= abs(new_24v_a - old_24v_a))
+    {
+        last_24_v_a[0] = (uint8_t)new_24v_v;
+        last_24_v_a[1] = (uint8_t)(new_24v_v >> 8);
+
+        last_24_v_a[2] = (uint8_t)new_24v_a;
+        last_24_v_a[3] = (uint8_t)(new_24v_a >> 8);
+        WriteFileContantPkt(0xA6, 0x64, PWOER_MSG_DEV_CODE, last_24_v_a, 4u);
+    }
+    rt_mutex_release(power_msg.mutex);
+}
+
+static void RecordingPower3V3SelfCheckMessage(void)
+{
+    static uint8_t last_3v3_v_a[2] = { 0x00U, 0x00U};
+    uint16_t new_3v3_v = 0, old_3v3_v = 0;
+
+    rt_mutex_take(power_msg.mutex, RT_WAITING_FOREVER);
+
+    new_3v3_v =  ((uint16_t) (*(&POWER_CAN_1_3V3_V + 1)) << 8u) + (uint16_t)POWER_CAN_1_3V3_V;
+    old_3v3_v = (uint16_t) (last_3v3_v_a[1] << 8) + (uint16_t)last_3v3_v_a[0];
+
+    /* 电压都是按实际的扩大了100
+     * 实际相差0.1V则记录
+     *  */
+    if(10 <= abs(new_3v3_v - old_3v3_v))
+    {
+        last_3v3_v_a[0] = (uint8_t)new_3v3_v;
+        last_3v3_v_a[1] = (uint8_t)(new_3v3_v >> 8);
+        WriteFileContantPkt(0xA6, 0x65, PWOER_MSG_DEV_CODE, last_3v3_v_a, 2u);
+    }
+    rt_mutex_release(power_msg.mutex);
+}
+
+static void RecordingPowerStateSelfCheckMessage(void)
+{
+    static uint8_t last_state[5] = { 0x00U, 0x00U, 0x00U, 0x00U, 0x00U};
+    uint16_t new_power_on_num = 0, old_power_on_num = 0;
+    uint16_t new_temp = 0, old_temp = 0;
+    uint8_t new_power_state = 0, old_power_state = 0;
+
+    rt_mutex_take(power_msg.mutex, RT_WAITING_FOREVER);
+
+    new_power_on_num =  ((uint16_t) (*(&POWER_CAN_2_POWER_NUM + 1)) << 8u) + (uint16_t)POWER_CAN_2_POWER_NUM;
+    old_power_on_num = (uint16_t) (last_state[1] << 8) + (uint16_t)last_state[0];
+
+    new_temp =  ((uint16_t) (*(&POWER_CAN_2_TEMP + 1)) << 8u) + (uint16_t)POWER_CAN_2_TEMP;
+    old_temp = (uint16_t) (last_state[3] << 8) + (uint16_t)last_state[2];
+
+    new_power_state =  POWER_CAN_2_POWER_CTL_STATE;
+    old_power_state = last_state[4];
+
+    /* 温度按照实际的扩大了100倍
+     * 两次温度相差1度则记录
+     *  */
+    if(new_power_on_num != old_power_on_num || new_power_state != old_power_state || 100 <= abs(new_temp - old_temp))
+    {
+        last_state[0] = (uint8_t)new_power_on_num;
+        last_state[1] = (uint8_t)(new_power_on_num >> 8);
+        last_state[2] = (uint8_t)new_temp;
+        last_state[3] = (uint8_t)(new_temp >> 8);
+        last_state[4] = (uint8_t)new_power_state;
+        WriteFileContantPkt(0xA6, 0x66, PWOER_MSG_DEV_CODE, last_state, 5u);
+    }
+    rt_mutex_release(power_msg.mutex);
+}
+
+static void RecordingPower110VSelfCheckMessage(void)
+{
+    static uint8_t last_110v[4] = { 0x00U, 0x00U, 0x00U, 0x00U};
+    uint16_t new_110v_v = 0, old_110v_v = 0;
+    uint16_t new_110v_a = 0, old_110v_a = 0;
+
+    rt_mutex_take(power_msg.mutex, RT_WAITING_FOREVER);
+
+    new_110v_v =  ((uint16_t) (*(&POWER_CAN_6_110V_V + 1)) << 8u) + (uint16_t)POWER_CAN_6_110V_V;
+    old_110v_v = (uint16_t) (last_110v[1] << 8) + (uint16_t)last_110v[0];
+
+    new_110v_a =  ((uint16_t) (*(&POWER_CAN_6_110V_A + 1)) << 8u) + (uint16_t)POWER_CAN_6_110V_A;
+    old_110v_a = (uint16_t) (last_110v[3] << 8) + (uint16_t)last_110v[2];
+
+    /* 电压电流都是按实际的扩大了100
+     * 实际相差0.1V则记录
+     *  */
+    if(10 <= abs(new_110v_v - old_110v_v) || 10 <= abs(new_110v_a - old_110v_a))
+    {
+        last_110v[0] = (uint8_t)new_110v_v;
+        last_110v[1] = (uint8_t)(new_110v_v >> 8);
+        last_110v[2] = (uint8_t)new_110v_a;
+        last_110v[3] = (uint8_t)(new_110v_a >> 8);
+        WriteFileContantPkt(0xA6, 0x67, PWOER_MSG_DEV_CODE, last_110v, 4u);
+    }
+    rt_mutex_release(power_msg.mutex);
+}
+
+void RecordingPowerPlugMessage(void)
+{
+    RecordingPower24VSelfCheckMessage();
+    RecordingPower3V3SelfCheckMessage();
+    RecordingPowerStateSelfCheckMessage();
+    RecordingPower110VSelfCheckMessage();
+}
+
+static void *PowerMsgThreadEntry(void *parameter)
+{
+    rt_err_t result = RT_EOK;
+    struct rt_can_msg rxmsg = {0};
+    S_POWER_CAN_FRAME can_tmp;
+    uint16_t read_crc = 0, msg_crc = 0;
+
+    /* 申请can帧缓冲区 */
+    power_can_frame = rt_malloc((sizeof(S_POWER_CAN_FRAME) * POWER_MSG_CAN_FRAME_NUM));
+    if(NULL == power_can_frame)
+    {
+        LOG_E("can frame malloc size %d error", (sizeof(S_POWER_CAN_FRAME) * POWER_MSG_CAN_FRAME_NUM));
+    }
+
+    rt_memset(power_can_frame, 0, sizeof((sizeof(S_POWER_CAN_FRAME) * POWER_MSG_CAN_FRAME_NUM)));
+
+    if(PowerMsgInit(&power_msg) != RT_EOK)
+    {
+        LOG_E("power msg init error");
+        return;
+    }
+
+    while(1)
+    {
+        result = rt_sem_take(&power_msg.rx_sem, 1000);
+        /* 从 CAN 读取一帧数据 */
+        if (rt_device_read(power_msg.can_dev, 0, &rxmsg, sizeof(rxmsg)) == sizeof(rxmsg))
+        {
+            memset(&can_tmp, 0, sizeof(S_POWER_CAN_FRAME));
+
+            can_tmp.priority_u8 = (uint8_t)(rxmsg.id >> 3u);
+            can_tmp.no_u8 = (uint8_t)(rxmsg.id & 0x07);
+            can_tmp.length_u8 = rxmsg.len;
+            rt_memcpy (can_tmp.data_u8, rxmsg.data, rxmsg.len);
+
+            LOG_D("read %x %d %d", can_tmp.priority_u8, can_tmp.no_u8, can_tmp.length_u8);
+            LOG_HEX("read", 16, can_tmp.data_u8, 8);
+
+            /* crc校验 */
+            msg_crc = Common_CRC16(can_tmp.data_u8, POWER_MSG_CAN_DATA_NUM);
+            read_crc = ((uint16_t) (can_tmp.data_u8[7]) << 8u) + (uint16_t)can_tmp.data_u8[6];
+            if(msg_crc == read_crc)
+            {
+                //加锁
+                rt_mutex_take(power_msg.mutex, RT_WAITING_FOREVER);
+                POWER_CAN_0xF9(can_tmp.no_u8) = can_tmp;
+                rt_mutex_release(power_msg.mutex);
+            }
+            else
+            {
+                LOG_E("%d crc error", can_tmp.no_u8);
+            }
+        }
+        rt_thread_mdelay(10);
+    }
+}
+
+rt_err_t PowerMsgThreadInit(void)
+{
+    rt_thread_t tid;
+
+    tid = rt_thread_create("power msg",
+                            PowerMsgThreadEntry, RT_NULL,
+                            POWER_MSG_THREAD_STACK_SIZE,
+                            POWER_MSG_THREAD_PRIORITY, POWER_MSG_THREAD_TIMESLICE);
+
+    if(tid != NULL)
+    {
+        rt_thread_startup(tid);
+        return RT_EOK;
+    }
+    return -RT_ERROR;
+}
+

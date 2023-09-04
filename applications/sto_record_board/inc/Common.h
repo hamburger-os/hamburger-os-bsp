@@ -193,7 +193,6 @@ extern void RecordBoard_Operation_Init(void);
 extern void CommunicationBoard_Operation_Init(void);
 
 /* export function relevant CRC16 */
-extern uint16_t Common_CRC16(uint8_t* pData, uint32_t nLength);
 extern uint8_t Common_BeTimeOutMN(uint32_t *time,uint32_t ms);
 extern uint8_t CAN_OutTime(uint32_t time,uint32_t ms );
 

@@ -87,7 +87,6 @@ void ETHToCanDataHandle(S_DATA_HANDLE *p_data_handle, uint8_t *pbuf, uint16_t da
             ((uint8_t *)pbuf)[6], ((uint8_t *)pbuf)[7], ((uint8_t *)pbuf)[8], ((uint8_t *)pbuf)[9], ((uint8_t *)pbuf)[10], ((uint8_t *)pbuf)[11]);
 #endif
 
-#if 1
     /* 2.转换CAN数据 */
     while (send_len < p_can_PACK->datalen)
     {
@@ -122,7 +121,6 @@ void ETHToCanDataHandle(S_DATA_HANDLE *p_data_handle, uint8_t *pbuf, uint16_t da
 //            LOG_I("ttt--- pr = %x, no = %x data = %x", can_tmp.priority_u8, can_tmp.no_u8, can_tmp.data_u8[0]);  //打开这个会导致上面队列发送出错 返回值为-3   过一会导致lwip里宕机
         }
     }
-#endif
 }
 
 /* 解析CAN数据 */

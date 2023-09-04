@@ -672,34 +672,65 @@ sint32_t FMInit(S_FILE_MANAGER *fm)
     }
 
     /* 打印相关信息 */
-    LOG_I("---------------- latest file ------------------");
-    LOG_I("| filename:        %s", fm->latest_dir_file_info.file_name);
-    LOG_I("| head_flag:       %x", fm->latest_dir_file_info.head_flag);
-    LOG_I("| dir_num:         %d", fm->latest_dir_file_info.dir_num);
-    LOG_I("| not_exsit:       %d", fm->latest_dir_file_info.not_exsit);
-    LOG_I("| tmp:             %s", fm->latest_tmp_file_info.file_name);
-    LOG_I("| not_exsit:       %d", fm->latest_tmp_file_info.not_exsit);
-    LOG_I("------------------- dir file ------------------");
-    LOG_I("| filename:        %s", fm->current_info->file_dir->ch_file_name);
-    LOG_I("| filesize:        %d", fm->current_info->file_dir->u32_file_size);
-    LOG_I("| file id:         %d", fm->current_info->file_dir->file_id);
-    LOG_I("| save:            %d", fm->current_info->file_dir->is_save);
-    LOG_I("| CheCi:           %d.%d.%d.%d",
+//    LOG_I("---------------- latest file ------------------");
+//    LOG_I("| filename:        %s", fm->latest_dir_file_info.file_name);
+//    LOG_I("| head_flag:       %x", fm->latest_dir_file_info.head_flag);
+//    LOG_I("| dir_num:         %d", fm->latest_dir_file_info.dir_num);
+//    LOG_I("| not_exsit:       %d", fm->latest_dir_file_info.not_exsit);
+//    LOG_I("| tmp:             %s", fm->latest_tmp_file_info.file_name);
+//    LOG_I("| not_exsit:       %d", fm->latest_tmp_file_info.not_exsit);
+//    LOG_I("------------------- dir file ------------------");
+//    LOG_I("| filename:        %s", fm->current_info->file_dir->ch_file_name);
+//    LOG_I("| filesize:        %d", fm->current_info->file_dir->u32_file_size);
+//    LOG_I("| file id:         %d", fm->current_info->file_dir->file_id);
+//    LOG_I("| save:            %d", fm->current_info->file_dir->is_save);
+//    LOG_I("| CheCi:           %d.%d.%d.%d",
+//                                    fm->current_info->file_dir->ch_checi[0], fm->current_info->file_dir->ch_checi[1],
+//                                    fm->current_info->file_dir->ch_checi[2], fm->current_info->file_dir->ch_checi[3]);
+//    LOG_I("| KuoChong:        %d.%d.%d.%d",
+//                                    fm->current_info->file_dir->ch_checikuochong[0], fm->current_info->file_dir->ch_checikuochong[1],
+//                                    fm->current_info->file_dir->ch_checikuochong[2], fm->current_info->file_dir->ch_checikuochong[3]);
+//    LOG_I("| SiJi:            %d.%d.%d.%d",
+//                                    fm->current_info->file_dir->ch_siji[0], fm->current_info->file_dir->ch_siji[1],
+//                                    fm->current_info->file_dir->ch_siji[2], fm->current_info->file_dir->ch_siji[3]);
+//    LOG_I("| Date:            %d.%d.%d.%d",
+//                                    fm->current_info->file_dir->ch_date[0], fm->current_info->file_dir->ch_date[1],
+//                                    fm->current_info->file_dir->ch_date[2], fm->current_info->file_dir->ch_date[3]);
+//    LOG_I("| Time:            %d.%d.%d.%d",
+//                                    fm->current_info->file_dir->ch_time[0], fm->current_info->file_dir->ch_time[1],
+//                                    fm->current_info->file_dir->ch_time[2], fm->current_info->file_dir->ch_time[3]);
+//    LOG_I("-----------------------------------------------");
+
+    rt_kprintf("---------------- latest file ------------------\n");
+    rt_kprintf("| filename:        %s\n", fm->latest_dir_file_info.file_name);
+    rt_kprintf("| head_flag:       %x\n", fm->latest_dir_file_info.head_flag);
+    rt_kprintf("| dir_num:         %d\n", fm->latest_dir_file_info.dir_num);
+    rt_kprintf("| not_exsit:       %d\n", fm->latest_dir_file_info.not_exsit);
+    rt_kprintf("| tmp:             %s\n", fm->latest_tmp_file_info.file_name);
+    rt_kprintf("| not_exsit:       %d\n", fm->latest_tmp_file_info.not_exsit);
+    rt_kprintf("------------------- dir file ------------------\n");
+    rt_kprintf("| filename:        %s\n", fm->current_info->file_dir->ch_file_name);
+    rt_kprintf("| filesize:        %d\n", fm->current_info->file_dir->u32_file_size);
+    rt_kprintf("| file id:         %d\n", fm->current_info->file_dir->file_id);
+    rt_kprintf("| save:            %d\n", fm->current_info->file_dir->is_save);
+    rt_kprintf("| CheCi:           %d.%d.%d.%d\n",
                                     fm->current_info->file_dir->ch_checi[0], fm->current_info->file_dir->ch_checi[1],
                                     fm->current_info->file_dir->ch_checi[2], fm->current_info->file_dir->ch_checi[3]);
-    LOG_I("| KuoChong:        %d.%d.%d.%d",
+    rt_kprintf("| KuoChong:        %d.%d.%d.%d\n",
                                     fm->current_info->file_dir->ch_checikuochong[0], fm->current_info->file_dir->ch_checikuochong[1],
                                     fm->current_info->file_dir->ch_checikuochong[2], fm->current_info->file_dir->ch_checikuochong[3]);
-    LOG_I("| SiJi:            %d.%d.%d.%d",
+    rt_kprintf("| SiJi:            %d.%d.%d.%d\n",
                                     fm->current_info->file_dir->ch_siji[0], fm->current_info->file_dir->ch_siji[1],
                                     fm->current_info->file_dir->ch_siji[2], fm->current_info->file_dir->ch_siji[3]);
-    LOG_I("| Date:            %d.%d.%d.%d",
+    rt_kprintf("| Date:            %d.%d.%d.%d\n",
                                     fm->current_info->file_dir->ch_date[0], fm->current_info->file_dir->ch_date[1],
                                     fm->current_info->file_dir->ch_date[2], fm->current_info->file_dir->ch_date[3]);
-    LOG_I("| Time:            %d.%d.%d.%d",
+    rt_kprintf("| Time:            %d.%d.%d.%d\n",
                                     fm->current_info->file_dir->ch_time[0], fm->current_info->file_dir->ch_time[1],
                                     fm->current_info->file_dir->ch_time[2], fm->current_info->file_dir->ch_time[3]);
-    LOG_I("-----------------------------------------------");
+    rt_kprintf("-----------------------------------------------\n");
+
+
     return (sint32_t)0;
 }
 
