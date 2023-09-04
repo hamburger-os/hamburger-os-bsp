@@ -28,19 +28,7 @@ menuconfig PKG_USING_HDLC7c7eFRAME
             default "uart7"
     endif
     
-menuconfig PKG_USING_SYSINFO
-    bool "Enable systerm info"
-    default n
-    
-    if PKG_USING_SYSINFO
-        config SYSINFO_PARTNAME
-            string "Set the partition name used, default : max31826"
-            default "max31826"
-            
-        config SYSINFO_PARTSIZE
-            int "Set the partition size, default: 128"
-            default (128)
-    endif
+source "packages/sysinfo/Kconfig"
 
 menuconfig PKG_USING_ULOG_BACK
     bool "Enable the ulog backend"

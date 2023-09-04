@@ -10,17 +10,20 @@
 #ifndef PACKAGES_SYSINFO_H_
 #define PACKAGES_SYSINFO_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct __attribute__ ((packed)) SysInfoDef
 {
     uint8_t     version[22];    //系统版本号
     uint32_t    type;           //设备类型
     uint8_t     SN[16];         //设备编号,16个字符的条形码
-    uint32_t    cpu_id[3];
-    float       cpu_temp;
-    uint8_t     chip_id[8];
-    float       chip_temp;
-    uint32_t    times;
-    uint16_t    count;
+    int32_t     cpu_temp;       //内部温度计 * 100
+    uint8_t     chip_id[8];     //max31826序列号
+    int32_t     chip_temp;      //max31826温度 * 100
+    uint32_t    times;          //ds1682上电历时
+    uint16_t    count;          //ds1682复位次数
 };
 
 //V0版本系统固化信息
@@ -40,5 +43,9 @@ void sysinfo_show(void);
 //int8_t sysinfofix_set(void *data);//设置api不提供给应用直接调用
 int8_t sysinfofix_get(void *data);
 void sysinfofix_show(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PACKAGES_SYSINFO_H_ */

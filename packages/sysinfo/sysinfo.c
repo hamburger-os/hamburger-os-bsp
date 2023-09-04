@@ -7,126 +7,81 @@
  * Date           Author       Notes
  * 2023-01-12     lvhan       the first version
  */
-#include "board.h"
-#include <fal.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
+#include "platform.h"
+#include "public.h"
 #include "sysinfo.h"
-
-#define DBG_TAG "sysinfo"
-#define DBG_LVL DBG_LOG
-#include <rtdbg.h>
-
-#define SYS_VERSION "v1.1.0.0_20230831"
-
-struct __attribute__((packed)) DS1682DataDef
-{
-    uint32_t times;
-    uint16_t count;
-};
 
 void sysinfo_get(struct SysInfoDef *info)
 {
-    rt_memset(info, 0, sizeof(struct SysInfoDef));
-    rt_device_t dev = NULL;
-    struct rt_sensor_data sensor_data = {0};
+    memset(info, 0, sizeof(struct SysInfoDef));
 
-    rt_strncpy((char *)info->version, SYS_VERSION, sizeof(info->version));
+    if (get_sys_version(info->version) != 0)
+    {
+        pLOG_E("version read error!");
+    }
 
     struct SysInfoFixV0Def infofixv0 = {0};
-    sysinfofix_get(&infofixv0);
-    if (infofixv0.version == 0)
+    if (sysinfofix_get(&infofixv0) != 0)
     {
-        struct SysInfoFixV0Def *pinfofix = &infofixv0;
-        rt_memcpy(info->SN, pinfofix->SN, sizeof(pinfofix->SN));
-    }
-
-    info->cpu_id[0] = HAL_GetUIDw0();
-    info->cpu_id[1] = HAL_GetUIDw1();
-    info->cpu_id[2] = HAL_GetUIDw2();
-
-    /* 查找 cpu temp 设备 */
-    dev = rt_device_find("temp_cpu");
-    if (dev == RT_NULL)
-    {
-        LOG_E("cpu temp not find!");
-    }
-    /* 以只读及轮询模式打开传感器设备 */
-    rt_device_open(dev, RT_DEVICE_FLAG_RDONLY);
-    if (rt_device_read(dev, 0, &sensor_data, sizeof(sensor_data)) == 1)
-    {
-        info->cpu_temp = sensor_data.data.temp / 100.0f;
+        pLOG_E("infofix read error!");
     }
     else
     {
-        LOG_E("cpu temp read error!");
+        if (infofixv0.version == 0)
+        {
+            struct SysInfoFixV0Def *pinfofix = &infofixv0;
+            info->type = pinfofix->type;
+            memcpy(info->SN, pinfofix->SN, sizeof(pinfofix->SN));
+        }
     }
 
-    /* 查找单总线MAX31826设备 */
-    dev = rt_device_find("temp_max31826");
-    if (dev == RT_NULL)
+    if (get_cpu_temp(&info->cpu_temp) != 0)
     {
-        LOG_E("max31826 not find!");
-    }
-    /* 以只读及轮询模式打开传感器设备 */
-    rt_device_open(dev, RT_DEVICE_FLAG_RDONLY);
-    rt_memset((void *)info->chip_id, 0, sizeof(info->chip_id));
-    if (rt_device_control(dev, RT_SENSOR_CTRL_GET_ID, info->chip_id) != 0)
-    {
-        LOG_E("max31826 id error!");
-    }
-    if (rt_device_read(dev, 0, &sensor_data, sizeof(sensor_data)) == 1)
-    {
-        info->chip_temp = sensor_data.data.temp / 100.0f;
-    }
-    else
-    {
-        LOG_E("max31826 read error!");
+        pLOG_E("cpu temp read error!");
     }
 
-    /* 查找历时芯片设备 */
-    dev = rt_device_find("ds1682");
-    if (dev == RT_NULL)
+    if (get_chip_id_temp(info->chip_id, &info->chip_temp) != 0)
     {
-        LOG_E("ds1682 not find!");
+        pLOG_E("max31826 read error!");
     }
-    /* 以只读及轮询模式打开传感器设备 */
-    rt_device_open(dev, RT_DEVICE_FLAG_RDONLY);
-    struct DS1682DataDef ds1682data = {0};
-    if (rt_device_read(dev, 0, &ds1682data, sizeof(ds1682data)) == 0)
+
+    if (get_times_count(&info->times, &info->count) != 0)
     {
-        info->times = ds1682data.times;
-        info->count = ds1682data.count;
-    }
-    else
-    {
-        LOG_E("ds1682 read error!");
+        pLOG_E("ds1682 read error!");
     }
 }
+#ifdef __PLATFORM_SWOS2__
 RTM_EXPORT(sysinfo_get);
+#endif
 
 void sysinfo_show(void)
 {
     struct SysInfoDef info = {0};
     sysinfo_get(&info);
 
-    LOG_D("- systerm info:");
-    LOG_D("----------------------------------------------------------------");
-    LOG_D("- version     : %s", info.version);
-    LOG_D("- type        : 0x%x", info.type);
+    pLOG_D("- systerm info:");
+    pLOG_D("----------------------------------------------------------------");
+    pLOG_D("- version     : %s", info.version);
+    pLOG_D("- type        : 0x%X", info.type);
     char SN_str[sizeof(info.SN) + 1] = {0};
-    rt_memcpy(SN_str, info.SN, sizeof(info.SN));
-    LOG_D("- SN          : %s", SN_str);
-    LOG_D("----------------------------------------------------------------");
-    LOG_D("- cpu id      : 0x%08X %08X %08X", info.cpu_id[0], info.cpu_id[1], info.cpu_id[2]);
-    LOG_D("- cpu temp    : %d.%02d (C) ", (int32_t)info.cpu_temp, abs((int32_t)((info.cpu_temp - (int32_t)info.cpu_temp) * 100)));
-    LOG_D("----------------------------------------------------------------");
-    LOG_D("- chip id     : 0x%02X %02X %02X %02X %02X %02X %02X %02X", info.chip_id[0], info.chip_id[1], info.chip_id[2], info.chip_id[3], info.chip_id[4], info.chip_id[5], info.chip_id[6], info.chip_id[7]);
-    LOG_D("- chip temp   : %d.%02d (C) ", (int32_t)info.chip_temp, abs((int32_t)((info.chip_temp - (int32_t)info.chip_temp) * 100)));
-    LOG_D("- times       : %d s", info.times);
-    LOG_D("- count       : %d", info.count);
-    LOG_D("----------------------------------------------------------------");
+    memcpy(SN_str, info.SN, sizeof(info.SN));
+    pLOG_D("- SN          : %s", SN_str);
+    pLOG_D("----------------------------------------------------------------");
+    pLOG_D("- cpu temp    : %d (C * 100) ", info.cpu_temp);
+    pLOG_D("- chip id     : %02X %02X %02X %02X %02X %02X %02X %02X", info.chip_id[0], info.chip_id[1], info.chip_id[2], info.chip_id[3], info.chip_id[4], info.chip_id[5], info.chip_id[6], info.chip_id[7]);
+    pLOG_D("- chip temp   : %d (C * 100) ", info.chip_temp);
+    pLOG_D("- times       : %d s", info.times);
+    pLOG_D("- count       : %d", info.count);
+    pLOG_D("----------------------------------------------------------------");
 }
+#ifdef __PLATFORM_SWOS2__
 RTM_EXPORT(sysinfo_show);
+#endif
 
 /*
  * This table was generated by the following program.
@@ -250,8 +205,6 @@ make it easy to compose the values of multiple blocks.
 */
 static uint32_t sysinfofix_xcrc32 (const uint8_t *buf, uint16_t len)
 {
-//    LOG_D("  xcrc: %d", len);
-//    LOG_HEX("      xcrc", 16, (uint8_t *)buf, len);
     uint32_t crc = 0xffffffff;
     while (len--)
     {
@@ -266,27 +219,19 @@ int8_t sysinfofix_set(void *data)
     //版本和crc位置固定，写入时按照v0版本进行即可
     struct SysInfoFixV0Def sysinfofix = {0};
     struct SysInfoFixV0Def *psysinfofix = data;
-    psysinfofix->crc32 = sysinfofix_xcrc32((uint8_t *)psysinfofix, SYSINFO_PARTSIZE - 4);
+    psysinfofix->crc32 = sysinfofix_xcrc32((uint8_t *)psysinfofix, sizeof(struct SysInfoFixV0Def) - 4);
 
-    struct fal_partition * part = (struct fal_partition *)fal_partition_find(SYSINFO_PARTNAME);
-    if (part == NULL)
+    if (sysinfofix_blk_write((uint8_t *)psysinfofix, sizeof(struct SysInfoFixV0Def)) != sizeof(struct SysInfoFixV0Def))
     {
-        LOG_E("part find error!");
-        return -1;
+        pLOG_E("blk write error!");
     }
-    if (fal_partition_write(part, 0, (uint8_t *)psysinfofix, SYSINFO_PARTSIZE) != SYSINFO_PARTSIZE)
+    if (sysinfofix_blk_read((uint8_t *)&sysinfofix, sizeof(struct SysInfoFixV0Def)) != sizeof(struct SysInfoFixV0Def))
     {
-        LOG_E("part write error!");
-        return -1;
-    }
-    if (fal_partition_read(part, 0, (uint8_t *)&sysinfofix, SYSINFO_PARTSIZE) != SYSINFO_PARTSIZE)
-    {
-        LOG_E("part read error!");
-        return -1;
+        pLOG_E("blk read error!");
     }
     if (psysinfofix->crc32 != sysinfofix.crc32)
     {
-        LOG_E("set check error!");
+        pLOG_E("set check error!");
         return -1;
     }
 
@@ -298,78 +243,77 @@ int8_t sysinfofix_get(void *data)
     //版本和crc位置固定，读取时按照v0版本进行即可
     uint32_t crc32 = 0;
     struct SysInfoFixV0Def *psysinfofix = data;
-    struct fal_partition * part = (struct fal_partition *)fal_partition_find(SYSINFO_PARTNAME);
-    if (part == NULL)
+
+    if (sysinfofix_blk_read((uint8_t *)psysinfofix, sizeof(struct SysInfoFixV0Def)) != sizeof(struct SysInfoFixV0Def))
     {
-        LOG_E("part find error!");
-        return -1;
+        pLOG_E("blk read error!");
     }
-    if (fal_partition_read(part, 0, (uint8_t *)psysinfofix, SYSINFO_PARTSIZE) != SYSINFO_PARTSIZE)
-    {
-        LOG_E("part read error!");
-        return -1;
-    }
-    crc32 = sysinfofix_xcrc32((uint8_t *)psysinfofix, SYSINFO_PARTSIZE - 4);
+    crc32 = sysinfofix_xcrc32((uint8_t *)psysinfofix, sizeof(struct SysInfoFixV0Def) - 4);
     if (psysinfofix->crc32 != crc32)
     {
-        LOG_E("get check error!");
+        pLOG_E("get check error!");
         return -1;
     }
 
     return 0;
 }
+#ifdef __PLATFORM_SWOS2__
 RTM_EXPORT(sysinfofix_get);
+#endif
 
 void sysinfofix_show(void)
 {
     //以v0版本读取
     struct SysInfoFixV0Def infofixv0 = {0};
-    if (sysinfofix_get(&infofixv0) == 0)
+    sysinfofix_get(&infofixv0);
+    if (infofixv0.version == 0)//解析为v0
     {
-        if (infofixv0.version == 0)//解析为v0
-        {
-            struct SysInfoFixV0Def *pinfofix = &infofixv0;
+        struct SysInfoFixV0Def *pinfofix = &infofixv0;
 
-            LOG_D("- systerm info fix:");
-            LOG_D("----------------------------------------------------------------");
-            LOG_D("- version     : %d", pinfofix->version);
-            LOG_D("- type        : 0x%x", pinfofix->type);
-            char SN_str[sizeof(pinfofix->SN) + 1] = {0};
-            rt_memcpy(SN_str, pinfofix->SN, sizeof(pinfofix->SN));
-            LOG_D("- SN          : %s", SN_str);
-            LOG_D("----------------------------------------------------------------");
-            LOG_HEX("     - MAC         ", 6, (uint8_t *)pinfofix->mac, 18);
-            LOG_D("----------------------------------------------------------------");
-        }
+        pLOG_D("- systerm info fix:");
+        pLOG_D("----------------------------------------------------------------");
+        pLOG_D("- version     : %d", pinfofix->version);
+        pLOG_D("- type        : 0x%x", pinfofix->type);
+        char SN_str[sizeof(pinfofix->SN) + 1] = {0};
+        memcpy(SN_str, pinfofix->SN, sizeof(pinfofix->SN));
+        pLOG_D("- SN          : %s", SN_str);
+        pLOG_HEX("     - MAC         ", 6, (uint8_t *)pinfofix->mac, 18);
+        pLOG_D("----------------------------------------------------------------");
     }
 }
+#ifdef __PLATFORM_SWOS2__
 RTM_EXPORT(sysinfofix_show);
+#endif
 
+#ifdef __PLATFORM_SWOS2__
 static void sysinfo_cmd(int argc, char *argv[])
+#else
+int main(int argc, char *argv[])
+#endif
 {
     if (argc < 2)
     {
-        rt_kprintf("Usage: sysinfo [cmd]\n");
-        rt_kprintf("       sysinfo --show\n");
-        rt_kprintf("       sysinfo --fixshow\n");
-        rt_kprintf("       sysinfo --set TYPE [version] [data]\n");
-        rt_kprintf("           example : sysinfo --set TYPE 0 0xFFFFFFFF\n");
-        rt_kprintf("       sysinfo --set SN [version] [data]\n");
-        rt_kprintf("           example : sysinfo --set SN 0 2023100112300100\n");
-        rt_kprintf("       sysinfo --set MAC [version] [dev id] [data]\n");
-        rt_kprintf("           example : sysinfo --set MAC 0 0 f8 09 a4 32 5d 3e\n");
+        pPrintf("Usage: sysinfo [cmd]\n");
+        pPrintf("       sysinfo --show\n");
+        pPrintf("       sysinfo --fixshow\n");
+        pPrintf("       sysinfo --set TYPE [version] [data]\n");
+        pPrintf("           example : sysinfo --set TYPE 0 0xFFFFFFFF\n");
+        pPrintf("       sysinfo --set SN [version] [data]\n");
+        pPrintf("           example : sysinfo --set SN 0 2023100112300100\n");
+        pPrintf("       sysinfo --set MAC [version] [dev id] [data]\n");
+        pPrintf("           example : sysinfo --set MAC 0 0 f8 09 a4 32 5d 3e\n");
     }
     else
     {
-        if (rt_strcmp(argv[1], "--show") == 0 && argc == 2)
+        if (strcmp(argv[1], "--show") == 0 && argc == 2)
         {
             sysinfo_show();
         }
-        else if (rt_strcmp(argv[1], "--fixshow") == 0 && argc == 2)
+        else if (strcmp(argv[1], "--fixshow") == 0 && argc == 2)
         {
             sysinfofix_show();
         }
-        else if (rt_strcmp(argv[1], "--set") == 0 && rt_strcmp(argv[2], "TYPE") == 0 && argc == 5)
+        else if (strcmp(argv[1], "--set") == 0 && strcmp(argv[2], "TYPE") == 0 && argc == 5)
         {
             uint16_t version = strtoul(argv[3], NULL, 10);
             if (version == 0)//解析为v0
@@ -380,15 +324,15 @@ static void sysinfo_cmd(int argc, char *argv[])
                 infofix.type = strtoul(argv[4], NULL, 16);
                 if (sysinfofix_set(&infofix) == 0)
                 {
-                    rt_kprintf("set succeed.\n");
+                    pPrintf("set succeed.\n");
                 }
                 else
                 {
-                    rt_kprintf("set failed.\n");
+                    pPrintf("set failed.\n");
                 }
             }
         }
-        else if (rt_strcmp(argv[1], "--set") == 0 && rt_strcmp(argv[2], "SN") == 0 && argc == 5)
+        else if (strcmp(argv[1], "--set") == 0 && strcmp(argv[2], "SN") == 0 && argc == 5)
         {
             uint16_t version = strtoul(argv[3], NULL, 10);
             if (version == 0)//解析为v0
@@ -396,18 +340,18 @@ static void sysinfo_cmd(int argc, char *argv[])
                 struct SysInfoFixV0Def infofix = {0};
                 sysinfofix_get(&infofix);
                 infofix.version = version;
-                rt_memcpy(infofix.SN, argv[4], sizeof(infofix.SN));
+                memcpy(infofix.SN, argv[4], sizeof(infofix.SN));
                 if (sysinfofix_set(&infofix) == 0)
                 {
-                    rt_kprintf("set succeed.\n");
+                    pPrintf("set succeed.\n");
                 }
                 else
                 {
-                    rt_kprintf("set failed.\n");
+                    pPrintf("set failed.\n");
                 }
             }
         }
-        else if (rt_strcmp(argv[1], "--set") == 0 && rt_strcmp(argv[2], "MAC") == 0 && argc == 11)
+        else if (strcmp(argv[1], "--set") == 0 && strcmp(argv[2], "MAC") == 0 && argc == 11)
         {
             uint16_t version = strtoul(argv[3], NULL, 10);
             uint16_t dev_id = strtoul(argv[4], NULL, 10);
@@ -424,29 +368,37 @@ static void sysinfo_cmd(int argc, char *argv[])
                 infofix.mac[dev_id][5] = strtoul(argv[10], NULL, 16);
                 if (sysinfofix_set(&infofix) == 0)
                 {
-                    rt_kprintf("set succeed.\n");
+                    pPrintf("set succeed.\n");
                 }
                 else
                 {
-                    rt_kprintf("set failed.\n");
+                    pPrintf("set failed.\n");
                 }
             }
         }
         else
         {
-            rt_kprintf("Usage: sysinfo [cmd]\n");
-            rt_kprintf("       sysinfo --show\n");
-            rt_kprintf("       sysinfo --fixshow\n");
-            rt_kprintf("       sysinfo --set TYPE [version] [data]\n");
-            rt_kprintf("           example : sysinfo --set TYPE 0 0xFFFFFFFF\n");
-            rt_kprintf("       sysinfo --set SN [version] [data]\n");
-            rt_kprintf("           example : sysinfo --set SN 0 2023100112300100\n");
-            rt_kprintf("       sysinfo --set MAC [version] [dev id] [data]\n");
-            rt_kprintf("           example : sysinfo --set MAC 0 0 f8 09 a4 32 5d 3e\n");
+            pPrintf("Usage: sysinfo [cmd]\n");
+            pPrintf("       sysinfo --show\n");
+            pPrintf("       sysinfo --fixshow\n");
+            pPrintf("       sysinfo --set TYPE [version] [data]\n");
+            pPrintf("           example : sysinfo --set TYPE 0 0xFFFFFFFF\n");
+            pPrintf("       sysinfo --set SN [version] [data]\n");
+            pPrintf("           example : sysinfo --set SN 0 2023100112300100\n");
+            pPrintf("       sysinfo --set MAC [version] [dev id] [data]\n");
+            pPrintf("           example : sysinfo --set MAC 0 0 f8 09 a4 32 5d 3e\n");
         }
     }
+
+#ifdef __PLATFORM_SWOS2__
+    return;
+#else
+    return 0;
+#endif
 }
+#ifdef __PLATFORM_SWOS2__
 #ifdef RT_USING_FINSH
 #include <finsh.h>
 MSH_CMD_EXPORT_ALIAS(sysinfo_cmd, sysinfo, System information and system fixed information operation commands.);
+#endif
 #endif
