@@ -45,11 +45,6 @@
   "name": "LITTLEFS"
  }, 
  {
-  "path": "/packages/system/lwext4", 
-  "ver": "latest", 
-  "name": "LWEXT4"
- }, 
- {
   "path": "/packages/system/syswatch", 
   "ver": "latest", 
   "name": "SYSWATCH"

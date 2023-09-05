@@ -37,6 +37,7 @@ static char * error_log2[] = {
 
 void selftest_gpio_test(SelftestlUserData *puserdata)
 {
+    //TODO: 测试短路
     uint8_t is_error = 0;
     for (int x = 0; x<6; x++)
     {

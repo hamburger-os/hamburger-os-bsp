@@ -30,7 +30,7 @@ static SelftestlUserData selftest_userdata = {
         "/mnt/fram",
         "/mnt/spinor64",
         "/mnt/spinor4",
-        "/mnt/nor",
+        "/mnt/nor",//TODO:并口数据回环
         "/mnt/emmc",
         "/mnt/udisk/ud0p0"},
     .i2c_devname = "eeprom",
