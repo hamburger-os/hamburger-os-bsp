@@ -1,3 +1,6 @@
 [submodule "rt-thread"]
 	path = rt-thread
 	url = http://192.168.101.251:8088/research-institute/swos2-kernel.git
+[submodule "packages/sysinfo"]
+	path = packages/sysinfo
+	url = http://192.168.101.251:8088/research-institute/sysinfo.git
