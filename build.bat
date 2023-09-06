@@ -1,5 +1,4 @@
-del .config
-copy %1 .config
+copy /Y %1 .config
 
 call scons --useconfig=.config
 call scons -c
