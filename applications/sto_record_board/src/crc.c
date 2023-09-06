@@ -10,6 +10,10 @@
 #include "crc.h"
 #include "string.h"
 
+#define DBG_TAG "crc"
+#define DBG_LVL DBG_LOG
+#include <rtdbg.h>
+
 /** 根据配置的32位多项式生成的计算表 */
 static uint32_t cfged_tab32[256];
 
@@ -227,7 +231,6 @@ static uint16_t crc16_create(const uint8_t * p_dat_u8, uint16_t len, uint16_t cr
   return (crc);    /* 返回 */
 }
 
-
 /*******************************************************************************************
  ** @brief: Common_CRC16
  ** @param: pData: the data for CRC
@@ -283,6 +286,20 @@ uint16_t  crc16l(uint8_t *ptr,uint8_t len)
 		ptr++;
 	}
 	return crc;
+}
+
+uint16_t Crc16TabCCITT(unsigned char* data, unsigned int length)
+{
+    unsigned short int crc = 0x0000;
+    unsigned int i;
+
+    for(i=0; i<length; i++)
+    {
+        crc = (crc>>8)^crctab16[crc&0xFF^*data];
+        data++;
+    }
+
+    return crc;
 }
 
 /* 出栈 */

@@ -42,7 +42,7 @@ static void *BoardInitThreadEntry(void *parameter)
     /* thread */
     ETHThreadInit();
     FileThreadInit();
-    PowerMsgThreadInit();
+//    PowerMsgThreadInit();
     usb_init();
     LOG_I("init ok");
 }
