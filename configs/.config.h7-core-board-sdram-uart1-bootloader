@@ -1280,6 +1280,7 @@ CONFIG_NORFLASH_BUFFER_PROGRAM_MAX=64
 # CONFIG_BSP_USING_ICCARD_FLASH is not set
 # CONFIG_BSP_USING_LTC186X is not set
 # CONFIG_BSP_USING_GNSS is not set
+# CONFIG_BSP_USING_KSZ8794 is not set
 # end of Onboard Peripheral Drivers
 # end of Hardware Drivers Config
 

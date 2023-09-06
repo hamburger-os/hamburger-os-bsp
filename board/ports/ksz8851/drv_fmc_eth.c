@@ -18,6 +18,10 @@
 #include "flashdb_port.h"
 #endif
 
+#ifdef BSP_USE_SYSINFO_MAC
+#include "sysinfo.h"
+#endif
+
 #include <string.h>
 
 #define DBG_TAG "drv.eth"
@@ -543,32 +547,54 @@ static int rt_fmc_eth_init(void)
 }
 INIT_DEVICE_EXPORT(rt_fmc_eth_init);
 
-#ifdef BSP_USE_KVDB_NET_IF
-/* Config the lwip device */
-char *ip_key[] = {"e0_ip", "e1_ip", "e2_ip"};
-char *gw_key[] = {"e0_gw", "e1_gw", "e2_gw"};
-char *mask_key[] = {"e0_mask", "e1_mask", "e2_mask"};
-
-static void netdev_set_if(char* netdev_name, char* ip_addr, char* gw_addr, char* nm_addr);
+#if defined(BSP_USE_KVDB_NET_IF) || defined(BSP_USE_SYSINFO_MAC)
 static int rt_netdev_set_if_init(void)
 {
     rt_err_t state = RT_EOK;
 
-#if !LWIP_DHCP
+#ifdef BSP_USE_KVDB_NET_IF
+    /* Config the lwip device */
+    char *ip_key[] = {"e0_ip", "e1_ip", "e2_ip"};
+    char *gw_key[] = {"e0_gw", "e1_gw", "e2_gw"};
+    char *mask_key[] = {"e0_mask", "e1_mask", "e2_mask"};
+
     char ip_addr[16] = {0};
     char gw_addr[16] = {0};
     char nm_addr[16] = {0};
+#endif
 
+#ifdef BSP_USE_SYSINFO_MAC
+    struct SysInfoFixV0Def sysinfofix = {0};
+#endif
     for (int i = 0; i < sizeof(fmc_eth_port) / sizeof(struct rt_fmc_eth_port); i++)
     {
+#ifdef BSP_USE_KVDB_NET_IF
+        extern void netdev_set_if(char* netdev_name, char* ip_addr, char* gw_addr, char* nm_addr);
+#if !LWIP_DHCP
         kvdb_get(ip_key[i], ip_addr);
         kvdb_get(gw_key[i], gw_addr);
         kvdb_get(mask_key[i], nm_addr);
 
         netdev_set_if(fmc_eth_device.port[i].dev_name, ip_addr, gw_addr, nm_addr);
         LOG_I("netdev %s set if %s %s %s", fmc_eth_device.port[i].dev_name, ip_addr, gw_addr, nm_addr);
-    }
 #endif
+#endif
+
+#ifdef BSP_USE_SYSINFO_MAC
+        sysinfofix_get(&sysinfofix);
+        /* OUI 厂商ID */
+        fmc_eth_device.port[i].mac[0] = sysinfofix.mac[i][0];
+        fmc_eth_device.port[i].mac[1] = sysinfofix.mac[i][1];
+        fmc_eth_device.port[i].mac[2] = sysinfofix.mac[i][2];
+        /* 设备MAC地址 */
+        fmc_eth_device.port[i].mac[3] = sysinfofix.mac[i][3];
+        fmc_eth_device.port[i].mac[4] = sysinfofix.mac[i][4];
+        fmc_eth_device.port[i].mac[5] = sysinfofix.mac[i][5];
+        LOG_I("netdev %s set MAC %02X %02X %02X %02X %02X %02X", fmc_eth_device.port[i].dev_name
+                , fmc_eth_device.port[i].mac[0], fmc_eth_device.port[i].mac[1], fmc_eth_device.port[i].mac[2]
+                , fmc_eth_device.port[i].mac[3], fmc_eth_device.port[i].mac[4], fmc_eth_device.port[i].mac[5]);
+#endif
+    }
 
     return state;
 }
