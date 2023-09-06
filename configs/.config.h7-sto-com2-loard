@@ -1307,5 +1307,7 @@ CONFIG_BSP_USING_MAX31826_EXAMPLE=y
 # CONFIG_APP_LY_05C is not set
 # CONFIG_APP_STO_RECORD_BOART is not set
 CONFIG_APP_STO_COM_BOARD=y
+CONFIG_HAL_OS_USE_RT_THREAD_LOG=y
+CONFIG_HAL_OS_THREAD_TIMESLICE=5
 # end of Product Application and Function
 # end of Supported applications and examples

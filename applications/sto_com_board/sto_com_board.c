@@ -14,13 +14,15 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
+#include "hal_os/hal_os.h"
+
 #define BOARD_INIT_THREAD_PRIORITY         20
 #define BOARD_INIT_THREAD_STACK_SIZE       (1024)
-#define BOARD_INIT_THREAD_TIMESLICE        5
 
 static void *BoardInitThreadEntry(void *parameter)
 {
     LOG_I("init ok");
+    HALOSTestThreadInit();
     while(1)
     {
         rt_thread_mdelay(10);
@@ -29,19 +31,17 @@ static void *BoardInitThreadEntry(void *parameter)
 
 static int BoardInitThreadInit(void)
 {
-    rt_thread_t tid;
-
-    tid = rt_thread_create("board_init",
-                            BoardInitThreadEntry, RT_NULL,
-                            BOARD_INIT_THREAD_STACK_SIZE,
-                            BOARD_INIT_THREAD_PRIORITY, BOARD_INIT_THREAD_TIMESLICE);
-
-    if(tid != NULL)
+    if(hal_os_creat_task("board_init",
+            BoardInitThreadEntry, NULL,
+            BOARD_INIT_THREAD_STACK_SIZE,
+            BOARD_INIT_THREAD_PRIORITY) < 0)
     {
-        rt_thread_startup(tid);
+        return -RT_ERROR;
+    }
+    else
+    {
         return RT_EOK;
     }
-    return -RT_ERROR;
 }
 
 static void STOComBoardInit(void)

@@ -1,3 +1,13 @@
 config APP_STO_COM_BOARD
     bool "Enable STO-COM-BOARD application"
     default n
+        
+    if APP_STO_COM_BOARD
+        config HAL_OS_USE_RT_THREAD_LOG
+            bool "Enable rtthread log"
+            default y
+
+        config HAL_OS_THREAD_TIMESLICE
+            int "Set thread time slice"
+            default 5
+    endif
