@@ -10,7 +10,13 @@
 **2023-07-21      zm           add swos2
 ********************************************************************************************/
 #include "Record_FileCreate.h"
+
+#define DBG_TAG "FileCreat"
+#define DBG_LVL DBG_LOG
+#include <rtdbg.h>
+
 #include "common.h"
+
 #include <rtthread.h>
 
 #include <stdio.h>
@@ -21,11 +27,7 @@
 
 #include "utils.h"
 #include "sto_record_board.h"
-
-#define DBG_TAG "FileCreat"
-#define DBG_LVL DBG_LOG
-#include <rtdbg.h>
-
+#include "power_msg.h"
 
 /* private macro definition -------------------------------------------------------------------- */
 /* 写文件头标志 */
@@ -342,7 +344,7 @@ static RecordingMessage  msgRecording =\
 static uint8_t Record_Condition_Judge(void);
 static rt_err_t Creat_FileHead(S_CURRENT_FILE_INFO *current_file_info);
 static void Get_Gonggongxinxi( void );
-static void WriteFileContantPkt( uint8_t num1, uint8_t num2, uint8_t device_code, uint8_t *contant, uint8_t lenth );
+void WriteFileContantPkt( uint8_t num1, uint8_t num2, uint8_t device_code, uint8_t *contant, uint8_t lenth );
 static void WriteGonggongxinxiPkt( void );
 static void Get_FileName(SFile_Directory *directory );
 static void Get_FileContant( void );
@@ -1465,7 +1467,7 @@ static uint8_t Init_GonggongxinxiState(void)
       lenth       --> 事件长度.
 返回：无.
 ***********************************************************************************************/
-static void WriteFileContantPkt(uint8_t num1, uint8_t num2, uint8_t device_code, uint8_t *contant, uint8_t lenth)
+void WriteFileContantPkt(uint8_t num1, uint8_t num2, uint8_t device_code, uint8_t *contant, uint8_t lenth)
 {
     static uint32_t rest_size = 255u;
     uint8_t contant_size = 0u;
@@ -1632,6 +1634,8 @@ static void Get_FileContant(void)
             RecordingVersionMessage();
             /* 插件自检信息 */
             RecordingSelfCheckMessage();
+            /* 电源插件信息 */
+            RecordingPowerPlugMessage();
         } /* end if */
 
     } /* end if */

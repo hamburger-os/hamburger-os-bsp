@@ -6114,7 +6114,7 @@ static uint32_t Processing_EC_SM_ASSERT( ErrorCodeInitStruct *inst )
       /* 2.6 EC_SM  = EC_SM_SEND. */
       inst->EC_SM   = EC_SM_SEND;
       
-      #if 1
+      #if 0 //TODO(mingzhao)
         printf( "\r\n--> 1, raddr=%x, waddr=%x\r\n", inst->ReadAddr, inst->WriteAddr );
         printf( "\r\n--> 2, tsize=%d, amnt=%d\r\n", inst->DGM_TotalSize, inst->DGM_AMNT );
       #endif

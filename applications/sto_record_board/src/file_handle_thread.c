@@ -32,7 +32,7 @@ static void *FileThreadEntry(void *parameter)
     while(1)
     {
         CanDataHandle(&eth0_can_data_handle);
-        CanDataHandle(&eth1_can_data_handle);
+//        CanDataHandle(&eth1_can_data_handle);
         RecordBoard_FileCreate();
         rt_thread_mdelay(1);
     }

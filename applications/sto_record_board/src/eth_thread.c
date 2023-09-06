@@ -166,21 +166,22 @@ int ETHThreadInit(void)
                             ETH0_THREAD_STACK_SIZE,
                             ETH0_THREAD_PRIORITY, ETH0_THREAD_TIMESLICE);
 
-    tid2 = rt_thread_create("eth1_thread",
-                            ETH1ThreadEntry, RT_NULL,
-                            ETH1_THREAD_STACK_SIZE,
-                            ETH1_THREAD_PRIORITY, ETH1_THREAD_TIMESLICE);
+//    tid2 = rt_thread_create("eth1_thread",
+//                            ETH1ThreadEntry, RT_NULL,
+//                            ETH1_THREAD_STACK_SIZE,
+//                            ETH1_THREAD_PRIORITY, ETH1_THREAD_TIMESLICE);
 
     if(tid1 != NULL)
     {
         rt_thread_startup(tid1);
-    }
-
-    if(tid2 != NULL)
-    {
-        rt_thread_startup(tid2);
         return RT_EOK;
     }
+
+//    if(tid2 != NULL)
+//    {
+//        rt_thread_startup(tid2);
+//        return RT_EOK;
+//    }
     return -RT_ERROR;
 }
 

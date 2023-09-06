@@ -627,6 +627,7 @@ void RecordingPowerOffMessage(void);
 void RecordingLLevelMessage( void );
 void RecordingSpeedDownMessage( void );
 
+void WriteFileContantPkt(uint8_t num1, uint8_t num2, uint8_t device_code, uint8_t *contant, uint8_t lenth);
 uint16_t FFFEEncode(uint8_t *u8p_SrcData, uint16_t u16_SrcLen, uint8_t *u8p_DstData);
 #endif
 

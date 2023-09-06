@@ -35,14 +35,14 @@ S_FILE_MANAGER file_manager;
 static void *BoardInitThreadEntry(void *parameter)
 {
     DataHandleInit(&eth0_can_data_handle);
-    DataHandleInit(&eth1_can_data_handle);
+//    DataHandleInit(&eth1_can_data_handle);
     FMInit(&file_manager);
     LedCtrlInit();
 
     /* thread */
     ETHThreadInit();
     FileThreadInit();
-//    PowerMsgThreadInit();
+    PowerMsgThreadInit();
     usb_init();
     LOG_I("init ok");
 }
