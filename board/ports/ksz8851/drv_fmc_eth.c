@@ -498,6 +498,18 @@ static int rt_fmc_eth_init(void)
 
     for (int i = 0; i < sizeof(fmc_eth_port) / sizeof(struct rt_fmc_eth_port); i++)
     {
+#ifdef BSP_USE_SYSINFO_MAC
+        struct SysInfoFixV0Def sysinfofix = {0};
+        sysinfofix_get(&sysinfofix);
+        /* OUI 厂商ID */
+        fmc_eth_device.port[i].mac[0] = sysinfofix.mac[i][0];
+        fmc_eth_device.port[i].mac[1] = sysinfofix.mac[i][1];
+        fmc_eth_device.port[i].mac[2] = sysinfofix.mac[i][2];
+        /* 设备MAC地址 */
+        fmc_eth_device.port[i].mac[3] = sysinfofix.mac[i][3];
+        fmc_eth_device.port[i].mac[4] = sysinfofix.mac[i][4];
+        fmc_eth_device.port[i].mac[5] = sysinfofix.mac[i][5];
+#else
         /* OUI 00-80-E1 STMICROELECTRONICS.前三个字节为厂商ID */
         fmc_eth_device.port[i].mac[0] = 0xF8;
         fmc_eth_device.port[i].mac[1] = 0x09;
@@ -506,7 +518,10 @@ static int rt_fmc_eth_init(void)
         fmc_eth_device.port[i].mac[3] = *(uint8_t *)(UID_BASE + 2 + i);
         fmc_eth_device.port[i].mac[4] = *(uint8_t *)(UID_BASE + 1 + i);
         fmc_eth_device.port[i].mac[5] = *(uint8_t *)(UID_BASE + 0 + i);
-
+#endif
+        LOG_I("netdev %s set MAC %02X %02X %02X %02X %02X %02X", fmc_eth_device.port[i].dev_name
+                , fmc_eth_device.port[i].mac[0], fmc_eth_device.port[i].mac[1], fmc_eth_device.port[i].mac[2]
+                , fmc_eth_device.port[i].mac[3], fmc_eth_device.port[i].mac[4], fmc_eth_device.port[i].mac[5]);
         fmc_eth_device.port[i].parent.parent.init = fmc_eth_init;
         fmc_eth_device.port[i].parent.parent.open = fmc_eth_open;
         fmc_eth_device.port[i].parent.parent.close = fmc_eth_close;
@@ -545,9 +560,9 @@ static int rt_fmc_eth_init(void)
 
     return state;
 }
-INIT_DEVICE_EXPORT(rt_fmc_eth_init);
+INIT_COMPONENT_EXPORT(rt_fmc_eth_init);
 
-#if defined(BSP_USE_KVDB_NET_IF) || defined(BSP_USE_SYSINFO_MAC)
+#if defined(BSP_USE_KVDB_NET_IF)
 static int rt_netdev_set_if_init(void)
 {
     rt_err_t state = RT_EOK;
@@ -563,9 +578,6 @@ static int rt_netdev_set_if_init(void)
     char nm_addr[16] = {0};
 #endif
 
-#ifdef BSP_USE_SYSINFO_MAC
-    struct SysInfoFixV0Def sysinfofix = {0};
-#endif
     for (int i = 0; i < sizeof(fmc_eth_port) / sizeof(struct rt_fmc_eth_port); i++)
     {
 #ifdef BSP_USE_KVDB_NET_IF
@@ -579,23 +591,7 @@ static int rt_netdev_set_if_init(void)
         LOG_I("netdev %s set if %s %s %s", fmc_eth_device.port[i].dev_name, ip_addr, gw_addr, nm_addr);
 #endif
 #endif
-
-#ifdef BSP_USE_SYSINFO_MAC
-        sysinfofix_get(&sysinfofix);
-        /* OUI 厂商ID */
-        fmc_eth_device.port[i].mac[0] = sysinfofix.mac[i][0];
-        fmc_eth_device.port[i].mac[1] = sysinfofix.mac[i][1];
-        fmc_eth_device.port[i].mac[2] = sysinfofix.mac[i][2];
-        /* 设备MAC地址 */
-        fmc_eth_device.port[i].mac[3] = sysinfofix.mac[i][3];
-        fmc_eth_device.port[i].mac[4] = sysinfofix.mac[i][4];
-        fmc_eth_device.port[i].mac[5] = sysinfofix.mac[i][5];
-        LOG_I("netdev %s set MAC %02X %02X %02X %02X %02X %02X", fmc_eth_device.port[i].dev_name
-                , fmc_eth_device.port[i].mac[0], fmc_eth_device.port[i].mac[1], fmc_eth_device.port[i].mac[2]
-                , fmc_eth_device.port[i].mac[3], fmc_eth_device.port[i].mac[4], fmc_eth_device.port[i].mac[5]);
-#endif
     }
-
     return state;
 }
 INIT_ENV_EXPORT(rt_netdev_set_if_init);

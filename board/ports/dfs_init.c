@@ -89,7 +89,7 @@ static const struct romfs_dirent _romfs_root[] =
 };
 
 //根文件系统
-const struct romfs_dirent romfs_root =
+static const struct romfs_dirent romfs_root =
 {
     ROMFS_DIRENT_DIR , "/"          , (rt_uint8_t *)_romfs_root    , sizeof(_romfs_root) / sizeof(struct romfs_dirent)
 };
@@ -166,7 +166,7 @@ static int rt_dfs_init(void)
     ret = dfs_mount(RT_NULL, "/", "rom", 0, &(romfs_root));
     if (ret != 0)
     {
-        LOG_E("root (rom) mount to '/' failed!");
+        LOG_E("root (rom) mount to '/' failed %d!", rt_get_errno());
         return -RT_ERROR;
     }
     else
@@ -252,4 +252,4 @@ static int rt_dfs_init(void)
     return ret;
 }
 /* 导出到自动初始化 */
-INIT_COMPONENT_EXPORT(rt_dfs_init);
+INIT_ENV_EXPORT(rt_dfs_init);
