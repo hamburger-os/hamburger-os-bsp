@@ -2108,7 +2108,6 @@ menu "On-chip Peripheral Drivers"
     menuconfig BSP_USING_ONCHIP_RTC
         bool "Enable RTC"
         select RT_USING_RTC
-        select RT_USING_LIBC
         default n
         if BSP_USING_ONCHIP_RTC
             choice
@@ -2441,11 +2440,13 @@ menu "Onboard Peripheral Drivers"
             choice
                 prompt "Select lcd driver"
                 default BSP_USING_LCD_LTDC
+                
+                config BSP_USING_NO_LCD
+                    bool "Disable LCD"
 
                 config BSP_USING_LCD_LTDC
                     bool "Enable LCD LTDC"
                     select BSP_USING_LCD
-                    select RT_TOUCH_PIN_IRQ
                     
                 config BSP_USING_FMCLCD
                     bool "Enable LCD FMC"
@@ -2536,6 +2537,10 @@ menu "Onboard Peripheral Drivers"
             endchoice
             
             if BSP_USING_TOUCH
+                config TOUCH_USING_CALIBRATION
+                    bool "Enable touch calibration"
+                    default n
+                    
                 choice
                     prompt "Select touch driver"
                     default TOUCH_USING_SW

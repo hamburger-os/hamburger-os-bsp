@@ -43,10 +43,9 @@
 #define MAX31826_PROG_EEPROM                ((rt_uint8_t)0xA5)       /*  编程EEPROM */
 #define MAX31826_CMD_TOKEN ((rt_uint8_t)0xA5)
 
-#define WIRE_RST_TIMEOUT                    (60*480)            /* 复位访问超时阈值 */
-#define WIRE_RD_TIMEOUT                     (60*80)             /* 读访问超时阈值 */
-
 #define TEMP_INVALID                        (-12500)            /*  无效的温度数据 */
+
+static struct rt_mutex max31826_mux;    /** 读写互斥信号量 */
 
 static int fal_max31826_init(void);
 static int fal_max31826_read(long offset, rt_uint8_t *buf, size_t size);
@@ -129,6 +128,7 @@ static rt_err_t max31826_init_by_ds2484(void)
 static rt_int32_t DEV_MAX31826_Reset1Wire(void)
 {
     rt_int32_t ret = 0xFF;
+    rt_mutex_take(&max31826_mux, RT_WAITING_FOREVER);
 
 #ifdef MAX31826_USING_IO
     rt_base_t level;
@@ -171,6 +171,7 @@ static rt_int32_t DEV_MAX31826_Reset1Wire(void)
     }
 #endif /* MAX31826_USING_I2C_DS2484 */
 
+    rt_mutex_release(&max31826_mux);
     return ret;
 }
 
@@ -182,6 +183,8 @@ static rt_int32_t DEV_MAX31826_Reset1Wire(void)
  ******************************/
 static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
 {
+    rt_mutex_take(&max31826_mux, RT_WAITING_FOREVER);
+
 #ifdef MAX31826_USING_IO
     rt_base_t level;
 
@@ -197,7 +200,6 @@ static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
     SET_DQ();
     rt_hw_interrupt_enable(level); /* 开中断 */
     rt_hw_us_delay(15);
-
 #endif /* MAX31826_USING_IO */
 
 #ifdef MAX31826_USING_I2C_DS2484
@@ -216,6 +218,8 @@ static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
         LOG_E("MAX31826 write ds2484_dev is null.");
     }
 #endif /* MAX31826_USING_I2C_DS2484 */
+
+    rt_mutex_release(&max31826_mux);
 }
 
 /****************************
@@ -227,6 +231,7 @@ static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
 static rt_uint8_t DEV_MAX31826_ReadBit(void)
 {
     rt_uint8_t readbit = 0;
+    rt_mutex_take(&max31826_mux, RT_WAITING_FOREVER);
 
 #ifdef MAX31826_USING_IO
     rt_base_t level;
@@ -240,7 +245,6 @@ static rt_uint8_t DEV_MAX31826_ReadBit(void)
     readbit = GET_DQ();
     rt_hw_interrupt_enable(level); /* 开中断 */
     rt_hw_us_delay(60);
-
 #endif /* MAX31826_USING_IO */
 
 #ifdef MAX31826_USING_I2C_DS2484
@@ -256,6 +260,8 @@ static rt_uint8_t DEV_MAX31826_ReadBit(void)
         LOG_E("MAX31826 read ds2484_dev is null.");
     }
 #endif /* MAX31826_USING_I2C_DS2484 */
+
+    rt_mutex_release(&max31826_mux);
     return readbit;
 }
 
@@ -705,7 +711,7 @@ int fal_max31826_read(long offset, rt_uint8_t *buf, size_t size)
 
     /* 复位传感器,按照时序进行操作 */
     DEV_MAX31826_Reset1Wire();
-    rt_thread_delay(20);/* 非常有必要 */
+    rt_thread_delay(100);/* 非常有必要 */
     DEV_MAX31826_Write1Wire(MAX31826_CMD_SKIP_ROM);
     DEV_MAX31826_Write1Wire(MAX31826_READ_MEMORY);
     DEV_MAX31826_Write1Wire((rt_uint8_t) addr);
@@ -822,6 +828,14 @@ static int rt_hw_max31826_init()
     rt_int8_t result;
     rt_sensor_t sensor_temp = RT_NULL;
 
+    /* 初始化 读写 互斥 */
+    result = rt_mutex_init(&max31826_mux, "max31826", RT_IPC_FLAG_PRIO);
+    if (result != RT_EOK)
+    {
+        LOG_E("mutex init error %d!", result);
+        return -RT_ERROR;
+    }
+
 #ifdef MAX31826_USING_I2C_DS2484
     if (rt_hw_ds2484_init() != RT_EOK)
     {
@@ -867,6 +881,6 @@ __exit:
     return -RT_ERROR;
 }
 /* 导出到自动初始化 */
-INIT_DEVICE_EXPORT(rt_hw_max31826_init);
+INIT_PREV_EXPORT(rt_hw_max31826_init);
 
 #endif

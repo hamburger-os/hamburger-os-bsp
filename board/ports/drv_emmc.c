@@ -357,6 +357,7 @@ static void emmc_ctrl(uint8_t onoff)
     rt_pin_mode(pin, PIN_MODE_OUTPUT);
 
     rt_pin_write(pin, onoff);
+    rt_thread_delay(100);
 }
 #endif
 

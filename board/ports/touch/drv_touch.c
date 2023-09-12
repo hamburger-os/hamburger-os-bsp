@@ -65,7 +65,8 @@ int drv_touch_hw_init(void)
 }
 INIT_DEVICE_EXPORT(drv_touch_hw_init);
 
-int drv_touch_env_init(void)
+#ifdef TOUCH_USING_CALIBRATION
+int drv_touch_calibration(void)
 {
 #ifdef TOUCH_USING_SW
     sw_calibration("lcd", "touch");
@@ -77,6 +78,7 @@ int drv_touch_env_init(void)
 
     return RT_EOK;
 }
-INIT_COMPONENT_EXPORT(drv_touch_env_init);
+INIT_COMPONENT_EXPORT(drv_touch_calibration);
+#endif
 
 #endif
