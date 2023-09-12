@@ -94,6 +94,7 @@ static void *ETH0ThreadEntry(void *parameter)
     ETHChannelSetRXCallback(&eth0_thread, ETH0RXChannel1Callback);
 
     eth0_thread.size_mq = rt_mq_create("e0 queue", sizeof(uint32_t), 256, RT_IPC_FLAG_FIFO);
+//    eth0_thread.size_mq = rt_mq_create("e0 queue", sizeof(uint32_t), 600, RT_IPC_FLAG_FIFO);
     if(RT_NULL == eth0_thread.size_mq)
     {
         LOG_E("eth0 create mq failed");
@@ -102,7 +103,8 @@ static void *ETH0ThreadEntry(void *parameter)
 
     while(1)
     {
-        ret = rt_mq_recv(eth0_thread.size_mq, (void *)&eth0_thread.rx_szie, sizeof(uint32_t), 1000);
+//        ret = rt_mq_recv(eth0_thread.size_mq, (void *)&eth0_thread.rx_szie, sizeof(uint32_t), 1000);
+        ret = rt_mq_recv(eth0_thread.size_mq, (void *)&eth0_thread.rx_szie, sizeof(uint32_t), RT_WAITING_FOREVER);
         if(RT_EOK == ret)
         {
             rt_device_read(eth0_thread.dev, 0, (void *)eth0_thread.rx_buf, eth0_thread.rx_szie);
@@ -112,50 +114,50 @@ static void *ETH0ThreadEntry(void *parameter)
     }
 }
 
-static rt_err_t ETH1RXChannel1Callback(rt_device_t dev, rt_size_t size)
-{
-    uint32_t rx_size;
-    rt_err_t ret = RT_EOK;
-
-    rx_size = size;
-    if(rx_size != 0)
-    {
-        ret = rt_mq_send(eth1_thread.size_mq, (const void *)&rx_size, sizeof(uint32_t));
-        if(ret != RT_EOK)
-        {
-            LOG_E("can data mq send error");
-            return ret;
-        }
-    }
-    return ret;
-}
-
-static void *ETH1ThreadEntry(void *parameter)
-{
-    rt_err_t ret = RT_EOK;
-
-    ETHChannelInit(&eth1_thread, "e1");
-    ETHChannelSetRXCallback(&eth1_thread, ETH1RXChannel1Callback);
-
-    eth1_thread.size_mq = rt_mq_create("e1 queue", sizeof(uint32_t), 256, RT_IPC_FLAG_FIFO);
-    if(RT_NULL == eth1_thread.size_mq)
-    {
-        LOG_E("eth1 create mq failed");
-        return ;
-    }
-
-    while(1)
-    {
-        ret = rt_mq_recv(eth1_thread.size_mq, (void *)&eth1_thread.rx_szie, sizeof(uint32_t), 1000);
-        if(RT_EOK == ret)
-        {
-            rt_device_read(eth1_thread.dev, 0, (void *)eth1_thread.rx_buf, eth1_thread.rx_szie);
-            rx_safe_layer_check(&eth1_can_data_handle, eth1_thread.rx_buf + 14, IN_ETH_DEV);
-        }
-
-        rt_thread_mdelay(5);
-    }
-}
+//static rt_err_t ETH1RXChannel1Callback(rt_device_t dev, rt_size_t size)
+//{
+//    uint32_t rx_size;
+//    rt_err_t ret = RT_EOK;
+//
+//    rx_size = size;
+//    if(rx_size != 0)
+//    {
+//        ret = rt_mq_send(eth1_thread.size_mq, (const void *)&rx_size, sizeof(uint32_t));
+//        if(ret != RT_EOK)
+//        {
+//            LOG_E("can data mq send error");
+//            return ret;
+//        }
+//    }
+//    return ret;
+//}
+//
+//static void *ETH1ThreadEntry(void *parameter)
+//{
+//    rt_err_t ret = RT_EOK;
+//
+//    ETHChannelInit(&eth1_thread, "e1");
+//    ETHChannelSetRXCallback(&eth1_thread, ETH1RXChannel1Callback);
+//
+//    eth1_thread.size_mq = rt_mq_create("e1 queue", sizeof(uint32_t), 256, RT_IPC_FLAG_FIFO);
+//    if(RT_NULL == eth1_thread.size_mq)
+//    {
+//        LOG_E("eth1 create mq failed");
+//        return ;
+//    }
+//
+//    while(1)
+//    {
+//        ret = rt_mq_recv(eth1_thread.size_mq, (void *)&eth1_thread.rx_szie, sizeof(uint32_t), 1000);
+//        if(RT_EOK == ret)
+//        {
+//            rt_device_read(eth1_thread.dev, 0, (void *)eth1_thread.rx_buf, eth1_thread.rx_szie);
+//            rx_safe_layer_check(&eth1_can_data_handle, eth1_thread.rx_buf + 14, IN_ETH_DEV);
+//        }
+//
+//        rt_thread_mdelay(5);
+//    }
+//}
 
 int ETHThreadInit(void)
 {

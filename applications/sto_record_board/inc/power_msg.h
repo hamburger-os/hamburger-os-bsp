@@ -59,6 +59,22 @@ extern S_POWER_CAN_FRAME *power_can_frame;
 #define POWER_MSG_CAN_0X7E1_DATA_CH               (power_can_frame[6].data_u8[1])
 #define POWER_MSG_CAN_0X7E1_DATA_CTL              (power_can_frame[6].data_u8[2])
 
+#define POWER_MSG_VOLTAGE_CURRENT_CH1             (0x60)
+#define POWER_MSG_VOLTAGE_CURRENT_CH2             (0x61)
+#define POWER_MSG_VOLTAGE_CURRENT_CH3             (0x62)
+#define POWER_MSG_VOLTAGE_CURRENT_CH4             (0x63)
+#define POWER_MSG_VOLTAGE_CURRENT_CH5             (0x64)
+#define POWER_MSG_VOLTAGE_CURRENT_CH6             (0x65)
+
+
+/* 通道不变 电压变化超过0.3V 或 电流变化超过0.002A 记录
+      *   电压单位 0.01V, 电流单位0.001A */
+#define POWER_MSG_VOLTAGE_DIFF                    (30)
+#define POWER_MSG_CURRENT_DIFF                    (2)
+
+/* 温度单位为0.1摄氏度 所以变化超过2度才记录 */
+#define POWER_MSG_TEMP_DIFF                    (20)
+
 /******************************** 按字节对齐 ********************************/
 #pragma pack (1)
 

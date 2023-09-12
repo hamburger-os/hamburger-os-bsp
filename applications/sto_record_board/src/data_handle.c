@@ -8,18 +8,21 @@
  * 2023-07-20     zm       the first version
  */
 #include "data_handle.h"
-#include "can_common_def.h"
-#include "Record_FileCreate.h"
-#include "Record_Board_App.h"
-#include "RecordErrorCode.h"
-
-#include <string.h>
 
 #define DBG_TAG "data handle"
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
+#include <string.h>
+
+#include "can_common_def.h"
+#include "Record_FileCreate.h"
+#include "Record_Board_App.h"
+#include "RecordErrorCode.h"
+#include "sto_record_board.h"
+
 S_CAN_PACKE_Grade s_packet_gradeInfo;           /* 曲线的打包数据缓存区 */
+static uint8_t read_time_flag = 0;
 
 rt_err_t DataHandleInit(S_DATA_HANDLE *p_data_handle)
 {
@@ -128,7 +131,6 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
 {
     rt_err_t ret = -RT_ERROR;
     struct tm tm_new;
-    static uint8_t read_time_flag = 0;
     static uint32_t set_rtc_time = 0u;
 
     if(RT_NULL == p_data_handle)
@@ -439,3 +441,15 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
     return RT_EOK;
 }
 
+uint8_t DataHandleLKJIsOnline(void)
+{
+    if(read_time_flag > 0)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+    return 0;
+}

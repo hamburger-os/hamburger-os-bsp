@@ -84,11 +84,10 @@ sint32_t fm_free_fram_space(S_FILE_MANAGER *fm)
     else
     {
         /* full_path对应的文件存在,则删除该文件，然后再创建该文件 */
-        unlink(full_path);
-        LOG_I("delete %s", full_path);
+        ret = unlink(full_path);
         if(ret < 0)
         {
-            LOG_E("delete error");
+            LOG_E("delete %s error", full_path);
             return ret;
         }
 
@@ -114,18 +113,16 @@ sint32_t fm_free_fram_space(S_FILE_MANAGER *fm)
 }
 
 /*
- * 向铁电存储器中存入临时文件
+ * 文件追加内容
  * */
-sint32_t FMWriteTmpFile(S_FILE_MANAGER *fm, const void *data, size_t count)
+sint32_t FMWriteTmpFile(S_FILE_MANAGER *fm, const char * file_path, const void *data, size_t count)
 {
-    char full_path[PATH_NAME_MAX_LEN] = {0};
     sint32_t fd = 0, ret = 0;
 
-    snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_TEMP_FILE_PATH_NAME, fm->latest_tmp_file_info.file_name);
-    fd = open(full_path, O_CREAT | O_RDWR | O_APPEND, S_IRUSR | S_IWUSR);
+    fd = open(file_path, O_CREAT | O_RDWR | O_APPEND, S_IRUSR | S_IWUSR);
     if (fd < 0)
     {
-        LOG_E("write open %s error", full_path);
+        LOG_E("write open %s error", file_path);
         return (sint32_t)-1;
     }
 
@@ -135,7 +132,7 @@ sint32_t FMWriteTmpFile(S_FILE_MANAGER *fm, const void *data, size_t count)
     close(fd);
     if (ret < 0)
     {
-        LOG_E("write %s error", full_path);
+        LOG_E("write %s error", file_path);
         return (sint32_t)-1;
     }
 
@@ -143,17 +140,15 @@ sint32_t FMWriteTmpFile(S_FILE_MANAGER *fm, const void *data, size_t count)
 }
 
 /*
- * 从铁电存储器中读取临时文件
+ * 从指定位置读取文件
  * */
-static sint32_t FMReadTmpFile(S_FILE_MANAGER *fm, void *data, size_t count)
+static sint32_t FMReadTmpFile(S_FILE_MANAGER *fm, const char * file_path, void *data, size_t count)
 {
-    char full_path[PATH_NAME_MAX_LEN] = {0};
     sint32_t bytes_read;
     sint32_t fd = 0;
     sint32_t lseek_count = 0;
 
-    snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_TEMP_FILE_PATH_NAME, fm->latest_tmp_file_info.file_name);
-    fd = open(full_path, O_RDONLY);
+    fd = open(file_path, O_RDONLY);
     if (fd > 0)
     {
         lseek_count = ChangeValuePositiveAndNegative(count);
@@ -167,13 +162,13 @@ static sint32_t FMReadTmpFile(S_FILE_MANAGER *fm, void *data, size_t count)
         }
         else
         {
-            LOG_E("read %s size = %d", full_path, bytes_read);
+            LOG_E("read %s size = %d", file_path, bytes_read);
             return -1;
         }
     }
     else
     {
-        LOG_E("read open %s error", full_path);
+        LOG_E("read open %s error", file_path);
         return -1;
     }
 
@@ -192,6 +187,7 @@ static sint32_t FMInitLatestTmpFile(S_FILE_MANAGER *fm)
     S_LATEST_TMP_FILE_INFO *latest_info = &fm->latest_tmp_file_info;
     sint32_t ret = -1;
     sint32_t fd = 0;
+    char full_path[PATH_NAME_MAX_LEN] = {0};
 
     LOG_I("latest file name: %s.", LATEST_TEMP_FILE_NAME);
     if (FMGetLatestFileInfo(fm, LATEST_TMP_NAME_FILE_PATH_NAME, LATEST_TEMP_FILE_NAME, latest_info, sizeof(S_LATEST_TMP_FILE_INFO)) == 0)
@@ -205,7 +201,8 @@ static sint32_t FMInitLatestTmpFile(S_FILE_MANAGER *fm)
         }
         else
         {
-            ret = FMReadTmpFile(fm, s_current_file_info.write_buf, sizeof(WRITE_BUF));
+            snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_TEMP_FILE_PATH_NAME, fm->latest_tmp_file_info.file_name);
+            ret = FMReadTmpFile(fm, full_path, s_current_file_info.write_buf, sizeof(WRITE_BUF));
             if(ret < 0)
             {
                 LOG_E("FMReadTmpFile error");
@@ -225,8 +222,6 @@ static sint32_t FMInitLatestTmpFile(S_FILE_MANAGER *fm)
     latest_info->head_flag = LATEST_DIR_FILE_HEAD_FLAG;
     latest_info->not_exsit = 1;
 
-    char full_path[PATH_NAME_MAX_LEN] = { 0 };
-
     snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_TEMP_FILE_PATH_NAME, fm->latest_tmp_file_info.file_name);
     fd = open(full_path, O_CREAT | O_RDWR | O_APPEND, S_IRUSR | S_IWUSR);
     if (fd < 0)
@@ -239,7 +234,7 @@ static sint32_t FMInitLatestTmpFile(S_FILE_MANAGER *fm)
     return FMWriteLatestInfo(LATEST_TMP_NAME_FILE_PATH_NAME, LATEST_TEMP_FILE_NAME, (const void *) latest_info, sizeof(S_LATEST_TMP_FILE_INFO));
 }
 
-sint32_t FMWriteFile(S_FILE_MANAGER *fm, const char * dirname, const void *dir_file, size_t count)
+sint32_t FMWriteDirFile(S_FILE_MANAGER *fm, const char * dirname, const void *dir_file, size_t count)
 {
     sint32_t fd = 0;
     sint32_t ret = -1;
@@ -271,7 +266,7 @@ sint32_t FMWriteFile(S_FILE_MANAGER *fm, const char * dirname, const void *dir_f
     }
 }
 
-sint32_t FMReadFile(S_FILE_MANAGER *fm, const char * dirname, void *dir_file, size_t len)
+sint32_t FMReadDirFile(S_FILE_MANAGER *fm, const char * dirname, void *dir_file, size_t len)
 {
     sint32_t fd = 0;
     char full_path[PATH_NAME_MAX_LEN] = { 0 };

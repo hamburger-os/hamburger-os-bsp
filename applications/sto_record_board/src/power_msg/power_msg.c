@@ -92,103 +92,71 @@ static rt_err_t PowerMsgInit(S_POWER_MSG *msg)
     }
 }
 
-static void RecordingPowerVoltageVurrentSelfCheckMessage(void)
+static void RecordingPowerVoltageCurrentOneSelfCheckMessage(uint8_t record_num2, uint8_t ch, uint16_t v_new, uint16_t a_new, uint8_t *last_value)
 {
-    static uint8_t last_value[5] = {0x00,0x00,0x00,0x00,0x00};
-    uint8_t ch_new = 0, ch_old = 0;
-    uint16_t v_new = 0, v_old = 0;
-    uint16_t a_new = 0, a_old = 0;
+    uint16_t v_old = 0;
+    uint16_t a_old = 0;
+
+    v_old =  ((uint16_t) (last_value[2]) << 8u) + (uint16_t)last_value[1];
+    a_old =  ((uint16_t) (last_value[4]) << 8u) + (uint16_t)last_value[3];
+
+    if((POWER_MSG_VOLTAGE_DIFF <= abs(v_new - v_old)) || (POWER_MSG_CURRENT_DIFF <= abs(a_new - a_old)))
+    {
+        last_value[0] = ch;
+        last_value[1] = (uint8_t)v_new;
+        last_value[2] = (uint8_t)(v_new >> 8);
+        last_value[3] = (uint8_t)a_new;
+        last_value[4] = (uint8_t)(a_new >> 8);
+
+        WriteFileContantPkt(0xA6, record_num2, PWOER_MSG_DEV_CODE, last_value, 4u);
+//        LOG_I("power ch %x, v %d, a %d", ch, v_new, a_new);
+    }
+}
+
+static void RecordingPowerVoltageCurrentSelfCheckMessage(void)
+{
+    static uint8_t last_value_ch0[5] = {0x00,0x00,0x00,0x00,0x00};
+    static uint8_t last_value_ch1[5] = {0x00,0x00,0x00,0x00,0x00};
+    static uint8_t last_value_ch2[5] = {0x00,0x00,0x00,0x00,0x00};
+    static uint8_t last_value_ch3[5] = {0x00,0x00,0x00,0x00,0x00};
+    static uint8_t last_value_ch4[5] = {0x00,0x00,0x00,0x00,0x00};
+    static uint8_t last_value_ch5[5] = {0x00,0x00,0x00,0x00,0x00};
+
+    uint8_t ch = 0;
+    uint16_t v_new = 0;
+    uint16_t a_new = 0;
 
     rt_mutex_take(power_msg.mutex, RT_WAITING_FOREVER);
 
-    ch_new = POWER_MSG_CAN_0X7C1_DATA_CH;
+    ch = POWER_MSG_CAN_0X7C1_DATA_CH;
     v_new =  ((uint16_t) (*(&POWER_MSG_CAN_0X7C1_DATA_V + 1)) << 8u) + (uint16_t)POWER_MSG_CAN_0X7C1_DATA_V;
     a_new =  ((uint16_t) (*(&POWER_MSG_CAN_0X7C1_DATA_A + 1)) << 8u) + (uint16_t)POWER_MSG_CAN_0X7C1_DATA_A;
 
     rt_mutex_release(power_msg.mutex);
 
-    ch_old = last_value[0];
-    v_old =  ((uint16_t) (last_value[2]) << 8u) + (uint16_t)last_value[1];
-    a_old =  ((uint16_t) (last_value[4]) << 8u) + (uint16_t)last_value[3];
-
-    /* 通道变化时必须记录 */
-    if(ch_old != ch_new)
+    switch(ch)
     {
-        last_value[0] = ch_new;
-        last_value[1] = (uint8_t)v_new;
-        last_value[2] = (uint8_t)(v_new >> 8);
-        last_value[3] = (uint8_t)a_new;
-        last_value[4] = (uint8_t)(a_new >> 8);
-        WriteFileContantPkt(0xA6, 0x64, PWOER_MSG_DEV_CODE, last_value, 5u);
-        LOG_I("power ch %x, v %d, a %d, old ch %x", ch_new, v_new, a_new, ch_old);
-    }
-    /* 通道不变 电压变化超过0.3V 或 电流变化超过0.002A 记录
-          *   电压单位 0.01V, 电流单位0.001A */
-    else if((30U <= abs(v_new - v_old)) || (2U <= abs(a_new - a_old)))
-    {
-        last_value[0] = ch_new;
-        last_value[1] = (uint8_t)v_new;
-        last_value[2] = (uint8_t)(v_new >> 8);
-        last_value[3] = (uint8_t)a_new;
-        last_value[4] = (uint8_t)(a_new >> 8);
-        WriteFileContantPkt(0xA6, 0x64, PWOER_MSG_DEV_CODE, last_value, 5u);
-        LOG_I("power ch no %x, v %d, a %d, old ch %x", ch_new, v_new, a_new, ch_old);
-    }
-}
-
-static void RecordingPowerStateSelfCheckMessage(void)
-{
-    static uint8_t last_value[5] = {0x00,0x00,0x00,0x00,0x00};
-    uint8_t state_type_new = 0, state_type_old = 0;
-    uint32_t state_new = 0, state_old = 0;
-
-    rt_mutex_take(power_msg.mutex, RT_WAITING_FOREVER);
-
-    state_type_new = POWER_MSG_CAN_0X7C2_DATA_STATE_TYEP;
-    state_new = ((uint32_t) (*(&POWER_MSG_CAN_0X7C2_DATA_STATE_INFO + 3)) << 32u) + ((uint32_t) (*(&POWER_MSG_CAN_0X7C2_DATA_STATE_INFO + 2)) << 16u) +
-                ((uint32_t) (*(&POWER_MSG_CAN_0X7C2_DATA_STATE_INFO + 1)) << 8u) + (uint32_t)POWER_MSG_CAN_0X7C2_DATA_STATE_INFO;
-
-    rt_mutex_release(power_msg.mutex);
-
-    state_type_old = last_value[0];
-    state_old = ((uint32_t) (last_value[4]) << 32u) + ((uint32_t) (last_value[3]) << 16u) +
-            ((uint32_t) (last_value[2]) << 8u) + (uint32_t)last_value[1];
-
-    if(state_old != state_new || state_type_new != state_type_old)
-    {
-        last_value[0] = state_type_new;
-        last_value[1] = (uint8_t)state_new;
-        last_value[2] = (uint8_t)(state_new >> 8);
-        last_value[3] = (uint8_t)(state_new >> 16);
-        last_value[4] = (uint8_t)(state_new >> 32);
-        WriteFileContantPkt(0xA6, 0x65, PWOER_MSG_DEV_CODE, last_value, 5u);
-        LOG_I("state type %x, state %x", state_type_new, state_new);
-    }
-}
-
-static void RecordingPowerPowerOnTimeSelfCheckMessage(void)
-{
-    static uint8_t last_value[4] = {0x00,0x00,0x00,0x00};
-    uint32_t power_on_time_new = 0, power_on_time_old = 0;
-
-    rt_mutex_take(power_msg.mutex, RT_WAITING_FOREVER);
-
-    power_on_time_new = ((uint32_t) (*(&POWER_MSG_CAN_0X7D1_DATA_POWER_ON_TIME + 3)) << 32u) + ((uint32_t) (*(&POWER_MSG_CAN_0X7D1_DATA_POWER_ON_TIME + 2)) << 16u) +
-                ((uint32_t) (*(&POWER_MSG_CAN_0X7D1_DATA_POWER_ON_TIME + 1)) << 8u) + (uint32_t)POWER_MSG_CAN_0X7D1_DATA_POWER_ON_TIME;
-
-    rt_mutex_release(power_msg.mutex);
-
-    power_on_time_old = ((uint32_t) (last_value[3]) << 32u) + ((uint32_t) (last_value[2]) << 16u) +
-            ((uint32_t) (last_value[1]) << 8u) + (uint32_t)last_value[0];
-
-    if(power_on_time_new != power_on_time_old)
-    {
-        last_value[0] = (uint8_t)power_on_time_new;
-        last_value[1] = (uint8_t)(power_on_time_new >> 8);
-        last_value[2] = (uint8_t)(power_on_time_new >> 16);
-        last_value[3] = (uint8_t)(power_on_time_new >> 32);
-        WriteFileContantPkt(0xA6, 0x69, PWOER_MSG_DEV_CODE, last_value, 4u);
-        LOG_I("power on time %d", power_on_time_new);
+    case POWER_MSG_VOLTAGE_CURRENT_CH1:
+        RecordingPowerVoltageCurrentOneSelfCheckMessage(0x64, ch, v_new, a_new, last_value_ch0);
+        break;
+    case POWER_MSG_VOLTAGE_CURRENT_CH2:
+        RecordingPowerVoltageCurrentOneSelfCheckMessage(0x65, ch, v_new, a_new, last_value_ch1);
+        break;
+    case POWER_MSG_VOLTAGE_CURRENT_CH3:
+        RecordingPowerVoltageCurrentOneSelfCheckMessage(0x66, ch, v_new, a_new, last_value_ch2);
+        break;
+    case POWER_MSG_VOLTAGE_CURRENT_CH4:
+        RecordingPowerVoltageCurrentOneSelfCheckMessage(0x67, ch, v_new, a_new, last_value_ch3);
+        break;
+    case POWER_MSG_VOLTAGE_CURRENT_CH5:
+        RecordingPowerVoltageCurrentOneSelfCheckMessage(0x68, ch, v_new, a_new, last_value_ch4);
+        break;
+    case POWER_MSG_VOLTAGE_CURRENT_CH6:
+        RecordingPowerVoltageCurrentOneSelfCheckMessage(0x69, ch, v_new, a_new, last_value_ch5);
+        break;
+    default:
+        LOG_E("power ch error");
+        break;
     }
 }
 
@@ -209,8 +177,9 @@ static void RecordingPowerPowerOnCntSelfCheckMessage(void)
     {
         last_value[0] = (uint8_t)power_on_cnt_new;
         last_value[1] = (uint8_t)(power_on_cnt_new >> 8);
-        WriteFileContantPkt(0xA6, 0x66, PWOER_MSG_DEV_CODE, last_value, 2u);
-        LOG_I("power on cnt %d", power_on_cnt_new);
+
+        WriteFileContantPkt(0xA6, 0x6a, PWOER_MSG_DEV_CODE, last_value, 4u);
+//        LOG_I("power temp1 %d temp 2 %d", temp1_new, temp2_new);
     }
 }
 
@@ -230,40 +199,15 @@ static void RecordingPowerTempSelfCheckMessage(void)
     temp1_old =  ((uint16_t) (last_value[1]) << 8u) + (uint16_t)last_value[0];
     temp2_old =  ((uint16_t) (last_value[3]) << 8u) + (uint16_t)last_value[2];
 
-    /* 温度单位为0.1摄氏度 所以变化超过2度才记录 */
-    if((20U <= abs(temp1_new - temp1_old)) || (10U <= abs(temp2_new - temp2_old)))
+    if((POWER_MSG_TEMP_DIFF <= abs(temp1_new - temp1_old)) || (POWER_MSG_TEMP_DIFF <= abs(temp2_new - temp2_old)))
     {
         last_value[0] = (uint8_t)temp1_new;
         last_value[1] = (uint8_t)(temp1_new >> 8);
         last_value[2] = (uint8_t)temp2_new;
         last_value[3] = (uint8_t)(temp2_new >> 8);
-        WriteFileContantPkt(0xA6, 0x67, PWOER_MSG_DEV_CODE, last_value, 4u);
-        LOG_I("power temp1 %d temp 2 %d", temp1_new, temp2_new);
-    }
-}
 
-static void RecordingPowerCTLSelfCheckMessage(void)
-{
-    static uint8_t last_value[2] = {0x00,0x00};
-    uint8_t ch_new = 0, ch_old = 0;
-    uint8_t ctl_new = 0, ctl_old = 0;
-
-    rt_mutex_take(power_msg.mutex, RT_WAITING_FOREVER);
-
-    ch_new = POWER_MSG_CAN_0X7E1_DATA_CH;
-    ctl_new = POWER_MSG_CAN_0X7E1_DATA_CTL;
-
-    rt_mutex_release(power_msg.mutex);
-
-    ch_old =  last_value[0];
-    ctl_old =  last_value[1];
-
-    if(ch_old != ch_new || ctl_new != ctl_old)
-    {
-        last_value[0] = (uint8_t)ch_new;
-        last_value[1] = (uint8_t)ctl_new;
-        WriteFileContantPkt(0xA6, 0x68, PWOER_MSG_DEV_CODE, last_value, 2u);
-        LOG_I("ctrl ch %x, ctl %x", ch_new, ctl_new);
+        WriteFileContantPkt(0xA6, 0x6b, PWOER_MSG_DEV_CODE, last_value, 4u);
+//        LOG_I("power temp1 %d temp 2 %d", temp1_new, temp2_new);
     }
 }
 
@@ -274,12 +218,12 @@ static void RecordingPowerSoftInfoMessage(void)
 
     rt_mutex_take(power_msg.mutex, RT_WAITING_FOREVER);
 
-    soft_new = ((uint32_t) (*(&POWER_MSG_CAN_0X7D6_DATA_SOFT + 3)) << 32u) + ((uint32_t) (*(&POWER_MSG_CAN_0X7D6_DATA_SOFT + 2)) << 16u) +
+    soft_new = ((uint32_t) (*(&POWER_MSG_CAN_0X7D6_DATA_SOFT + 3)) << 24u) + ((uint32_t) (*(&POWER_MSG_CAN_0X7D6_DATA_SOFT + 2)) << 16u) +
                 ((uint32_t) (*(&POWER_MSG_CAN_0X7D6_DATA_SOFT + 1)) << 8u) + (uint32_t)POWER_MSG_CAN_0X7D6_DATA_SOFT;
 
     rt_mutex_release(power_msg.mutex);
 
-    soft_old = ((uint32_t) (last_value[3]) << 32u) + ((uint32_t) (last_value[2]) << 16u) +
+    soft_old = ((uint32_t) (last_value[3]) << 24u) + ((uint32_t) (last_value[2]) << 16u) +
             ((uint32_t) (last_value[1]) << 8u) + (uint32_t)last_value[0];
 
     if(soft_old != soft_new)
@@ -287,9 +231,10 @@ static void RecordingPowerSoftInfoMessage(void)
         last_value[0] = (uint8_t)soft_new;
         last_value[1] = (uint8_t)(soft_new >> 8);
         last_value[2] = (uint8_t)(soft_new >> 16);
-        last_value[3] = (uint8_t)(soft_new >> 32);
+        last_value[3] = (uint8_t)(soft_new >> 24);
+
         WriteFileContantPkt(0xA5, 0x08, PWOER_MSG_DEV_CODE, last_value, 4u);
-        LOG_I("soft new %x, old %x", soft_new, soft_old);
+//        LOG_I("soft new %x, old %x", soft_new, soft_old);
     }
 }
 
@@ -297,12 +242,9 @@ void RecordingPowerPlugMessage(void)
 {
     RecordingPowerSoftInfoMessage();
 
-    RecordingPowerVoltageVurrentSelfCheckMessage();
-//    RecordingPowerStateSelfCheckMessage();  //没发
-//    RecordingPowerPowerOnTimeSelfCheckMessage();   //没必要记录
+    RecordingPowerVoltageCurrentSelfCheckMessage();
     RecordingPowerPowerOnCntSelfCheckMessage();
     RecordingPowerTempSelfCheckMessage();
-//    RecordingPowerCTLSelfCheckMessage();  //没发
 }
 
 static void PowerMsgCanDeal(struct rt_can_msg *can_msg)
@@ -318,13 +260,6 @@ static void PowerMsgCanDeal(struct rt_can_msg *can_msg)
     case POWER_MSG_CAN_0X7C1:
         rt_memcpy (POWER_MSG_CAN_0X7C1_DATA.data_u8, can_msg->data, can_msg->len);
         break;
-//    case POWER_MSG_CAN_0x7C2:
-//        LOG_HEX("read 0x7c2", 16, POWER_MSG_CAN_0X7E1_DATA.data_u8, 8);
-//        rt_memcpy (POWER_MSG_CAN_0X7C2_DATA.data_u8, can_msg->data, can_msg->len);
-//        break;
-//    case POWER_MSG_CAN_0x7D1:
-//        rt_memcpy (POWER_MSG_CAN_0X7D1_DATA.data_u8, can_msg->data, can_msg->len);
-//        break;
     case POWER_MSG_CAN_0x7D2:
         rt_memcpy (POWER_MSG_CAN_0X7D2_DATA.data_u8, can_msg->data, can_msg->len);
         break;
@@ -334,15 +269,10 @@ static void PowerMsgCanDeal(struct rt_can_msg *can_msg)
     case POWER_MSG_CAN_0x7D6:
         rt_memcpy (POWER_MSG_CAN_0X7D6_DATA.data_u8, can_msg->data, can_msg->len);
         break;
-//    case POWER_MSG_CAN_0x7E1:
-//        LOG_HEX("read 0x7e1", 16, POWER_MSG_CAN_0X7E1_DATA.data_u8, 8);
-//        rt_memcpy (POWER_MSG_CAN_0X7E1_DATA.data_u8, can_msg->data, can_msg->len);
-//        break;
     default:
         break;
     }
     rt_mutex_release(power_msg.mutex);
-    return RT_EOK;
 }
 
 static void *PowerMsgThreadEntry(void *parameter)
@@ -372,9 +302,6 @@ static void *PowerMsgThreadEntry(void *parameter)
         /* 从 CAN 读取一帧数据 */
         if (rt_device_read(power_msg.can_dev, 0, &rxmsg, sizeof(rxmsg)) == sizeof(rxmsg))
         {
-//            LOG_D("read %x %d", rxmsg.id, rxmsg.len);
-//            LOG_HEX("read", 16, rxmsg.data, 8);
-
             /* crc校验 */
             msg_crc = Crc16TabCCITT(rxmsg.data, (POWER_MSG_CAN_DATA_NUM - 2));
             read_crc = ((uint16_t) (rxmsg.data[7]) << 8u) + (uint16_t)rxmsg.data[6];

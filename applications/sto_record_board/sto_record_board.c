@@ -29,21 +29,20 @@
 #define BOARD_INIT_THREAD_TIMESLICE        5
 
 S_DATA_HANDLE eth0_can_data_handle;
-S_DATA_HANDLE eth1_can_data_handle;
+//S_DATA_HANDLE eth1_can_data_handle;
 S_FILE_MANAGER file_manager;
 
 static void *BoardInitThreadEntry(void *parameter)
 {
     DataHandleInit(&eth0_can_data_handle);
-//    DataHandleInit(&eth1_can_data_handle);
+    ETHThreadInit();
     FMInit(&file_manager);
     LedCtrlInit();
 
     /* thread */
-    ETHThreadInit();
     FileThreadInit();
-    PowerMsgThreadInit();
     usb_init();
+    PowerMsgThreadInit();
     LOG_I("init ok");
 }
 

@@ -82,7 +82,7 @@ static int is_dir(const char *path)
  * @retval 0:否 1:是
  *
  *******************************************************/
-static int is_file(const char *path)
+int is_file(const char *path)
 {
     struct stat statbuf;
     if (stat(path, &statbuf) == 0)
