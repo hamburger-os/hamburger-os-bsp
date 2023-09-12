@@ -171,10 +171,10 @@ static sint32_t store_file_func(file_info_t *p, const char *target)
     }
 
     /* 将拷贝成功的记录文件对应的目录内容设置为已转存 */
-    if(FMReadFile(&file_manager, p->dir_name, (void *)buffer, sizeof(SFile_Directory)) == 0)
+    if(FMReadDirFile(&file_manager, p->dir_name, (void *)buffer, sizeof(SFile_Directory)) == 0)
     {
         ((SFile_Directory *)buffer)->is_save = 1;
-        if(FMWriteFile(&file_manager, p->dir_name, (const void *)buffer, sizeof(SFile_Directory)) < 0)
+        if(FMWriteDirFile(&file_manager, p->dir_name, (const void *)buffer, sizeof(SFile_Directory)) < 0)
         {
             return -1;
         }

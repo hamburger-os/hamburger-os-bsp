@@ -10,7 +10,13 @@
 **2023-07-21      zm           add swos2
 ********************************************************************************************/
 #include "Record_FileCreate.h"
+
+#define DBG_TAG "FileCreat"
+#define DBG_LVL DBG_LOG
+#include <rtdbg.h>
+
 #include "common.h"
+
 #include <rtthread.h>
 
 #include <stdio.h>
@@ -21,11 +27,7 @@
 
 #include "utils.h"
 #include "sto_record_board.h"
-
-#define DBG_TAG "FileCreat"
-#define DBG_LVL DBG_LOG
-#include <rtdbg.h>
-
+#include "power_msg.h"
 
 /* private macro definition -------------------------------------------------------------------- */
 /* 写文件头标志 */
@@ -342,11 +344,12 @@ static RecordingMessage  msgRecording =\
 static uint8_t Record_Condition_Judge(void);
 static rt_err_t Creat_FileHead(S_CURRENT_FILE_INFO *current_file_info);
 static void Get_Gonggongxinxi( void );
-static void WriteFileContantPkt( uint8_t num1, uint8_t num2, uint8_t device_code, uint8_t *contant, uint8_t lenth );
+void WriteFileContantPkt( uint8_t num1, uint8_t num2, uint8_t device_code, uint8_t *contant, uint8_t lenth );
 static void WriteGonggongxinxiPkt( void );
-static void Get_FileName(SFile_Directory *directory );
+static void Get_FileNameByLKJ(SFile_Directory *directory );
+static rt_err_t Get_FileNameNOLKJ(SFile_Directory *directory);
 static void Get_FileContant( void );
-static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info);
+static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info, uint8_t is_creat_new_file, uint8_t is_online);
 static uint8_t Init_GonggongxinxiState( void );
 static void Update_FileHead(void);
 static sint32_t fm_write_record_file_head(S_CURRENT_FILE_INFO *current_file_info);
@@ -533,10 +536,43 @@ void RecordBoard_FileCreate(void)
     static uint32_t File_time = 0u;
     struct stat stat_l;
     int32_t ret = 0;
+    static uint8_t last_online_state = 0, current_online_state = 0;
 
+    current_online_state = DataHandleLKJIsOnline();
+
+    if(1 == current_online_state && 0  == last_online_state)
+    {
+        Directory_time = rt_tick_get() + 1010;
+    }
+    last_online_state = current_online_state;
     if (Common_BeTimeOutMN(&Directory_time, 1000u))
     {
-        Init_FileDirectory(current_file_info);
+        if(current_online_state > 0)
+        {
+            Init_FileDirectory(current_file_info, Record_Condition_Judge(), current_online_state);
+        }
+        else
+        {
+            if(0 == current_file_info->file_dir->off_line_fie_index)
+            {
+                snprintf(full_path, sizeof(full_path), "%s/%s.DSW", RECORD_FILE_PATH_NAME, OFF_LINE_FILE_1_NAME);
+
+                if(access(full_path, F_OK) != 0)  /* 文件不存在 */
+                {
+                    Init_FileDirectory(current_file_info, 1, current_online_state);
+                }
+                else
+                {
+                    /* 文件存在 */
+                    /* 文件名为上次有lkj时的文件名，这个时候不更换为no lkj */
+                }
+            }
+            else
+            {
+                Init_FileDirectory(current_file_info, Record_Condition_Judge(), current_online_state);
+            }
+        }
+
     } /* end if */
 
     /* 100ms循环检测 */
@@ -586,7 +622,7 @@ void RecordBoard_FileCreate(void)
         }
         /* 文件大小 */
         s_File_Directory.u32_file_size = stat_l.st_size;
-        FMWriteFile(&file_manager, file_manager.latest_dir_file_info.file_name,
+        FMWriteDirFile(&file_manager, file_manager.latest_dir_file_info.file_name,
                     (const void *) &s_File_Directory,
                     sizeof(SFile_Directory));
 
@@ -650,11 +686,103 @@ static uint8_t Record_Condition_Judge(void)
     return judge_resault;
 }
 
+static rt_err_t record_file_create(S_FILE_MANAGER *p_file_manager, uint8_t is_online)
+{
+    sint32_t ret = 0;
+
+    if(NULL == p_file_manager)
+    {
+        return -RT_EEMPTY;
+    }
+
+    /* 生成目录与记录文件名 */
+    if(is_online)
+    {
+        p_file_manager->latest_dir_file_info.dir_num += 1u;
+        LOG_I("start create new file dir num %d", p_file_manager->latest_dir_file_info.dir_num);
+        if (p_file_manager->latest_dir_file_info.dir_num > FILE_MAX_NUM)    //目录个数
+        {
+            if (fm_free_emmc_space() < 0)
+            {
+                LOG_E("fm_free_emmc_space error");
+                return -RT_ERROR;
+            }
+        } /* end if */
+
+
+        /* 生成新目录 */
+        rt_memcpy (p_file_manager->current_info->file_dir->ch_date, &TIME_NYR, 3u);
+        rt_memcpy (p_file_manager->current_info->file_dir->ch_time, &TIME_SFM, 3u);
+
+        /* 计数方式采用先加1后用的方式，避免数据丢失 */
+        p_file_manager->current_info->file_dir->u32_over_flag = 0u;
+        p_file_manager->current_info->file_dir->u32_file_size = sizeof(SFile_Head);
+        p_file_manager->current_info->file_dir->file_id = p_file_manager->latest_dir_file_info.dir_num;
+
+        LOG_I("data %d %d %d %d", p_file_manager->current_info->file_dir->ch_date[0], p_file_manager->current_info->file_dir->ch_date[1],
+                p_file_manager->current_info->file_dir->ch_date[2], p_file_manager->current_info->file_dir->ch_date[3]);
+
+        Get_FileNameByLKJ(p_file_manager->current_info->file_dir);
+    }
+    else
+    {
+
+        if(Get_FileNameNOLKJ(p_file_manager->current_info->file_dir) != RT_EOK)
+        {
+            LOG_E("get on lkj file name error");
+            return -RT_ERROR;
+        }
+    }
+
+    /* 1.生成新的记录文件 */
+    char full_path[PATH_NAME_MAX_LEN];
+    snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, p_file_manager->current_info->file_dir->ch_file_name);
+    LOG_I("creat record file: %s", full_path);
+    ret = create_file(full_path);
+    if (ret < 0)
+    {
+        LOG_E("create record %s error, ret=%d", full_path, ret);
+        return -RT_ERROR;
+    }
+
+    /* 2.生成新的目录文件 */
+    memset(full_path, 0, sizeof(full_path));
+    snprintf(full_path, sizeof(full_path), "%s/%s", DIR_FILE_PATH_NAME,
+            p_file_manager->latest_dir_file_info.file_name);
+    LOG_I("creat dir file: %s", full_path);
+    ret = create_file(full_path);
+    if (ret < 0)
+    {
+        LOG_E("create %s error, ret=%d", p_file_manager->latest_dir_file_info.file_name, ret);
+        return -RT_ERROR;
+    }
+
+    /* 3.把最新的目录文件信息写入配置文件 */
+    ret = FMWriteLatestInfo(LATEST_DIR_NAME_FILE_PATH_NAME, NEW_DIR_FILE_NAME_CONF, (const void *) &p_file_manager->latest_dir_file_info, sizeof(S_LATEST_DIR_FILE_INFO));
+    if (ret < 0)
+    {
+        LOG_E("write latest info error");
+        return -RT_ERROR;
+    }
+
+    /* 4.写入目录信息 */
+    ret = FMWriteDirFile(p_file_manager, p_file_manager->latest_dir_file_info.file_name,
+                            (const void *) p_file_manager->current_info->file_dir,
+                            sizeof(SFile_Directory));
+    if (ret < 0)
+    {
+        LOG_E("%s write dir error", p_file_manager->latest_dir_file_info.file_name);
+        return -RT_ERROR;
+    }
+
+    return RT_EOK;
+}
+
 /********************************************************************************************
 ** @brief: Init_FileDirectory
 ** @param: null
 ********************************************************************************************/
-static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
+static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info, uint8_t is_creat_new_file, uint8_t is_online)
 {
     if (NULL == current_file_info || NULL == current_file_info->file_dir)
     {
@@ -666,8 +794,23 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
     sint32_t ret = 0;
     struct stat stat_l;
 
+    if(!is_online)
+    {
+        nulldata[0] = 0xa5;
+        nulldata[1] = 0x5a;
+        nulldata[2] = 0xa5;
+        nulldata[3] = 0x5a;
+        nulldata[4] = 0xa5;
+        nulldata[5] = 0x5a;
+        nulldata[6] = 0xa5;
+        nulldata[7] = 0x5a;
+    }
+    else
+    {
+//        memset(nulldata, 0, sizeof(nulldata));
+    }
     /* 确认新文件生成标记，置位开始记录文件标志 */
-    if (Record_Condition_Judge())
+    if(is_creat_new_file)
     {
         CheCi_Count1 += 1u;
         CheCi_Count2 = 0u;
@@ -707,11 +850,11 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
                 if(ret < 0)
                 {
                     LOG_E("can not stat file '%s'.error code: 0x%08x", full_path, ret);
-                    return;
+                    return -RT_ERROR;
                 }
                 /* 文件大小 */
                 s_File_Directory.u32_file_size = stat_l.st_size;
-                FMWriteFile(&file_manager, file_manager.latest_dir_file_info.file_name,
+                FMWriteDirFile(&file_manager, file_manager.latest_dir_file_info.file_name,
                             (const void *) &s_File_Directory,
                             sizeof(SFile_Directory));
 
@@ -770,120 +913,11 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info)
     if (Create_Flag == 1u)
     {
         Create_Flag = 0u;
-        file_manager.latest_dir_file_info.dir_num += 1u;
-        LOG_I("start create new file dir num %d", file_manager.latest_dir_file_info.dir_num);
-        if (file_manager.latest_dir_file_info.dir_num > FILE_MAX_NUM)    //目录个数
+        if(record_file_create(&file_manager, is_online) != RT_EOK)
         {
-            if (fm_free_emmc_space() < 0)
-            {
-                LOG_E("fm_free_emmc_space error");
-            }
-        } /* end if */
-
-        /* 生成新目录 */
-        rt_memcpy (s_File_Directory.ch_date, &TIME_NYR, 3u);
-        rt_memcpy (s_File_Directory.ch_time, &TIME_SFM, 3u);
-
-        /* 计数方式采用先加1后用的方式，避免数据丢失 */
-        s_File_Directory.u32_over_flag = 0u;
-        s_File_Directory.u32_file_size = sizeof(SFile_Head);
-        s_File_Directory.file_id = file_manager.latest_dir_file_info.dir_num;
-
-        LOG_I("data %d %d %d %d", s_File_Directory.ch_date[0], s_File_Directory.ch_date[1], s_File_Directory.ch_date[2],
-                s_File_Directory.ch_date[3]);
-        /* 生成目录与记录文件名 */
-        Get_FileName(&s_File_Directory);
-
-        /* 1.生成新的记录文件 */
-        char full_path[PATH_NAME_MAX_LEN];
-        snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, s_File_Directory.ch_file_name);
-        LOG_I("creat record file: %s", full_path);
-        ret = create_file(full_path);
-        if (ret < 0)
-        {
-            LOG_E("create record %s error, ret=%d", full_path, ret);
+            LOG_E("创建新文件失败");
         }
 
-        /* 2.生成新的目录文件 */
-        memset(full_path, 0, sizeof(full_path));
-        snprintf(full_path, sizeof(full_path), "%s/%s", DIR_FILE_PATH_NAME,
-                file_manager.latest_dir_file_info.file_name);
-        LOG_I("creat dir file: %s", full_path);
-        ret = create_file(full_path);
-        if (ret < 0)
-        {
-            LOG_E("create %s error, ret=%d", file_manager.latest_dir_file_info.file_name, ret);
-        }
-
-        /* 3.把最新的目录文件信息写入配置文件 */
-        FMWriteLatestInfo(LATEST_DIR_NAME_FILE_PATH_NAME, NEW_DIR_FILE_NAME_CONF, (const void *) &file_manager.latest_dir_file_info, sizeof(S_LATEST_DIR_FILE_INFO));
-
-        /* 4.写入目录信息 */
-        FMWriteFile(&file_manager, file_manager.latest_dir_file_info.file_name,
-                    (const void *) &s_File_Directory,
-                    sizeof(SFile_Directory));
-
-#if 0
-        /* 打开目录文件 */
-        sint32_t fd = 0;
-        fd = open(full_path, O_RDWR);
-        if (fd < 0)
-        {
-            LOG_E("open %s error, ret=%d", full_path, fd);
-            return -RT_ERROR;
-        }
-
-        /* 写入目录信息 */
-        ret = write(fd, (char *)&s_File_Directory, sizeof(SFile_Directory));
-        fsync(fd);
-        close(fd);
-        if(ret < 0)
-        {
-            return -RT_ERROR;
-        }
-#endif
-
-#if 0
-        LOG_I("che ci %d %d %d %d", s_File_Directory.ch_checi[0], s_File_Directory.ch_checi[1], s_File_Directory.ch_checi[2], s_File_Directory.ch_checi[3]);
-        LOG_I("kuo chong %d %d %d %d", s_File_Directory.ch_checikuochong[0], s_File_Directory.ch_checikuochong[1], s_File_Directory.ch_checikuochong[2], s_File_Directory.ch_checikuochong[3]);
-        LOG_I("si ji %d %d %d %d", s_File_Directory.ch_siji[0], s_File_Directory.ch_siji[1], s_File_Directory.ch_siji[2], s_File_Directory.ch_siji[3]);
-        LOG_I("data %d %d %d %d", s_File_Directory.ch_date[0], s_File_Directory.ch_date[1], s_File_Directory.ch_date[2], s_File_Directory.ch_date[3]);
-        LOG_I("time %d %d %d %d", s_File_Directory.ch_time[0], s_File_Directory.ch_time[1], s_File_Directory.ch_time[2], s_File_Directory.ch_time[3]);
-        LOG_I("over %d", s_File_Directory.u32_over_flag);
-        LOG_I("size %d", s_File_Directory.u32_file_size);
-        LOG_I("name %s", s_File_Directory.ch_file_name);
-        LOG_I("benbu %d", s_File_Directory.ch_benbuzhuangtai[0]);
-        LOG_I("reserve %d %d %d", s_File_Directory.ch_reserve[0], s_File_Directory.ch_reserve[1], s_File_Directory.ch_reserve[2]);
-        LOG_I("id %d", s_File_Directory.file_id);
-        LOG_I("save %d", s_File_Directory.is_save);
-        LOG_I("------------------------------------------");
-
-        SFile_Directory read_file_dir;
-
-        fd = open(full_path, O_RDWR);
-        if (fd < 0)
-        {
-            LOG_E("open %s error, ret=%d", full_path, fd);
-            return -RT_ERROR;
-        }
-
-        read(fd, (char *)&read_file_dir, sizeof(SFile_Directory));
-        close(fd);
-
-        LOG_I("che ci %d %d %d %d", read_file_dir.ch_checi[0], read_file_dir.ch_checi[1], read_file_dir.ch_checi[2], read_file_dir.ch_checi[3]);
-        LOG_I("kuo chong %d %d %d %d", read_file_dir.ch_checikuochong[0], read_file_dir.ch_checikuochong[1], read_file_dir.ch_checikuochong[2], read_file_dir.ch_checikuochong[3]);
-        LOG_I("si ji %d %d %d %d", read_file_dir.ch_siji[0], read_file_dir.ch_siji[1], read_file_dir.ch_siji[2], read_file_dir.ch_siji[3]);
-        LOG_I("data %d %d %d %d", read_file_dir.ch_date[0], read_file_dir.ch_date[1], read_file_dir.ch_date[2], read_file_dir.ch_date[3]);
-        LOG_I("time %d %d %d %d", read_file_dir.ch_time[0], read_file_dir.ch_time[1], read_file_dir.ch_time[2], read_file_dir.ch_time[3]);
-        LOG_I("over %d", read_file_dir.u32_over_flag);
-        LOG_I("size %d", read_file_dir.u32_file_size);
-        LOG_I("name %s", read_file_dir.ch_file_name);
-        LOG_I("benbu %d", read_file_dir.ch_benbuzhuangtai[0]);
-        LOG_I("reserve %d %d %d", read_file_dir.ch_reserve[0], read_file_dir.ch_reserve[1], read_file_dir.ch_reserve[2]);
-        LOG_I("id %d", read_file_dir.file_id);
-        LOG_I("save %d", read_file_dir.is_save);
-
-#endif
         u8_FileHead_Flag = 1u;
         return RT_EOK;
     }
@@ -1465,7 +1499,7 @@ static uint8_t Init_GonggongxinxiState(void)
       lenth       --> 事件长度.
 返回：无.
 ***********************************************************************************************/
-static void WriteFileContantPkt(uint8_t num1, uint8_t num2, uint8_t device_code, uint8_t *contant, uint8_t lenth)
+void WriteFileContantPkt(uint8_t num1, uint8_t num2, uint8_t device_code, uint8_t *contant, uint8_t lenth)
 {
     static uint32_t rest_size = 255u;
     uint8_t contant_size = 0u;
@@ -1503,7 +1537,8 @@ static void WriteFileContantPkt(uint8_t num1, uint8_t num2, uint8_t device_code,
             }
             else
             {
-                if(FMWriteTmpFile(&file_manager, (const void *)&write_buf, sizeof(WRITE_BUF)) < 0)
+                snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_TEMP_FILE_PATH_NAME, file_manager.latest_tmp_file_info.file_name);
+                if(FMWriteTmpFile(&file_manager, full_path, (const void *)&write_buf, sizeof(WRITE_BUF)) < 0)
                 {
                     LOG_E("write record pos %d", write_buf.pos);
                 }
@@ -1546,7 +1581,7 @@ static void WriteFileContantPkt(uint8_t num1, uint8_t num2, uint8_t device_code,
             }
             /* 文件大小 */
             s_File_Directory.u32_file_size = stat_l.st_size;
-            FMWriteFile(&file_manager, file_manager.latest_dir_file_info.file_name,
+            FMWriteDirFile(&file_manager, file_manager.latest_dir_file_info.file_name,
                         (const void *) &s_File_Directory,
                         sizeof(SFile_Directory));
 
@@ -1599,6 +1634,9 @@ static void Get_FileContant(void)
             /* 插件自检信息 */
             RecordingSelfCheckMessage();
 
+            /* 电源插件信息 */
+            RecordingPowerPlugMessage();
+
             u8_Clear_Flag = 0U;
         } /* end if */
         /* 司机操作信息*/
@@ -1632,18 +1670,32 @@ static void Get_FileContant(void)
             RecordingVersionMessage();
             /* 插件自检信息 */
             RecordingSelfCheckMessage();
+            /* 电源插件信息 */
+            RecordingPowerPlugMessage();
         } /* end if */
 
     } /* end if */
 }
 
 
+static void FileCreatUpdateFileName(SFile_Directory *directory, const char *name)
+{
+
+    /* 设置目录文件名 */
+    snprintf(file_manager.latest_dir_file_info.file_name, FILE_NAME_MAX_NUM, "%s_dir", name);
+    /* 设置最新的目录文件名 */
+    rt_memcpy (directory->ch_dir_name, file_manager.latest_dir_file_info.file_name, FILE_NAME_MAX_NUM);
+
+    /* 最新的记录文件名 */
+    snprintf(directory->ch_file_name, FILE_NAME_MAX_NUM, "%s.DSW", name);
+}
+
 /**********************************************
 功能：获取文件名
 参数：directory  -->  文件目录结构体信息
 返回：无
 ***********************************************/
-static void Get_FileName(SFile_Directory *directory)
+static void Get_FileNameByLKJ(SFile_Directory *directory)
 {
     uint32_t i = 0u, j = 0u;
     uint32_t num, divisor = 0u;
@@ -1782,7 +1834,59 @@ static void Get_FileName(SFile_Directory *directory)
     snprintf(directory->ch_file_name, FILE_NAME_MAX_NUM, "%s.DSW", tmp_file_name);
 
     /* 打印记录文件名与目录文件名 */
-    LOG_I("file：%s dir: %s", directory->ch_file_name, file_manager.latest_dir_file_info.file_name);
+    LOG_I("on line file：%s dir: %s", directory->ch_file_name, file_manager.latest_dir_file_info.file_name);
+}
+
+static rt_err_t Get_FileNameNOLKJ(SFile_Directory *directory)
+{
+    struct stat stat_l;
+    char full_path[PATH_NAME_MAX_LEN] = { 0 };
+    sint32_t ret = -1;
+
+    if(directory->off_line_fie_index == 0)
+    {
+        FileCreatUpdateFileName(directory, OFF_LINE_FILE_1_NAME);
+        directory->off_line_fie_index = 1;
+    }
+    else if(directory->off_line_fie_index == 1)
+    {
+        snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, OFF_LINE_FILE_2_NAME);
+        if(stat(full_path, &stat_l) >= 0)
+        {
+            /* 文件存在则先删除 */
+            ret = unlink(full_path);
+            if(ret < 0)
+            {
+                LOG_E("delete %s error", full_path);
+                return -RT_ERROR;
+            }
+        }
+
+        FileCreatUpdateFileName(directory, OFF_LINE_FILE_2_NAME);
+
+        directory->off_line_fie_index = 2;
+    }
+    else if(directory->off_line_fie_index == 2)
+    {
+        snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, OFF_LINE_FILE_1_NAME);
+        if(stat(full_path, &stat_l) >= 0)
+        {
+            /* 文件存在则先删除 */
+            ret = unlink(full_path);
+            if(ret < 0)
+            {
+                LOG_E("delete %s error", full_path);
+                return -RT_ERROR;
+            }
+        }
+
+        FileCreatUpdateFileName(directory, OFF_LINE_FILE_1_NAME);
+        directory->off_line_fie_index = 1;
+    }
+
+    /* 打印记录文件名与目录文件名 */
+    LOG_I("off line file：%s dir: %s", directory->ch_file_name, file_manager.latest_dir_file_info.file_name);
+    return RT_EOK;
 }
 
 /**********************************************
