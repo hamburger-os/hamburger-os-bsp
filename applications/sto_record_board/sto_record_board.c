@@ -29,7 +29,6 @@
 #define BOARD_INIT_THREAD_TIMESLICE        5
 
 S_DATA_HANDLE eth0_can_data_handle;
-//S_DATA_HANDLE eth1_can_data_handle;
 S_FILE_MANAGER file_manager;
 
 static void *BoardInitThreadEntry(void *parameter)

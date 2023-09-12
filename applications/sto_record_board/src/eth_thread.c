@@ -39,10 +39,8 @@ typedef struct {
 } S_ETH_THREAD;
 
 extern S_DATA_HANDLE eth0_can_data_handle;
-extern S_DATA_HANDLE eth1_can_data_handle;
 
 static S_ETH_THREAD eth0_thread;
-static S_ETH_THREAD eth1_thread;
 
 static void ETHChannelSetRXCallback(S_ETH_THREAD *p_thread, rt_err_t (*rx_ind)(rt_device_t dev,rt_size_t size))
 {
@@ -114,51 +112,6 @@ static void *ETH0ThreadEntry(void *parameter)
     }
 }
 
-//static rt_err_t ETH1RXChannel1Callback(rt_device_t dev, rt_size_t size)
-//{
-//    uint32_t rx_size;
-//    rt_err_t ret = RT_EOK;
-//
-//    rx_size = size;
-//    if(rx_size != 0)
-//    {
-//        ret = rt_mq_send(eth1_thread.size_mq, (const void *)&rx_size, sizeof(uint32_t));
-//        if(ret != RT_EOK)
-//        {
-//            LOG_E("can data mq send error");
-//            return ret;
-//        }
-//    }
-//    return ret;
-//}
-//
-//static void *ETH1ThreadEntry(void *parameter)
-//{
-//    rt_err_t ret = RT_EOK;
-//
-//    ETHChannelInit(&eth1_thread, "e1");
-//    ETHChannelSetRXCallback(&eth1_thread, ETH1RXChannel1Callback);
-//
-//    eth1_thread.size_mq = rt_mq_create("e1 queue", sizeof(uint32_t), 256, RT_IPC_FLAG_FIFO);
-//    if(RT_NULL == eth1_thread.size_mq)
-//    {
-//        LOG_E("eth1 create mq failed");
-//        return ;
-//    }
-//
-//    while(1)
-//    {
-//        ret = rt_mq_recv(eth1_thread.size_mq, (void *)&eth1_thread.rx_szie, sizeof(uint32_t), 1000);
-//        if(RT_EOK == ret)
-//        {
-//            rt_device_read(eth1_thread.dev, 0, (void *)eth1_thread.rx_buf, eth1_thread.rx_szie);
-//            rx_safe_layer_check(&eth1_can_data_handle, eth1_thread.rx_buf + 14, IN_ETH_DEV);
-//        }
-//
-//        rt_thread_mdelay(5);
-//    }
-//}
-
 int ETHThreadInit(void)
 {
     rt_thread_t tid1, tid2;
@@ -168,22 +121,11 @@ int ETHThreadInit(void)
                             ETH0_THREAD_STACK_SIZE,
                             ETH0_THREAD_PRIORITY, ETH0_THREAD_TIMESLICE);
 
-//    tid2 = rt_thread_create("eth1_thread",
-//                            ETH1ThreadEntry, RT_NULL,
-//                            ETH1_THREAD_STACK_SIZE,
-//                            ETH1_THREAD_PRIORITY, ETH1_THREAD_TIMESLICE);
-
     if(tid1 != NULL)
     {
         rt_thread_startup(tid1);
         return RT_EOK;
     }
-
-//    if(tid2 != NULL)
-//    {
-//        rt_thread_startup(tid2);
-//        return RT_EOK;
-//    }
     return -RT_ERROR;
 }
 
