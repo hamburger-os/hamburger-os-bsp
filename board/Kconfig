@@ -3601,7 +3601,7 @@ menu "Onboard Peripheral Drivers"
                 default "PC.13"
         endif
         
-      menuconfig BSP_USING_KSZ8794
+	menuconfig BSP_USING_KSZ8794
         bool "Enable ksz8794"
         default n
         
@@ -3626,6 +3626,21 @@ menu "Onboard Peripheral Drivers"
               string "Set the pin of the chip rst, default: PI.7"
               default "PI.7"
         endif
+        
+	menuconfig BSP_USING_LTC4281I
+        bool "Enable ltc4281i"
+        default n
+        
+        if BSP_USING_LTC4281I
+			config LTC4281I_I2C_DEV
+				string "Set the i2c device name used, default: i2c3"
+				default "i2c3"
+			  
+			config LTC4281I_I2C_ADD
+				hex "Set the i2c device address, default: 0x44"
+				default (0x44)
+        endif
+    
         
 endmenu
 
