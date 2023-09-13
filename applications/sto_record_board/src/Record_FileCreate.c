@@ -341,6 +341,7 @@ static RecordingMessage  msgRecording =\
 };
 
 /* private function declaration ---------------------------------------------------------------- */
+static void SetNulldataByOnline(uint8_t is_online);
 static uint8_t Record_Condition_Judge(void);
 static rt_err_t Creat_FileHead(S_CURRENT_FILE_INFO *current_file_info);
 static void Get_Gonggongxinxi( void );
@@ -547,6 +548,7 @@ void RecordBoard_FileCreate(void)
     last_online_state = current_online_state;
     if (Common_BeTimeOutMN(&Directory_time, 1000u))
     {
+        SetNulldataByOnline(current_online_state);
         if(current_online_state > 0)
         {
             Init_FileDirectory(current_file_info, Record_Condition_Judge(), current_online_state);
@@ -565,6 +567,9 @@ void RecordBoard_FileCreate(void)
                 {
                     /* 文件存在 */
                     /* 文件名为上次有lkj时的文件名，这个时候不更换为no lkj */
+                    /* 文件创建标志位设置为0 上线状态设置为0，原因：即使没上线，也要让数据记录在上次有lkj信息的文件中，所以不需要再次创建文件 */
+                    SetNulldataByOnline(0);
+                    Init_FileDirectory(current_file_info, 0, 0);
                 }
             }
             else
@@ -778,6 +783,24 @@ static rt_err_t record_file_create(S_FILE_MANAGER *p_file_manager, uint8_t is_on
     return RT_EOK;
 }
 
+static void SetNulldataByOnline(uint8_t is_online)
+{
+    if(!is_online)
+    {
+        nulldata[0] = 0xa5;
+        nulldata[1] = 0x5a;
+        nulldata[2] = 0xa5;
+        nulldata[3] = 0x5a;
+        nulldata[4] = 0xa5;
+        nulldata[5] = 0x5a;
+        nulldata[6] = 0xa5;
+        nulldata[7] = 0x5a;
+    }
+    else
+    {
+        memset(nulldata, 0, sizeof(nulldata));
+    }
+}
 /********************************************************************************************
 ** @brief: Init_FileDirectory
 ** @param: null
@@ -794,21 +817,6 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info, uint8
     sint32_t ret = 0;
     struct stat stat_l;
 
-    if(!is_online)
-    {
-        nulldata[0] = 0xa5;
-        nulldata[1] = 0x5a;
-        nulldata[2] = 0xa5;
-        nulldata[3] = 0x5a;
-        nulldata[4] = 0xa5;
-        nulldata[5] = 0x5a;
-        nulldata[6] = 0xa5;
-        nulldata[7] = 0x5a;
-    }
-    else
-    {
-//        memset(nulldata, 0, sizeof(nulldata));
-    }
     /* 确认新文件生成标记，置位开始记录文件标志 */
     if(is_creat_new_file)
     {

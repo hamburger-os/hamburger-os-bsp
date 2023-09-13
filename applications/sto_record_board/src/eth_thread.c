@@ -25,10 +25,6 @@
 #define ETH0_THREAD_STACK_SIZE       (1024 * 2)
 #define ETH0_THREAD_TIMESLICE        5
 
-#define ETH1_THREAD_PRIORITY         10
-#define ETH1_THREAD_STACK_SIZE       (1024 * 2)
-#define ETH1_THREAD_TIMESLICE        5
-
 #define ETH_RX_BUF_MAX_NUM 1500
 
 typedef struct {
