@@ -18,6 +18,7 @@ uint8_t crc8_create(const uint8_t * p_dat_u8, uint16_t len_u16, uint8_t crc_init
 
 uint16_t Common_CRC16(uint8_t* pData, uint32_t nLength);
 uint16_t  crc16l(uint8_t *ptr,uint8_t len);
+uint16_t Crc16TabCCITT(unsigned char* data, unsigned int length);
 uint32_t crc32_create(const uint8_t * p_dat_u8, uint16_t len, uint32_t crc);
 uint32_t generate_CRC32(const uint8_t * p_dat_u8, uint32_t len, uint32_t oldcrc32);
 

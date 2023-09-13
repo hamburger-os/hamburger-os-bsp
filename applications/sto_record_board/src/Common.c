@@ -237,39 +237,6 @@ static const uint32_t Crc32Table[ 256 ] =
 ,0x933EB0BB,0x97FFAD0C,0xAFB010B1,0xAB710D06,0xA6322BDF,0xA2F33668
 ,0xBCB4666D,0xB8757BDA,0xB5365D03,0xB1F740B4 };
 
-#if 0
-/*******************************************************************************************
- ** @brief: Common_CRC16
- ** @param: pData: the data for CRC
-	        nLength: the Length of data for CRC
-*******************************************************************************************/
-uint16_t Common_CRC16(uint8_t* pData, uint32_t nLength)
-{
-	uint32_t k;
-	uint16_t crc = 0U;
-	
-  /* 30-August-2018, by Liang Zhen. */
-  #if 0
-	if ( nLength > 0xffffU )
-  #else
-  if ( ( NULL == pData ) || ( 0U == nLength ) )
-  #endif
-	{
-		k = 0x17U;
-		return ( 0U );
-	} /* end if */
-	
-	while ( nLength > 0u )
-	{
-		k   = ( crc ^ *pData ) & 0xffU;
-		crc = ( crc >> 8u ) ^ crctab16[ k ];
-		nLength--;
-		pData++;
-	} /* end while */
-  
-	return ( ~crc );
-}
-#endif
 
 /* 06-July-2020, by DuYanPo. */
 /*******************************************************************************

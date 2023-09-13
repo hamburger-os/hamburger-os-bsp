@@ -8,18 +8,21 @@
  * 2023-07-20     zm       the first version
  */
 #include "data_handle.h"
-#include "can_common_def.h"
-#include "Record_FileCreate.h"
-#include "Record_Board_App.h"
-#include "RecordErrorCode.h"
-
-#include <string.h>
 
 #define DBG_TAG "data handle"
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
+#include <string.h>
+
+#include "can_common_def.h"
+#include "Record_FileCreate.h"
+#include "Record_Board_App.h"
+#include "RecordErrorCode.h"
+#include "sto_record_board.h"
+
 S_CAN_PACKE_Grade s_packet_gradeInfo;           /* 曲线的打包数据缓存区 */
+static uint8_t read_time_flag = 0;
 
 rt_err_t DataHandleInit(S_DATA_HANDLE *p_data_handle)
 {
@@ -87,7 +90,6 @@ void ETHToCanDataHandle(S_DATA_HANDLE *p_data_handle, uint8_t *pbuf, uint16_t da
             ((uint8_t *)pbuf)[6], ((uint8_t *)pbuf)[7], ((uint8_t *)pbuf)[8], ((uint8_t *)pbuf)[9], ((uint8_t *)pbuf)[10], ((uint8_t *)pbuf)[11]);
 #endif
 
-#if 1
     /* 2.转换CAN数据 */
     while (send_len < p_can_PACK->datalen)
     {
@@ -122,7 +124,6 @@ void ETHToCanDataHandle(S_DATA_HANDLE *p_data_handle, uint8_t *pbuf, uint16_t da
 //            LOG_I("ttt--- pr = %x, no = %x data = %x", can_tmp.priority_u8, can_tmp.no_u8, can_tmp.data_u8[0]);  //打开这个会导致上面队列发送出错 返回值为-3   过一会导致lwip里宕机
         }
     }
-#endif
 }
 
 /* 解析CAN数据 */
@@ -130,7 +131,6 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
 {
     rt_err_t ret = -RT_ERROR;
     struct tm tm_new;
-    static uint8_t read_time_flag = 0;
     static uint32_t set_rtc_time = 0u;
 
     if(RT_NULL == p_data_handle)
@@ -441,3 +441,15 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
     return RT_EOK;
 }
 
+uint8_t DataHandleLKJIsOnline(void)
+{
+    if(read_time_flag > 0)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+    return 0;
+}
