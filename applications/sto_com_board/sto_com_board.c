@@ -14,24 +14,24 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-#include "hal_os/hal_os.h"
+#include "if_os.h"
 
 #define BOARD_INIT_THREAD_PRIORITY         20
 #define BOARD_INIT_THREAD_STACK_SIZE       (1024)
 
 static void *BoardInitThreadEntry(void *parameter)
 {
-    LOG_I("init ok");
-    HALOSTestThreadInit();
-    while(1)
+    if(TaskInit() < 0)
     {
-        rt_thread_mdelay(10);
+        LOG_E("TaskInit Error");
     }
+
+    LOG_I("init ok");
 }
 
 static int BoardInitThreadInit(void)
 {
-    if(hal_os_creat_task("board_init",
+    if(if_OSTaskCreate("board_init",
             BoardInitThreadEntry, NULL,
             BOARD_INIT_THREAD_STACK_SIZE,
             BOARD_INIT_THREAD_PRIORITY) < 0)

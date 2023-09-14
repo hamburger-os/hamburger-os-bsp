@@ -4,15 +4,27 @@ import rtconfig
 from building import *
 
 cwd     = GetCurrentDir()
-CPPPATH = [cwd, cwd + '/hal_os']
+path =  [cwd]
+path += [cwd + '/linkLib/inc']
+path += [cwd + '/app']
 
 src =  Split('''
     sto_com_board.c
-    hal_os/hal_os.c
-    hal_os/hal_os_test.c
+    linkLib/src_swos2/swos2_app.c
+    linkLib/src_swos2/swos2_can.c
+    linkLib/src_swos2/swos2_common.c
+    linkLib/src_swos2/swos2_eth.c
+    linkLib/src_swos2/swos2_file.c
+    linkLib/src_swos2/swos2_gpio.c
+    linkLib/src_swos2/swos2_hdlc.c
+    linkLib/src_swos2/swos2_mvb.c
+    linkLib/src_swos2/swos2_os.c
+    linkLib/src_swos2/swos2_rs485.c
+    linkLib/src_swos2/swos2_timer.c
+    app/task_loop.c
     '''
     )
 
-group = DefineGroup('sto_com_board', src, depend = ['APP_STO_COM_BOARD'], CPPPATH = CPPPATH)
+group = DefineGroup('sto_com_board', src, depend = ['APP_STO_COM_BOARD'], CPPPATH = path)
 
 Return('group')
