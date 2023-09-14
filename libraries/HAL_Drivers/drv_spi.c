@@ -617,6 +617,7 @@ rt_err_t rt_hw_spi_device_attach(const char *bus_name, const char *device_name, 
 
     return result;
 }
+RTM_EXPORT(rt_hw_spi_device_attach);
 
 #if defined(BSP_SPI1_TX_USING_DMA) || defined(BSP_SPI1_RX_USING_DMA)
 void SPI1_IRQHandler(void)

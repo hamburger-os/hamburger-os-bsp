@@ -217,6 +217,7 @@ rt_err_t USBH_diskio_uninitialize()
     int i;
     rt_err_t ret = RT_EOK;
 #ifdef BSP_USING_ROOTFS
+    extern void rm(const char *filename);
     rm("/proc/udisk");
 #endif
 
