@@ -20,6 +20,8 @@ typedef enum
     E_SLOT_ID_4,
     E_SLOT_ID_5,
     E_SLOT_ID_6,
+    E_SLOT_ID_7,
+    E_SLOT_ID_8,
     E_SLOT_ID_MAX
 }E_SLOT_ID;
 

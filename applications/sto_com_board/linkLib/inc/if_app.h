@@ -33,6 +33,7 @@ extern S_APP_ARCH_IF g_appArchIf;
 
 /* 架构运行接口 */
 extern BOOL app_archRunning( p_init appArchIf_init );
+extern void app_archInit( void );
 
 #endif
 

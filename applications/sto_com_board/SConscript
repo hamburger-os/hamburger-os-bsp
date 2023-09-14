@@ -7,6 +7,8 @@ cwd     = GetCurrentDir()
 path =  [cwd]
 path += [cwd + '/linkLib/inc']
 path += [cwd + '/app']
+path += [cwd + '/support']
+path += [cwd + '/support/include']
 
 src =  Split('''
     sto_com_board.c
@@ -21,7 +23,21 @@ src =  Split('''
     linkLib/src_swos2/swos2_os.c
     linkLib/src_swos2/swos2_rs485.c
     linkLib/src_swos2/swos2_timer.c
+    support/com_lib/support_libCRC.c
+    support/com_lib/support_libList.c
+    support/com_lib/support_libOS.c
+    support/com_lib/support_libPub.c
+    support/src/support_can.c
+    support/src/support_eth.c
+    support/src/support_filesys.c
+    support/src/support_gpio.c
+    support/src/support_hdlc.c
+    support/src/support_init.c
+    support/src/support_mvb.c
+    support/src/support_rs485.c
+    support/src/support_timer.c
     app/task_loop.c
+    app/to_support_main.c
     '''
     )
 

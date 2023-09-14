@@ -11,6 +11,10 @@
 #include "if_os.h"
 #include "if_app.h"
 
+#define DBG_TAG "loop"
+#define DBG_LVL DBG_LOG
+#include <rtdbg.h>
+
 #define TASK_HIGH_THREAD_PRIORITY         15
 #define TASK_HIGH_THREAD_STACK_SIZE       (1024)
 
@@ -44,6 +48,7 @@ static sint32 TaskHighThreadInit(void)
     }
 }
 
+
 static void *TaskLowThreadEntry(void *parameter)
 {
     while(1)
@@ -52,6 +57,10 @@ static void *TaskLowThreadEntry(void *parameter)
         {
             g_appArchIf.app_idle_proc();
         }
+//        else {
+//            LOG_E("")
+//        }
+//        LOG_I("app_idle_proc");
         if_OSTimeDly(10);
     }
 }
@@ -59,7 +68,7 @@ static void *TaskLowThreadEntry(void *parameter)
 static sint32 TaskLowThreadInit(void)
 {
     if(if_OSTaskCreate("task low",
-            TaskHighThreadEntry, NULL,
+            TaskLowThreadEntry, NULL,
             TASK_LOW_THREAD_STACK_SIZE,
             TASK_LOW_THREAD_PRIORITY) < 0)
     {
@@ -78,14 +87,20 @@ sint32 TaskInit(void)
     {
         g_appArchIf.app_init();
     }
+    else
+    {
+        LOG_E("app_init is null");
+    }
 
     if(TaskHighThreadInit() < 0)
     {
+        LOG_E("task high thread init error");
         return -1;
     }
 
     if(TaskLowThreadInit() < 0)
     {
+        LOG_E("task low thread init error");
         return -1;
     }
     return 0;

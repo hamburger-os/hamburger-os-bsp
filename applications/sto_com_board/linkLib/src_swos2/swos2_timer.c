@@ -23,6 +23,6 @@ BOOL if_timer_init( void )
 
 uint32 if_timer_getTicks( void )
 {
-    return 0;
+    return rt_tick_get();
 }
 

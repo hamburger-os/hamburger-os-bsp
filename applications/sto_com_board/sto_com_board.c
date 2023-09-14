@@ -15,6 +15,7 @@
 #include <rtdbg.h>
 
 #include "if_os.h"
+#include "linklib/inc/if_app.h"
 
 #define BOARD_INIT_THREAD_PRIORITY         20
 #define BOARD_INIT_THREAD_STACK_SIZE       (1024)
@@ -46,7 +47,11 @@ static int BoardInitThreadInit(void)
 
 static void STOComBoardInit(void)
 {
+#if 0
     BoardInitThreadInit();
+#else
+    app_archInit();
+#endif
 }
 
 INIT_APP_EXPORT(STOComBoardInit);

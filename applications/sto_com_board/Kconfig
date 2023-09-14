@@ -8,6 +8,10 @@ config APP_STO_COM_BOARD
             default y
 
         config HAL_OS_THREAD_TIMESLICE
-            int "Set thread time slice"
+            int "Set thread time slice, default(5)"
             default 5
+
+        config HAL_OS_FMT_BUF_SIZE
+            int "Set printf buf size, default(1024 * 2)"
+            default 2048
     endif

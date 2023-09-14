@@ -16,14 +16,39 @@
 #include <rtthread.h>
 #include <rtdevice.h>
 
+static char fmt_buf[HAL_OS_FMT_BUF_SIZE] = { 0 };
 sint32 MY_Printf( const char *fmt,... )
 {
-    return rt_kprintf(fmt);
+
+    sint32 vsn_len_s32 = 0;
+    va_list args;
+
+    va_start(args, fmt);
+
+    vsn_len_s32 = rt_vsnprintf((char *)fmt_buf, HAL_OS_FMT_BUF_SIZE - 1, fmt, args );
+
+    if( vsn_len_s32 > (sint32)( HAL_OS_FMT_BUF_SIZE - 1U ))
+    {
+        vsn_len_s32 = (sint32)( HAL_OS_FMT_BUF_SIZE - 1U );
+    }
+
+    va_end(args);
+
+    return rt_kprintf("%s", fmt_buf);
 }
 
 sint32 MY_PrintfLog( const char *fmt,... )
 {
+    va_list args;
 
+    /* args point to the first variable parameter */
+    va_start(args, fmt);
+
+    ulog_voutput(DBG_LOG, "app", RT_TRUE, fmt, args);
+
+    va_end(args);
+
+    return 0;
 }
 
 /*******************************************************************************************
@@ -128,10 +153,10 @@ real64 d64_abs(real64 a)
 real32 f32_sqrt(real32 a)
 {
     real32 xhalf = 0.5f * a;
-    sint32 i = *(sint32*) &a;
+    sint32 i = *(sint32 *) &a;
 
     i = 0x5f375a86 - (i >> 1);
-    a = *(real32*) &i;
+    a = *(real32 *) &i;
     a = a * (1.5f - xhalf * a * a);
     a = a * (1.5f - xhalf * a * a);
     a = a * (1.5f - xhalf * a * a);
