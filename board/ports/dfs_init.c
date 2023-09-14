@@ -27,7 +27,7 @@ static const struct romfs_dirent _romfs_root_mnt[] =
     {ROMFS_DIRENT_DIR, "nfs"        , RT_NULL, 0},      //nfs
 #endif
 
-#ifdef FM25xx_USING_FS
+#ifdef FM25xx_ENABLE_FS
     {ROMFS_DIRENT_DIR, BLK_FRAM     , RT_NULL, 0},      //fram
 #endif
 
@@ -35,11 +35,11 @@ static const struct romfs_dirent _romfs_root_mnt[] =
     {ROMFS_DIRENT_DIR, BLK_SPI_FLASH, RT_NULL, 0},      //spiflash
 #endif
 
-#ifdef BSP_USING_S25FL512
+#ifdef S25FL512_ENABLE_FS
     {ROMFS_DIRENT_DIR, BLK_S25FL512, RT_NULL, 0},       //S25FL512
 #endif
 
-#ifdef BSP_USING_AT45DB321E
+#ifdef AT45DB321E_ENABLE_FS
     {ROMFS_DIRENT_DIR, BLK_AT45DB321E, RT_NULL, 0},       //AT45DB321E
 #endif
 
@@ -111,7 +111,7 @@ static const struct mount_fs _mount_fs[] =
     {RT_NULL            , BLK_USBH_UDISK    , "tmp"             },
 #endif
 
-#ifdef FM25xx_USING_FS
+#ifdef FM25xx_ENABLE_FS
     {BLK_FRAM           , BLK_FRAM          , FM25xx_FS         },
 #endif
 
@@ -119,11 +119,11 @@ static const struct mount_fs _mount_fs[] =
     {BLK_SPI_FLASH      , BLK_SPI_FLASH     , SPI_FLASH_FS      },
 #endif
 
-#ifdef BSP_USING_S25FL512
+#ifdef S25FL512_ENABLE_FS
     {BLK_S25FL512       , BLK_S25FL512      , S25FL512_FS       },
 #endif
 
-#ifdef BSP_USING_AT45DB321E
+#ifdef AT45DB321E_ENABLE_FS
     {BLK_AT45DB321E     , BLK_AT45DB321E    , AT45DB321E_FS     },
 #endif
 

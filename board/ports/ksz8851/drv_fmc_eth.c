@@ -287,6 +287,9 @@ static rt_err_t fmc_eth_close(rt_device_t dev)
 static rt_size_t fmc_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t size)
 {
     struct rt_fmc_eth_port *fmc_eth = dev->user_data;
+
+    rt_mutex_take(&fmc_eth->eth_mux, RT_WAITING_FOREVER);
+
     rt_uint16_t read_size = 0;
     S_LEP_BUF *p_s_LepBuf = RT_NULL;
     rt_list_t *list_pos = NULL;
@@ -320,16 +323,23 @@ static rt_size_t fmc_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_si
                 /* step4：释放接收接收缓冲区 */
                 rt_free(p_s_LepBuf);
                 fmc_eth->link_layer_buf.rx_lep_buf_num--;
+
+                rt_mutex_release(&fmc_eth->eth_mux);
                 return read_size;
             }
         }
     }
+
+    rt_mutex_release(&fmc_eth->eth_mux);
     return read_size;
 }
 
 static rt_size_t fmc_eth_write(rt_device_t dev, rt_off_t pos, const void *buffer, rt_size_t size)
 {
     struct rt_fmc_eth_port *fmc_eth = dev->user_data;
+
+    rt_mutex_take(&fmc_eth->eth_mux, RT_WAITING_FOREVER);
+
     rt_uint16_t tx_size = 0;
 
     rt_memset(&fmc_eth->link_layer_buf.tx_buf, 0, sizeof(S_LEP_BUF));
@@ -347,9 +357,10 @@ static rt_size_t fmc_eth_write(rt_device_t dev, rt_off_t pos, const void *buffer
     if (ks_start_xmit_link_layer(fmc_eth, &fmc_eth->link_layer_buf.tx_buf) != 0)
     {
         LOG_D("link layer write error");
-        return 0;
+        tx_size = 0;
     }
 
+    rt_mutex_release(&fmc_eth->eth_mux);
     return tx_size;
 }
 
@@ -423,32 +434,32 @@ struct pbuf *fmc_eth_rx(rt_device_t dev)
 #ifdef BSP_USE_LINK_LAYER_COMMUNICATION
     if(p != NULL)
     {
-        S_LEP_BUF *ps_lep_buf = RT_NULL;
-
-        if(fmc_eth->link_layer_buf.rx_lep_buf_num < BSP_LINK_LAYER_RX_BUF_NUM)
+        struct pbuf *q = NULL;
+        for (q = p; q != NULL; q = q->next)
         {
-            ps_lep_buf = rt_malloc(sizeof(S_LEP_BUF));
+            if (fmc_eth->link_layer_buf.rx_lep_buf_num >= BSP_LINK_LAYER_RX_BUF_NUM)
+            {
+                lep_eth_if_clear(&fmc_eth->link_layer_buf, E_ETH_IF_CLER_MODE_ONE);
+            }
+
+            S_LEP_BUF *ps_lep_buf = rt_malloc(sizeof(S_LEP_BUF));
             if(RT_NULL != ps_lep_buf)
             {
                 fmc_eth->link_layer_buf.rx_lep_buf_num++;
                 ps_lep_buf->flag = 0;
                 ps_lep_buf->flag |= LEP_RBF_RV;
-                ps_lep_buf->len = p->len;
-                rt_memcpy(ps_lep_buf->buf, p->payload, p->len);
+                ps_lep_buf->len = q->len;
+                rt_memcpy(ps_lep_buf->buf, q->payload, q->len);
                 rt_list_insert_before(&fmc_eth->link_layer_buf.rx_head->list, &ps_lep_buf->list);
                 if(dev->rx_indicate != NULL)
                 {
-                    dev->rx_indicate(dev, p->len);
+                    dev->rx_indicate(dev, q->len);
                 }
             }
             else
             {
                 LOG_E("ps_lep_buf rx null");
             }
-        }
-        else
-        {
-            lep_eth_if_clear(&fmc_eth->link_layer_buf, E_ETH_IF_CLER_MODE_ONE);
         }
     }
 #endif /* BSP_USE_LINK_LAYER_COMMUNICATION */

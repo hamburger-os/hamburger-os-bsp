@@ -14,7 +14,9 @@ typedef struct
 {
     char *gpio_devname[6][2];
     char *key_devname;
-    char *fs_path[6];
+    char *fs_path[5];
+    char *spi_devname;
+    char *spi_devname_cs;
     char *i2c_devname;
     char *wav_path;
     char *uart_devname[3][2];
@@ -31,21 +33,14 @@ typedef struct
 } SelftestlUserData;
 
 void selftest_gpio_test(SelftestlUserData *puserdata);
-
 void selftest_key_test(SelftestlUserData *puserdata);
-
 void selftest_fs_test(SelftestlUserData *puserdata);
-
+void selftest_spi_test(SelftestlUserData *puserdata);
 void selftest_i2c_test(SelftestlUserData *puserdata);
-
 void selftest_i2s_test(SelftestlUserData *puserdata);
-
 void selftest_uart_test(SelftestlUserData *puserdata);
-
 void selftest_can_test(SelftestlUserData *puserdata);
-
 void selftest_eth_test(SelftestlUserData *puserdata);
-
 void selftest_tcpip_test(SelftestlUserData *puserdata);
 
 #endif /* APPLICATIONS_SELFTEST_SELFTEST_H_ */

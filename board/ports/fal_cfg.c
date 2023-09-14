@@ -129,7 +129,33 @@ const struct fal_partition partition_table_def[] =
 #endif
 
 #ifdef BSP_USING_S25FL512
-    {FAL_PART_MAGIC_WORD, BLK_S25FL512,    S25FL512_DEV_NAME,                             0,     S25FL512_SIZE_GRANULARITY_TOTAL, 0},
+#if S25FL512_SIZE_DOWNLOAD > 0
+    {FAL_PART_MAGIC_WORD,  "download",     S25FL512_DEV_NAME,      S25FL512_OFFSET_DOWNLOAD,              S25FL512_SIZE_DOWNLOAD, 0},
+#endif
+#if S25FL512_SIZE_FACTORY > 0
+    {FAL_PART_MAGIC_WORD,   "factory",     S25FL512_DEV_NAME,       S25FL512_OFFSET_FACTORY,               S25FL512_SIZE_FACTORY, 0},
+#endif
+#if S25FL512_SIZE_BIN > 0
+    {FAL_PART_MAGIC_WORD,       "bin",     S25FL512_DEV_NAME,           S25FL512_OFFSET_BIN,                   S25FL512_SIZE_BIN, 0},
+#endif
+#if S25FL512_SIZE_ETC > 0
+    {FAL_PART_MAGIC_WORD,       "etc",     S25FL512_DEV_NAME,           S25FL512_OFFSET_ETC,                   S25FL512_SIZE_ETC, 0},
+#endif
+#if S25FL512_SIZE_LIB > 0
+    {FAL_PART_MAGIC_WORD,       "lib",     S25FL512_DEV_NAME,           S25FL512_OFFSET_LIB,                   S25FL512_SIZE_LIB, 0},
+#endif
+#if S25FL512_SIZE_USR > 0
+    {FAL_PART_MAGIC_WORD,       "usr",     S25FL512_DEV_NAME,           S25FL512_OFFSET_USR,                   S25FL512_SIZE_USR, 0},
+#endif
+#if S25FL512_SIZE_KVDB > 0
+    {FAL_PART_MAGIC_WORD,      "kvdb",     S25FL512_DEV_NAME,          S25FL512_OFFSET_KVDB,                  S25FL512_SIZE_KVDB, 0},
+#endif
+#if S25FL512_SIZE_TSDB > 0
+    {FAL_PART_MAGIC_WORD,      "tsdb",     S25FL512_DEV_NAME,          S25FL512_OFFSET_TSDB,                  S25FL512_SIZE_TSDB, 0},
+#endif
+#if S25FL512_SIZE_FS > 0
+    {FAL_PART_MAGIC_WORD,BLK_S25FL512,     S25FL512_DEV_NAME,            S25FL512_OFFSET_FS,                    S25FL512_SIZE_FS, 0},
+#endif
 #endif
 
 #ifdef BSP_USING_AT45DB321E
@@ -145,9 +171,6 @@ const struct fal_partition partition_table_def[] =
 #endif
 
 #ifdef BSP_USING_NORFLASH
-#if NORFLASH_SIZE_APP > 0
-    {FAL_PART_MAGIC_WORD,       "app",     NORFLASH_DEV_NAME,           NORFLASH_OFFSET_APP,                   NORFLASH_SIZE_APP, 0},
-#endif
 #if NORFLASH_SIZE_DOWNLOAD > 0
     {FAL_PART_MAGIC_WORD,  "download",     NORFLASH_DEV_NAME,      NORFLASH_OFFSET_DOWNLOAD,              NORFLASH_SIZE_DOWNLOAD, 0},
 #endif
@@ -172,7 +195,7 @@ const struct fal_partition partition_table_def[] =
 #if NORFLASH_SIZE_TSDB > 0
     {FAL_PART_MAGIC_WORD,      "tsdb",     NORFLASH_DEV_NAME,          NORFLASH_OFFSET_TSDB,                  NORFLASH_SIZE_TSDB, 0},
 #endif
-#if NORFLASH_SIZE_FS > 0 && defined(NORFLASH_ENABLE_FS)
+#if NORFLASH_SIZE_FS > 0
     {FAL_PART_MAGIC_WORD,     BLK_NOR,     NORFLASH_DEV_NAME,            NORFLASH_OFFSET_FS,                    NORFLASH_SIZE_FS, 0},
 #endif
 #endif

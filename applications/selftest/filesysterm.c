@@ -29,7 +29,6 @@
 static char * error_log[] = {
     "fram       ",
     "spinor64   ",
-    "spinor4    ",
     "nor        ",
     "emmc       ",
     "udisk      ",
@@ -56,7 +55,7 @@ void selftest_fs_test(SelftestlUserData *puserdata)
         write_data[index] = index;
     }
 
-    for (int x = 0; x<6; x++)
+    for (int x = 0; x<5; x++)
     {
         uint8_t is_error = 0;
 

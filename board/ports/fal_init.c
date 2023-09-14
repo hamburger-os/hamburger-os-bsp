@@ -54,7 +54,7 @@ static const struct fal_dev_init _fal_dev[] =
     {BLK_SDRAM, BSP_SDRAM_FS, NULL},
 #endif
 
-#ifdef NORFLASH_ENABLE_FS
+#ifdef BSP_USING_NORFLASH
     {BLK_NOR, NORFLASH_FS, NULL},
 #endif
 

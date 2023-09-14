@@ -9,6 +9,11 @@
 #define DBG_LVL DBG_INFO
 #include <rtdbg.h>
 
+#define U16_WRITE(__ADDRESS__, __DATA__)   do{                                                             \
+                                               (*(__IO uint16_t *)((uint32_t)(__ADDRESS__)) = (__DATA__)); \
+                                               __DSB();                                                    \
+                                             } while(0)
+
 static void sleepms(uint32_t utick)
 {
     rt_thread_mdelay(utick);
@@ -19,7 +24,7 @@ static void sleepms(uint32_t utick)
  */
 static uint8_t readb(volatile uint8_t *addr)
 {
-    volatile uint8_t ram;           //防止被优化
+    uint8_t ram;           //防止被优化
     ram = *addr;
     return ram;
 }
@@ -30,7 +35,7 @@ static uint8_t readb(volatile uint8_t *addr)
  */
 static uint16_t readw(volatile uint16_t *addr)
 {
-    volatile uint16_t ram;           //防止被优化
+    uint16_t ram;           //防止被优化
     ram = *addr;
     return ram;
 }
@@ -42,8 +47,7 @@ static uint16_t readw(volatile uint16_t *addr)
  */
 static void writew(uint16_t data, volatile uint16_t *addr)
 {
-    data = data;      //使用-O2优化的时候,必须插入的延时
-    *addr = data;
+    U16_WRITE(addr, data);
 }
 
 /**
@@ -752,18 +756,12 @@ int32_t ks_start_xmit_link_layer(struct rt_fmc_eth_port *ps_ks, S_LEP_BUF *ps_le
     /* Extra space are required:
      *  4 byte for alignment, 4 for status/length, 4 for CRC
      */
-    if (ks_tx_fifo_space(ps_ks) >= ps_lep_buf->len + 12)
-    {
-        ks_write_qmu(ps_ks, ps_lep_buf->buf, ps_lep_buf->len);
-    }
-    else
-    {
-        retv_i32 = -1;
-    }
+    ks_write_qmu(ps_ks, ps_lep_buf->buf, ps_lep_buf->len);
 
     return retv_i32;
 }
 #endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
+
 static unsigned long const ethernet_polynomial = 0x04c11db7U;
 static unsigned long ether_gen_crc(int length, uint8_t *data)
 {

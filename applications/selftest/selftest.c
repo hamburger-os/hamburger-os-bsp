@@ -29,10 +29,11 @@ static SelftestlUserData selftest_userdata = {
     .fs_path = {
         "/mnt/fram",
         "/mnt/spinor64",
-        "/mnt/spinor4",
         "/mnt/nor",//TODO:并口数据回环
         "/mnt/emmc",
         "/mnt/udisk/ud0p0"},
+    .spi_devname = BSP_DEV_TABLE_SPI2,
+    .spi_devname_cs = BSP_GPIO_TABLE_SPI2_CS0,
     .i2c_devname = "eeprom",
     .wav_path = "/usr/5s_8000_2ch.wav",
     .uart_devname = {
@@ -101,6 +102,8 @@ static void selftest_thread_entry(void* parameter)
     selftest_key_test(puserdata);
     //filesysterm
     selftest_fs_test(puserdata);
+    //spi
+    selftest_spi_test(puserdata);
     //i2c
     selftest_i2c_test(puserdata);
     //i2s

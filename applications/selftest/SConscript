@@ -11,6 +11,7 @@ src     = Split('''
                 gpio.c
                 key.c
                 filesysterm.c
+                spi.c
                 i2c.c
                 i2s.c
                 uart.c

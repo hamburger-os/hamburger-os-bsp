@@ -2795,11 +2795,7 @@ menu "Onboard Peripheral Drivers"
                 int "Set BusTurnAroundDuration, default: 0"
                 default (0)
                 
-            config NORFLASH_SIZE_APP
-                int "Set application part size, default: (0 * 1024)"
-                default (0)
-	            
-	        config NORFLASH_SIZE_DOWNLOAD
+            config NORFLASH_SIZE_DOWNLOAD
                 int "Set download part size, default: (2048 * 1024)"
                 default (2097152)
                 
@@ -2851,10 +2847,6 @@ menu "Onboard Peripheral Drivers"
 	        	int "Maximum buffer write length, default: 64"
 	        	depends on NORFLASH_ENABLE_BUFFER_PROGRAM
 	        	default (64)
-	        	
-	        config NORFLASH_ENABLE_TEST
-                bool "Enable test cmd"
-                default n
         endif
 
     menuconfig BSP_USING_FM25xx
@@ -2886,7 +2878,7 @@ menu "Onboard Peripheral Drivers"
                 string "Set the part name, default: fram"
                 default "fram"
             
-            config FM25xx_USING_FS
+            config FM25xx_ENABLE_FS
                 bool "Enable the file system"
                 select RT_USING_DFS
                 select RT_USING_DFS_ROMFS
@@ -2895,7 +2887,7 @@ menu "Onboard Peripheral Drivers"
             
             config FM25xx_FS
 	            string "Set the file system used, default: lfs"
-	            depends on FM25xx_USING_FS
+	            depends on FM25xx_ENABLE_FS
 	            default "lfs"
         endif
         
@@ -2932,17 +2924,10 @@ menu "Onboard Peripheral Drivers"
             config SPI_FLASH_FS
                 string "Set the file system used, default: lfs"
                 default "lfs"
-                
-            config SPI_FLASH_ENABLE_TEST
-                bool "Enable test cmd"
-                default n
         endif
         
     menuconfig BSP_USING_S25FL512
         bool "Enable SPI FLASH (S25FL512)"
-        select RT_USING_DFS
-        select RT_USING_DFS_ROMFS
-        select PKG_USING_LITTLEFS
         default n
         
         if BSP_USING_S25FL512
@@ -2965,17 +2950,54 @@ menu "Onboard Peripheral Drivers"
             config S25FL512_BLK_SIZE
                 int "Set the memory block size, default: (262144)"
                 default (262144)
+                
+            config S25FL512_SIZE_DOWNLOAD
+                int "Set download part size, default: (2048 * 1024)"
+                default (0)
+                
+            config S25FL512_SIZE_FACTORY
+                int "Set factory part size, default: (2048 * 1024)"
+                default (0)
+                
+            config S25FL512_SIZE_BIN
+                int "Set bin part size, default: (2048 * 1024)"
+                default (0)
+                
+            config S25FL512_SIZE_ETC
+                int "Set etc part size, default: (2048 * 1024)"
+                default (0)
+                
+            config S25FL512_SIZE_LIB
+                int "Set lib part size, default: (2048 * 1024)"
+                default (0)
+                
+            config S25FL512_SIZE_USR
+                int "Set usr part size, default: (2048 * 1024)"
+                default (0)
+                
+            config S25FL512_SIZE_KVDB
+                int "Set kvdb part size, default: (2048 * 1024)"
+                default (0)
+                
+            config S25FL512_SIZE_TSDB
+                int "Set tsdb part size, default: (0 * 1024)"
+                default (0)
+                
+            config S25FL512_ENABLE_FS
+                bool "Enable the file system"
+                select RT_USING_DFS
+                select RT_USING_DFS_ROMFS
+                select PKG_USING_LITTLEFS
+                default y
             
             config S25FL512_FS
                 string "Set the file system used, default: lfs"
+                depends on S25FL512_ENABLE_FS
                 default "lfs"
         endif
         
     menuconfig BSP_USING_AT45DB321E
         bool "Enable SPI FLASH (AT45DB321E)"
-        select RT_USING_DFS
-        select RT_USING_DFS_ROMFS
-        select PKG_USING_LITTLEFS
         default n
         
         if BSP_USING_AT45DB321E
@@ -2998,9 +3020,17 @@ menu "Onboard Peripheral Drivers"
             config AT45DB321E_BLK_SIZE
                 int "Set the memory block size, default: (4096)"
                 default (4096)
+
+            config AT45DB321E_ENABLE_FS
+                bool "Enable the file system"
+                select RT_USING_DFS
+                select RT_USING_DFS_ROMFS
+                select PKG_USING_LITTLEFS
+                default y
             
             config AT45DB321E_FS
                 string "Set the file system used, default: lfs"
+                depends on AT45DB321E_ENABLE_FS
                 default "lfs"
         endif
         
