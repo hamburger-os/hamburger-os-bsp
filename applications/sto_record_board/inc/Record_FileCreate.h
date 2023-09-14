@@ -470,6 +470,7 @@ typedef struct __attribute__((packed)) _SFile_Directory /* 按照字节对齐*/ 
     char ch_reserve[3]; /* 预留 */
     uint8_t file_id;   /* 文件ID */  //TODO(mingzhao) 对接到文件链表中使用
     uint8_t is_save;     /* 是否转存过  1：转存 0：未转存 */
+    uint8_t off_line_fie_index;
 } SFile_Directory;
 
 
@@ -627,6 +628,7 @@ void RecordingPowerOffMessage(void);
 void RecordingLLevelMessage( void );
 void RecordingSpeedDownMessage( void );
 
+void WriteFileContantPkt(uint8_t num1, uint8_t num2, uint8_t device_code, uint8_t *contant, uint8_t lenth);
 uint16_t FFFEEncode(uint8_t *u8p_SrcData, uint16_t u16_SrcLen, uint8_t *u8p_DstData);
 #endif
 

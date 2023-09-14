@@ -24,6 +24,7 @@ src =  Split('''
     src/utils/utils.c
     src/usb/usb.c
     src/can_common.c
+    src/power_msg/power_msg.c
     '''
     )
 

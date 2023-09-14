@@ -78,5 +78,7 @@ typedef struct
 rt_err_t DataHandleInit(S_DATA_HANDLE *p_data_handle);
 void ETHToCanDataHandle(S_DATA_HANDLE *p_data_handle, uint8_t *pbuf, uint16_t data_len);
 rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle);
+/* 返回值等于0 没上线  返回值大于0 上线 */
+uint8_t DataHandleLKJIsOnline(void);
 
 #endif /* APPLICATIONS_STO_RECORD_BOARD_INC_DATA_HANDLE_H_ */
