@@ -14,14 +14,14 @@
 /* 槽位类型 */
 typedef enum
 {
-    E_SLOT_ID_1 = 0U,
-    E_SLOT_ID_2,
-    E_SLOT_ID_3,
-    E_SLOT_ID_4,
-    E_SLOT_ID_5,
-    E_SLOT_ID_6,
-    E_SLOT_ID_7,
-    E_SLOT_ID_8,
+    E_SLOT_ID_1 = 0U,    /* I系通信1 底板 */
+    E_SLOT_ID_2,         /* I系通信1 子板 */
+    E_SLOT_ID_3,         /* I系通信2 底板 */
+    E_SLOT_ID_4,         /* I系通信2 子板 */
+    E_SLOT_ID_5,         /* II系通信1 底板 */
+    E_SLOT_ID_6,         /* II系通信1 子板 */
+    E_SLOT_ID_7,         /* II系通信2 底板 */
+    E_SLOT_ID_8,         /* II系通信2 子板 */
     E_SLOT_ID_MAX
 }E_SLOT_ID;
 

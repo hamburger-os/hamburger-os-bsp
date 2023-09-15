@@ -16,10 +16,10 @@
 #include <rtdbg.h>
 
 #define TASK_HIGH_THREAD_PRIORITY         15
-#define TASK_HIGH_THREAD_STACK_SIZE       (1024)
+#define TASK_HIGH_THREAD_STACK_SIZE       (1024 * 10)
 
 #define TASK_LOW_THREAD_PRIORITY         20
-#define TASK_LOW_THREAD_STACK_SIZE       (1024)
+#define TASK_LOW_THREAD_STACK_SIZE       (1024 * 10)
 
 static void *TaskHighThreadEntry(void *parameter)
 {
@@ -57,10 +57,6 @@ static void *TaskLowThreadEntry(void *parameter)
         {
             g_appArchIf.app_idle_proc();
         }
-//        else {
-//            LOG_E("")
-//        }
-//        LOG_I("app_idle_proc");
         if_OSTimeDly(10);
     }
 }
