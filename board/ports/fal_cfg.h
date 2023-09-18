@@ -37,6 +37,23 @@ extern "C" {
 #endif
 #endif
 
+#ifdef BSP_FMCSRAM_ENABLE_BLK
+//sram定义,无需修改
+#define FMCSRAM_DEV_NAME                "fmc_sram"
+#define BLK_FMCSRAM                     "sram"
+#define FMCSRAM_BLK_SIZE                (512)
+#endif
+
+#ifdef BSP_SDRAM_ENABLE_BLK
+//sdram定义,无需修改
+#define SDRAM_DEV_NAME                  "sdram"
+#define BLK_SDRAM                       "sdram"
+#define SDRAM_BLK_SIZE                  (512)
+#endif
+#ifndef BSP_SDRAM_BLK_SIZE
+#define BSP_SDRAM_BLK_SIZE              (0)
+#endif
+
 #ifdef BSP_USING_FM25xx
 //fm25xx定义,无需修改
 #define FM25xx_START_ADRESS            (0)
@@ -84,23 +101,6 @@ extern "C" {
 #endif
 #endif
 
-#ifdef BSP_FMCSRAM_ENABLE_BLK
-//sram定义,无需修改
-#define FMCSRAM_DEV_NAME                "fmc_sram"
-#define BLK_FMCSRAM                     "sram"
-#define FMCSRAM_BLK_SIZE                (512)
-#endif
-
-#ifdef BSP_SDRAM_ENABLE_BLK
-//sdram定义,无需修改
-#define SDRAM_DEV_NAME                  "sdram"
-#define BLK_SDRAM                       "sdram"
-#define SDRAM_BLK_SIZE                  (512)
-#endif
-#ifndef BSP_SDRAM_BLK_SIZE
-#define BSP_SDRAM_BLK_SIZE              (0)
-#endif
-
 #ifdef BSP_USING_NORFLASH
 //norflash定义,无需修改
 #define NORFLASH_DEV_NAME               "fmc_nor"
@@ -125,8 +125,17 @@ extern "C" {
 #define EMMC_DEV_NAME                   "sdmmc"
 #define BLK_EMMC                        "emmc"
 #define EMMC_START_ADRESS               (0)
-#define EMMC_SIZE_GRANULARITY_TOTAL     (2048)
 #define EMMC_BLK_SIZE                   (512)
+#define EMMC_OFFSET_DOWNLOAD            (0)
+#define EMMC_OFFSET_FACTORY             (EMMC_OFFSET_DOWNLOAD + EMMC_SIZE_DOWNLOAD)
+#define EMMC_OFFSET_BIN                 (EMMC_OFFSET_FACTORY + EMMC_SIZE_FACTORY)
+#define EMMC_OFFSET_ETC                 (EMMC_OFFSET_BIN + EMMC_SIZE_BIN)
+#define EMMC_OFFSET_LIB                 (EMMC_OFFSET_ETC + EMMC_SIZE_ETC)
+#define EMMC_OFFSET_USR                 (EMMC_OFFSET_LIB + EMMC_SIZE_LIB)
+#define EMMC_OFFSET_FS                  (EMMC_OFFSET_USR + EMMC_SIZE_USR)
+#ifndef EMMC_ENABLE_FS
+#define EMMC_FS                         ""
+#endif
 #endif
 
 #ifdef BSP_USING_EEPROM_24Cxx
@@ -173,8 +182,12 @@ extern const size_t partition_table_def_len;
 #endif /* FAL_PART_HAS_TABLE_CFG */
 #endif
 
-struct rt_device *fal_dev_mtd_nor_device_create(struct fal_flash_dev *fal_dev);
-struct rt_device *fal_dev_blk_device_create(struct fal_flash_dev *fal_dev);
+#include "drv_fal.h"
+
+struct rt_device *fal_dev_mtd_nor_device_create(struct fal_flash64_dev *fal_dev);
+struct rt_device *fal_dev_mtd_nor_devices_create(struct fal_flash64_dev *fal_dev);
+struct rt_device *fal_dev_blk_device_create(struct fal_flash64_dev *fal_dev);
+struct rt_device *fal_dev_blk_devices_create(struct fal_flash64_dev *fal_dev);
 
 #ifdef __cplusplus
 }

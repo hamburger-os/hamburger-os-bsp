@@ -21,15 +21,23 @@ struct fal_dev_init
 {
     char *dev_name;
     char *fs;
-    void *p;
+    struct fal_flash64_dev *p;
 };
 
 #ifdef BSP_USING_EMMC
-    extern struct fal_flash_dev emmc_flash;
+    extern struct fal_flash64_dev emmc_flash[];
 #endif
 
 static const struct fal_dev_init _fal_dev[] =
 {
+#ifdef BSP_FMCSRAM_ENABLE_BLK
+    {BLK_FMCSRAM, BSP_FMCSRAM_FS, NULL},
+#endif
+
+#ifdef BSP_SDRAM_ENABLE_BLK
+    {BLK_SDRAM, BSP_SDRAM_FS, NULL},
+#endif
+
 #ifdef BSP_USING_FM25xx
     {BLK_FRAM, FM25xx_FS, NULL},
 #endif
@@ -46,16 +54,12 @@ static const struct fal_dev_init _fal_dev[] =
     {BLK_AT45DB321E, AT45DB321E_FS, NULL},
 #endif
 
-#ifdef BSP_FMCSRAM_ENABLE_BLK
-    {BLK_FMCSRAM, BSP_FMCSRAM_FS, NULL},
-#endif
-
-#ifdef BSP_SDRAM_ENABLE_BLK
-    {BLK_SDRAM, BSP_SDRAM_FS, NULL},
-#endif
-
 #ifdef BSP_USING_NORFLASH
     {BLK_NOR, NORFLASH_FS, NULL},
+#endif
+
+#ifdef BSP_USING_EMMC
+    {EMMC_DEV_NAME, EMMC_FS, emmc_flash},
 #endif
 
 #ifdef BSP_USING_EEPROM_24Cxx
@@ -72,10 +76,6 @@ static const struct fal_dev_init _fal_dev[] =
     {"lib", "lfs", NULL},
     {"usr", "lfs", NULL},
 #endif
-
-#ifdef BSP_USING_EMMC
-    {EMMC_DEV_NAME, EMMC_FS, &emmc_flash},
-#endif
 };
 
 static int rt_fal_init(void)
@@ -91,7 +91,7 @@ static int rt_fal_init(void)
         {
             if (node.p != NULL)
             {
-                if (fal_dev_mtd_nor_device_create(node.p) == NULL)
+                if (fal_dev_mtd_nor_devices_create(node.p) == NULL)
                 {
                     LOG_E("Failed to creat nor %s!", node.dev_name);
                 }
@@ -108,7 +108,7 @@ static int rt_fal_init(void)
         {
             if (node.p != NULL)
             {
-                if (fal_dev_blk_device_create(node.p) == NULL)
+                if (fal_dev_blk_devices_create(node.p) == NULL)
                 {
                     LOG_E("Failed to creat blk %s!", node.dev_name);
                 }
@@ -125,7 +125,7 @@ static int rt_fal_init(void)
         {
             if (node.p != NULL)
             {
-                if (fal_dev_blk_device_create(node.p) == NULL)
+                if (fal_dev_blk_devices_create(node.p) == NULL)
                 {
                     LOG_E("Failed to creat blk %s!", node.dev_name);
                 }

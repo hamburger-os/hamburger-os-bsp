@@ -44,6 +44,10 @@
     extern const struct fal_flash_dev nor_flash;
 #endif
 
+#if EMMC_OFFSET_FS > 0
+    extern const struct fal_flash_dev emmc_fal_flash;
+#endif
+
 #ifdef BSP_USING_EEPROM_24Cxx
     extern const struct fal_flash_dev hg24cxx_eeprom;
 #endif
@@ -87,6 +91,10 @@ const struct fal_flash_dev * const device_table[] =
 
 #ifdef BSP_USING_NORFLASH
     &nor_flash,
+#endif
+
+#if EMMC_OFFSET_FS > 0
+    &emmc_fal_flash,
 #endif
 
 #ifdef BSP_USING_EEPROM_24Cxx
@@ -197,6 +205,27 @@ const struct fal_partition partition_table_def[] =
 #endif
 #if NORFLASH_SIZE_FS > 0
     {FAL_PART_MAGIC_WORD,     BLK_NOR,     NORFLASH_DEV_NAME,            NORFLASH_OFFSET_FS,                    NORFLASH_SIZE_FS, 0},
+#endif
+#endif
+
+#ifdef BSP_USING_EMMC
+#if EMMC_SIZE_DOWNLOAD > 0
+    {FAL_PART_MAGIC_WORD,  "download",     EMMC_DEV_NAME,      EMMC_OFFSET_DOWNLOAD,              EMMC_SIZE_DOWNLOAD, 0},
+#endif
+#if EMMC_SIZE_FACTORY > 0
+    {FAL_PART_MAGIC_WORD,   "factory",     EMMC_DEV_NAME,       EMMC_OFFSET_FACTORY,               EMMC_SIZE_FACTORY, 0},
+#endif
+#if EMMC_SIZE_BIN > 0
+    {FAL_PART_MAGIC_WORD,       "bin",     EMMC_DEV_NAME,           EMMC_OFFSET_BIN,                   EMMC_SIZE_BIN, 0},
+#endif
+#if EMMC_SIZE_ETC > 0
+    {FAL_PART_MAGIC_WORD,       "etc",     EMMC_DEV_NAME,           EMMC_OFFSET_ETC,                   EMMC_SIZE_ETC, 0},
+#endif
+#if EMMC_SIZE_LIB > 0
+    {FAL_PART_MAGIC_WORD,       "lib",     EMMC_DEV_NAME,           EMMC_OFFSET_LIB,                   EMMC_SIZE_LIB, 0},
+#endif
+#if EMMC_SIZE_USR > 0
+    {FAL_PART_MAGIC_WORD,       "usr",     EMMC_DEV_NAME,           EMMC_OFFSET_USR,                   EMMC_SIZE_USR, 0},
 #endif
 #endif
 

@@ -55,7 +55,7 @@ static const struct romfs_dirent _romfs_root_mnt[] =
     {ROMFS_DIRENT_DIR, BLK_NOR      , RT_NULL, 0},      //nor
 #endif
 
-#ifdef BSP_USING_EMMC
+#ifdef EMMC_ENABLE_FS
     {ROMFS_DIRENT_DIR, BLK_EMMC     , RT_NULL, 0},      //emmc
 #endif
 
@@ -139,8 +139,8 @@ static const struct mount_fs _mount_fs[] =
     {BLK_NOR            , BLK_NOR           , NORFLASH_FS       },
 #endif
 
-#ifdef BSP_USING_EMMC
-    {EMMC_DEV_NAME      , BLK_EMMC          , EMMC_FS           },
+#ifdef EMMC_ENABLE_FS
+    {BLK_EMMC           , BLK_EMMC          , EMMC_FS           },
 #endif
 };
 

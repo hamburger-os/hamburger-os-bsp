@@ -3036,10 +3036,6 @@ menu "Onboard Peripheral Drivers"
         
     menuconfig BSP_USING_EMMC
         bool "Enable EMMC"
-        select RT_USING_DFS
-        select RT_USING_DFS_ROMFS
-        select PKG_USING_LITTLEFS
-        select RT_USING_DFS_ELMFAT
         default n
         
         if BSP_USING_EMMC            
@@ -3072,10 +3068,43 @@ menu "Onboard Peripheral Drivers"
                 string "Set SDIO power ctrl pin, default: PG.10"
                 depends on BSP_SDIO_USING_CTRL
                 default "PG.10"
+                
+            config EMMC_SIZE_DOWNLOAD
+                int "Set download part size, default: (2048 * 1024)"
+                default (0)
+                
+            config EMMC_SIZE_FACTORY
+                int "Set factory part size, default: (2048 * 1024)"
+                default (0)
+                
+            config EMMC_SIZE_BIN
+                int "Set bin part size, default: (2048 * 1024)"
+                default (0)
+                
+            config EMMC_SIZE_ETC
+                int "Set etc part size, default: (2048 * 1024)"
+                default (0)
+                
+            config EMMC_SIZE_LIB
+                int "Set lib part size, default: (2048 * 1024)"
+                default (0)
+                
+            config EMMC_SIZE_USR
+                int "Set usr part size, default: (2048 * 1024)"
+                default (0)
+	            
+	        config EMMC_ENABLE_FS
+                bool "Enable the file system"
+                select RT_USING_DFS
+                select RT_USING_DFS_ROMFS
+                select PKG_USING_LITTLEFS
+                select RT_USING_DFS_ELMFAT
+                default y
             
             config EMMC_FS
-	            string "Set the file system used, default: elm"
-	            default "elm"
+                string "Set the file system used, default: elm"
+                depends on EMMC_ENABLE_FS
+                default "elm"
         endif
         
     menuconfig BSP_USING_SDCARD
