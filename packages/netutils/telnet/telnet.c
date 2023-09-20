@@ -413,7 +413,7 @@ static void telnet_thread(void* parameter)
 
         telnet->echo_mode = finsh_get_echo();
         /* disable echo mode */
-        finsh_set_echo(0);
+        finsh_set_echo(1);
         /* output RT-Thread version and shell prompt */
 #ifdef FINSH_USING_MSH
         msh_exec("version", rt_strlen("version"));
