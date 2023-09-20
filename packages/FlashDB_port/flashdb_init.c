@@ -88,8 +88,14 @@ size_t kvdb_get(const char *key, char *value)
 {
     /* get the KV value */
     char *pvalue = fdb_kv_get(&kvdb, key);
-    rt_strcpy(value, pvalue);
-    return rt_strlen(value);
+    if (pvalue != NULL)
+    {
+        rt_strcpy(value, pvalue);
+        return rt_strlen(value);
+    }
+
+    LOG_E("kvdb get '%s' error!", key);
+    return 0;
 }
 RTM_EXPORT(kvdb_get);
 
