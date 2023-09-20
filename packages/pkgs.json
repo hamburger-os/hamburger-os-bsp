@@ -5,11 +5,6 @@
   "name": "NETUTILS"
  }, 
  {
-  "path": "/packages/multimedia/wavplayer", 
-  "ver": "latest", 
-  "name": "WAVPLAYER"
- }, 
- {
   "path": "/packages/system/enhanced-kservice/rt_memcpy_cm", 
   "ver": "latest", 
   "name": "RT_MEMCPY_CM"

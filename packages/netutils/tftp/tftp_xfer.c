@@ -347,7 +347,7 @@ struct tftp_xfer *tftp_xfer_create(const char *ip_addr, int port)
     _private = (struct tftp_xfer_private *)&xfer[1];
 
     /* create socket */
-    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    sock = socket(PF_INET, SOCK_DGRAM, 0);
     if (sock < 0)
     {
         tftp_printf("can't create socket!! exit\n");

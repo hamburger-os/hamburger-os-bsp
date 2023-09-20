@@ -318,7 +318,7 @@ static rt_err_t telnet_control(rt_device_t dev, int cmd, void *args)
 /* telnet server thread entry */
 static void telnet_thread(void* parameter)
 {
-#define RECV_BUF_LEN 64
+#define RECV_BUF_LEN 128
     struct sockaddr_in addr;
     socklen_t addr_size;
     rt_uint8_t recv_buf[RECV_BUF_LEN];
@@ -505,6 +505,5 @@ FINSH_FUNCTION_EXPORT(telnet_server, startup telnet server);
 MSH_CMD_EXPORT(telnet_server, startup telnet server)
 #endif /* FINSH_USING_MSH */
 #endif /* RT_USING_FINSH */
-//开机自启telnet
 INIT_APP_EXPORT(telnet_server);
 #endif /* PKG_NETUTILS_TELNET */
