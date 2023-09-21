@@ -29,13 +29,25 @@
 #define UDP_RCV_THREAD_TIMESLICE    (20)
 
 #define UDP_SERVER_PORT    (8090U)
-#define UDP_RCV_BUFSZ      (1024U)
+#define UDP_RCV_BUFSZ      (1500U)
+
+#define UDP_RCV_MQ_NUM     (10)
+
+
+
+uint8_t udp_recv_buffer[UDP_RCV_BUFSZ];
+extern uint32_t GetNewDatagram( uint8_t dgm[], uint32_t len );
+extern uint32_t GetDownloadDatagram( uint8_t dgm[], uint32_t size );
 
 typedef struct {
     int sock;
     struct sockaddr_in server_addr;
     struct sockaddr_in client_addr;
-    char *recv_data;
+    uint8_t *recv_data;
+    uint8_t *recv_data_by_mq;
+    uint32_t recv_len;
+    rt_mq_t rcv_mq;
+    rt_mutex_t mutex;
 } S_UDP_SERVER;
 
 static S_UDP_SERVER udp_server_dev;
@@ -55,12 +67,36 @@ static rt_err_t UDPServerInit(S_UDP_SERVER *dev)
 
     memset(dev, 0, sizeof(S_UDP_SERVER));
 
+    dev->rcv_mq = rt_mq_create("udp mq", sizeof(uint8_t) * UDP_RCV_BUFSZ, UDP_RCV_MQ_NUM, RT_IPC_FLAG_FIFO);
+    if(RT_NULL == dev->rcv_mq)
+    {
+        LOG_E("rt_mq_create failed");
+        return -RT_ERROR;
+    }
+
+    /* 创建一个动态互斥量 */
+    dev->mutex = rt_mutex_create("udp mutex", RT_IPC_FLAG_PRIO);
+    if (RT_NULL == dev->mutex)
+    {
+        LOG_E("create udp mutex failed");
+        return -1;
+    }
+
     /* Allocate space for recv_data */
     /* 分配接收用的数据缓冲 */
     dev->recv_data = rt_malloc(UDP_RCV_BUFSZ);
     if (dev->recv_data == RT_NULL)
     {
-        LOG_E("No memory");
+        LOG_E("rcv data no memory");
+        return -RT_ERROR;
+    }
+
+    dev->recv_data_by_mq = rt_malloc(UDP_RCV_BUFSZ);
+    if (dev->recv_data_by_mq == RT_NULL)
+    {
+        rt_free(dev->recv_data);
+        dev->recv_data = RT_NULL;
+        LOG_E("rcv data by mq no memory");
         return -RT_ERROR;
     }
 
@@ -77,6 +113,7 @@ static void UDPServerRcvThreadEntry(void *paramemter)
 {
     int bytes_read;
     socklen_t addr_len;
+    rt_err_t ret = -RT_ERROR;
 
     struct timeval timeout;
     fd_set readset;
@@ -115,12 +152,15 @@ static void UDPServerRcvThreadEntry(void *paramemter)
 
     while (1)
     {
+
         FD_ZERO(&readset);
         FD_SET(dev->sock, &readset);
 
         /* Wait for read or write */
         if (select(dev->sock + 1, &readset, RT_NULL, RT_NULL, &timeout) == 0)
+        {
             continue;
+        }
         /* The maximum size received from sock is BUFSZ-1 bytes*/
         /* 从sock中收取最大BUFSZ - 1字节数据 */
         bytes_read = recvfrom(dev->sock, dev->recv_data, UDP_RCV_BUFSZ - 1, 0,
@@ -140,8 +180,19 @@ static void UDPServerRcvThreadEntry(void *paramemter)
             dev->recv_data[bytes_read] = '\0'; /* Append '\0' at the end of message *//* 把末端清零 */
             /* Output received message */
             /* 输出接收的数据 */
-            LOG_D("Received data = %s", dev->recv_data);
-            UDPServerSendData(dev->recv_data, rt_strlen(dev->recv_data));
+            LOG_D("Received data = %s size = %d", dev->recv_data, bytes_read);
+//            UDPServerSendData(dev->recv_data, rt_strlen(dev->recv_data));
+
+
+            rt_mutex_take(dev->mutex, RT_WAITING_FOREVER);
+            dev->recv_len = bytes_read;
+            rt_mutex_release(dev->mutex);
+
+            ret = rt_mq_send(dev->rcv_mq, (const void *)dev->recv_data, sizeof(uint8_t) * UDP_RCV_BUFSZ);
+            if(ret != RT_EOK)
+            {
+                LOG_E("udp mq send error %d", ret);
+            }
         }
     }
 __exit:
@@ -150,11 +201,51 @@ __exit:
         rt_free(dev->recv_data);
         dev->recv_data = RT_NULL;
     }
+
+    if(dev->recv_data_by_mq)
+    {
+        rt_free(dev->recv_data_by_mq);
+        dev->recv_data_by_mq = RT_NULL;
+    }
     if (dev->sock >= 0)
     {
         closesocket(dev->sock);
         dev->sock = -1;
     }
+}
+
+rt_err_t UDPServerRcvMQData(void)
+{
+    rt_err_t ret = -RT_ERROR;
+    S_UDP_SERVER *dev = &udp_server_dev;
+    uint32_t udp_recv_len;
+
+    ret = rt_mq_recv(dev->rcv_mq, (void *)dev->recv_data_by_mq, sizeof(uint8_t) * UDP_RCV_BUFSZ, 0);
+    if(ret != RT_EOK)
+    {
+        return -RT_ERROR;
+    }
+
+    rt_mutex_take(dev->mutex, RT_WAITING_FOREVER);
+    udp_recv_len = dev->recv_len;
+    rt_mutex_release(dev->mutex);
+    LOG_D("Rcv mq data = %s len %d", dev->recv_data_by_mq, udp_recv_len);
+
+    memset(udp_recv_buffer, 0, UDP_RCV_BUFSZ);
+    memcpy(udp_recv_buffer, dev->recv_data_by_mq, udp_recv_len);
+
+//    for(int i = 0; i < udp_recv_len; i++)
+//    {
+//        LOG_D("udp_recv_buffer i = %d, data %d", i, udp_recv_buffer[i]);
+//    }
+
+    /* 2. Copy network data to error code buffer. */
+    GetNewDatagram( udp_recv_buffer, udp_recv_len );
+
+    /* 3. Copy network data to recording file buffer. */
+    GetDownloadDatagram( udp_recv_buffer, udp_recv_len );
+
+    return RT_EOK;
 }
 
 int UDPServerRcvThreadInit(void)

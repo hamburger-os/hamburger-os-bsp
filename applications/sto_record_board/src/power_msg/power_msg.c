@@ -155,7 +155,7 @@ static void RecordingPowerVoltageCurrentSelfCheckMessage(void)
         RecordingPowerVoltageCurrentOneSelfCheckMessage(0x69, ch, v_new, a_new, last_value_ch5);
         break;
     default:
-        LOG_E("power ch error");
+//        LOG_E("power ch error");
         break;
     }
 }

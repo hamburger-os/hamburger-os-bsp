@@ -10,6 +10,15 @@
 #ifndef APPLICATIONS_STO_RECORD_BOARD_INC_UDP_COMM_H_
 #define APPLICATIONS_STO_RECORD_BOARD_INC_UDP_COMM_H_
 
+#include <rtthread.h>
+
+typedef enum
+{
+  UDP_RECV_EMPTY = 0U,
+  UDP_RECV_NOTEMPTY
+} UDP_RECV_STATUS;
+
 int UDPServerRcvThreadInit(void);
+rt_err_t UDPServerRcvMQData(void);
 
 #endif /* APPLICATIONS_STO_RECORD_BOARD_INC_UDP_COMM_H_ */

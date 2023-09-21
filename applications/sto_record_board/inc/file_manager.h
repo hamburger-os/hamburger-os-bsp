@@ -12,6 +12,7 @@
 
 #include <rtthread.h>
 #include "type.h"
+#include "utils.h"
 
 #define FILE_MANAGER_TEST 0  /* 文件超出设置的大小以及个数的逻辑测试 */
 #define TMP_FILE_MANAGER_TEST 0  /* 临时文件超出设置的大小以及个数的逻辑测试 */
@@ -107,5 +108,7 @@ sint32_t FMAppendWrite(const char *filename, const void *buffer, size_t count);
 sint32_t FMWriteLatestInfo(const char *pathname, const char *filename, const void *data, size_t size);
 sint32_t FMGetLatestFileInfo(S_FILE_MANAGER *fm, const char *pathname, const char *filename, void *data, size_t size);
 sint32_t FMInit(S_FILE_MANAGER *fm);
+sint32_t FMReadFile(S_FILE_MANAGER *fm,const char *file_path, uint32_t offset, void *data, size_t size);
+int32_t FMGetIndexFile(S_FILE_MANAGER *fm, const char *path, uint8_t file_id, file_info_t *file_info);
 
 #endif /* APPLICATIONS_STO_RECORD_BOARD_INC_FILE_MANAGER_H_ */
