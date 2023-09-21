@@ -17,7 +17,7 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-static SelftestlUserData selftest_userdata = {
+static SelftestUserData selftest_userdata = {
     .gpio_devname = {
         {BSP_GPIO_TABLE_PWM1        , BSP_GPIO_TABLE_GPIO1      },
         {BSP_GPIO_TABLE_GPIO5       , BSP_GPIO_TABLE_GPIO6      },
@@ -46,6 +46,15 @@ static SelftestlUserData selftest_userdata = {
     .eth_devname = {
         {"e0"                       , "e1"                      },
         {"e1"                       , "e0"                      }},
+    .result = {
+        {"MAX31826", 1},{"DS1682", 1},
+        {"GPIO_LOW", 1},{"GPIO_HIGH", 1},
+        {"FRAM", 1},{"SPINOR64", 1},{"NOR", 1},{"EMMC", 1},{"UDISK", 1},
+        {"SPINOR4", 1},{"EEPROM", 1},
+        {"UART2_UART2", 1},{"UART3_UART4", 1},{"UART4_UART3", 1},
+        {"CAN1_CAN2", 1},{"CAN2_CAN1", 1},
+        {"ETH1_ETH2", 1},{"ETH2_ETH1", 1},
+    },
 };
 
 #if 0 //运行Gui-Guider创建的app
@@ -72,52 +81,79 @@ static void selftest_thread_entry(void* parameter)
         rt_thread_delay(10);
     }
 
-    SelftestlUserData *puserdata = (SelftestlUserData *)parameter;
+    SelftestUserData *puserdata = (SelftestUserData *)parameter;
 
-    LOG_I("startup...");
+    while(1)
+    {
+        LOG_I("startup...");
 
-    //系统信息
-    sysinfo_show();
-    struct SysInfoDef info = {0};
-    sysinfo_get(&info);
-    if (info.chip_id[0] != 0 && info.chip_id[0] != 0xff)
-    {
-        LOG_D("max31826    pass");
-    }
-    else
-    {
-        LOG_E("max31826    error!");
-    }
-    if (info.times != 0)
-    {
-        LOG_D("ds1682      pass");
-    }
-    else
-    {
-        LOG_E("ds1682      error!");
-    }
-    //gpio
-    selftest_gpio_test(puserdata);
-    //key
-    selftest_key_test(puserdata);
-    //filesysterm
-    selftest_fs_test(puserdata);
-    //spi
-    selftest_spi_test(puserdata);
-    //i2c
-    selftest_i2c_test(puserdata);
-    //i2s
-    selftest_i2s_test(puserdata);
-    //uart
-    selftest_uart_test(puserdata);
-    //can
-    selftest_can_test(puserdata);
-    //eth
-    selftest_eth_test(puserdata);
-    //tcpip
-    selftest_tcpip_test(puserdata);
+        //系统信息
+        struct SysInfoDef info = {0};
+        sysinfo_get(&info);
+        if (info.chip_id[0] != 0 && info.chip_id[0] != 0xff)
+        {
+            LOG_D("max31826    pass");
+            puserdata->result[RESULT_MAX31826].result = 0;
+        }
+        else
+        {
+            LOG_E("max31826    error!");
+            puserdata->result[RESULT_MAX31826].result = 1;
+        }
+        if (info.times != 0)
+        {
+            LOG_D("ds1682      pass");
+            puserdata->result[RESULT_DS1682].result = 0;
+        }
+        else
+        {
+            LOG_E("ds1682      error!");
+            puserdata->result[RESULT_DS1682].result = 1;
+        }
+        //gpio
+        selftest_gpio_test(puserdata);
+        //filesysterm
+        selftest_fs_test(puserdata);
+        //key
+        selftest_key_test(puserdata);
+        //i2s
+        rt_tick_t tick = rt_tick_get();
+        selftest_i2s_test(puserdata);
+        //spi
+        selftest_spi_test(puserdata);
+        //i2c
+        selftest_i2c_test(puserdata);
+        //uart
+        selftest_uart_test(puserdata);
+        //can
+        selftest_can_test(puserdata);
+        //eth
+        selftest_eth_test(puserdata);
+        //tcpip
+        selftest_tcpip_test(puserdata);
 
-    LOG_I("end.");
+        LOG_I("end.");
+
+        rt_kprintf("\n");
+        char SN_str[sizeof(info.SN) + 1] = {0};
+        rt_memcpy(SN_str, info.SN, sizeof(info.SN));
+        rt_kprintf("--Ans TestResult T:M4H7 SN:%s R=", SN_str);
+
+        for (int i = 0; i < sizeof(puserdata->result)/sizeof(puserdata->result[0]); i++)
+        {
+            rt_kprintf("%s:%02d", puserdata->result[i].name, puserdata->result[i].result);
+            if (i == sizeof(puserdata->result)/sizeof(puserdata->result[0]) - 1)
+            {
+                rt_kprintf("\n");
+            }
+            else
+            {
+                rt_kprintf(";");
+            }
+        }
+
+        rt_thread_delay_until(&tick, 6000);
+    }
 }
 
 static int selftest_init(void)
@@ -127,7 +163,7 @@ static int selftest_init(void)
                                             selftest_thread_entry,
                                             &selftest_userdata,
                                             4096,
-                                            1,
+                                            24,
                                             10);
     if ( thread != RT_NULL)
     {

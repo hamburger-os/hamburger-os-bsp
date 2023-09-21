@@ -374,8 +374,6 @@ static void telnet_thread(void* parameter)
 
     while (1)
     {
-        rt_kprintf("telnet: waiting for connection\n");
-
         /* grab new connection */
         if ((telnet->client_fd = accept(telnet->server_fd, (struct sockaddr *) &addr, &addr_size)) == -1)
         {

@@ -30,10 +30,10 @@ static void key_hz_test(rt_base_t pin, uint16_t hz, uint16_t s)
         rt_hw_us_delay(us);
         rt_pin_write(pin, PIN_LOW);
     }
-    rt_thread_delay(10);
+    rt_thread_delay(100);
 }
 
-void selftest_key_test(SelftestlUserData *puserdata)
+void selftest_key_test(SelftestUserData *puserdata)
 {
     puserdata->key_pin = rt_pin_get(puserdata->key_devname);
 

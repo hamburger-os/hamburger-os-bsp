@@ -30,7 +30,7 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-void selftest_tcpip_test(SelftestlUserData *puserdata)
+void selftest_tcpip_test(SelftestUserData *puserdata)
 {
 
 }

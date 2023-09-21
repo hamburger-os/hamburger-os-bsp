@@ -18,11 +18,11 @@
 #include <rtdbg.h>
 
 static char * error_log[] = {
-    "CAN1       ----> CAN2      ",
-    "CAN2       ----> CAN1      ",
+    "CAN1   ----> CAN2  ",
+    "CAN2   ----> CAN1  ",
 };
 
-void selftest_can_test(SelftestlUserData *puserdata)
+void selftest_can_test(SelftestUserData *puserdata)
 {
     struct rt_can_msg txmsg = {0};
     txmsg.id = 0x78;              /* ID 为 0x78 */
@@ -71,18 +71,17 @@ void selftest_can_test(SelftestlUserData *puserdata)
 
         rt_memset(&rxmsg, 0, sizeof(rxmsg));
         rxmsg.hdr = -1;
-        if (rt_device_read(puserdata->can_dev[i][1], 0, &rxmsg, sizeof(rxmsg)) != sizeof(rxmsg))
-        {
-            LOG_E("%s read failed", error_log[i]);
-        }
+        rt_device_read(puserdata->can_dev[i][1], 0, &rxmsg, sizeof(rxmsg));
         if (rt_memcmp(txmsg.data, rxmsg.data, txmsg.len) == 0)
         {
             LOG_D("%s pass", error_log[i]);
+            puserdata->result[RESULT_CAN1_CAN2 + i].result = 0;
         }
         else
         {
             LOG_E("%s error!", error_log[i]);
             LOG_HEX("rd", 16, rxmsg.data, txmsg.len);
+            puserdata->result[RESULT_CAN1_CAN2 + i].result = 1;
         }
     }
 

@@ -32,11 +32,11 @@ union LinkLayerPackDef
 };
 
 static char * error_log[] = {
-    "ETH1       ----> ETH2      ",
-    "ETH2       ----> ETH1      ",
+    "ETH1   ----> ETH2  ",
+    "ETH2   ----> ETH1  ",
 };
 
-void selftest_eth_test(SelftestlUserData *puserdata)
+void selftest_eth_test(SelftestUserData *puserdata)
 {
     union LinkLayerPackDef data_wr = {
         .frame.mac_des = {0xF8,0x09,0xA4,0x00,0x23,0x00},
@@ -78,6 +78,7 @@ void selftest_eth_test(SelftestlUserData *puserdata)
             if (rt_memcmp(&data_wr, &data_rd, sizeof(union LinkLayerPackDef)) == 0)
             {
                 LOG_D("%s pass", error_log[i]);
+                puserdata->result[RESULT_ETH1_ETH2 + i].result = 0;
                 break;
             }
         }
@@ -86,6 +87,7 @@ void selftest_eth_test(SelftestlUserData *puserdata)
             LOG_E("%s error!", error_log[i]);
             LOG_HEX("wr", 16, (uint8_t *)&data_wr, sizeof(union LinkLayerPackDef));
             LOG_HEX("rd", 16, (uint8_t *)&data_rd, sizeof(union LinkLayerPackDef));
+            puserdata->result[RESULT_ETH1_ETH2 + i].result = 1;
         }
 //        LOG_W("%s %d", error_log[i], n);
     }

@@ -19,8 +19,7 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-void selftest_i2s_test(SelftestlUserData *puserdata)
+void selftest_i2s_test(SelftestUserData *puserdata)
 {
     wavplayer_play(puserdata->wav_path);
-    rt_thread_delay(6 * 1000);
 }

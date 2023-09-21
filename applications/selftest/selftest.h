@@ -10,6 +10,33 @@
 #ifndef APPLICATIONS_SELFTEST_SELFTEST_H_
 #define APPLICATIONS_SELFTEST_SELFTEST_H_
 
+enum {
+    RESULT_MAX31826 = 0,
+    RESULT_DS1682,
+    RESULT_GPIO_LOW,
+    RESULT_GPIO_HIGH,
+    RESULT_FRAM,
+    RESULT_SPINOR64,
+    RESULT_NOR,
+    RESULT_EMMC,
+    RESULT_UDISK,
+    RESULT_SPINOR4,
+    RESULT_EEPROM,
+    RESULT_UART2_UART2,
+    RESULT_UART3_UART4,
+    RESULT_UART4_UART3,
+    RESULT_CAN1_CAN2,
+    RESULT_CAN2_CAN1,
+    RESULT_ETH1_ETH2,
+    RESULT_ETH2_ETH1,
+};
+
+typedef struct
+{
+    char *name;
+    uint8_t result;
+} SelftestResult;
+
 typedef struct
 {
     char *gpio_devname[6][2];
@@ -30,17 +57,19 @@ typedef struct
     rt_device_t can_dev[2][2];
     rt_device_t eth_dev[2][2];
     int sock[2][2];
-} SelftestlUserData;
 
-void selftest_gpio_test(SelftestlUserData *puserdata);
-void selftest_key_test(SelftestlUserData *puserdata);
-void selftest_fs_test(SelftestlUserData *puserdata);
-void selftest_spi_test(SelftestlUserData *puserdata);
-void selftest_i2c_test(SelftestlUserData *puserdata);
-void selftest_i2s_test(SelftestlUserData *puserdata);
-void selftest_uart_test(SelftestlUserData *puserdata);
-void selftest_can_test(SelftestlUserData *puserdata);
-void selftest_eth_test(SelftestlUserData *puserdata);
-void selftest_tcpip_test(SelftestlUserData *puserdata);
+    SelftestResult result[18];
+} SelftestUserData;
+
+void selftest_gpio_test(SelftestUserData *puserdata);
+void selftest_key_test(SelftestUserData *puserdata);
+void selftest_fs_test(SelftestUserData *puserdata);
+void selftest_spi_test(SelftestUserData *puserdata);
+void selftest_i2c_test(SelftestUserData *puserdata);
+void selftest_i2s_test(SelftestUserData *puserdata);
+void selftest_uart_test(SelftestUserData *puserdata);
+void selftest_can_test(SelftestUserData *puserdata);
+void selftest_eth_test(SelftestUserData *puserdata);
+void selftest_tcpip_test(SelftestUserData *puserdata);
 
 #endif /* APPLICATIONS_SELFTEST_SELFTEST_H_ */

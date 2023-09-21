@@ -2569,9 +2569,10 @@ menu "Onboard Peripheral Drivers"
                         int "Set the rate of spi, default: (2 * 1000 *1000)"
                         default (2000000)
                         
-                    config TOUCH_SW_SAMPLE_TIMES
-                        int "Set the number of sampling times, default: (4)"
-                        default (4)
+                    config TOUCH_SW_USING_KVDB
+                        bool "Enable KVDB to save adjust"
+                        select PKG_USING_FLASHDB_PORT
+                        default y
                 endif
                 
                 if TOUCH_USING_XPT2046

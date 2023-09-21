@@ -46,6 +46,7 @@
 #define TEMP_INVALID                        (-12500)            /*  无效的温度数据 */
 
 static struct rt_mutex max31826_mux;    /** 读写互斥信号量 */
+static struct rt_mutex fal_mux;         /** 读写互斥信号量 */
 
 static int fal_max31826_init(void);
 static int fal_max31826_read(long offset, rt_uint8_t *buf, size_t size);
@@ -127,8 +128,8 @@ static rt_err_t max31826_init_by_ds2484(void)
  */
 static rt_int32_t DEV_MAX31826_Reset1Wire(void)
 {
-    rt_int32_t ret = 0xFF;
     rt_mutex_take(&max31826_mux, RT_WAITING_FOREVER);
+    rt_int32_t ret = 0xFF;
 
 #ifdef MAX31826_USING_IO
     rt_base_t level;
@@ -230,8 +231,8 @@ static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
  *****************************/
 static rt_uint8_t DEV_MAX31826_ReadBit(void)
 {
-    rt_uint8_t readbit = 0;
     rt_mutex_take(&max31826_mux, RT_WAITING_FOREVER);
+    rt_uint8_t readbit = 0;
 
 #ifdef MAX31826_USING_IO
     rt_base_t level;
@@ -697,15 +698,19 @@ static int fal_max31826_init(void)
 
 int fal_max31826_read(long offset, rt_uint8_t *buf, size_t size)
 {
+    rt_mutex_take(&fal_mux, RT_WAITING_FOREVER);
+
     uint32_t addr = max31826_flash.addr + offset;
     if (addr + size > max31826_flash.addr + max31826_flash.len)
     {
         LOG_E("read outrange flash size! addr is (0x%p)", (void*)(addr + size));
+        rt_mutex_release(&fal_mux);
         return -RT_EINVAL;
     }
     if (size < 1)
     {
 //        LOG_W("read size %d! addr is (0x%p)", size, (void*)(addr + size));
+        rt_mutex_release(&fal_mux);
         return 0;
     }
 
@@ -724,25 +729,31 @@ int fal_max31826_read(long offset, rt_uint8_t *buf, size_t size)
 
     LOG_HEX("rd", 16, buf, size);
     LOG_D("read (0x%p) %d", (void*)(addr), size);
+    rt_mutex_release(&fal_mux);
     return size;
 }
 
 int fal_max31826_write(long offset, const rt_uint8_t *buf, size_t size)
 {
+    rt_mutex_take(&fal_mux, RT_WAITING_FOREVER);
+
     uint32_t addr = max31826_flash.addr + offset;
     if (addr + size > max31826_flash.addr + max31826_flash.len)
     {
         LOG_E("write outrange flash size! addr is (0x%p)", (void*)(addr + size));
+        rt_mutex_release(&fal_mux);
         return -RT_EINVAL;
     }
     if (addr % 8 != 0)
     {
         LOG_E("write addr must be 8-byte alignment (0x%p) %d %d", (void*)(addr), addr % 8, size);
+        rt_mutex_release(&fal_mux);
         return -RT_EINVAL;
     }
     if (size < 1)
     {
 //        LOG_W("write size %d! addr is (0x%p)", size, (void*)(addr + size));
+        rt_mutex_release(&fal_mux);
         return 0;
     }
 
@@ -797,8 +808,10 @@ int fal_max31826_write(long offset, const rt_uint8_t *buf, size_t size)
     LOG_D("write (0x%p) %d", (void*)(addr), size);
     if (e_return == 0)
     {
+        rt_mutex_release(&fal_mux);
         return size;
     }
+    rt_mutex_release(&fal_mux);
     return 0;
 }
 
@@ -830,6 +843,12 @@ static int rt_hw_max31826_init()
 
     /* 初始化 读写 互斥 */
     result = rt_mutex_init(&max31826_mux, "max31826", RT_IPC_FLAG_PRIO);
+    if (result != RT_EOK)
+    {
+        LOG_E("mutex init error %d!", result);
+        return -RT_ERROR;
+    }
+    result = rt_mutex_init(&fal_mux, "fal_mux", RT_IPC_FLAG_PRIO);
     if (result != RT_EOK)
     {
         LOG_E("mutex init error %d!", result);

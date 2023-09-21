@@ -17,6 +17,10 @@
 #include "sw_touch.h"
 #include "xpt2046.h"
 
+#ifdef PKG_USING_FLASHDB_PORT
+#include "flashdb_port.h"
+#endif
+
 #define DBG_TAG "drv.touch"
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
@@ -78,7 +82,15 @@ int drv_touch_calibration(void)
 
     return RT_EOK;
 }
-INIT_COMPONENT_EXPORT(drv_touch_calibration);
+INIT_ENV_EXPORT(drv_touch_calibration);
+#endif
+
+#ifdef PKG_USING_FLASHDB_PORT
+int touch_adjust_del(void)
+{
+    return kvdb_del("sw_touch");
+}
+MSH_CMD_EXPORT(touch_adjust_del, touch adjust del);
 #endif
 
 #endif

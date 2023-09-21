@@ -21,7 +21,7 @@
 #include <rtdbg.h>
 
 //通过读写底板上的spinor4的id来确认spi的完整性
-void selftest_spi_test(SelftestlUserData *puserdata)
+void selftest_spi_test(SelftestUserData *puserdata)
 {
     struct rt_spi_device *spidev = NULL;
 
@@ -68,10 +68,12 @@ void selftest_spi_test(SelftestlUserData *puserdata)
     if (rt_memcmp(id, check, 5) == 0)
     {
         LOG_D("spinor4     pass");
+        puserdata->result[RESULT_SPINOR4].result = 0;
     }
     else
     {
         LOG_E("spinor4 error! 0x%02x %02x %02x %02x %02x.", id[0], id[1], id[2], id[3], id[4]);
+        puserdata->result[RESULT_SPINOR4].result = 1;
     }
 
     return;

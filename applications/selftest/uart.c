@@ -18,9 +18,9 @@
 #include <rtdbg.h>
 
 static char * error_log[] = {
-    "UART2      ----> UART2     ",
-    "UART3      ----> UART4     ",
-    "UART4      ----> UART3     ",
+    "UART2  ----> UART2 ",
+    "UART3  ----> UART4 ",
+    "UART4  ----> UART3 ",
 };
 
 #define BAUD_CONFIG         BAUD_RATE_115200    //波特率
@@ -30,11 +30,10 @@ static char * error_log[] = {
 
 #define BUFFER_LEN  256
 
-void selftest_uart_test(SelftestlUserData *puserdata)
+void selftest_uart_test(SelftestUserData *puserdata)
 {
     uint8_t data_wr[] = {1, 2, 3, 4, 5, 6, 7, 8};
     uint8_t data_rd[16];
-    uint16_t data_rd_len = 0;
 
     for (int i = 0; i<3; i++)
     {
@@ -82,14 +81,11 @@ void selftest_uart_test(SelftestlUserData *puserdata)
             rt_thread_delay(100);
 
             rt_memset(data_rd, 0, 16);
-            data_rd_len = rt_device_read(puserdata->uart_dev[i][1], 0, data_rd, 16);
-            if (data_rd_len < 1)
-            {
-                LOG_E("%s read failed %d", error_log[i], data_rd_len);
-            }
+            rt_device_read(puserdata->uart_dev[i][1], 0, data_rd, 16);
             if (rt_memcmp(data_rd, data_wr, 8) == 0)
             {
                 LOG_D("%s pass", error_log[i]);
+                puserdata->result[RESULT_UART2_UART2 + i].result = 0;
                 break;
             }
         }
@@ -97,6 +93,7 @@ void selftest_uart_test(SelftestlUserData *puserdata)
         {
             LOG_E("%s error!", error_log[i]);
             LOG_HEX("rd", 16, data_rd, 16);
+            puserdata->result[RESULT_UART2_UART2 + i].result = 1;
         }
 //        LOG_W("%s %d", error_log[i], n);
     }

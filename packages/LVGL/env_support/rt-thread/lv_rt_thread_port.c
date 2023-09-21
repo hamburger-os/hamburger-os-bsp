@@ -83,6 +83,6 @@ static int lvgl_thread_init(void)
 
     return RT_EOK;
 }
-INIT_ENV_EXPORT(lvgl_thread_init);
+INIT_APP_EXPORT(lvgl_thread_init);
 
 #endif /*__RTTHREAD__*/

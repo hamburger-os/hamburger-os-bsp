@@ -23,7 +23,7 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-#define TEST_LEN    4096
+#define TEST_LEN    1024
 #define TEST_COUNT  8
 
 static char * error_log[] = {
@@ -34,21 +34,15 @@ static char * error_log[] = {
     "udisk      ",
 };
 
-void selftest_fs_test(SelftestlUserData *puserdata)
+static char write_data[TEST_LEN];
+static char read_data[TEST_LEN];
+
+void selftest_fs_test(SelftestUserData *puserdata)
 {
     int fd;
     char path[128];
     uint32_t index, length;
 
-    char *write_data = rt_malloc(TEST_LEN);
-    char *read_data = rt_malloc(TEST_LEN);
-    if (write_data == NULL || read_data == NULL)
-    {
-        rt_free(write_data);
-        rt_free(read_data);
-        LOG_W("Not enough memory to request a block.");
-        return;
-    }
     /* plan write data */
     for (index = 0; index < TEST_LEN; index++)
     {
@@ -122,13 +116,12 @@ void selftest_fs_test(SelftestlUserData *puserdata)
         if (is_error == 0)
         {
             LOG_D("%s pass", error_log[x]);
+            puserdata->result[RESULT_FRAM + x].result = 0;
         }
         else
         {
             LOG_E("%s error!", error_log[x]);
+            puserdata->result[RESULT_FRAM + x].result = is_error;
         }
     }
-
-    rt_free(write_data);
-    rt_free(read_data);
 }

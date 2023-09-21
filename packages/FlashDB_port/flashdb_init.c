@@ -113,6 +113,14 @@ fdb_err_t kvdb_set(const char *key, char *value)
 }
 RTM_EXPORT(kvdb_set);
 
+fdb_err_t kvdb_del(const char *key)
+{
+    /* del the KV */
+    return fdb_kv_del(&kvdb, key);
+}
+RTM_EXPORT(kvdb_del);
+
+
 #ifdef FLASHDB_PORT_USING_TSDB
 static struct fdb_tsdb tsdb;
 
