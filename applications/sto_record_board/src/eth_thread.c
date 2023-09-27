@@ -84,20 +84,19 @@ static void *ETH0ThreadEntry(void *parameter)
 {
     rt_err_t ret = RT_EOK;
 
-    ETHChannelInit(&eth0_thread, "e0");
-    ETHChannelSetRXCallback(&eth0_thread, ETH0RXChannel1Callback);
-
     eth0_thread.size_mq = rt_mq_create("e0 queue", sizeof(uint32_t), 256, RT_IPC_FLAG_FIFO);
-//    eth0_thread.size_mq = rt_mq_create("e0 queue", sizeof(uint32_t), 600, RT_IPC_FLAG_FIFO);
     if(RT_NULL == eth0_thread.size_mq)
     {
         LOG_E("eth0 create mq failed");
         return ;
     }
 
+    ETHChannelInit(&eth0_thread, "e0");
+    ETHChannelSetRXCallback(&eth0_thread, ETH0RXChannel1Callback);
+
     while(1)
     {
-//        ret = rt_mq_recv(eth0_thread.size_mq, (void *)&eth0_thread.rx_szie, sizeof(uint32_t), 1000);
+//        ret = rt_mq_recv(eth0_thread.size_mq, (void *)&eth0_thread.rx_szie, sizeof(uint32_t), 0);
         ret = rt_mq_recv(eth0_thread.size_mq, (void *)&eth0_thread.rx_szie, sizeof(uint32_t), RT_WAITING_FOREVER);
         if(RT_EOK == ret)
         {

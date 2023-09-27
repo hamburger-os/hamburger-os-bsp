@@ -1,6 +1,6 @@
 #include "Record_FileDown.h"
 
-#define DBG_TAG "udp_comm"
+#define DBG_TAG "file down"
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
@@ -643,34 +643,42 @@ void ThreadFileDownload( void )
             break;
 
         case DW_SM_ASSERT_BRIEF :
+//            LOG_I("DW_SM_ASSERT_BRIEF");
             Processing_DW_SM_ASSERT_BRIEF( &downloadFileInst );
             break;
 
         case DW_SM_ASSERT_FILE :
+//            LOG_I("DW_SM_ASSERT_FILE");
             Processing_DW_SM_ASSERT_FILE( &downloadFileInst );
             break;
 
         case DW_SM_SEND_BRIEF :
+//            LOG_I("DW_SM_SEND_BRIEF");
             Processing_DW_SM_SEND_BRIEF( &downloadFileInst );
             break;
 
         case DW_SM_SEND_FILE :
+//            LOG_I("DW_SM_SEND_FILE");
             Processing_DW_SM_SEND_FILE( &downloadFileInst );
             break;
 
         case DW_SM_ACK_BRIEF :
+//            LOG_I("DW_SM_ACK_BRIEF");
             Processing_DW_SM_ACK_BRIEF( dgm_status, &downloadFileInst );
             break;
 
         case DW_SM_ACK_FILE :
+//            LOG_I("DW_SM_ACK_FILE");
             Processing_DW_SM_ACK_FILE( dgm_status, &downloadFileInst );
             break;
 
         case DW_SM_EXCEPTION :
+//            LOG_I("DW_SM_EXCEPTION");
             Processing_DW_SM_EXCEPTION( &downloadFileInst );
             break;
 
         default :
+//            LOG_I("default");
             downloadFileInst.smDownload = DW_SM_IDLE;
             break;
     } /* end switch */
@@ -744,6 +752,7 @@ uint32_t GetDownloadDatagram( uint8_t dgm[], uint32_t size )
             memcpy( downloadFileInst.RX_Buffer, dgm, size );
 
             downloadFileInst.udp_recv = UDP_RECV_NOTEMPTY;
+            LOG_I("UDP_RECV_NOTEMPTY");
         } /* end if...else */
     } /* end if...else if...else */
 
@@ -1084,7 +1093,7 @@ static uint32_t Processing_DW_SM_SEND_BRIEF( DownloadFileStruct *dwf )
             memset( dwf->TX_Buffer, 0U, PROTOCOL_LENGTH );
 #if 0
             LOG_I( "$$ 1, dwf->BriefAmount=%d, dwf->BriefNum=%d $$",\
-            dwf->BriefAmount, dwf->BriefNum );
+                                dwf->BriefAmount, dwf->BriefNum );
 #endif
             /* 2.1 Loading command. */
             memcpy( dwf->TX_Buffer, DOWN_CMD_UPRB, 4U );
@@ -1118,7 +1127,7 @@ static uint32_t Processing_DW_SM_SEND_BRIEF( DownloadFileStruct *dwf )
             if(FMGetIndexFile(fm, DIR_FILE_PATH_NAME, dwf->BriefAddress, &file_info) < 0)
             {
                 exit_code = 3U;
-                LOG_E("FMGetIndexFile id %d error", dwf->BriefAddress);
+                LOG_E("FMGetIndexFile id %d error line %d", dwf->BriefAddress, __LINE__);
                 return exit_code;
             }
             else
@@ -1131,8 +1140,8 @@ static uint32_t Processing_DW_SM_SEND_BRIEF( DownloadFileStruct *dwf )
                 }
             }
             memcpy( &dwf->TX_Buffer[16], fd.ch_file_name, 16U + 8U);
-#if 0
-            LOG_I("发送文件名：%s ", fd.ch_file_name);
+#if 1
+            LOG_I("send file name %s ", fd.ch_file_name);
 #endif
 
             /* 4-December-2018, by Liang Zhen. */
@@ -1154,7 +1163,7 @@ static uint32_t Processing_DW_SM_SEND_BRIEF( DownloadFileStruct *dwf )
             dwf->TX_Buffer[38 + 8U] = ( uint8_t )( ( uint32_t )crc >> 8U );
             dwf->TX_Buffer[39 + 8U] = ( uint8_t )( ( uint32_t )crc >> 0U );
             /* 2.7 Sending datagram. */
-            UDPServerSendData( ( char * )dwf->TX_Buffer, 40U + 8U );
+            UDPServerSendData( ( const void * )dwf->TX_Buffer, 40U + 8U );
 #endif
             /* 2.8 Update ack time. */
             dwf->smDownload = DW_SM_ACK_BRIEF;
@@ -1232,10 +1241,10 @@ static uint32_t Processing_DW_SM_SEND_FILE( DownloadFileStruct *dwf )
             file_info_t file_info;
             S_FILE_MANAGER *fm = &file_manager;
 
-            if(FMGetIndexFile(fm, DIR_FILE_PATH_NAME, dwf->FileNum, &file_info) < 0)
+            if(FMGetIndexFile(fm, DIR_FILE_PATH_NAME, (dwf->FileNum - 1), &file_info) < 0)
             {
                 exit_code = 3U;
-                LOG_E("FMGetIndexFile id %d error line %d", dwf->FileNum, __LINE__);
+                LOG_E("FMGetIndexFile id %d error line %d", (dwf->FileNum - 1), __LINE__);
                 return exit_code;
             }
             else
@@ -1444,6 +1453,7 @@ static uint32_t AssertAckBrief( DownloadFileStruct *dwf )
                     dwf->BriefNum = tsn + 1U;
                     dwf->BriefAddress -= ( fsn - tsn );// * sizeof( SFile_Directory );
                     dwf->smDownload = DW_SM_SEND_BRIEF;
+                    LOG_I("brieNum %d address %d line %d", dwf->BriefNum, dwf->BriefAddress, __LINE__);
                 } /* end if */
             }
             else if ( 0U == strncmp( ACK_RS, ( const char * )&dwf->RX_Buffer[16], 2U ) )
@@ -1456,6 +1466,7 @@ static uint32_t AssertAckBrief( DownloadFileStruct *dwf )
                 {
                     dwf->BriefAddress += 1;//sizeof( SFile_Directory );
                     dwf->smDownload = DW_SM_SEND_BRIEF;
+                    LOG_I("brief address %d, num %d, line %d", dwf->BriefAddress, dwf->BriefNum, __LINE__);
                 }
                 else
                 {

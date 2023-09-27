@@ -44,7 +44,7 @@ sint32_t fm_free_fram_space(S_FILE_MANAGER *fm)
     /* 得到板载存储器的剩余空间大小 */
     disk_free_space = get_disk_free_space(RECORD_TEMP_FILE_PATH_NAME);
 
-    LOG_I("free fram before: %d K", disk_free_space);
+//    LOG_I("free fram before: %d K", disk_free_space);
 
     if (disk_free_space >= (TMP_FILE_MAN_SIZE + FRAM_RESERVE_SIZE)) /* 单个文件大小加预留空间的大小 */
     {

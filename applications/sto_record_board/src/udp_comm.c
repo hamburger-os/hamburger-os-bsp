@@ -28,7 +28,8 @@
 #define UDP_RCV_THREAD_PRIORITY     (15)
 #define UDP_RCV_THREAD_TIMESLICE    (20)
 
-#define UDP_SERVER_PORT    (8090U)
+//#define UDP_SERVER_PORT    (8090U)
+#define UDP_SERVER_PORT    (8089U)
 #define UDP_RCV_BUFSZ      (1500U)
 
 #define UDP_RCV_MQ_NUM     (10)
@@ -55,11 +56,15 @@ static S_UDP_SERVER udp_server_dev;
 void UDPServerSendData(const void *data, size_t size)
 {
     S_UDP_SERVER *dev = &udp_server_dev;
+    int ret = -1;
 
-    sendto(dev->sock, data, size, 0,
+    ret = sendto(dev->sock, data, size, 0,
            (struct sockaddr *)&dev->client_addr, sizeof(struct sockaddr));
-
-    rt_thread_mdelay(1000);
+    if(ret < 0)
+    {
+        LOG_E("ret error");
+    }
+//    rt_thread_mdelay(1000);
 }
 
 static rt_err_t UDPServerInit(S_UDP_SERVER *dev)
@@ -159,6 +164,7 @@ static void UDPServerRcvThreadEntry(void *paramemter)
         /* Wait for read or write */
         if (select(dev->sock + 1, &readset, RT_NULL, RT_NULL, &timeout) == 0)
         {
+//            LOG_E("sock wait");
             continue;
         }
         /* The maximum size received from sock is BUFSZ-1 bytes*/
@@ -233,11 +239,6 @@ rt_err_t UDPServerRcvMQData(void)
 
     memset(udp_recv_buffer, 0, UDP_RCV_BUFSZ);
     memcpy(udp_recv_buffer, dev->recv_data_by_mq, udp_recv_len);
-
-//    for(int i = 0; i < udp_recv_len; i++)
-//    {
-//        LOG_D("udp_recv_buffer i = %d, data %d", i, udp_recv_buffer[i]);
-//    }
 
     /* 2. Copy network data to error code buffer. */
     GetNewDatagram( udp_recv_buffer, udp_recv_len );
