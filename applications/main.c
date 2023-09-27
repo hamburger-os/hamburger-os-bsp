@@ -11,10 +11,6 @@
 #include <rtdevice.h>
 #include <board.h>
 
-#ifdef PKG_USING_SYSINFO
-#include "sysinfo.h"
-#endif
-
 #define DBG_TAG "main"
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
@@ -30,10 +26,6 @@ int main(void)
 #ifdef BSP_USING_SYS_LED
     /* set LED pin mode to output */
     rt_pin_mode(LED_PIN, PIN_MODE_OUTPUT);
-#endif
-
-#ifdef PKG_USING_SYSINFO
-    sysinfo_show();
 #endif
 
 #ifndef PKG_USING_QBOOT

@@ -17,7 +17,7 @@
 #include "drv_touch.h"
 #include "sw_touch.h"
 
-#ifdef PKG_USING_FLASHDB_PORT
+#ifdef TOUCH_SW_USING_KVDB
 #include "flashdb_port.h"
 #endif
 
@@ -35,7 +35,7 @@ struct SWAdjuct
     float F;
 };
 
-static struct SWAdjuct sw_adjuct = {0.23, 0.00, -62.91, 0.01, 0.15, 1.03};
+static struct SWAdjuct sw_adjuct = {0.23f, 0.00f, -62.91f, 0.01f, 0.15f, 1.03f};
 
 /*
  * slld_Read_IDCmd - Read ID from SPI Flash
@@ -46,7 +46,7 @@ static struct SWAdjuct sw_adjuct = {0.23, 0.00, -62.91, 0.01, 0.15, 1.03};
  *
  * RETURNS: Touch_STATE_OK or SLLD_E_HAL_ERROR
  */
-rt_err_t slld_Read_toucX(struct rt_touch_device *touch, uint16_t *value)
+static rt_err_t slld_Read_toucX(struct rt_touch_device *touch, uint16_t *value)
 {
     rt_err_t ret = RT_EOK;
     struct _rt_drv_touch *config = (struct _rt_drv_touch *)touch->parent.user_data;
@@ -55,7 +55,7 @@ rt_err_t slld_Read_toucX(struct rt_touch_device *touch, uint16_t *value)
     ret = rt_spi_send_then_recv(config->spidev, &cmd, 1, value, 2);
     if (ret != RT_EOK)
     {
-        LOG_E("read id error %d!", ret);
+        LOG_E("read x error %d!", ret);
         ret = -RT_EIO;
     }
     *value = __SWP16(*value);
@@ -73,7 +73,7 @@ rt_err_t slld_Read_toucX(struct rt_touch_device *touch, uint16_t *value)
  *
  * RETURNS: Touch_STATE_OK or SLLD_E_HAL_ERROR
  */
-rt_err_t slld_Read_toucY(struct rt_touch_device *touch, uint16_t *value)
+static rt_err_t slld_Read_toucY(struct rt_touch_device *touch, uint16_t *value)
 {
     rt_err_t ret = RT_EOK;
     struct _rt_drv_touch *config = (struct _rt_drv_touch *)touch->parent.user_data;
@@ -82,7 +82,7 @@ rt_err_t slld_Read_toucY(struct rt_touch_device *touch, uint16_t *value)
     ret = rt_spi_send_then_recv(config->spidev, &cmd, 1, value, 2);
     if (ret != RT_EOK)
     {
-        LOG_E("read id error %d!", ret);
+        LOG_E("read y error %d!", ret);
         ret = -RT_EIO;
     }
     *value = __SWP16(*value);
@@ -94,7 +94,7 @@ rt_err_t slld_Read_toucY(struct rt_touch_device *touch, uint16_t *value)
 /* Please calibrate the resistive touch screen before use, it is best to store the calibrated data */
 rt_err_t sw_calibration(const char *lcd_name,const char *touch_name)
 {
-#ifdef PKG_USING_FLASHDB_PORT
+#ifdef TOUCH_SW_USING_KVDB
     struct fdb_blob blob = {0};
     /* GET the KV value */
     kvdb_get_blob("sw_touch", fdb_blob_make(&blob, &sw_adjuct, sizeof(sw_adjuct)));
@@ -111,8 +111,8 @@ rt_err_t sw_calibration(const char *lcd_name,const char *touch_name)
     }
 #endif
 
-    const uint32_t black = 0xFF0000;
-    const uint32_t white = 0xFFFFFF;
+    uint16_t black = 0b1111100000000000;
+    uint16_t white = 0b1111111111111111;
 
     /* Find the TFT LCD device */
     rt_device_t lcd = rt_device_find(lcd_name);
@@ -145,14 +145,17 @@ rt_err_t sw_calibration(const char *lcd_name,const char *touch_name)
     rt_device_control(lcd, RTGRAPHIC_CTRL_GET_INFO, &lcd_info);
 
     /* clear screen */
-    LOG_I(" lcd (%d, %d)", lcd_info.width, lcd_info.height);
+    LOG_D(" lcd (%d, %d)", lcd_info.width, lcd_info.height);
     for (uint16_t y = 0; y < lcd_info.height; ++y)
     {
         rt_graphix_ops(lcd)->draw_hline((const char *) (&white), 0, lcd_info.width, y);
     }
     rt_device_control(lcd, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);
+
     /* Set the information for the four points used for calibration */
     uint16_t cross_size = (lcd_info.width > lcd_info.height ? lcd_info.height : lcd_info.width) / 32;
+
+_adjust:
     //rand()%(b - a + 1)+ a    生成[a, b]   范围内的随机数
     srand(UID_BASE * rt_tick_get() + rt_tick_get());
     uint16_t x0 = rand() % (lcd_info.width - cross_size - cross_size + 1) + cross_size;
@@ -164,7 +167,6 @@ rt_err_t sw_calibration(const char *lcd_name,const char *touch_name)
     uint16_t x3 = rand() % (lcd_info.width - cross_size - cross_size + 1) + cross_size;
     uint16_t y3 = rand() % (lcd_info.height - cross_size - cross_size + 1) + cross_size;
 
-_adjust:
     rt_graphix_ops(lcd)->draw_hline((const char *) (&black), x0 - cross_size, x0 + cross_size, y0);
     rt_graphix_ops(lcd)->draw_vline((const char *) (&black), x0, y0 - cross_size, y0 + cross_size);
     rt_device_control(lcd, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);
@@ -175,11 +177,11 @@ _adjust:
     uint16_t adyvalue[4] = { 0 };
     uint16_t posxvalue[4] = { 0 };
     uint16_t posyvalue[4] = { 0 };
+    struct rt_touch_data read_data = {0};
     while (1)
     {
-        rt_thread_mdelay(10);
+        rt_thread_mdelay(20);
 
-        struct rt_touch_data read_data = {0};
         if (rt_device_read((rt_device_t) touch, 0, &read_data, 1) == 1 && read_data.event == RT_TOUCH_EVENT_DOWN)
         {
             LOG_I(" %d point press (%d, %d)", raw_idx, read_data.x, read_data.y);
@@ -194,7 +196,8 @@ _adjust:
                 rt_graphix_ops(lcd)->draw_hline((const char *) (&white), 0, lcd_info.width, y);
             }
             rt_device_control(lcd, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);
-            rt_thread_mdelay(400);
+            rt_thread_delay(500);
+
             if (raw_idx > 3)
             {
                 break;
@@ -242,11 +245,11 @@ _adjust:
     posyvalue[3] = sw_adjuct.D * adxvalue[3] + sw_adjuct.E * adyvalue[3] + sw_adjuct.F;
     if (abs(posxvalue[3] - x3) > cross_size || abs(posyvalue[3] - y3) > cross_size)
     {
-        LOG_E("check: (%d, %d) (%d, %d)", posxvalue[3], posyvalue[3], x3, y3);
+        LOG_E("check: (%d, %d) (%d, %d) (%d, %d)", adxvalue[3], adyvalue[3], posxvalue[3], posyvalue[3], x3, y3);
         goto _adjust;
     }
 
-#ifdef PKG_USING_FLASHDB_PORT
+#ifdef TOUCH_SW_USING_KVDB
     /* CHANGE the KV value */
     kvdb_set_blob("sw_touch", fdb_blob_make(&blob, &sw_adjuct, sizeof(sw_adjuct)));
 #endif
@@ -278,23 +281,25 @@ static rt_size_t sw_touch_readpoint(struct rt_touch_device *touch, void *buf, rt
         }
 #endif /* RT_TOUCH_PIN_IRQ */
         uint8_t i = 0;
-        uint16_t xa[9];
-        uint16_t ya[9];
-        uint16_t xb[3];
-        uint16_t yb[3];
-        uint16_t mx[3];
-        uint16_t my[3];
+        uint16_t xa[9] = { 0 };
+        uint16_t ya[9] = { 0 };
+        uint16_t xb[3] = { 0 };
+        uint16_t yb[3] = { 0 };
+        uint16_t mx[3] = { 0 };
+        uint16_t my[3] = { 0 };
 
         for (i = 0; i < 9; i++)
         {
             slld_Read_toucX(touch, &xa[i]);
             slld_Read_toucY(touch, &ya[i]);
+            LOG_D("press: read (%d, %d)", xa[i], ya[i]);
         }
 
         for (i = 0; i < 3; i++)
         {
-            xb[i] = (uint16_t) ((xa[i * 3] + xa[i * 3 + 1] + xa[i * 3 + 2]) / 3. + 0.5);
-            yb[i] = (uint16_t) ((ya[i * 3] + ya[i * 3 + 1] + ya[i * 3 + 2]) / 3. + 0.5);
+            xb[i] = (uint16_t) ((xa[i * 3] + xa[i * 3 + 1] + xa[i * 3 + 2]) / 3.0f + 0.5f);
+            yb[i] = (uint16_t) ((ya[i * 3] + ya[i * 3 + 1] + ya[i * 3 + 2]) / 3.0f + 0.5f);
+            LOG_D("press: aver (%d, %d)", xb[i], yb[i]);
         }
 
         for (i = 0; i < 3; i++)

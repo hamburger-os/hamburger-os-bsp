@@ -503,5 +503,5 @@ FINSH_FUNCTION_EXPORT(telnet_server, startup telnet server);
 MSH_CMD_EXPORT(telnet_server, startup telnet server)
 #endif /* FINSH_USING_MSH */
 #endif /* RT_USING_FINSH */
-INIT_APP_EXPORT(telnet_server);
+INIT_SERVICE_EXPORT(telnet_server);
 #endif /* PKG_NETUTILS_TELNET */

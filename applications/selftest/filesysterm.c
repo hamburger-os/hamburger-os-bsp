@@ -23,7 +23,7 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-#define TEST_LEN    1024
+#define TEST_LEN    4096
 #define TEST_COUNT  8
 
 static char * error_log[] = {
@@ -39,9 +39,11 @@ static char read_data[TEST_LEN];
 
 void selftest_fs_test(SelftestUserData *puserdata)
 {
-    int fd;
-    char path[128];
+    int fd = -1;
+    char path[256] = { 0 };
     uint32_t index, length;
+    uint8_t x = 0;
+    uint8_t is_error = 0;
 
     /* plan write data */
     for (index = 0; index < TEST_LEN; index++)
@@ -49,12 +51,12 @@ void selftest_fs_test(SelftestUserData *puserdata)
         write_data[index] = index;
     }
 
-    for (int x = 0; x<5; x++)
+    for (x = 0; x<5; x++)
     {
-        uint8_t is_error = 0;
+        is_error = 0;
 
         /* creat file path */
-        rt_memset(path, 0, 128);
+        rt_memset(path, 0, sizeof(path));
         rt_strncpy(path, puserdata->fs_path[x], rt_strlen(puserdata->fs_path[x]));
         rt_strncpy(&path[rt_strlen(puserdata->fs_path[x])], "/selftest.dat", 14);
 

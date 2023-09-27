@@ -497,4 +497,4 @@ int wavplayer_init(void)
     return RT_EOK;
 }
 
-INIT_APP_EXPORT(wavplayer_init);
+INIT_SERVICE_EXPORT(wavplayer_init);

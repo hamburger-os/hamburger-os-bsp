@@ -51,7 +51,6 @@ def GetCPPPATH(BSP_ROOT, RTT_ROOT):
 		RTT_ROOT + "/components/drivers/include",
 		RTT_ROOT + "/components/drivers/sensors",
 		RTT_ROOT + "/components/drivers/spi",
-		RTT_ROOT + "/components/drivers/spi/sfud/inc",
 		RTT_ROOT + "/components/fal/inc",
 		RTT_ROOT + "/components/finsh",
 		RTT_ROOT + "/components/libc/compilers/common/include",

@@ -24,6 +24,7 @@
 #include "drv_spi.h"
 #include "drv_config.h"
 #include <string.h>
+#include <math.h>
 
 //#define DRV_DEBUG
 #define LOG_TAG              "drv.spi"
@@ -108,8 +109,6 @@ static rt_err_t stm32_spi_init(struct stm32_spi *spi_drv, struct rt_spi_configur
     if (cfg->data_width == 8)
     {
         spi_handle->Init.DataSize = SPI_DATASIZE_8BIT;
-        spi_handle->TxXferSize = 8;
-        spi_handle->RxXferSize = 8;
     }
     else if (cfg->data_width == 16)
     {
@@ -140,9 +139,8 @@ static rt_err_t stm32_spi_init(struct stm32_spi *spi_drv, struct rt_spi_configur
 
     spi_handle->Init.NSS = SPI_NSS_SOFT;
 
-    uint32_t SPI_CLOCK = 0;
-
-/* Some series may only have APBPERIPH_BASE, but don't have HAL_RCC_GetPCLK2Freq */
+    uint32_t SPI_CLOCK = 0UL;
+    /* Some series may only have APBPERIPH_BASE, but don't have HAL_RCC_GetPCLK2Freq */
 #if defined(APBPERIPH_BASE)
     SPI_CLOCK = HAL_RCC_GetPCLK1Freq();
 #elif defined(APB1PERIPH_BASE) || defined(APB2PERIPH_BASE)
@@ -151,7 +149,18 @@ static rt_err_t stm32_spi_init(struct stm32_spi *spi_drv, struct rt_spi_configur
     /* When the configuration is generated using CUBEMX, the configuration for the SPI clock is placed in the HAL_SPI_Init function.
     Therefore, it is necessary to initialize and configure the SPI clock to automatically configure the frequency division */
     HAL_SPI_Init(spi_handle);
-    SPI_CLOCK = HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_SPI123);
+    if (spi_handle->Instance == SPI1 || spi_handle->Instance == SPI2 || spi_handle->Instance == SPI3)
+    {
+        SPI_CLOCK = HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_SPI123);
+    }
+    else if (spi_handle->Instance == SPI4 || spi_handle->Instance == SPI5)
+    {
+        SPI_CLOCK = HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_SPI45);
+    }
+    else if (spi_handle->Instance == SPI6)
+    {
+        SPI_CLOCK = HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_SPI6);
+    }
 #else
     if ((rt_uint32_t)spi_drv->config->Instance >= APB2PERIPH_BASE)
     {
@@ -217,11 +226,11 @@ static rt_err_t stm32_spi_init(struct stm32_spi *spi_drv, struct rt_spi_configur
         spi_handle->Init.FirstBit = SPI_FIRSTBIT_LSB;
     }
 
-    spi_handle->Init.TIMode = SPI_TIMODE_DISABLE;
-    spi_handle->Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-    spi_handle->State = HAL_SPI_STATE_RESET;
+    spi_handle->Init.TIMode                     = SPI_TIMODE_DISABLE;
+    spi_handle->Init.CRCCalculation             = SPI_CRCCALCULATION_DISABLE;
+    spi_handle->State                           = HAL_SPI_STATE_RESET;
 #if defined(SOC_SERIES_STM32L4) || defined(SOC_SERIES_STM32G0) || defined(SOC_SERIES_STM32F0) || defined(SOC_SERIES_STM32WB)
-    spi_handle->Init.NSSPMode          = SPI_NSS_PULSE_DISABLE;
+    spi_handle->Init.NSSPMode                   = SPI_NSS_PULSE_DISABLE;
 #elif defined(SOC_SERIES_STM32H7) || defined(SOC_SERIES_STM32MP1)
     spi_handle->Init.Mode                       = SPI_MODE_MASTER;
     spi_handle->Init.NSS                        = SPI_NSS_SOFT;
@@ -281,8 +290,10 @@ static rt_err_t stm32_spi_init(struct stm32_spi *spi_drv, struct rt_spi_configur
     return RT_EOK;
 }
 
-static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *message)
+static rt_size_t spixfer(struct rt_spi_device *device, struct rt_spi_message *message)
 {
+    #define DMA_TRANS_MIN_LEN  16 /* only buffer length >= DMA_TRANS_MIN_LEN will use DMA mode */
+
     HAL_StatusTypeDef state = HAL_OK;
     rt_size_t message_length, already_send_length;
     rt_uint16_t send_length;
@@ -291,19 +302,17 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
 
     RT_ASSERT(device != RT_NULL);
     RT_ASSERT(device->bus != RT_NULL);
-    RT_ASSERT(device->bus->parent.user_data != RT_NULL);
     RT_ASSERT(message != RT_NULL);
 
     struct stm32_spi *spi_drv =  rt_container_of(device->bus, struct stm32_spi, spi_bus);
     SPI_HandleTypeDef *spi_handle = &spi_drv->handle;
-    rt_base_t *cs = device->parent.user_data;
 
-    if (message->cs_take && !(device->config.mode & RT_SPI_NO_CS))
+    if (message->cs_take && !(device->config.mode & RT_SPI_NO_CS) && (device->cs_pin != PIN_NONE))
     {
         if (device->config.mode & RT_SPI_CS_HIGH)
-            rt_pin_write(*cs, PIN_HIGH);
+            rt_pin_write(device->cs_pin, PIN_HIGH);
         else
-            rt_pin_write(*cs, PIN_LOW);
+            rt_pin_write(device->cs_pin, PIN_LOW);
     }
 
     LOG_D("%s transfer prepare and start", spi_drv->config->bus_name);
@@ -340,46 +349,86 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
         {
             recv_buf = (rt_uint8_t *)message->recv_buf + already_send_length;
         }
-        
-#if defined(SOC_SERIES_STM32H7) || defined(SOC_SERIES_STM32F7)
-        rt_uint32_t* dma_buf = RT_NULL;
-        if ((spi_drv->spi_dma_flag & SPI_USING_TX_DMA_FLAG) && (spi_drv->spi_dma_flag & SPI_USING_RX_DMA_FLAG))
+
+        rt_uint32_t* dma_aligned_buffer = RT_NULL;
+        rt_uint32_t* p_txrx_buffer = RT_NULL;
+
+        if ((spi_drv->spi_dma_flag & SPI_USING_TX_DMA_FLAG) && (send_length >= DMA_TRANS_MIN_LEN))
         {
-            dma_buf = (rt_uint32_t *)rt_malloc_align(send_length,32);
-            if(send_buf)
+#if defined(SOC_SERIES_STM32H7) || defined(SOC_SERIES_STM32F7)
+            if (RT_IS_ALIGN((rt_uint32_t)send_buf, 32)) /* aligned with 32 bytes? */
             {
-                rt_memcpy(dma_buf, send_buf, send_length);
+                p_txrx_buffer = (rt_uint32_t *)send_buf; /* send_buf aligns with 32 bytes, no more operations */
             }
             else
             {
-                rt_memset(dma_buf, 0xFF, send_length);
+                /* send_buf doesn't align with 32 bytes, so creat a cache buffer with 32 bytes aligned */
+                dma_aligned_buffer = (rt_uint32_t *)rt_malloc_align(send_length, 32);
+                rt_memcpy(dma_aligned_buffer, send_buf, send_length);
+                p_txrx_buffer = dma_aligned_buffer;
             }
-            rt_hw_cpu_dcache_ops(RT_HW_CACHE_FLUSH, dma_buf, send_length);
-            state = HAL_SPI_TransmitReceive_DMA(spi_handle, (uint8_t *)dma_buf, (uint8_t *)dma_buf, send_length);
-        }
-        else
+            rt_hw_cpu_dcache_ops(RT_HW_CACHE_FLUSH, dma_aligned_buffer, send_length);
+#else
+            if (RT_IS_ALIGN((rt_uint32_t)send_buf, 4)) /* aligned with 4 bytes? */
+            {
+                p_txrx_buffer = (rt_uint32_t *)send_buf; /* send_buf aligns with 4 bytes, no more operations */
+            }
+            else
+            {
+                /* send_buf doesn't align with 4 bytes, so creat a cache buffer with 4 bytes aligned */
+                dma_aligned_buffer = (rt_uint32_t *)rt_malloc(send_length); /* aligned with RT_ALIGN_SIZE (8 bytes by default) */
+                rt_memcpy(dma_aligned_buffer, send_buf, send_length);
+                p_txrx_buffer = dma_aligned_buffer;
+            }
 #endif /* SOC_SERIES_STM32H7 || SOC_SERIES_STM32F7 */
+        }
+
         /* start once data exchange in DMA mode */
         if (message->send_buf && message->recv_buf)
         {
-            if ((spi_drv->spi_dma_flag & SPI_USING_TX_DMA_FLAG) && (spi_drv->spi_dma_flag & SPI_USING_RX_DMA_FLAG))
+            if ((spi_drv->spi_dma_flag & SPI_USING_TX_DMA_FLAG) && (spi_drv->spi_dma_flag & SPI_USING_RX_DMA_FLAG) && (send_length >= DMA_TRANS_MIN_LEN))
             {
-                state = HAL_SPI_TransmitReceive_DMA(spi_handle, (uint8_t *)send_buf, (uint8_t *)recv_buf, send_length);
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+                SCB_CleanDCache_by_Addr((uint32_t *)p_txrx_buffer, send_length);
+#endif
+                state = HAL_SPI_TransmitReceive_DMA(spi_handle, (uint8_t *)p_txrx_buffer, (uint8_t *)p_txrx_buffer, send_length);
+                LOG_D("HAL_SPI_TransmitReceive_DMA: %d %d", send_length, state);
+            }
+            else if ((spi_drv->spi_dma_flag & SPI_USING_TX_DMA_FLAG) && (send_length >= DMA_TRANS_MIN_LEN))
+            {
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+                SCB_CleanDCache_by_Addr((uint32_t *)p_txrx_buffer, send_length);
+#endif
+                /* same as Tx ONLY. It will not receive SPI data any more. */
+                state = HAL_SPI_Transmit_DMA(spi_handle, (uint8_t *)p_txrx_buffer, send_length);
+                LOG_D("HAL_SPI_Transmit_DMA: %d %d", send_length, state);
+            }
+            else if ((spi_drv->spi_dma_flag & SPI_USING_RX_DMA_FLAG) && (send_length >= DMA_TRANS_MIN_LEN))
+            {
+                state = HAL_ERROR;
+                LOG_E("It shoule be enabled both BSP_SPIx_TX_USING_DMA and BSP_SPIx_TX_USING_DMA flag, if wants to use SPI DMA Rx singly.");
+                break;
             }
             else
             {
                 state = HAL_SPI_TransmitReceive(spi_handle, (uint8_t *)send_buf, (uint8_t *)recv_buf, send_length, send_length * 8);
+                LOG_D("HAL_SPI_TransmitReceive: %d %d", send_length, state);
             }
         }
         else if (message->send_buf)
         {
-            if (spi_drv->spi_dma_flag & SPI_USING_TX_DMA_FLAG)
+            if ((spi_drv->spi_dma_flag & SPI_USING_TX_DMA_FLAG) && (send_length >= DMA_TRANS_MIN_LEN))
             {
-                state = HAL_SPI_Transmit_DMA(spi_handle, (uint8_t *)send_buf, send_length);
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+                SCB_CleanDCache_by_Addr((uint32_t *)p_txrx_buffer, send_length);
+#endif
+                state = HAL_SPI_Transmit_DMA(spi_handle, (uint8_t *)p_txrx_buffer, send_length);
+                LOG_D("HAL_SPI_Transmit_DMA: %d %d", send_length, state);
             }
             else
             {
                 state = HAL_SPI_Transmit(spi_handle, (uint8_t *)send_buf, send_length, send_length * 8);
+                LOG_D("HAL_SPI_Transmit: %d %d", send_length, state);
             }
 
             if (message->cs_release && (device->config.mode & RT_SPI_3WIRE))
@@ -388,26 +437,37 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
                 __HAL_SPI_DISABLE(spi_handle);
             }
         }
-        else
+        else if(message->recv_buf)
         {
             rt_memset((uint8_t *)recv_buf, 0xff, send_length);
-            if (spi_drv->spi_dma_flag & SPI_USING_RX_DMA_FLAG)
+            if ((spi_drv->spi_dma_flag & SPI_USING_RX_DMA_FLAG) && (send_length >= DMA_TRANS_MIN_LEN))
             {
-                state = HAL_SPI_Receive_DMA(spi_handle, (uint8_t *)recv_buf, send_length);
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+                SCB_CleanDCache_by_Addr((uint32_t *)p_txrx_buffer, send_length);
+#endif
+                state = HAL_SPI_Receive_DMA(spi_handle, (uint8_t *)p_txrx_buffer, send_length);
+                LOG_D("HAL_SPI_Receive_DMA: %d %d", send_length, state);
             }
             else
             {
                 /* clear the old error flag */
                 __HAL_SPI_CLEAR_OVRFLAG(spi_handle);
                 state = HAL_SPI_Receive(spi_handle, (uint8_t *)recv_buf, send_length, send_length * 8);
+                LOG_D("HAL_SPI_Receive: %d %d", send_length, state);
             }
+        }
+        else
+        {
+            state = HAL_ERROR;
+            LOG_E("message->send_buf and message->recv_buf are both NULL!");
         }
 
         if (state != HAL_OK)
         {
-            LOG_E("spi transfer error : %d %d", state, send_length);
+            LOG_E("SPI transfer error: %d", state);
             message->length = 0;
-            HAL_SPI_Abort(spi_handle);
+            spi_handle->State = HAL_SPI_STATE_READY;
+            break;
         }
         else
         {
@@ -417,39 +477,49 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
         /* For simplicity reasons, this example is just waiting till the end of the
            transfer, but application may perform other tasks while transfer operation
            is ongoing. */
-        if (spi_drv->spi_dma_flag & (SPI_USING_TX_DMA_FLAG | SPI_USING_RX_DMA_FLAG))
+        if ((spi_drv->spi_dma_flag & (SPI_USING_TX_DMA_FLAG | SPI_USING_RX_DMA_FLAG)) && (send_length >= DMA_TRANS_MIN_LEN))
         {
             /* blocking the thread,and the other tasks can run */
-            rt_completion_wait(&spi_drv->cpt, RT_WAITING_FOREVER);
+            if (rt_completion_wait(&spi_drv->cpt, send_length * 8) != RT_EOK)
+            {
+                state = HAL_ERROR;
+                LOG_E("wait for DMA interrupt overtime!");
+                break;
+            }
         }
         else
         {
             while (HAL_SPI_GetState(spi_handle) != HAL_SPI_STATE_READY);
         }
-#if defined(SOC_SERIES_STM32H7) || defined(SOC_SERIES_STM32F7)
-        if(dma_buf)
+
+        if(dma_aligned_buffer != RT_NULL) /* re-aligned, so need to copy the data to recv_buf */
         {
-            if(recv_buf)
+            if(recv_buf != RT_NULL)
             {
-                rt_hw_cpu_dcache_ops(RT_HW_CACHE_INVALIDATE, dma_buf, send_length);
-                rt_memcpy(recv_buf, dma_buf,send_length);
-            }
-            rt_free_align(dma_buf);
-        }
+#if defined(SOC_SERIES_STM32H7) || defined(SOC_SERIES_STM32F7)
+                rt_hw_cpu_dcache_ops(RT_HW_CACHE_INVALIDATE, p_txrx_buffer, send_length);
 #endif /* SOC_SERIES_STM32H7 || SOC_SERIES_STM32F7 */
+                rt_memcpy(recv_buf, p_txrx_buffer, send_length);
+            }
+#if defined(SOC_SERIES_STM32H7) || defined(SOC_SERIES_STM32F7)
+            rt_free_align(dma_aligned_buffer);
+#else
+            rt_free(dma_aligned_buffer);
+#endif /* SOC_SERIES_STM32H7 || SOC_SERIES_STM32F7 */
+        }
     }
 
-    if (message->cs_release && !(device->config.mode & RT_SPI_NO_CS))
+    if (message->cs_release && !(device->config.mode & RT_SPI_NO_CS) && (device->cs_pin != PIN_NONE))
     {
         if (device->config.mode & RT_SPI_CS_HIGH)
-            rt_pin_write(*cs, PIN_LOW);
+            rt_pin_write(device->cs_pin, PIN_LOW);
         else
-            rt_pin_write(*cs, PIN_HIGH);
+            rt_pin_write(device->cs_pin, PIN_HIGH);
     }
 
     if(state != HAL_OK)
     {
-        return 0;
+        return -RT_ERROR;
     }
     return message->length;
 }
@@ -585,27 +655,19 @@ static int rt_hw_spi_bus_init(void)
 /**
   * Attach the spi device to SPI bus, this function must be used after initialization.
   */
-rt_err_t rt_hw_spi_device_attach(const char *bus_name, const char *device_name, rt_base_t cs_gpio_pin)
+rt_err_t rt_hw_spi_device_attach(const char *bus_name, const char *device_name, rt_base_t cs_pin)
 {
     RT_ASSERT(bus_name != RT_NULL);
     RT_ASSERT(device_name != RT_NULL);
 
     rt_err_t result;
     struct rt_spi_device *spi_device;
-    rt_base_t *cs_pin;
-
-    /* initialize the cs pin && select the slave*/
-    rt_pin_mode(cs_gpio_pin, PIN_MODE_OUTPUT);
-    rt_pin_write(cs_gpio_pin, PIN_HIGH);
 
     /* attach the device to spi bus*/
     spi_device = (struct rt_spi_device *)rt_malloc(sizeof(struct rt_spi_device));
     RT_ASSERT(spi_device != RT_NULL);
-    cs_pin = (rt_base_t *)rt_malloc(sizeof(rt_base_t));
-    RT_ASSERT(cs_pin != RT_NULL);
-    *cs_pin = cs_gpio_pin;
-    result = rt_spi_bus_attach_device(spi_device, device_name, bus_name, (void *)cs_pin);
 
+    result = rt_spi_bus_attach_device_cspin(spi_device, device_name, bus_name, cs_pin, RT_NULL);
     if (result != RT_EOK)
     {
         LOG_E("%s attach to %s faild, %d\n", device_name, bus_name, result);
@@ -972,18 +1034,27 @@ static void stm32_get_dma_info(void)
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 {
     struct stm32_spi *spi_drv =  rt_container_of(hspi, struct stm32_spi, handle);
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+//    SCB_InvalidateDCache();
+#endif
     rt_completion_done(&spi_drv->cpt);
 }
 
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 {
     struct stm32_spi *spi_drv =  rt_container_of(hspi, struct stm32_spi, handle);
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+//    SCB_InvalidateDCache();
+#endif
     rt_completion_done(&spi_drv->cpt);
 }
 
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
 {
     struct stm32_spi *spi_drv =  rt_container_of(hspi, struct stm32_spi, handle);
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+//    SCB_InvalidateDCache();
+#endif
     rt_completion_done(&spi_drv->cpt);
 }
 

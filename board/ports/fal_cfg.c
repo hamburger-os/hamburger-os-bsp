@@ -128,6 +128,10 @@ const struct fal_partition partition_table_def[] =
 #endif
 #endif
 
+#ifdef BSP_USING_MAX31826
+    {FAL_PART_MAGIC_WORD,BLK_MAX31826,     MAX31826_DEV_NAME,                             0,     MAX31826_SIZE_GRANULARITY_TOTAL, 0},
+#endif
+
 #ifdef BSP_USING_FM25xx
     {FAL_PART_MAGIC_WORD,    BLK_FRAM,       FM25xx_DEV_NAME,                             0,       FM25xx_SIZE_GRANULARITY_TOTAL, 0},
 #endif
@@ -231,10 +235,6 @@ const struct fal_partition partition_table_def[] =
 
 #ifdef BSP_USING_EEPROM_24Cxx
     {FAL_PART_MAGIC_WORD,  BLK_EEPROM, EEPROM_24Cxx_DEV_NAME,                             0, EEPROM_24Cxx_SIZE_GRANULARITY_TOTAL, 0},
-#endif
-
-#ifdef BSP_USING_MAX31826
-    {FAL_PART_MAGIC_WORD,BLK_MAX31826,     MAX31826_DEV_NAME,                             0,     MAX31826_SIZE_GRANULARITY_TOTAL, 0},
 #endif
 };
 const size_t partition_table_def_len = sizeof(partition_table_def) / sizeof(struct fal_partition);

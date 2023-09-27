@@ -123,6 +123,8 @@ void LTDC_IRQHandler(void)
 
 rt_err_t stm32_lcd_init(struct drv_lcd_device *lcd)
 {
+    __HAL_RCC_DMA2D_CLK_ENABLE();
+
     LTDC_LayerCfgTypeDef pLayerCfg = {0};
 
     /* LTDC Initialization -------------------------------------------------------*/
@@ -268,27 +270,53 @@ void turn_on_lcd_backlight(void)
 }
 #endif
 
+static void DMA2D_Copy(void * pSrc, void * pDst, uint32_t xSize, uint32_t ySize, uint32_t OffLineSrc,
+        uint32_t OffLineDst, uint32_t PixelFormat)
+{
+    /* DMA2D 采用存储器到存储器模式, 这种模式是前景层作为 DMA2D 输入 */
+    DMA2D->CR = 0x00000000UL | (1 << 9);
+    DMA2D->FGMAR = (uint32_t) pSrc;
+    DMA2D->OMAR = (uint32_t) pDst;
+    DMA2D->FGOR = OffLineSrc;
+    DMA2D->OOR = OffLineDst;
+    /* 前景层和输出区域都采用的 RGB565 颜色格式 */
+    DMA2D->FGPFCCR = PixelFormat;
+    DMA2D->OPFCCR = PixelFormat;
+    DMA2D->NLR = (uint32_t) (xSize << 16) | (uint16_t) ySize;
+    /* 启动传输 */
+    DMA2D->CR |= DMA2D_CR_START;
+    /* 等待 DMA2D 传输完成 */
+    while (DMA2D->CR & DMA2D_CR_START)
+    {
+    }
+}
+
 void lcd_fill_array(rt_uint16_t x_start, rt_uint16_t y_start, rt_uint16_t x_end, rt_uint16_t y_end, void *pcolor)
 {
-    uint16_t *pixel = (uint16_t *)pcolor;
-    uint16_t *framebuffer;
-
     struct drv_lcd_device *lcd = &_lcd;
-    uint16_t cycle_y, x_offset = 0;
-
-    for(cycle_y = y_start; cycle_y <= y_end; cycle_y++)
-    {
-        for(x_offset = 0;x_start + x_offset <= x_end; x_offset++)
-        {
-            framebuffer = (uint16_t *)&lcd->lcd_info.framebuffer[2 * (cycle_y * lcd->lcd_info.width + x_start + x_offset)];
-#ifdef LCD_USING_RGB2BGR
-            *framebuffer = LCD_RGB2BGR(*pixel);//核心板的lvds转接将RGB接为了BGR
-#else
-            *framebuffer = *pixel;
+    uint16_t *pixel = (uint16_t *)pcolor;
+    uint16_t *framebuffer = (uint16_t *)&lcd->lcd_info.framebuffer[2 * (y_start * lcd->lcd_info.width + x_start)];
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+        SCB_CleanDCache_by_Addr((uint32_t *)lcd->lcd_info.framebuffer, LCD_BUF_SIZE);
 #endif
-            pixel ++;
-        }
-    }
+//    uint16_t cycle_y, x_offset = 0;
+//    for(cycle_y = y_start; cycle_y <= y_end; cycle_y++)
+//    {
+//        for(x_offset = 0;x_start + x_offset <= x_end; x_offset++)
+//        {
+//            framebuffer = (uint16_t *)&lcd->lcd_info.framebuffer[2 * (cycle_y * lcd->lcd_info.width + x_start + x_offset)];
+//#ifdef LCD_USING_RGB2BGR
+//            *framebuffer = LCD_RGB2BGR(*pixel);//核心板的lvds转接将RGB接为了BGR
+//#else
+//            *framebuffer = *pixel;
+//#endif
+//            pixel ++;
+//        }
+//    }
+    DMA2D_Copy(pixel, framebuffer, x_end - x_start + 1, y_end - y_start + 1, 0, lcd->lcd_info.width - x_end + x_start - 1, LTDC_PIXEL_FORMAT_RGB565);
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+        SCB_CleanInvalidateDCache_by_Addr((uint32_t *)lcd->lcd_info.framebuffer, LCD_BUF_SIZE);
+#endif
     lcd->parent.control(&lcd->parent, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);
 }
 
@@ -319,7 +347,6 @@ static void drv_lcd_set_pixel(const char *pixel, int x, int y)
 
     framebuffer = (uint16_t *)&lcd->lcd_info.framebuffer[2 * (y * lcd->lcd_info.width + x)];
     *framebuffer = color;
-//    lcd->parent.control(&lcd->parent, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);
 }
 
 //读取个某点的颜色值
@@ -346,7 +373,6 @@ static void drv_lcd_draw_hline(const char *pixel, int x1, int x2, int y)
         framebuffer = (uint16_t *)&lcd->lcd_info.framebuffer[2 * (y * lcd->lcd_info.width + x_offset + x1)];
         *framebuffer = color;
     }
-//    lcd->parent.control(&lcd->parent, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);
 }
 
 //画竖线
@@ -366,7 +392,6 @@ static void drv_lcd_draw_vline(const char *pixel, int x, int y1, int y2)
         framebuffer = (uint16_t *)&lcd->lcd_info.framebuffer[2 * (cycle_y * lcd->lcd_info.width + x)];
         *framebuffer = color;
     }
-//    lcd->parent.control(&lcd->parent, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);
 }
 
 //画线

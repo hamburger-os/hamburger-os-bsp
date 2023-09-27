@@ -277,4 +277,4 @@ static int tftp_server(void)
 
     return 0;
 }
-INIT_APP_EXPORT(tftp_server);
+INIT_SERVICE_EXPORT(tftp_server);

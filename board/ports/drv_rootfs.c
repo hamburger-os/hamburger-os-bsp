@@ -164,4 +164,4 @@ static int rootfs_init(void)
 
     return RT_EOK;
 }
-INIT_APP_EXPORT(rootfs_init);
+INIT_SERVICE_EXPORT(rootfs_init);

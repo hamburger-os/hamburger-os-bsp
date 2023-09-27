@@ -37,6 +37,6 @@ static int rt_ulog_back_init(void)
     return RT_EOK;
 }
 /* 导出到自动初始化 */
-INIT_APP_EXPORT(rt_ulog_back_init);
+INIT_SERVICE_EXPORT(rt_ulog_back_init);
 
 #endif

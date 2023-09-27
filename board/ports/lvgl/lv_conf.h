@@ -67,8 +67,8 @@
 /*==================
 * GPU
 *==================*/
-#define LV_USE_GPU                  1   /*Only enables `gpu_fill_cb` and `gpu_blend_cb` in the disp. drv- */
-#define LV_USE_GPU_STM32_DMA2D      0
+#define LV_USE_GPU                  0   /*Only enables `gpu_fill_cb` and `gpu_blend_cb` in the disp. drv- */
+#define LV_USE_GPU_STM32_DMA2D      1
 /*If enabling LV_USE_GPU_STM32_DMA2D, LV_GPU_DMA2D_CMSIS_INCLUDE must be defined to include path of CMSIS header of target processor
 e.g. "stm32f769xx.h" or "stm32f429xx.h" */
 #ifdef SOC_M4COREBOARD_SDRAM

@@ -521,4 +521,4 @@ int amrplayer_init(void)
     return RT_EOK;
 }
 
-INIT_APP_EXPORT(amrplayer_init);
+INIT_SERVICE_EXPORT(amrplayer_init);

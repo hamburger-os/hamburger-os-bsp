@@ -530,7 +530,7 @@ static int ota_from_file_init(void)
 
     return RT_EOK;
 }
-INIT_APP_EXPORT(ota_from_file_init);
+INIT_SERVICE_EXPORT(ota_from_file_init);
 
 RT_WEAK void ota_from_file_handle(OtaHandleTypeDef type)
 {
