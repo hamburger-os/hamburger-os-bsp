@@ -37,60 +37,106 @@ static char * error_log2[] = {
 
 void selftest_gpio_test(SelftestUserData *puserdata)
 {
-    //TODO: 测试短路
-    for (int value = 0; value < 2; value++)
+    uint8_t is_f_h_error = 0;
+    uint8_t is_f_l_error = 0;
+    uint8_t is_r_h_error = 0;
+    uint8_t is_r_l_error = 0;
+
+    for (int x = 0; x<6; x++)
     {
-        uint8_t is_error = 0;
-        for (int x = 0; x<6; x++)
+        puserdata->gpio_pin[x][0] = rt_pin_get(puserdata->gpio_devname[x][0]);
+        puserdata->gpio_pin[x][1] = rt_pin_get(puserdata->gpio_devname[x][1]);
+
+        //正向 低
+        rt_pin_mode(puserdata->gpio_pin[x][0], PIN_MODE_OUTPUT);
+        rt_pin_write(puserdata->gpio_pin[x][0], PIN_LOW);
+
+        rt_pin_mode(puserdata->gpio_pin[x][1], PIN_MODE_INPUT);
+        if (rt_pin_read(puserdata->gpio_pin[x][1]) != PIN_LOW)
         {
-            puserdata->gpio_pin[x][0] = rt_pin_get(puserdata->gpio_devname[x][0]);
-            puserdata->gpio_pin[x][1] = rt_pin_get(puserdata->gpio_devname[x][1]);
-
-            rt_pin_mode(puserdata->gpio_pin[x][0], PIN_MODE_OUTPUT);
-            rt_pin_write(puserdata->gpio_pin[x][0], value);
-
-            rt_pin_mode(puserdata->gpio_pin[x][1], PIN_MODE_INPUT);
-            if (rt_pin_read(puserdata->gpio_pin[x][1]) != value)
-            {
-                LOG_E("%s %d error!", error_log1[x], value);
-                is_error++;
-            }
-
-            rt_pin_mode(puserdata->gpio_pin[x][1], PIN_MODE_OUTPUT);
-            rt_pin_write(puserdata->gpio_pin[x][1], value);
-
-            rt_pin_mode(puserdata->gpio_pin[x][0], PIN_MODE_INPUT);
-            if (rt_pin_read(puserdata->gpio_pin[x][0]) != value)
-            {
-                LOG_E("%s %d error!", error_log2[x], value);
-                is_error++;
-            }
-
-            rt_pin_mode(puserdata->gpio_pin[x][1], PIN_MODE_INPUT);
+            LOG_E("%s LOW  error!", error_log1[x]);
+            is_f_l_error++;
         }
-        if (is_error == 0)
+        rt_pin_mode(puserdata->gpio_pin[x][0], PIN_MODE_INPUT);
+
+        //正向 高
+        rt_pin_mode(puserdata->gpio_pin[x][0], PIN_MODE_OUTPUT);
+        rt_pin_write(puserdata->gpio_pin[x][0], PIN_HIGH);
+
+        rt_pin_mode(puserdata->gpio_pin[x][1], PIN_MODE_INPUT);
+        if (rt_pin_read(puserdata->gpio_pin[x][1]) != PIN_HIGH)
         {
-            if (value == 0)
-            {
-                LOG_D("gpio LOW    pass");
-                puserdata->result[RESULT_GPIO_LOW].result = 0;
-            }
-            else
-            {
-                LOG_D("gpio HIGH   pass");
-                puserdata->result[RESULT_GPIO_HIGH].result = 0;
-            }
+            LOG_E("%s HIGH error!", error_log1[x]);
+            is_f_h_error++;
         }
-        else
+        rt_pin_mode(puserdata->gpio_pin[x][0], PIN_MODE_INPUT);
+
+        //反向 低
+        rt_pin_mode(puserdata->gpio_pin[x][1], PIN_MODE_OUTPUT);
+        rt_pin_write(puserdata->gpio_pin[x][1], PIN_LOW);
+
+        rt_pin_mode(puserdata->gpio_pin[x][0], PIN_MODE_INPUT);
+        if (rt_pin_read(puserdata->gpio_pin[x][0]) != PIN_LOW)
         {
-            if (value == 0)
-            {
-                puserdata->result[RESULT_GPIO_LOW].result = is_error;
-            }
-            else
-            {
-                puserdata->result[RESULT_GPIO_HIGH].result = is_error;
-            }
+            LOG_E("%s LOW  error!", error_log2[x]);
+            is_r_l_error++;
         }
+        rt_pin_mode(puserdata->gpio_pin[x][1], PIN_MODE_INPUT);
+
+        //反向 高
+        rt_pin_mode(puserdata->gpio_pin[x][1], PIN_MODE_OUTPUT);
+        rt_pin_write(puserdata->gpio_pin[x][1], PIN_HIGH);
+
+        rt_pin_mode(puserdata->gpio_pin[x][0], PIN_MODE_INPUT);
+        if (rt_pin_read(puserdata->gpio_pin[x][0]) != PIN_HIGH)
+        {
+            LOG_E("%s HIGH error!", error_log2[x]);
+            is_r_h_error++;
+        }
+        rt_pin_mode(puserdata->gpio_pin[x][1], PIN_MODE_INPUT);
+    }
+
+    if (is_f_l_error == 0)
+    {
+        LOG_D("gpio f LOW  pass");
+        puserdata->result[RESULT_GPIO_LOW_F].result = 0;
+    }
+    else
+    {
+        LOG_E("gpio f LOW  error!");
+        puserdata->result[RESULT_GPIO_LOW_F].result = is_f_l_error;
+    }
+
+    if (is_f_h_error == 0)
+    {
+        LOG_D("gpio f HIGH pass");
+        puserdata->result[RESULT_GPIO_HIGH_F].result = 0;
+    }
+    else
+    {
+        LOG_E("gpio f HIGH error!");
+        puserdata->result[RESULT_GPIO_HIGH_F].result = is_f_h_error;
+    }
+
+    if (is_r_l_error == 0)
+    {
+        LOG_D("gpio r LOW  pass");
+        puserdata->result[RESULT_GPIO_LOW_R].result = 0;
+    }
+    else
+    {
+        LOG_E("gpio r LOW  error!");
+        puserdata->result[RESULT_GPIO_LOW_R].result = is_f_l_error;
+    }
+
+    if (is_r_h_error == 0)
+    {
+        LOG_D("gpio r HIGH pass");
+        puserdata->result[RESULT_GPIO_HIGH_R].result = 0;
+    }
+    else
+    {
+        LOG_E("gpio r HIGH error!");
+        puserdata->result[RESULT_GPIO_HIGH_R].result = is_f_h_error;
     }
 }

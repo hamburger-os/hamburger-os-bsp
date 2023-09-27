@@ -48,7 +48,7 @@ static SelftestUserData selftest_userdata = {
         {"e1"                       , "e0"                      }},
     .result = {
         {"MAX31826"     , 1},{"DS1682"      , 1},
-        {"GPIO_LOW"     , 1},{"GPIO_HIGH"   , 1},
+        {"GPIO_LOW_F"   , 1},{"GPIO_HIGH_F" , 1},{"GPIO_LOW_R"  , 1},{"GPIO_HIGH_R" , 1},
         {"FRAM"         , 1},{"SPINOR64"    , 1},{"NOR"         , 1},{"EMMC"        , 1},{"UDISK"       , 1},
         {"SPINOR4"      , 1},{"EEPROM"      , 1},
         {"UART2_UART2"  , 1},{"UART3_UART4" , 1},{"UART4_UART3" , 1},

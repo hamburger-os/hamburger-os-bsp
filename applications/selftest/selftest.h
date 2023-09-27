@@ -13,8 +13,10 @@
 enum {
     RESULT_MAX31826 = 0,
     RESULT_DS1682,
-    RESULT_GPIO_LOW,
-    RESULT_GPIO_HIGH,
+    RESULT_GPIO_LOW_F,
+    RESULT_GPIO_HIGH_F,
+    RESULT_GPIO_LOW_R,
+    RESULT_GPIO_HIGH_R,
     RESULT_FRAM,
     RESULT_SPINOR64,
     RESULT_NOR,
@@ -58,7 +60,7 @@ typedef struct
     rt_device_t eth_dev[2][2];
     int sock[2][2];
 
-    SelftestResult result[18];
+    SelftestResult result[20];
 } SelftestUserData;
 
 void selftest_gpio_test(SelftestUserData *puserdata);
