@@ -207,10 +207,10 @@ extern "C" {
 #ifndef SPI6_TX_DMA_CONFIG
 #define SPI6_TX_DMA_CONFIG                          \
     {                                               \
-        .dma_rcc = RCC_AHB4ENR_BDMAEN,                 \
-        .Instance = BDMA_Channel1,           \
-        .dma_irq = BDMA_Channel1_IRQn,                 \
-        .request = BDMA_REQUEST_SPI6_TX              \
+        .dma_rcc = SPI6_TX_DMA_RCC,                 \
+        .Instance = SPI6_TX_DMA_INSTANCE,           \
+        .dma_irq = SPI6_TX_DMA_IRQ,                 \
+        .request = SPI6_TX_DMA_REQUEST              \
     }
 #endif /* SPI6_TX_DMA_CONFIG */
 #endif /* BSP_SPI6_TX_USING_DMA */
@@ -219,10 +219,10 @@ extern "C" {
 #ifndef SPI6_RX_DMA_CONFIG
 #define SPI6_RX_DMA_CONFIG                          \
     {                                               \
-        .dma_rcc = RCC_AHB4ENR_BDMAEN,                 \
-        .Instance = BDMA_Channel0,           \
-        .dma_irq = BDMA_Channel0_IRQn,                 \
-        .request = BDMA_REQUEST_SPI6_RX              \
+        .dma_rcc = SPI6_RX_DMA_RCC,                 \
+        .Instance = SPI6_RX_DMA_INSTANCE,           \
+        .dma_irq = SPI6_RX_DMA_IRQ,                 \
+        .request = SPI6_RX_DMA_REQUEST              \
     }
 #endif /* SPI6_RX_DMA_CONFIG */
 #endif /* BSP_SPI6_RX_USING_DMA */

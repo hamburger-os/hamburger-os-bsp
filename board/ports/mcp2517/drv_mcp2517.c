@@ -18,6 +18,9 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
+#define BDMA_DATA_RAM_SECTION     __attribute__((section(".bss.bdmadata")))
+#define BDMA_MEM_ALIGNX           __attribute__((aligned(RT_ALIGN_SIZE)))
+
 // Transmit Channels
 #define APP_TX_FIFO CAN_FIFO_CH2
 // Receive Channels
@@ -89,7 +92,8 @@ typedef struct
     MCP2517_CAN_LIST rx_list;
 } MCP2517_Dev;
 
-static MCP2517_Dev mcp2517_can_port[] = {
+static BDMA_DATA_RAM_SECTION BDMA_MEM_ALIGNX MCP2517_Dev mcp2517_can_port[] = {
+//static MCP2517_Dev mcp2517_can_port[] = {
 #ifdef BSP_USE_MCP2517FD_CAN1
     {
         .spi_name = BSP_MCP2517FD_CAN1_SPI_BUS,
@@ -2852,13 +2856,13 @@ static rt_err_t mcp2517_open(rt_device_t dev, rt_uint16_t oflag)
     {
         return -RT_ERROR;
     }
-
+    LOG_I("00000000000");
     CAN_CONFIG config;
     REG_CiFLTOBJ fObj;
     REG_CiMASK mObj;
     CAN_TX_FIFO_CONFIG txConfig;
     CAN_RX_FIFO_CONFIG rxConfig;
-
+    LOG_I("111111111111");
     /* 芯片内部复位 */
     ret = mcp2517_can_spi_reset(mcp2517_dev);
     if (ret != RT_EOK)
@@ -2866,7 +2870,7 @@ static rt_err_t mcp2517_open(rt_device_t dev, rt_uint16_t oflag)
         LOG_E("can spi reset error!");
         return ret;
     }
-
+    LOG_I("222222222222");
     /* enable ECC and initialize RAM */
     can_spi_ecc_enable(mcp2517_dev);
     ret = can_spi_ram_init(mcp2517_dev, 0xff);
@@ -2875,7 +2879,7 @@ static rt_err_t mcp2517_open(rt_device_t dev, rt_uint16_t oflag)
         LOG_E("can_spi_ram_init error!");
         return ret;
     }
-
+    LOG_I("333333333333");
     /* Configure device */
     can_spi_configure_object_reset(&config);
     config.IsoCrcEnable = 1;

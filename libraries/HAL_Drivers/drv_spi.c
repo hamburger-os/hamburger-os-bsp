@@ -514,9 +514,18 @@ static int rt_hw_spi_bus_init(void)
                 SET_BIT(RCC->AHBENR, spi_config[i].dma_rx->dma_rcc);
                 tmpreg = READ_BIT(RCC->AHBENR, spi_config[i].dma_rx->dma_rcc);
 #elif defined(SOC_SERIES_STM32F2) || defined(SOC_SERIES_STM32F4) || defined(SOC_SERIES_STM32F7) || defined(SOC_SERIES_STM32L4) || defined(SOC_SERIES_STM32WB) || defined(SOC_SERIES_STM32H7)
-                SET_BIT(RCC->AHB1ENR, spi_config[i].dma_rx->dma_rcc);
-                /* Delay after an RCC peripheral clock enabling */
-                tmpreg = READ_BIT(RCC->AHB1ENR, spi_config[i].dma_rx->dma_rcc);
+
+                if(strcmp("spi6", spi_config[i].bus_name) != 0)
+                {
+                    __HAL_RCC_BDMA_CLK_ENABLE();
+                }
+                else
+                {
+                    SET_BIT(RCC->AHB4ENR, spi_config[i].dma_rx->dma_rcc);
+                    /* Delay after an RCC peripheral clock enabling */
+                    tmpreg = READ_BIT(RCC->AHB4ENR, spi_config[i].dma_rx->dma_rcc);
+                }
+
 #elif defined(SOC_SERIES_STM32MP1)
                 __HAL_RCC_DMAMUX_CLK_ENABLE();
                 SET_BIT(RCC->MP_AHB2ENSETR, spi_config[i].dma_rx->dma_rcc);
@@ -558,9 +567,16 @@ static int rt_hw_spi_bus_init(void)
                 SET_BIT(RCC->AHBENR, spi_config[i].dma_tx->dma_rcc);
                 tmpreg = READ_BIT(RCC->AHBENR, spi_config[i].dma_tx->dma_rcc);
 #elif defined(SOC_SERIES_STM32F2) || defined(SOC_SERIES_STM32F4) || defined(SOC_SERIES_STM32F7) || defined(SOC_SERIES_STM32L4) || defined(SOC_SERIES_STM32WB) || defined(SOC_SERIES_STM32H7)
-                SET_BIT(RCC->AHB1ENR, spi_config[i].dma_tx->dma_rcc);
-                /* Delay after an RCC peripheral clock enabling */
-                tmpreg = READ_BIT(RCC->AHB1ENR, spi_config[i].dma_tx->dma_rcc);
+                if(strcmp("spi6", spi_config[i].bus_name) != 0)
+                {
+                    __HAL_RCC_BDMA_CLK_ENABLE();
+                }
+                else
+                {
+                    SET_BIT(RCC->AHB4ENR, spi_config[i].dma_rx->dma_rcc);
+                    /* Delay after an RCC peripheral clock enabling */
+                    tmpreg = READ_BIT(RCC->AHB4ENR, spi_config[i].dma_rx->dma_rcc);
+                }
 #elif defined(SOC_SERIES_STM32MP1)
                 __HAL_RCC_DMAMUX_CLK_ENABLE();
                 SET_BIT(RCC->MP_AHB2ENSETR, spi_config[i].dma_tx->dma_rcc);
@@ -862,6 +878,19 @@ void SPI5_DMA_TX_IRQHandler(void)
     rt_interrupt_leave();
 }
 #endif /* defined(BSP_USING_SPI5) && defined(BSP_SPI_USING_DMA) */
+
+#if defined(BSP_SPI6_TX_USING_DMA) || defined(BSP_SPI6_RX_USING_DMA)
+void SPI6_IRQHandler(void)
+{
+    /* enter interrupt */
+    rt_interrupt_enter();
+
+    HAL_SPI_IRQHandler(&spi_bus_obj[SPI6_INDEX].handle);
+
+    /* leave interrupt */
+    rt_interrupt_leave();
+}
+#endif
 
 #if defined(BSP_USING_SPI6) && defined(BSP_SPI6_RX_USING_DMA)
 /**
