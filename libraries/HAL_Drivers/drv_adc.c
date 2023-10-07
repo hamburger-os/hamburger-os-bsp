@@ -46,7 +46,7 @@ struct stm32_adc
 
 static struct stm32_adc stm32_adc_obj[sizeof(adc_config) / sizeof(adc_config[0])];
 
-static rt_err_t stm32_adc_get_channel(rt_int8_t rt_channel, uint32_t *stm32_channel)
+static rt_err_t stm32_adc_get_channel(rt_uint32_t rt_channel, uint32_t *stm32_channel)
 {
     switch (rt_channel)
     {
@@ -138,7 +138,7 @@ static rt_err_t stm32_adc_get_channel(rt_int8_t rt_channel, uint32_t *stm32_chan
     return RT_EOK;
 }
 
-static rt_err_t stm32_adc_enabled(struct rt_adc_device *device, rt_int8_t channel, rt_bool_t enabled)
+static rt_err_t stm32_adc_enabled(struct rt_adc_device *device, rt_uint32_t channel, rt_bool_t enabled)
 {
     ADC_HandleTypeDef *stm32_adc_handler;
     RT_ASSERT(device != RT_NULL);
@@ -253,12 +253,12 @@ static rt_uint8_t stm32_adc_get_resolution(struct rt_adc_device *device)
 #endif /* defined(SOC_SERIES_STM32F1) || defined(SOC_SERIES_STM32F3) */
 }
 
-static rt_int16_t stm32_adc_get_vref (struct rt_adc_device *device)
+static rt_uint32_t stm32_adc_get_vref (struct rt_adc_device *device)
 {
     if(device == RT_NULL)
       return -RT_ERROR;
 
-    rt_uint16_t vref_mv;
+    rt_uint32_t vref_mv;
 #ifdef __LL_ADC_CALC_VREFANALOG_VOLTAGE
     rt_err_t ret = RT_EOK;
     rt_uint32_t vref_value;
@@ -283,7 +283,7 @@ static rt_int16_t stm32_adc_get_vref (struct rt_adc_device *device)
     return vref_mv;
 }
 
-static rt_err_t stm32_adc_get_value(struct rt_adc_device *device, rt_int8_t channel, rt_uint32_t *value)
+static rt_err_t stm32_adc_get_value(struct rt_adc_device *device, rt_uint32_t channel, rt_uint32_t *value)
 {
     ADC_HandleTypeDef *stm32_adc_handler;
 

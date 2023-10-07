@@ -33,7 +33,6 @@ MSH_CMD_EXPORT(reboot, Reboot System);
 #endif /* RT_USING_FINSH */
 
 extern __IO uint32_t uwTick;
-static uint32_t _systick_ms = 1;
 
 /* SysTick configuration */
 void rt_hw_systick_init(void)
@@ -41,10 +40,6 @@ void rt_hw_systick_init(void)
     HAL_SYSTICK_Config(SystemCoreClock / RT_TICK_PER_SECOND);
 
     NVIC_SetPriority(SysTick_IRQn, 0xFF);
-
-    _systick_ms = 1000u / RT_TICK_PER_SECOND;
-    if(_systick_ms == 0)
-        _systick_ms = 1;
 }
 
 /**
@@ -56,9 +51,6 @@ void SysTick_Handler(void)
     /* enter interrupt */
     rt_interrupt_enter();
 
-    if(SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk)
-        HAL_IncTick();
-
     rt_tick_increase();
 
     /* leave interrupt */
@@ -67,15 +59,14 @@ void SysTick_Handler(void)
 
 uint32_t HAL_GetTick(void)
 {
-    if(SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk)
-        HAL_IncTick();
+    uwTick = rt_tick_get();
 
     return uwTick;
 }
 
 void HAL_IncTick(void)
 {
-    uwTick += _systick_ms;
+    uwTick = rt_tick_get();
 }
 
 void HAL_SuspendTick(void)

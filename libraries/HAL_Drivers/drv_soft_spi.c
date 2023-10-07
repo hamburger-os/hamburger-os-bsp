@@ -54,7 +54,6 @@ static struct stm32_soft_spi_config soft_spi_config[] =
   */
 rt_err_t rt_hw_soft_spi_device_attach(const char *bus_name, const char *device_name, const char *pin_name)
 {
-
     rt_err_t result;
     struct rt_spi_device *spi_device;
 
@@ -71,6 +70,7 @@ rt_err_t rt_hw_soft_spi_device_attach(const char *bus_name, const char *device_n
     result = rt_spi_bus_attach_device(spi_device, device_name, bus_name, (void *)cs_pin);
     return result;
 }
+RTM_EXPORT(rt_hw_soft_spi_device_attach);
 
 static void stm32_spi_gpio_init(struct stm32_soft_spi *spi)
 {

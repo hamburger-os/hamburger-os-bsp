@@ -37,34 +37,6 @@ extern "C" {
 #endif
 #endif
 
-#ifdef BSP_USING_FM25xx
-//fm25xx定义,无需修改
-#define FM25xx_START_ADRESS            (0)
-#define FM25xx_DEV_NAME                "fm25xx"
-#define BLK_FRAM                       FM25xx_PARTNAME
-#endif
-
-#ifdef BSP_USING_SPI_FLASH
-//spiflash定义,无需修改
-#define SPI_FLASH_START_ADRESS          (0)
-#define SPI_FLASH_DEV_NAME              "sfud"
-#define BLK_SPI_FLASH                   "spiflash"
-#endif
-
-#ifdef BSP_USING_S25FL512
-//s25fl512定义,无需修改
-#define S25FL512_START_ADRESS           (0)
-#define S25FL512_DEV_NAME               "s25fl512"
-#define BLK_S25FL512                    "spinor64"
-#endif
-
-#ifdef BSP_USING_AT45DB321E
-//at45db321e定义,无需修改
-#define AT45DB321E_START_ADRESS         (0)
-#define AT45DB321E_DEV_NAME             "at45db321e"
-#define BLK_AT45DB321E                  "spinor4"
-#endif
-
 #ifdef BSP_FMCSRAM_ENABLE_BLK
 //sram定义,无需修改
 #define FMCSRAM_DEV_NAME                "fmc_sram"
@@ -82,12 +54,58 @@ extern "C" {
 #define BSP_SDRAM_BLK_SIZE              (0)
 #endif
 
+#ifdef BSP_USING_FM25xx
+//fm25xx定义,无需修改
+#define FM25xx_START_ADRESS            (0)
+#define FM25xx_DEV_NAME                "fm25xx"
+#define BLK_FRAM                       FM25xx_PARTNAME
+#ifndef FM25xx_ENABLE_FS
+#define FM25xx_FS                      ""
+#endif
+#endif
+
+#ifdef BSP_USING_SPI_FLASH
+//spiflash定义,无需修改
+#define SPI_FLASH_START_ADRESS          (0)
+#define SPI_FLASH_DEV_NAME              "sfud"
+#define BLK_SPI_FLASH                   "spiflash"
+#endif
+
+#ifdef BSP_USING_S25FL512
+//s25fl512定义,无需修改
+#define S25FL512_START_ADRESS           (0)
+#define S25FL512_DEV_NAME               "s25fl512"
+#define BLK_S25FL512                    "spinor64"
+#define S25FL512_OFFSET_DOWNLOAD        (0)
+#define S25FL512_OFFSET_FACTORY         (S25FL512_OFFSET_DOWNLOAD + S25FL512_SIZE_DOWNLOAD)
+#define S25FL512_OFFSET_BIN             (S25FL512_OFFSET_FACTORY + S25FL512_SIZE_FACTORY)
+#define S25FL512_OFFSET_ETC             (S25FL512_OFFSET_BIN + S25FL512_SIZE_BIN)
+#define S25FL512_OFFSET_LIB             (S25FL512_OFFSET_ETC + S25FL512_SIZE_ETC)
+#define S25FL512_OFFSET_USR             (S25FL512_OFFSET_LIB + S25FL512_SIZE_LIB)
+#define S25FL512_OFFSET_KVDB            (S25FL512_OFFSET_USR + S25FL512_SIZE_USR)
+#define S25FL512_OFFSET_TSDB            (S25FL512_OFFSET_KVDB + S25FL512_SIZE_KVDB)
+#define S25FL512_OFFSET_FS              (S25FL512_OFFSET_TSDB + S25FL512_SIZE_TSDB)
+#define S25FL512_SIZE_FS                (S25FL512_SIZE_GRANULARITY_TOTAL - S25FL512_OFFSET_FS)
+#ifndef S25FL512_ENABLE_FS
+#define S25FL512_FS                     ""
+#endif
+#endif
+
+#ifdef BSP_USING_AT45DB321E
+//at45db321e定义,无需修改
+#define AT45DB321E_START_ADRESS         (0)
+#define AT45DB321E_DEV_NAME             "at45db321e"
+#define BLK_AT45DB321E                  "spinor4"
+#ifndef AT45DB321E_ENABLE_FS
+#define AT45DB321E_FS                   ""
+#endif
+#endif
+
 #ifdef BSP_USING_NORFLASH
 //norflash定义,无需修改
 #define NORFLASH_DEV_NAME               "fmc_nor"
 #define BLK_NOR                         "nor"
-#define NORFLASH_OFFSET_APP             (0)
-#define NORFLASH_OFFSET_DOWNLOAD        (NORFLASH_OFFSET_APP + NORFLASH_SIZE_APP)
+#define NORFLASH_OFFSET_DOWNLOAD        (0)
 #define NORFLASH_OFFSET_FACTORY         (NORFLASH_OFFSET_DOWNLOAD + NORFLASH_SIZE_DOWNLOAD)
 #define NORFLASH_OFFSET_BIN             (NORFLASH_OFFSET_FACTORY + NORFLASH_SIZE_FACTORY)
 #define NORFLASH_OFFSET_ETC             (NORFLASH_OFFSET_BIN + NORFLASH_SIZE_BIN)
@@ -97,50 +115,52 @@ extern "C" {
 #define NORFLASH_OFFSET_TSDB            (NORFLASH_OFFSET_KVDB + NORFLASH_SIZE_KVDB)
 #define NORFLASH_OFFSET_FS              (NORFLASH_OFFSET_TSDB + NORFLASH_SIZE_TSDB)
 #define NORFLASH_SIZE_FS                (NORFLASH_SIZE_GRANULARITY_TOTAL - NORFLASH_OFFSET_FS)
+#ifndef NORFLASH_ENABLE_FS
+#define NORFLASH_FS                     ""
+#endif
 #endif
 
 #ifdef BSP_USING_EMMC
 //emmc定义,无需修改
-#define EMMC_START_ADRESS               (0)
 #define EMMC_DEV_NAME                   "sdmmc"
 #define BLK_EMMC                        "emmc"
-#define EMMC_SIZE_GRANULARITY_TOTAL     (2048)
+#define EMMC_START_ADRESS               (0)
 #define EMMC_BLK_SIZE                   (512)
+#define EMMC_OFFSET_DOWNLOAD            (0)
+#define EMMC_OFFSET_FACTORY             (EMMC_OFFSET_DOWNLOAD + EMMC_SIZE_DOWNLOAD)
+#define EMMC_OFFSET_BIN                 (EMMC_OFFSET_FACTORY + EMMC_SIZE_FACTORY)
+#define EMMC_OFFSET_ETC                 (EMMC_OFFSET_BIN + EMMC_SIZE_BIN)
+#define EMMC_OFFSET_LIB                 (EMMC_OFFSET_ETC + EMMC_SIZE_ETC)
+#define EMMC_OFFSET_USR                 (EMMC_OFFSET_LIB + EMMC_SIZE_LIB)
+#define EMMC_OFFSET_FS                  (EMMC_OFFSET_USR + EMMC_SIZE_USR)
+#ifndef EMMC_ENABLE_FS
+#define EMMC_FS                         ""
+#endif
 #endif
 
 #ifdef BSP_USING_EEPROM_24Cxx
 //24cxx定义,无需修改
-#define EEPROM_24Cxx_START_ADRESS      (0)
 #define EEPROM_24Cxx_DEV_NAME          "24cxx"
 #define BLK_EEPROM                     "eeprom"
+#define EEPROM_24Cxx_START_ADRESS      (0)
 #endif
 
 #ifdef BSP_USING_MAX31826
 //max31826定义,无需修改
-#define MAX31826_START_ADRESS           (0)
 #define MAX31826_DEV_NAME               "max31826"
 #define BLK_MAX31826                    "max31826"
+#define MAX31826_START_ADRESS           (0)
 #endif
 
 #ifdef BSP_USING_SDCARD
 //sdcard定义,无需修改
 #define BLK_SDCARD                      "sdcard"
-#define BLK_SDCARD0                     "sd0"
-#define BLK_SDCARDp0                    "sd0p0"
-#define BLK_SDCARDp1                    "sd0p1"
-#define BLK_SDCARDp2                    "sd0p2"
-#define BLK_SDCARDp3                    "sd0p3"
 #endif
 
 #ifdef BSP_USING_USB
 //msc定义,无需修改
-#define UDISK_BLK_SIZE                  (512)
 #define BLK_USBH_UDISK                  "udisk"
-#define BLK_USBH_UDISK0                 "ud0"
-#define BLK_USBH_UDISK0p0               "ud0p0"
-#define BLK_USBH_UDISK0p1               "ud0p1"
-#define BLK_USBH_UDISK0p2               "ud0p2"
-#define BLK_USBH_UDISK0p3               "ud0p3"
+#define UDISK_BLK_SIZE                  (512)
 #endif
 
 #ifdef RT_USING_FAL
@@ -162,8 +182,12 @@ extern const size_t partition_table_def_len;
 #endif /* FAL_PART_HAS_TABLE_CFG */
 #endif
 
-struct rt_device *fal_dev_mtd_nor_device_create(struct fal_flash_dev *fal_dev);
-struct rt_device *fal_dev_blk_device_create(struct fal_flash_dev *fal_dev);
+#include "drv_fal.h"
+
+struct rt_device *fal_dev_mtd_nor_device_create(struct fal_flash64_dev *fal_dev);
+struct rt_device *fal_dev_mtd_nor_devices_create(struct fal_flash64_dev *fal_dev);
+struct rt_device *fal_dev_blk_device_create(struct fal_flash64_dev *fal_dev);
+struct rt_device *fal_dev_blk_devices_create(struct fal_flash64_dev *fal_dev);
 
 #ifdef __cplusplus
 }

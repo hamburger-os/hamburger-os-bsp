@@ -44,6 +44,10 @@
     extern const struct fal_flash_dev nor_flash;
 #endif
 
+#if EMMC_OFFSET_FS > 0
+    extern const struct fal_flash_dev emmc_fal_flash;
+#endif
+
 #ifdef BSP_USING_EEPROM_24Cxx
     extern const struct fal_flash_dev hg24cxx_eeprom;
 #endif
@@ -89,6 +93,10 @@ const struct fal_flash_dev * const device_table[] =
     &nor_flash,
 #endif
 
+#if EMMC_OFFSET_FS > 0
+    &emmc_fal_flash,
+#endif
+
 #ifdef BSP_USING_EEPROM_24Cxx
     &hg24cxx_eeprom,
 #endif
@@ -120,6 +128,10 @@ const struct fal_partition partition_table_def[] =
 #endif
 #endif
 
+#ifdef BSP_USING_MAX31826
+    {FAL_PART_MAGIC_WORD,BLK_MAX31826,     MAX31826_DEV_NAME,                             0,     MAX31826_SIZE_GRANULARITY_TOTAL, 0},
+#endif
+
 #ifdef BSP_USING_FM25xx
     {FAL_PART_MAGIC_WORD,    BLK_FRAM,       FM25xx_DEV_NAME,                             0,       FM25xx_SIZE_GRANULARITY_TOTAL, 0},
 #endif
@@ -129,7 +141,33 @@ const struct fal_partition partition_table_def[] =
 #endif
 
 #ifdef BSP_USING_S25FL512
-    {FAL_PART_MAGIC_WORD, BLK_S25FL512,    S25FL512_DEV_NAME,                             0,     S25FL512_SIZE_GRANULARITY_TOTAL, 0},
+#if S25FL512_SIZE_DOWNLOAD > 0
+    {FAL_PART_MAGIC_WORD,  "download",     S25FL512_DEV_NAME,      S25FL512_OFFSET_DOWNLOAD,              S25FL512_SIZE_DOWNLOAD, 0},
+#endif
+#if S25FL512_SIZE_FACTORY > 0
+    {FAL_PART_MAGIC_WORD,   "factory",     S25FL512_DEV_NAME,       S25FL512_OFFSET_FACTORY,               S25FL512_SIZE_FACTORY, 0},
+#endif
+#if S25FL512_SIZE_BIN > 0
+    {FAL_PART_MAGIC_WORD,       "bin",     S25FL512_DEV_NAME,           S25FL512_OFFSET_BIN,                   S25FL512_SIZE_BIN, 0},
+#endif
+#if S25FL512_SIZE_ETC > 0
+    {FAL_PART_MAGIC_WORD,       "etc",     S25FL512_DEV_NAME,           S25FL512_OFFSET_ETC,                   S25FL512_SIZE_ETC, 0},
+#endif
+#if S25FL512_SIZE_LIB > 0
+    {FAL_PART_MAGIC_WORD,       "lib",     S25FL512_DEV_NAME,           S25FL512_OFFSET_LIB,                   S25FL512_SIZE_LIB, 0},
+#endif
+#if S25FL512_SIZE_USR > 0
+    {FAL_PART_MAGIC_WORD,       "usr",     S25FL512_DEV_NAME,           S25FL512_OFFSET_USR,                   S25FL512_SIZE_USR, 0},
+#endif
+#if S25FL512_SIZE_KVDB > 0
+    {FAL_PART_MAGIC_WORD,      "kvdb",     S25FL512_DEV_NAME,          S25FL512_OFFSET_KVDB,                  S25FL512_SIZE_KVDB, 0},
+#endif
+#if S25FL512_SIZE_TSDB > 0
+    {FAL_PART_MAGIC_WORD,      "tsdb",     S25FL512_DEV_NAME,          S25FL512_OFFSET_TSDB,                  S25FL512_SIZE_TSDB, 0},
+#endif
+#if S25FL512_SIZE_FS > 0
+    {FAL_PART_MAGIC_WORD,BLK_S25FL512,     S25FL512_DEV_NAME,            S25FL512_OFFSET_FS,                    S25FL512_SIZE_FS, 0},
+#endif
 #endif
 
 #ifdef BSP_USING_AT45DB321E
@@ -145,9 +183,6 @@ const struct fal_partition partition_table_def[] =
 #endif
 
 #ifdef BSP_USING_NORFLASH
-#if NORFLASH_SIZE_APP > 0
-    {FAL_PART_MAGIC_WORD,       "app",     NORFLASH_DEV_NAME,           NORFLASH_OFFSET_APP,                   NORFLASH_SIZE_APP, 0},
-#endif
 #if NORFLASH_SIZE_DOWNLOAD > 0
     {FAL_PART_MAGIC_WORD,  "download",     NORFLASH_DEV_NAME,      NORFLASH_OFFSET_DOWNLOAD,              NORFLASH_SIZE_DOWNLOAD, 0},
 #endif
@@ -172,17 +207,34 @@ const struct fal_partition partition_table_def[] =
 #if NORFLASH_SIZE_TSDB > 0
     {FAL_PART_MAGIC_WORD,      "tsdb",     NORFLASH_DEV_NAME,          NORFLASH_OFFSET_TSDB,                  NORFLASH_SIZE_TSDB, 0},
 #endif
-#if NORFLASH_SIZE_FS > 0 && defined(NORFLASH_ENABLE_FS)
+#if NORFLASH_SIZE_FS > 0
     {FAL_PART_MAGIC_WORD,     BLK_NOR,     NORFLASH_DEV_NAME,            NORFLASH_OFFSET_FS,                    NORFLASH_SIZE_FS, 0},
+#endif
+#endif
+
+#ifdef BSP_USING_EMMC
+#if EMMC_SIZE_DOWNLOAD > 0
+    {FAL_PART_MAGIC_WORD,  "download",     EMMC_DEV_NAME,      EMMC_OFFSET_DOWNLOAD,              EMMC_SIZE_DOWNLOAD, 0},
+#endif
+#if EMMC_SIZE_FACTORY > 0
+    {FAL_PART_MAGIC_WORD,   "factory",     EMMC_DEV_NAME,       EMMC_OFFSET_FACTORY,               EMMC_SIZE_FACTORY, 0},
+#endif
+#if EMMC_SIZE_BIN > 0
+    {FAL_PART_MAGIC_WORD,       "bin",     EMMC_DEV_NAME,           EMMC_OFFSET_BIN,                   EMMC_SIZE_BIN, 0},
+#endif
+#if EMMC_SIZE_ETC > 0
+    {FAL_PART_MAGIC_WORD,       "etc",     EMMC_DEV_NAME,           EMMC_OFFSET_ETC,                   EMMC_SIZE_ETC, 0},
+#endif
+#if EMMC_SIZE_LIB > 0
+    {FAL_PART_MAGIC_WORD,       "lib",     EMMC_DEV_NAME,           EMMC_OFFSET_LIB,                   EMMC_SIZE_LIB, 0},
+#endif
+#if EMMC_SIZE_USR > 0
+    {FAL_PART_MAGIC_WORD,       "usr",     EMMC_DEV_NAME,           EMMC_OFFSET_USR,                   EMMC_SIZE_USR, 0},
 #endif
 #endif
 
 #ifdef BSP_USING_EEPROM_24Cxx
     {FAL_PART_MAGIC_WORD,  BLK_EEPROM, EEPROM_24Cxx_DEV_NAME,                             0, EEPROM_24Cxx_SIZE_GRANULARITY_TOTAL, 0},
-#endif
-
-#ifdef BSP_USING_MAX31826
-    {FAL_PART_MAGIC_WORD,BLK_MAX31826,     MAX31826_DEV_NAME,                             0,     MAX31826_SIZE_GRANULARITY_TOTAL, 0},
 #endif
 };
 const size_t partition_table_def_len = sizeof(partition_table_def) / sizeof(struct fal_partition);

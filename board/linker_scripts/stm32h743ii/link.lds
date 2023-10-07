@@ -125,21 +125,6 @@ SECTIONS
         . = ALIGN(4);
         _eusb = .;
     } > RAM4
-    
-    .bdma (BDMADATA):
-    {
-        . = ALIGN(4);
-        _sbdma = .;
-
-        /* section information for noncacheable */
-        *(.bdmadata)     /* .data sections */
-        *(.bdmadata.*)    /* .data* sections */
-        *(.bss.bdmadata) /* .bss sections */
-        *(.gnu.linkonce.d*)
-        
-        . = ALIGN(4);
-        _ebdma = .;
-    } > RAM5
 
     .stack : 
     {

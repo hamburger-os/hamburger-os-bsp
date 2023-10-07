@@ -20,11 +20,47 @@
 #ifdef MAX31826_USING_IO
 
 #define MAX31826_PIN    rt_pin_get(MAX31826_GPIO)
-#define SET_DQ()        rt_pin_write(MAX31826_PIN, PIN_HIGH)
-#define CLR_DQ()        rt_pin_write(MAX31826_PIN, PIN_LOW)
-#define OUT_DQ()        rt_pin_mode(MAX31826_PIN, PIN_MODE_OUTPUT_OD)
-#define IN_DQ()         rt_pin_mode(MAX31826_PIN, PIN_MODE_INPUT)
-#define GET_DQ()        rt_pin_read(MAX31826_PIN)
+static rt_base_t max31826_pin = 0;
+static void SET_DQ(void)
+{
+    if (max31826_pin == 0)
+    {
+        max31826_pin = MAX31826_PIN;
+    }
+    rt_pin_write(max31826_pin, PIN_HIGH);
+}
+static void CLR_DQ(void)
+{
+    if (max31826_pin == 0)
+    {
+        max31826_pin = MAX31826_PIN;
+    }
+    rt_pin_write(max31826_pin, PIN_LOW);
+}
+static void OUT_DQ(void)
+{
+    if (max31826_pin == 0)
+    {
+        max31826_pin = MAX31826_PIN;
+    }
+    rt_pin_mode(max31826_pin, PIN_MODE_OUTPUT_OD);
+}
+static void IN_DQ(void)
+{
+    if (max31826_pin == 0)
+    {
+        max31826_pin = MAX31826_PIN;
+    }
+    rt_pin_mode(max31826_pin, PIN_MODE_INPUT);
+}
+static int GET_DQ(void)
+{
+    if (max31826_pin == 0)
+    {
+        max31826_pin = MAX31826_PIN;
+    }
+    return rt_pin_read(max31826_pin);
+}
 
 #endif  /* MAX31826_USING_IO */
 
@@ -43,10 +79,10 @@
 #define MAX31826_PROG_EEPROM                ((rt_uint8_t)0xA5)       /*  编程EEPROM */
 #define MAX31826_CMD_TOKEN ((rt_uint8_t)0xA5)
 
-#define WIRE_RST_TIMEOUT                    (60*480)            /* 复位访问超时阈值 */
-#define WIRE_RD_TIMEOUT                     (60*80)             /* 读访问超时阈值 */
-
 #define TEMP_INVALID                        (-12500)            /*  无效的温度数据 */
+
+static struct rt_mutex max31826_mux;    /** 读写互斥信号量 */
+static struct rt_mutex fal_mux;         /** 读写互斥信号量 */
 
 static int fal_max31826_init(void);
 static int fal_max31826_read(long offset, rt_uint8_t *buf, size_t size);
@@ -128,11 +164,11 @@ static rt_err_t max31826_init_by_ds2484(void)
  */
 static rt_int32_t DEV_MAX31826_Reset1Wire(void)
 {
+    rt_mutex_take(&max31826_mux, RT_WAITING_FOREVER);
     rt_int32_t ret = 0xFF;
 
 #ifdef MAX31826_USING_IO
     rt_base_t level;
-
     level = rt_hw_interrupt_disable();/* 关中断*/
     OUT_DQ();
     CLR_DQ();
@@ -146,8 +182,8 @@ static rt_int32_t DEV_MAX31826_Reset1Wire(void)
         ret = 1;
     else
         ret = 0;
-    rt_hw_interrupt_enable(level); /* 开中断 */
     rt_hw_us_delay(300);
+    rt_hw_interrupt_enable(level); /* 开中断 */
 
 #endif  /* MAX31826_USING_IO */
 
@@ -171,6 +207,7 @@ static rt_int32_t DEV_MAX31826_Reset1Wire(void)
     }
 #endif /* MAX31826_USING_I2C_DS2484 */
 
+    rt_mutex_release(&max31826_mux);
     return ret;
 }
 
@@ -182,9 +219,10 @@ static rt_int32_t DEV_MAX31826_Reset1Wire(void)
  ******************************/
 static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
 {
+    rt_mutex_take(&max31826_mux, RT_WAITING_FOREVER);
+
 #ifdef MAX31826_USING_IO
     rt_base_t level;
-
     level = rt_hw_interrupt_disable();/* 关中断*/
     OUT_DQ();
     CLR_DQ();
@@ -195,9 +233,8 @@ static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
     }
     rt_hw_us_delay(65);
     SET_DQ();
-    rt_hw_interrupt_enable(level); /* 开中断 */
     rt_hw_us_delay(15);
-
+    rt_hw_interrupt_enable(level); /* 开中断 */
 #endif /* MAX31826_USING_IO */
 
 #ifdef MAX31826_USING_I2C_DS2484
@@ -216,6 +253,8 @@ static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
         LOG_E("MAX31826 write ds2484_dev is null.");
     }
 #endif /* MAX31826_USING_I2C_DS2484 */
+
+    rt_mutex_release(&max31826_mux);
 }
 
 /****************************
@@ -226,21 +265,21 @@ static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
  *****************************/
 static rt_uint8_t DEV_MAX31826_ReadBit(void)
 {
+    rt_mutex_take(&max31826_mux, RT_WAITING_FOREVER);
     rt_uint8_t readbit = 0;
 
 #ifdef MAX31826_USING_IO
     rt_base_t level;
+    level = rt_hw_interrupt_disable();/* 关中断*/
 
     OUT_DQ();
-    level = rt_hw_interrupt_disable();/* 关中断*/ 
     CLR_DQ();
     rt_hw_us_delay(2);
     IN_DQ();
     rt_hw_us_delay(2);
     readbit = GET_DQ();
-    rt_hw_interrupt_enable(level); /* 开中断 */
     rt_hw_us_delay(60);
-
+    rt_hw_interrupt_enable(level); /* 开中断 */
 #endif /* MAX31826_USING_IO */
 
 #ifdef MAX31826_USING_I2C_DS2484
@@ -256,6 +295,8 @@ static rt_uint8_t DEV_MAX31826_ReadBit(void)
         LOG_E("MAX31826 read ds2484_dev is null.");
     }
 #endif /* MAX31826_USING_I2C_DS2484 */
+
+    rt_mutex_release(&max31826_mux);
     return readbit;
 }
 
@@ -485,29 +526,23 @@ static void DEV_MAX31826_Write1Wire(rt_uint8_t data)
 static rt_int32_t DEV_MAX31826_ReadID(rt_uint8_t *bufferid)
 {
     rt_int32_t ret = -1;
-    rt_uint8_t p_id[8] =
-    {   0};
-    rt_uint8_t i, *p;
+    rt_uint8_t i;
 
     /* 读ID */
     if(DEV_MAX31826_Reset1Wire())
     {
         DEV_MAX31826_Write1Wire(MAX31826_CMD_READ_ROM);
-        p = p_id;
 
         /* 读ID */
-        for(i = (rt_uint8_t)0; i < (rt_uint8_t)8; i++)
+        for(i = 0; i < 8; i++)
         {
-            *p = DEV_MAX31826_Read1Wire();
-            *bufferid = *p;
-            p++;
-            bufferid++;
+            bufferid[i] = DEV_MAX31826_Read1Wire();
             rt_hw_us_delay(100);   //此处增加延时后,则可读取成功
         }
 
         /* 检查结果 */
-        i = p_id[7];
-        if(i == crc8_create(p_id, 7))
+        i = bufferid[7];
+        if(i == crc8_create(bufferid, 7))
         {
             ret = (rt_int32_t)0;
         }
@@ -691,21 +726,25 @@ static int fal_max31826_init(void)
 
 int fal_max31826_read(long offset, rt_uint8_t *buf, size_t size)
 {
+    rt_mutex_take(&fal_mux, RT_WAITING_FOREVER);
+
     uint32_t addr = max31826_flash.addr + offset;
     if (addr + size > max31826_flash.addr + max31826_flash.len)
     {
         LOG_E("read outrange flash size! addr is (0x%p)", (void*)(addr + size));
+        rt_mutex_release(&fal_mux);
         return -RT_EINVAL;
     }
     if (size < 1)
     {
 //        LOG_W("read size %d! addr is (0x%p)", size, (void*)(addr + size));
+        rt_mutex_release(&fal_mux);
         return 0;
     }
 
     /* 复位传感器,按照时序进行操作 */
     DEV_MAX31826_Reset1Wire();
-    rt_thread_delay(20);/* 非常有必要 */
+    rt_thread_delay(100);/* 非常有必要 */
     DEV_MAX31826_Write1Wire(MAX31826_CMD_SKIP_ROM);
     DEV_MAX31826_Write1Wire(MAX31826_READ_MEMORY);
     DEV_MAX31826_Write1Wire((rt_uint8_t) addr);
@@ -718,25 +757,31 @@ int fal_max31826_read(long offset, rt_uint8_t *buf, size_t size)
 
     LOG_HEX("rd", 16, buf, size);
     LOG_D("read (0x%p) %d", (void*)(addr), size);
+    rt_mutex_release(&fal_mux);
     return size;
 }
 
 int fal_max31826_write(long offset, const rt_uint8_t *buf, size_t size)
 {
+    rt_mutex_take(&fal_mux, RT_WAITING_FOREVER);
+
     uint32_t addr = max31826_flash.addr + offset;
     if (addr + size > max31826_flash.addr + max31826_flash.len)
     {
         LOG_E("write outrange flash size! addr is (0x%p)", (void*)(addr + size));
+        rt_mutex_release(&fal_mux);
         return -RT_EINVAL;
     }
     if (addr % 8 != 0)
     {
         LOG_E("write addr must be 8-byte alignment (0x%p) %d %d", (void*)(addr), addr % 8, size);
+        rt_mutex_release(&fal_mux);
         return -RT_EINVAL;
     }
     if (size < 1)
     {
 //        LOG_W("write size %d! addr is (0x%p)", size, (void*)(addr + size));
+        rt_mutex_release(&fal_mux);
         return 0;
     }
 
@@ -791,8 +836,10 @@ int fal_max31826_write(long offset, const rt_uint8_t *buf, size_t size)
     LOG_D("write (0x%p) %d", (void*)(addr), size);
     if (e_return == 0)
     {
+        rt_mutex_release(&fal_mux);
         return size;
     }
+    rt_mutex_release(&fal_mux);
     return 0;
 }
 
@@ -822,15 +869,29 @@ static int rt_hw_max31826_init()
     rt_int8_t result;
     rt_sensor_t sensor_temp = RT_NULL;
 
+    /* 初始化 读写 互斥 */
+    result = rt_mutex_init(&max31826_mux, "max31826", RT_IPC_FLAG_PRIO);
+    if (result != RT_EOK)
+    {
+        LOG_E("mutex init error %d!", result);
+        return -RT_ERROR;
+    }
+    result = rt_mutex_init(&fal_mux, "fal_mux", RT_IPC_FLAG_PRIO);
+    if (result != RT_EOK)
+    {
+        LOG_E("mutex init error %d!", result);
+        return -RT_ERROR;
+    }
+
 #ifdef MAX31826_USING_I2C_DS2484
     if (rt_hw_ds2484_init() != RT_EOK)
     {
-        goto __exit;
+        return -RT_ERROR;
     }
     if (max31826_init_by_ds2484() != RT_EOK)
     {
         LOG_E("max31826_init_by_ds2484 fail");
-        goto __exit;
+        return -RT_ERROR;
     }
 #endif /* MAX31826_USING_I2C_DS2484 */
 
@@ -867,6 +928,6 @@ __exit:
     return -RT_ERROR;
 }
 /* 导出到自动初始化 */
-INIT_DEVICE_EXPORT(rt_hw_max31826_init);
+INIT_PREV_EXPORT(rt_hw_max31826_init);
 
 #endif

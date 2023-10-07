@@ -9,6 +9,11 @@
 #define DBG_LVL DBG_INFO
 #include <rtdbg.h>
 
+#define U16_WRITE(__ADDRESS__, __DATA__)   do{                                                             \
+                                               (*(__IO uint16_t *)((uint32_t)(__ADDRESS__)) = (__DATA__)); \
+                                               __DSB();                                                    \
+                                             } while(0)
+
 static void sleepms(uint32_t utick)
 {
     rt_thread_mdelay(utick);
@@ -17,9 +22,9 @@ static void sleepms(uint32_t utick)
  * 读一个字节
  * @param addr: 读出地址指针
  */
-static __inline uint8_t readb(volatile uint8_t *addr)
+static uint8_t readb(volatile uint8_t *addr)
 {
-    volatile uint8_t ram;           //防止被优化
+    uint8_t ram;           //防止被优化
     ram = *addr;
     return ram;
 }
@@ -28,12 +33,10 @@ static __inline uint8_t readb(volatile uint8_t *addr)
  * 读一个16位字
  * @param addr: 读出地址指针
  */
-static __inline uint16_t readw(volatile uint16_t *addr)
+static uint16_t readw(volatile uint16_t *addr)
 {
-    volatile uint16_t ram;           //防止被优化
+    uint16_t ram;           //防止被优化
     ram = *addr;
-    ram = ram;
-    ram = ram;
     return ram;
 }
 
@@ -42,10 +45,9 @@ static __inline uint16_t readw(volatile uint16_t *addr)
  * @param v :写入值
  * @param addr: 写入地址指针
  */
-static __inline void writew(uint16_t data, volatile uint16_t *addr)
+static void writew(uint16_t data, volatile uint16_t *addr)
 {
-    data = data;      //使用-O2优化的时候,必须插入的延时
-    *addr = data;
+    U16_WRITE(addr, data);
 }
 
 /**
@@ -122,7 +124,7 @@ static void ks_wrreg16(struct rt_fmc_eth_port *ps_ks, uint16_t offset_u16, uint1
  * @len_u32: 读的字节数
  *
  */
-static __inline void ks_inblk(struct rt_fmc_eth_port *ps_ks, uint16_t *p_wptr_u16, uint32_t len_u32)
+static void ks_inblk(struct rt_fmc_eth_port *ps_ks, uint16_t *p_wptr_u16, uint32_t len_u32)
 {
     len_u32 >>= 1;
     while (len_u32--)
@@ -138,7 +140,7 @@ static __inline void ks_inblk(struct rt_fmc_eth_port *ps_ks, uint16_t *p_wptr_u1
  * @len_u32: 待写数据字节数。
  *
  */
-static __inline void ks_outblk(struct rt_fmc_eth_port *ps_ks, uint16_t *p_wptr_u16, uint32_t len_u32)
+static void ks_outblk(struct rt_fmc_eth_port *ps_ks, uint16_t *p_wptr_u16, uint32_t len_u32)
 {
     len_u32 >>= 1;
     while (len_u32--)
@@ -170,7 +172,7 @@ static void ks_enable_int(struct rt_fmc_eth_port *ps_ks)
  * @ps_ks: 芯片信息结构指针。
  *
  */
-static __inline uint16_t ks_tx_fifo_space(struct rt_fmc_eth_port *ps_ks)
+static uint16_t ks_tx_fifo_space(struct rt_fmc_eth_port *ps_ks)
 {
     return ks_rdreg16(ps_ks, KSZ8851_TXMIR) & TXMIR_SIZE_MASK;
 }
@@ -180,7 +182,7 @@ static __inline uint16_t ks_tx_fifo_space(struct rt_fmc_eth_port *ps_ks)
  * @ps_ks: 芯片信息结构指针。
  *
  */
-static __inline void ks_save_cmd_reg(struct rt_fmc_eth_port *ps_ks)
+static void ks_save_cmd_reg(struct rt_fmc_eth_port *ps_ks)
 {
     /*ks8851 MLL has a bug to read back the command register.
      * So rely on software to save the content of command register.
@@ -193,7 +195,7 @@ static __inline void ks_save_cmd_reg(struct rt_fmc_eth_port *ps_ks)
  * @ps_ks: 芯片信息结构指针。
  *
  */
-static __inline void ks_restore_cmd_reg(struct rt_fmc_eth_port *ps_ks)
+static void ks_restore_cmd_reg(struct rt_fmc_eth_port *ps_ks)
 {
     ps_ks->cmd_reg_cache = ps_ks->cmd_reg_cache_int;
     writew(ps_ks->cmd_reg_cache, ps_ks->hw_addr_cmd);
@@ -754,18 +756,12 @@ int32_t ks_start_xmit_link_layer(struct rt_fmc_eth_port *ps_ks, S_LEP_BUF *ps_le
     /* Extra space are required:
      *  4 byte for alignment, 4 for status/length, 4 for CRC
      */
-    if (ks_tx_fifo_space(ps_ks) >= ps_lep_buf->len + 12)
-    {
-        ks_write_qmu(ps_ks, ps_lep_buf->buf, ps_lep_buf->len);
-    }
-    else
-    {
-        retv_i32 = -1;
-    }
+    ks_write_qmu(ps_ks, ps_lep_buf->buf, ps_lep_buf->len);
 
     return retv_i32;
 }
 #endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
+
 static unsigned long const ethernet_polynomial = 0x04c11db7U;
 static unsigned long ether_gen_crc(int length, uint8_t *data)
 {
@@ -1048,18 +1044,33 @@ static int32_t ks_hw_init(struct rt_fmc_eth_port *ps_ks)
     return 0;
 }
 
-static int32_t ks_probe(struct rt_fmc_eth_port *ps_ks)
+static int ks_readid(struct rt_fmc_eth_port *ps_ks)
 {
-    int32_t err_i32 = 0;
-    uint16_t data_u16;
-    ks_read_config(ps_ks);
     /* simple check for a valid chip being connected to the bus */
     uint32_t CID = ks_rdreg16(ps_ks, KSZ8851_CIDER);
     CID = CID & ~CIDER_REV_MASK;
     if (CID != CIDER_ID)
     {
+        LOG_E("CID: failed %X != %X", CID, CIDER_ID);
+        return -1;
+    }
+    else
+    {
+        LOG_D("CID: %04X succeed.", CID);
+    }
+
+    return 0;
+}
+
+static int32_t ks_probe(struct rt_fmc_eth_port *ps_ks)
+{
+    int32_t err_i32 = 0;
+    uint16_t data_u16;
+    ks_read_config(ps_ks);
+
+    if (ks_readid(ps_ks) < 0)
+    {
         err_i32 = -1;
-        LOG_E("probe CID: failed %X != %X", CID, CIDER_ID);
     }
     else if (ks_read_selftest(ps_ks))
     {
@@ -1086,30 +1097,8 @@ static int32_t ks_probe(struct rt_fmc_eth_port *ps_ks)
     return err_i32;
 }
 
-int ks_readid(struct rt_fmc_eth_port *ps_ks)
-{
-    /* simple check for a valid chip being connected to the bus */
-    uint32_t CID = ks_rdreg16(ps_ks, KSZ8851_CIDER);
-    CID = CID & ~CIDER_REV_MASK;
-    if (CID != CIDER_ID)
-    {
-        LOG_E("CID: failed %X != %X", CID, CIDER_ID);
-        return -1;
-    }
-    else
-    {
-        LOG_D("CID: %04X succeed.", CID);
-    }
-
-    return 0;
-}
-
 int ks_init(struct rt_fmc_eth_port *ps_ks)
 {
-    if (ks_readid(ps_ks) < 0)
-    {
-        return -RT_ERROR;
-    }
     /* 网口芯片初始化 0(成功)、-1、-2 */
     if (ks_probe(ps_ks) == 0)
     {

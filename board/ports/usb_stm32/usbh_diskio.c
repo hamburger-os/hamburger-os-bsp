@@ -217,7 +217,7 @@ rt_err_t USBH_diskio_uninitialize()
     int i;
     rt_err_t ret = RT_EOK;
 #ifdef BSP_USING_ROOTFS
-    rm("/proc/udisk");
+    dfs_file_unlink("/proc/udisk");
 #endif
 
     for (i = 0; i < MAX_PARTITION_COUNT; i++)

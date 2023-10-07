@@ -17,7 +17,7 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-static SelftestlUserData selftest_userdata = {
+static SelftestUserData selftest_userdata = {
     .gpio_devname = {
         {BSP_GPIO_TABLE_PWM1        , BSP_GPIO_TABLE_GPIO1      },
         {BSP_GPIO_TABLE_GPIO5       , BSP_GPIO_TABLE_GPIO6      },
@@ -29,10 +29,11 @@ static SelftestlUserData selftest_userdata = {
     .fs_path = {
         "/mnt/fram",
         "/mnt/spinor64",
-        "/mnt/spinor4",
-        "/mnt/nor",
+        "/mnt/nor",//TODO:并口数据回环
         "/mnt/emmc",
         "/mnt/udisk/ud0p0"},
+    .spi_devname = BSP_DEV_TABLE_SPI2,
+    .spi_devname_cs = BSP_GPIO_TABLE_SPI2_CS0,
     .i2c_devname = "eeprom",
     .wav_path = "/usr/5s_8000_2ch.wav",
     .uart_devname = {
@@ -45,6 +46,15 @@ static SelftestlUserData selftest_userdata = {
     .eth_devname = {
         {"e0"                       , "e1"                      },
         {"e1"                       , "e0"                      }},
+    .result = {
+        {"MAX31826"     , 1},{"DS1682"      , 1},
+        {"GPIO_LOW_F"   , 1},{"GPIO_HIGH_F" , 1},{"GPIO_LOW_R"  , 1},{"GPIO_HIGH_R" , 1},
+        {"FRAM"         , 1},{"SPINOR64"    , 1},{"NOR"         , 1},{"EMMC"        , 1},{"UDISK"       , 1},
+        {"SPINOR4"      , 1},{"EEPROM"      , 1},
+        {"UART2_UART2"  , 1},{"UART3_UART4" , 1},{"UART4_UART3" , 1},
+        {"CAN1_CAN2"    , 1},{"CAN2_CAN1"   , 1},
+        {"ETH1_ETH2"    , 1},{"ETH2_ETH1"   , 1},
+    },
 };
 
 #if 0 //运行Gui-Guider创建的app
@@ -64,78 +74,118 @@ void lv_user_gui_init(void)
 }
 #endif
 
-static void selftest_thread_entry(void* parameter)
+/** \brief change sys led delay
+ * \return void
+ *
+ */
+static void selftest_start(int argc, char *argv[])
 {
-    while (rt_tick_get() < 20000)
+    SelftestUserData *puserdata = (SelftestUserData *)&selftest_userdata;
+
+    for (uint8_t i = 0; i < sizeof(puserdata->result)/sizeof(puserdata->result[0]); i++)
     {
-        rt_thread_delay(10);
+        puserdata->result[i].result = 1;
     }
 
-    SelftestlUserData *puserdata = (SelftestlUserData *)parameter;
+    //系统信息
+    struct SysInfoDef info = {0};
+    char SN_str[sizeof(info.SN) + 1] = {0};
 
     LOG_I("startup...");
 
-    //系统信息
-    sysinfo_show();
-    struct SysInfoDef info = {0};
     sysinfo_get(&info);
     if (info.chip_id[0] != 0 && info.chip_id[0] != 0xff)
     {
         LOG_D("max31826    pass");
+        puserdata->result[RESULT_MAX31826].result = 0;
     }
     else
     {
         LOG_E("max31826    error!");
+        puserdata->result[RESULT_MAX31826].result = 1;
     }
     if (info.times != 0)
     {
         LOG_D("ds1682      pass");
+        puserdata->result[RESULT_DS1682].result = 0;
     }
     else
     {
         LOG_E("ds1682      error!");
+        puserdata->result[RESULT_DS1682].result = 1;
     }
     //gpio
     selftest_gpio_test(puserdata);
-    //key
-    selftest_key_test(puserdata);
     //filesysterm
     selftest_fs_test(puserdata);
+    //key
+    selftest_key_test(puserdata);
+    //i2s
+    rt_tick_t tick = rt_tick_get();
+    selftest_i2s_test(puserdata);
+    //spi
+    selftest_spi_test(puserdata);
     //i2c
     selftest_i2c_test(puserdata);
-    //i2s
-    selftest_i2s_test(puserdata);
     //uart
     selftest_uart_test(puserdata);
     //can
     selftest_can_test(puserdata);
     //eth
     selftest_eth_test(puserdata);
-    //tcpip
-    selftest_tcpip_test(puserdata);
 
     LOG_I("end.");
+
+    rt_kprintf("\n");
+    rt_memcpy(SN_str, info.SN, sizeof(info.SN));
+    rt_kprintf("--Ans TestResult T:M4H7 SN:%s R=", SN_str);
+
+    for (uint8_t i = 0; i < sizeof(puserdata->result)/sizeof(puserdata->result[0]); i++)
+    {
+        rt_kprintf("%s:%02d", puserdata->result[i].name, puserdata->result[i].result);
+        if (i == sizeof(puserdata->result)/sizeof(puserdata->result[0]) - 1)
+        {
+            rt_kprintf("\n");
+        }
+        else
+        {
+            rt_kprintf(";");
+        }
+    }
+
+    rt_thread_delay_until(&tick, 6000);
 }
+
+#ifdef RT_USING_FINSH
+#include <finsh.h>
+MSH_CMD_EXPORT_ALIAS(selftest_start, selftest_start, selftest start.);
+#endif
 
 static int selftest_init(void)
 {
-    //启动自测任务
-    rt_thread_t thread = rt_thread_create( "selftest",
-                                            selftest_thread_entry,
-                                            &selftest_userdata,
-                                            4096,
-                                            1,
-                                            10);
-    if ( thread != RT_NULL)
-    {
-        rt_thread_startup(thread);
-    }
-    else
-    {
-        LOG_E("creat thread error!");
+    SelftestUserData *puserdata = (SelftestUserData *)&selftest_userdata;
 
-        return -RT_ERROR;
+    struct SysInfoDef info = {0};
+    char SN_str[sizeof(info.SN) + 1] = {0};
+    sysinfo_get(&info);
+
+    rt_kprintf("\n");
+    rt_memcpy(SN_str, info.SN, sizeof(info.SN));
+    rt_kprintf("--Ans TestResult T:M4H7 SN:%s R=", SN_str);
+
+    for (uint8_t i = 0; i < sizeof(puserdata->result)/sizeof(puserdata->result[0]); i++)
+    {
+        rt_kprintf("%s:%02d", puserdata->result[i].name, puserdata->result[i].result);
+        if (i == sizeof(puserdata->result)/sizeof(puserdata->result[0]) - 1)
+        {
+            rt_kprintf("\n");
+        }
+        else
+        {
+            rt_kprintf(";");
+        }
     }
+
     return RT_EOK;
 }
 

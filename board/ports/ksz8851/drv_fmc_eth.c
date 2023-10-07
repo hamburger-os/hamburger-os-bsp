@@ -18,6 +18,10 @@
 #include "flashdb_port.h"
 #endif
 
+#ifdef BSP_USE_SYSINFO_MAC
+#include "sysinfo.h"
+#endif
+
 #include <string.h>
 
 #define DBG_TAG "drv.eth"
@@ -283,6 +287,9 @@ static rt_err_t fmc_eth_close(rt_device_t dev)
 static rt_size_t fmc_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t size)
 {
     struct rt_fmc_eth_port *fmc_eth = dev->user_data;
+
+    rt_mutex_take(&fmc_eth->eth_mux, RT_WAITING_FOREVER);
+
     rt_uint16_t read_size = 0;
     S_LEP_BUF *p_s_LepBuf = RT_NULL;
     rt_list_t *list_pos = NULL;
@@ -316,16 +323,23 @@ static rt_size_t fmc_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_si
                 /* step4：释放接收接收缓冲区 */
                 rt_free(p_s_LepBuf);
                 fmc_eth->link_layer_buf.rx_lep_buf_num--;
+
+                rt_mutex_release(&fmc_eth->eth_mux);
                 return read_size;
             }
         }
     }
+
+    rt_mutex_release(&fmc_eth->eth_mux);
     return read_size;
 }
 
 static rt_size_t fmc_eth_write(rt_device_t dev, rt_off_t pos, const void *buffer, rt_size_t size)
 {
     struct rt_fmc_eth_port *fmc_eth = dev->user_data;
+
+    rt_mutex_take(&fmc_eth->eth_mux, RT_WAITING_FOREVER);
+
     rt_uint16_t tx_size = 0;
 
     rt_memset(&fmc_eth->link_layer_buf.tx_buf, 0, sizeof(S_LEP_BUF));
@@ -343,9 +357,10 @@ static rt_size_t fmc_eth_write(rt_device_t dev, rt_off_t pos, const void *buffer
     if (ks_start_xmit_link_layer(fmc_eth, &fmc_eth->link_layer_buf.tx_buf) != 0)
     {
         LOG_D("link layer write error");
-        return 0;
+        tx_size = 0;
     }
 
+    rt_mutex_release(&fmc_eth->eth_mux);
     return tx_size;
 }
 
@@ -419,32 +434,32 @@ struct pbuf *fmc_eth_rx(rt_device_t dev)
 #ifdef BSP_USE_LINK_LAYER_COMMUNICATION
     if(p != NULL)
     {
-        S_LEP_BUF *ps_lep_buf = RT_NULL;
-
-        if(fmc_eth->link_layer_buf.rx_lep_buf_num < BSP_LINK_LAYER_RX_BUF_NUM)
+        struct pbuf *q = NULL;
+        for (q = p; q != NULL; q = q->next)
         {
-            ps_lep_buf = rt_malloc(sizeof(S_LEP_BUF));
+            if (fmc_eth->link_layer_buf.rx_lep_buf_num >= BSP_LINK_LAYER_RX_BUF_NUM)
+            {
+                lep_eth_if_clear(&fmc_eth->link_layer_buf, E_ETH_IF_CLER_MODE_ONE);
+            }
+
+            S_LEP_BUF *ps_lep_buf = rt_malloc(sizeof(S_LEP_BUF));
             if(RT_NULL != ps_lep_buf)
             {
                 fmc_eth->link_layer_buf.rx_lep_buf_num++;
                 ps_lep_buf->flag = 0;
                 ps_lep_buf->flag |= LEP_RBF_RV;
-                ps_lep_buf->len = p->len;
-                rt_memcpy(ps_lep_buf->buf, p->payload, p->len);
+                ps_lep_buf->len = q->len;
+                rt_memcpy(ps_lep_buf->buf, q->payload, q->len);
                 rt_list_insert_before(&fmc_eth->link_layer_buf.rx_head->list, &ps_lep_buf->list);
                 if(dev->rx_indicate != NULL)
                 {
-                    dev->rx_indicate(dev, p->len);
+                    dev->rx_indicate(dev, q->len);
                 }
             }
             else
             {
                 LOG_E("ps_lep_buf rx null");
             }
-        }
-        else
-        {
-            lep_eth_if_clear(&fmc_eth->link_layer_buf, E_ETH_IF_CLER_MODE_ONE);
         }
     }
 #endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
@@ -494,6 +509,31 @@ static int rt_fmc_eth_init(void)
 
     for (int i = 0; i < sizeof(fmc_eth_port) / sizeof(struct rt_fmc_eth_port); i++)
     {
+#ifdef BSP_USE_SYSINFO_MAC
+        struct SysInfoFixV0Def sysinfofix = {0};
+        if (sysinfofix_get(&sysinfofix) == 0)
+        {
+            /* OUI 厂商ID */
+            fmc_eth_device.port[i].mac[0] = sysinfofix.mac[i][0];
+            fmc_eth_device.port[i].mac[1] = sysinfofix.mac[i][1];
+            fmc_eth_device.port[i].mac[2] = sysinfofix.mac[i][2];
+            /* 设备MAC地址 */
+            fmc_eth_device.port[i].mac[3] = sysinfofix.mac[i][3];
+            fmc_eth_device.port[i].mac[4] = sysinfofix.mac[i][4];
+            fmc_eth_device.port[i].mac[5] = sysinfofix.mac[i][5];
+        }
+        else
+        {
+            /* OUI 00-80-E1 STMICROELECTRONICS.前三个字节为厂商ID */
+            fmc_eth_device.port[i].mac[0] = 0xF8;
+            fmc_eth_device.port[i].mac[1] = 0x09;
+            fmc_eth_device.port[i].mac[2] = 0xA4;
+            /* generate MAC addr from 96bit unique ID (only for test). */
+            fmc_eth_device.port[i].mac[3] = *(uint8_t *)(UID_BASE + 2 + i);
+            fmc_eth_device.port[i].mac[4] = *(uint8_t *)(UID_BASE + 1 + i);
+            fmc_eth_device.port[i].mac[5] = *(uint8_t *)(UID_BASE + 0 + i);
+        }
+#else
         /* OUI 00-80-E1 STMICROELECTRONICS.前三个字节为厂商ID */
         fmc_eth_device.port[i].mac[0] = 0xF8;
         fmc_eth_device.port[i].mac[1] = 0x09;
@@ -502,7 +542,10 @@ static int rt_fmc_eth_init(void)
         fmc_eth_device.port[i].mac[3] = *(uint8_t *)(UID_BASE + 2 + i);
         fmc_eth_device.port[i].mac[4] = *(uint8_t *)(UID_BASE + 1 + i);
         fmc_eth_device.port[i].mac[5] = *(uint8_t *)(UID_BASE + 0 + i);
-
+#endif
+        LOG_I("netdev %s set MAC %02X %02X %02X %02X %02X %02X", fmc_eth_device.port[i].dev_name
+                , fmc_eth_device.port[i].mac[0], fmc_eth_device.port[i].mac[1], fmc_eth_device.port[i].mac[2]
+                , fmc_eth_device.port[i].mac[3], fmc_eth_device.port[i].mac[4], fmc_eth_device.port[i].mac[5]);
         fmc_eth_device.port[i].parent.parent.init = fmc_eth_init;
         fmc_eth_device.port[i].parent.parent.open = fmc_eth_open;
         fmc_eth_device.port[i].parent.parent.close = fmc_eth_close;
@@ -541,35 +584,49 @@ static int rt_fmc_eth_init(void)
 
     return state;
 }
-INIT_DEVICE_EXPORT(rt_fmc_eth_init);
+INIT_COMPONENT_EXPORT(rt_fmc_eth_init);
 
-#ifdef BSP_USE_KVDB_NET_IF
-/* Config the lwip device */
-char *ip_key[] = {"e0_ip", "e1_ip", "e2_ip"};
-char *gw_key[] = {"e0_gw", "e1_gw", "e2_gw"};
-char *mask_key[] = {"e0_mask", "e1_mask", "e2_mask"};
-
-static void netdev_set_if(char* netdev_name, char* ip_addr, char* gw_addr, char* nm_addr);
+#if defined(BSP_USE_KVDB_NET_IF)
 static int rt_netdev_set_if_init(void)
 {
     rt_err_t state = RT_EOK;
 
-#if !LWIP_DHCP
+#ifdef BSP_USE_KVDB_NET_IF
+    /* Config the lwip device */
+    char *ip_key[] = {"e0_ip", "e1_ip", "e2_ip"};
+    char *gw_key[] = {"e0_gw", "e1_gw", "e2_gw"};
+    char *mask_key[] = {"e0_mask", "e1_mask", "e2_mask"};
+
     char ip_addr[16] = {0};
     char gw_addr[16] = {0};
     char nm_addr[16] = {0};
+#endif
 
     for (int i = 0; i < sizeof(fmc_eth_port) / sizeof(struct rt_fmc_eth_port); i++)
     {
-        kvdb_get(ip_key[i], ip_addr);
-        kvdb_get(gw_key[i], gw_addr);
-        kvdb_get(mask_key[i], nm_addr);
+#ifdef BSP_USE_KVDB_NET_IF
+        extern void netdev_set_if(char* netdev_name, char* ip_addr, char* gw_addr, char* nm_addr);
+#if !LWIP_DHCP
+        if (kvdb_get(ip_key[i], ip_addr) == 0)
+        {
+            char ip_addr_str[16];
+            rt_sprintf(ip_addr_str, "192.168.1.%d", i + 30);
+            strcpy(ip_addr, ip_addr_str);
+        }
+        if (kvdb_get(gw_key[i], gw_addr) == 0)
+        {
+            strcpy(gw_addr, "192.168.1.1");
+        }
+        if (kvdb_get(mask_key[i], nm_addr) == 0)
+        {
+            strcpy(nm_addr, "255.255.255.0");
+        }
 
         netdev_set_if(fmc_eth_device.port[i].dev_name, ip_addr, gw_addr, nm_addr);
         LOG_I("netdev %s set if %s %s %s", fmc_eth_device.port[i].dev_name, ip_addr, gw_addr, nm_addr);
-    }
 #endif
-
+#endif
+    }
     return state;
 }
 INIT_ENV_EXPORT(rt_netdev_set_if_init);

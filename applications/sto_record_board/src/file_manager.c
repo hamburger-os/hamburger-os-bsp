@@ -84,11 +84,10 @@ sint32_t fm_free_fram_space(S_FILE_MANAGER *fm)
     else
     {
         /* full_path对应的文件存在,则删除该文件，然后再创建该文件 */
-        unlink(full_path);
-        LOG_I("delete %s", full_path);
+        ret = unlink(full_path);
         if(ret < 0)
         {
-            LOG_E("delete error");
+            LOG_E("delete %s error", full_path);
             return ret;
         }
 
@@ -114,18 +113,16 @@ sint32_t fm_free_fram_space(S_FILE_MANAGER *fm)
 }
 
 /*
- * 向铁电存储器中存入临时文件
+ * 文件追加内容
  * */
-sint32_t FMWriteTmpFile(S_FILE_MANAGER *fm, const void *data, size_t count)
+sint32_t FMWriteTmpFile(S_FILE_MANAGER *fm, const char * file_path, const void *data, size_t count)
 {
-    char full_path[PATH_NAME_MAX_LEN] = {0};
     sint32_t fd = 0, ret = 0;
 
-    snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_TEMP_FILE_PATH_NAME, fm->latest_tmp_file_info.file_name);
-    fd = open(full_path, O_CREAT | O_RDWR | O_APPEND, S_IRUSR | S_IWUSR);
+    fd = open(file_path, O_CREAT | O_RDWR | O_APPEND, S_IRUSR | S_IWUSR);
     if (fd < 0)
     {
-        LOG_E("write open %s error", full_path);
+        LOG_E("write open %s error", file_path);
         return (sint32_t)-1;
     }
 
@@ -135,7 +132,7 @@ sint32_t FMWriteTmpFile(S_FILE_MANAGER *fm, const void *data, size_t count)
     close(fd);
     if (ret < 0)
     {
-        LOG_E("write %s error", full_path);
+        LOG_E("write %s error", file_path);
         return (sint32_t)-1;
     }
 
@@ -143,17 +140,15 @@ sint32_t FMWriteTmpFile(S_FILE_MANAGER *fm, const void *data, size_t count)
 }
 
 /*
- * 从铁电存储器中读取临时文件
+ * 从指定位置读取文件
  * */
-static sint32_t FMReadTmpFile(S_FILE_MANAGER *fm, void *data, size_t count)
+static sint32_t FMReadTmpFile(S_FILE_MANAGER *fm, const char * file_path, void *data, size_t count)
 {
-    char full_path[PATH_NAME_MAX_LEN] = {0};
     sint32_t bytes_read;
     sint32_t fd = 0;
     sint32_t lseek_count = 0;
 
-    snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_TEMP_FILE_PATH_NAME, fm->latest_tmp_file_info.file_name);
-    fd = open(full_path, O_RDONLY);
+    fd = open(file_path, O_RDONLY);
     if (fd > 0)
     {
         lseek_count = ChangeValuePositiveAndNegative(count);
@@ -167,13 +162,13 @@ static sint32_t FMReadTmpFile(S_FILE_MANAGER *fm, void *data, size_t count)
         }
         else
         {
-            LOG_E("read %s size = %d", full_path, bytes_read);
+            LOG_E("read %s size = %d", file_path, bytes_read);
             return -1;
         }
     }
     else
     {
-        LOG_E("read open %s error", full_path);
+        LOG_E("read open %s error", file_path);
         return -1;
     }
 
@@ -192,6 +187,7 @@ static sint32_t FMInitLatestTmpFile(S_FILE_MANAGER *fm)
     S_LATEST_TMP_FILE_INFO *latest_info = &fm->latest_tmp_file_info;
     sint32_t ret = -1;
     sint32_t fd = 0;
+    char full_path[PATH_NAME_MAX_LEN] = {0};
 
     LOG_I("latest file name: %s.", LATEST_TEMP_FILE_NAME);
     if (FMGetLatestFileInfo(fm, LATEST_TMP_NAME_FILE_PATH_NAME, LATEST_TEMP_FILE_NAME, latest_info, sizeof(S_LATEST_TMP_FILE_INFO)) == 0)
@@ -205,7 +201,8 @@ static sint32_t FMInitLatestTmpFile(S_FILE_MANAGER *fm)
         }
         else
         {
-            ret = FMReadTmpFile(fm, s_current_file_info.write_buf, sizeof(WRITE_BUF));
+            snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_TEMP_FILE_PATH_NAME, fm->latest_tmp_file_info.file_name);
+            ret = FMReadTmpFile(fm, full_path, s_current_file_info.write_buf, sizeof(WRITE_BUF));
             if(ret < 0)
             {
                 LOG_E("FMReadTmpFile error");
@@ -225,8 +222,6 @@ static sint32_t FMInitLatestTmpFile(S_FILE_MANAGER *fm)
     latest_info->head_flag = LATEST_DIR_FILE_HEAD_FLAG;
     latest_info->not_exsit = 1;
 
-    char full_path[PATH_NAME_MAX_LEN] = { 0 };
-
     snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_TEMP_FILE_PATH_NAME, fm->latest_tmp_file_info.file_name);
     fd = open(full_path, O_CREAT | O_RDWR | O_APPEND, S_IRUSR | S_IWUSR);
     if (fd < 0)
@@ -239,7 +234,7 @@ static sint32_t FMInitLatestTmpFile(S_FILE_MANAGER *fm)
     return FMWriteLatestInfo(LATEST_TMP_NAME_FILE_PATH_NAME, LATEST_TEMP_FILE_NAME, (const void *) latest_info, sizeof(S_LATEST_TMP_FILE_INFO));
 }
 
-sint32_t FMWriteFile(S_FILE_MANAGER *fm, const char * dirname, const void *dir_file, size_t count)
+sint32_t FMWriteDirFile(S_FILE_MANAGER *fm, const char * dirname, const void *dir_file, size_t count)
 {
     sint32_t fd = 0;
     sint32_t ret = -1;
@@ -271,7 +266,7 @@ sint32_t FMWriteFile(S_FILE_MANAGER *fm, const char * dirname, const void *dir_f
     }
 }
 
-sint32_t FMReadFile(S_FILE_MANAGER *fm, const char * dirname, void *dir_file, size_t len)
+sint32_t FMReadDirFile(S_FILE_MANAGER *fm, const char * dirname, void *dir_file, size_t len)
 {
     sint32_t fd = 0;
     char full_path[PATH_NAME_MAX_LEN] = { 0 };
@@ -615,12 +610,6 @@ sint32_t FMInit(S_FILE_MANAGER *fm)
 
     sint32_t ret = 0;
 
-//    LOG_I("SFile_Head size %d", sizeof(SFile_Head));
-//    LOG_I("SFile_Public size %d", sizeof(SFile_Public));
-//    LOG_I("SFile_Directory size %d", sizeof(SFile_Directory));
-//    LOG_I("FILE_CONTANT size %d", sizeof(FILE_CONTANT));
-//    LOG_I("write_buf size %d", sizeof(WRITE_BUF));
-
     memset(fm, 0, sizeof(S_FILE_MANAGER));
 
     /* 创建一个动态互斥量 */
@@ -672,34 +661,36 @@ sint32_t FMInit(S_FILE_MANAGER *fm)
     }
 
     /* 打印相关信息 */
-    LOG_I("---------------- latest file ------------------");
-    LOG_I("| filename:        %s", fm->latest_dir_file_info.file_name);
-    LOG_I("| head_flag:       %x", fm->latest_dir_file_info.head_flag);
-    LOG_I("| dir_num:         %d", fm->latest_dir_file_info.dir_num);
-    LOG_I("| not_exsit:       %d", fm->latest_dir_file_info.not_exsit);
-    LOG_I("| tmp:             %s", fm->latest_tmp_file_info.file_name);
-    LOG_I("| not_exsit:       %d", fm->latest_tmp_file_info.not_exsit);
-    LOG_I("------------------- dir file ------------------");
-    LOG_I("| filename:        %s", fm->current_info->file_dir->ch_file_name);
-    LOG_I("| filesize:        %d", fm->current_info->file_dir->u32_file_size);
-    LOG_I("| file id:         %d", fm->current_info->file_dir->file_id);
-    LOG_I("| save:            %d", fm->current_info->file_dir->is_save);
-    LOG_I("| CheCi:           %d.%d.%d.%d",
+    rt_kprintf("---------------- latest file ------------------\n");
+    rt_kprintf("| filename:        %s\n", fm->latest_dir_file_info.file_name);
+    rt_kprintf("| head_flag:       %x\n", fm->latest_dir_file_info.head_flag);
+    rt_kprintf("| dir_num:         %d\n", fm->latest_dir_file_info.dir_num);
+    rt_kprintf("| not_exsit:       %d\n", fm->latest_dir_file_info.not_exsit);
+    rt_kprintf("| tmp:             %s\n", fm->latest_tmp_file_info.file_name);
+    rt_kprintf("| not_exsit:       %d\n", fm->latest_tmp_file_info.not_exsit);
+    rt_kprintf("------------------- dir file ------------------\n");
+    rt_kprintf("| filename:        %s\n", fm->current_info->file_dir->ch_file_name);
+    rt_kprintf("| filesize:        %d\n", fm->current_info->file_dir->u32_file_size);
+    rt_kprintf("| file id:         %d\n", fm->current_info->file_dir->file_id);
+    rt_kprintf("| save:            %d\n", fm->current_info->file_dir->is_save);
+    rt_kprintf("| CheCi:           %d.%d.%d.%d\n",
                                     fm->current_info->file_dir->ch_checi[0], fm->current_info->file_dir->ch_checi[1],
                                     fm->current_info->file_dir->ch_checi[2], fm->current_info->file_dir->ch_checi[3]);
-    LOG_I("| KuoChong:        %d.%d.%d.%d",
+    rt_kprintf("| KuoChong:        %d.%d.%d.%d\n",
                                     fm->current_info->file_dir->ch_checikuochong[0], fm->current_info->file_dir->ch_checikuochong[1],
                                     fm->current_info->file_dir->ch_checikuochong[2], fm->current_info->file_dir->ch_checikuochong[3]);
-    LOG_I("| SiJi:            %d.%d.%d.%d",
+    rt_kprintf("| SiJi:            %d.%d.%d.%d\n",
                                     fm->current_info->file_dir->ch_siji[0], fm->current_info->file_dir->ch_siji[1],
                                     fm->current_info->file_dir->ch_siji[2], fm->current_info->file_dir->ch_siji[3]);
-    LOG_I("| Date:            %d.%d.%d.%d",
+    rt_kprintf("| Date:            %d.%d.%d.%d\n",
                                     fm->current_info->file_dir->ch_date[0], fm->current_info->file_dir->ch_date[1],
                                     fm->current_info->file_dir->ch_date[2], fm->current_info->file_dir->ch_date[3]);
-    LOG_I("| Time:            %d.%d.%d.%d",
+    rt_kprintf("| Time:            %d.%d.%d.%d\n",
                                     fm->current_info->file_dir->ch_time[0], fm->current_info->file_dir->ch_time[1],
                                     fm->current_info->file_dir->ch_time[2], fm->current_info->file_dir->ch_time[3]);
-    LOG_I("-----------------------------------------------");
+    rt_kprintf("-----------------------------------------------\n");
+
+
     return (sint32_t)0;
 }
 

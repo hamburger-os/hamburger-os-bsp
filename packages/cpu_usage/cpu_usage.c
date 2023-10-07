@@ -131,5 +131,5 @@ float cpu_load_average(void)
 }
 
 #ifdef RT_USING_COMPONENTS_INIT
-INIT_APP_EXPORT(cpu_usage_init);
+INIT_SERVICE_EXPORT(cpu_usage_init);
 #endif

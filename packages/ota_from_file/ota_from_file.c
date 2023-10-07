@@ -55,6 +55,7 @@ enum
 {
     MODE_DOWNLOAD = 0,
     MODE_FACTORY,
+    MODE_TFTP,
 };
 
 struct ota_from_file_ops
@@ -66,7 +67,7 @@ struct ota_from_file_ops
 
     const char* part_name[2];
     const struct fal_partition * part[2];
-    const char *path[2];
+    const char *path[3];
 
     uint8_t updatesta;//升级状态
     uint8_t* cmprs_buf;
@@ -78,7 +79,7 @@ struct ota_from_file_ops
 static struct ota_from_file_ops ota_from_file = {
     .devname = OTA_FROM_FILE_DEVNAME,
     .part_name = {OTA_FROM_FILE_DOWNLOAD_PART_NAME, OTA_FROM_FILE_FACTORY_PART_NAME},
-    .path = {OTA_FROM_FILE_DOWNLOAD_PATH, OTA_FROM_FILE_FACTORY_PATH},
+    .path = {OTA_FROM_FILE_DOWNLOAD_PATH, OTA_FROM_FILE_FACTORY_PATH, OTA_FROM_FILE_TFTP_PATH},
 };
 
 typedef struct {
@@ -450,6 +451,60 @@ static void ota_thread_entry(void* parameter)
                 rt_thread_mdelay(200);
             }
         }
+
+        if (access(ops->path[MODE_TFTP], 0) == 0)
+        {
+            LOG_D("firmware '%s' is exisit", ops->path[MODE_TFTP]);
+            rt_thread_mdelay(5000);
+            ops->fd = open(ops->path[MODE_TFTP], O_RDONLY);
+            if (ota_on_begin(ops, MODE_DOWNLOAD) == RT_EOK)
+            {
+                ota_from_file_handle(OTA_HANDLE_START);
+                LOG_I("Start programming ...");
+                rt_size_t length = 1;
+                lseek(ops->fd, 0, SEEK_SET);
+                while (length > 0)
+                {
+                    rt_memset(ops->file_buf, 0, OTA_FILE_BUF_LEN);
+                    length = read(ops->fd, ops->file_buf, OTA_FILE_BUF_LEN);
+                    if (length < 1)
+                    {
+                        break;
+                    }
+                    if (ota_on_data(ops, length, MODE_DOWNLOAD) != RT_EOK)
+                    {
+                        break;
+                    }
+                    rt_kprintf(".");
+                }
+                if (length < 1)
+                    rt_kprintf("\n");
+
+                if (ops->update_file_total_size == ops->update_file_cur_size)
+                {
+                    ota_from_file_handle(OTA_HANDLE_FINISH);
+                    LOG_D("Download firmware to flash success.");
+
+                    LOG_I("System now will restart...");
+
+                    /* wait some time for terminal response finish */
+                    rt_thread_mdelay(200);
+
+                    /* Reset the device, Start new firmware */
+                    rt_hw_cpu_reset();
+                    /* wait some time for terminal response finish */
+                    rt_thread_mdelay(200);
+                }
+                else
+                {
+                    /* wait some time for terminal response finish */
+                    rt_thread_mdelay(1000);
+                    LOG_E("Update firmware fail %d/%d.", ops->update_file_cur_size, ops->update_file_total_size);
+                }
+            }
+            close(ops->fd);
+            dfs_file_unlink(ops->path[MODE_TFTP]);
+        }
     }
 }
 
@@ -475,7 +530,7 @@ static int ota_from_file_init(void)
 
     return RT_EOK;
 }
-INIT_APP_EXPORT(ota_from_file_init);
+INIT_SERVICE_EXPORT(ota_from_file_init);
 
 RT_WEAK void ota_from_file_handle(OtaHandleTypeDef type)
 {

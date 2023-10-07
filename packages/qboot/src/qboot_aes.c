@@ -23,8 +23,8 @@ void qbt_aes_decrypt_init(void)
     {
         len = sizeof(qbt_aes_iv);
     }
-    rt_memset(qbt_aes_iv, 0, sizeof(qbt_aes_iv));
-    rt_memcpy(qbt_aes_iv, QBOOT_AES_IV, len);
+    memset(qbt_aes_iv, 0, sizeof(qbt_aes_iv));
+    memcpy(qbt_aes_iv, QBOOT_AES_IV, len);
     tiny_aes_setkey_dec(&qbt_aes_ctx, (u8 *)QBOOT_AES_KEY, 256);
 }
 

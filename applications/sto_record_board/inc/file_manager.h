@@ -41,7 +41,7 @@
 #define TMP_FILE_MAN_SIZE          (50)   //单位KB
 #endif
 
-#define FIRST_LATEST_DIR_NAME_NULL "NULL"
+#define FIRST_LATEST_DIR_NAME_NULL "NO_LKJ"
 
 #define SORT_UP 0x01   /* 升序 */
 #define SORT_DOWN 0x10 /* 降序 */
@@ -68,6 +68,10 @@
 #define LOG_FILE_0_TARGET_NAME "/mnt/udisk/ud0p0/SW_RecordLog/file.log"     /* U盘中保存日志文件的路径 */
 #define LOG_FILE_1_TARGET_NAME "/mnt/udisk/ud0p0/SW_RecordLog/file_0.log"     /* U盘中保存日志文件的路径 */
 
+#define OFF_LINE_FILE_1_NAME "offline_file_1"
+#define OFF_LINE_FILE_2_NAME "offline_file_2"
+
+
 typedef struct _S_CURRENT_FILE_INFO S_CURRENT_FILE_INFO;
 
 /* 最新目录文件信息 */
@@ -92,11 +96,11 @@ typedef struct __attribute__((packed)) {
     rt_mutex_t file_mutex;
 } S_FILE_MANAGER;
 
-sint32_t FMWriteTmpFile(S_FILE_MANAGER *fm, const void *data, size_t count);
+sint32_t FMWriteTmpFile(S_FILE_MANAGER *fm, const char * file_path, const void *data, size_t count);
 sint32_t fm_free_fram_space(S_FILE_MANAGER *fm);
 
-sint32_t FMWriteFile(S_FILE_MANAGER *fm, const char * dirname, const void *dir_file, size_t count);
-sint32_t FMReadFile(S_FILE_MANAGER *fm, const char * dirname, void *dir_file, size_t len);
+sint32_t FMWriteDirFile(S_FILE_MANAGER *fm, const char * dirname, const void *dir_file, size_t count);
+sint32_t FMReadDirFile(S_FILE_MANAGER *fm, const char * dirname, void *dir_file, size_t len);
 sint32_t fm_free_emmc_space(void);
 
 sint32_t FMAppendWrite(const char *filename, const void *buffer, size_t count);

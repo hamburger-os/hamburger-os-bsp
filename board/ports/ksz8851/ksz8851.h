@@ -322,7 +322,6 @@ typedef enum
 } KSZ_BUSWD_ENUM;
 
 int ks_init(struct rt_fmc_eth_port *ps_ks);
-int ks_readid(struct rt_fmc_eth_port *ps_ks);
 
 int ks_start_xmit(struct rt_fmc_eth_port *ps_ks, struct pbuf *p);
 #ifdef BSP_USE_LINK_LAYER_COMMUNICATION

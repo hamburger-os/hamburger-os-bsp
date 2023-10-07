@@ -86,7 +86,8 @@ static rt_size_t stm32_master_xfer(struct rt_i2c_bus_device *bus,
 
         if (msg->flags & RT_I2C_RD)
         {
-            if (HAL_I2C_Master_Receive(&config->hi2c, msg->addr, msg->buf, msg->len, msg->len) != HAL_OK)
+            ret = HAL_I2C_Master_Receive(&config->hi2c, msg->addr, msg->buf, msg->len, msg->len);
+            if (ret != HAL_OK)
             {
                 if (msg->len > 64)
                 {
@@ -96,7 +97,7 @@ static rt_size_t stm32_master_xfer(struct rt_i2c_bus_device *bus,
                 {
                     LOG_HEX("rd", 32, msg->buf, msg->len);
                 }
-                LOG_E("master_xfer %s read : %d 0x%x %d/%d", config->bus_name, msg->flags, msg->addr, i, num);
+                LOG_E("master_xfer %s read : %d 0x%x %d %d/%d %d", config->bus_name, msg->flags, msg->addr, msg->len, i, num, ret);
                 ret = -RT_EIO;
                 goto out;
             }
@@ -108,7 +109,8 @@ static rt_size_t stm32_master_xfer(struct rt_i2c_bus_device *bus,
         }
         else
         {
-            if (HAL_I2C_Master_Transmit(&config->hi2c, msg->addr, msg->buf, msg->len, msg->len) != HAL_OK)
+            ret = HAL_I2C_Master_Transmit(&config->hi2c, msg->addr, msg->buf, msg->len, msg->len);
+            if (ret != HAL_OK)
             {
                 if (msg->len > 64)
                 {
@@ -118,7 +120,7 @@ static rt_size_t stm32_master_xfer(struct rt_i2c_bus_device *bus,
                 {
                     LOG_HEX("wr", 32, msg->buf, msg->len);
                 }
-                LOG_E("master_xfer %s write : %d 0x%x %d/%d", config->bus_name, msg->flags, msg->addr, i, num);
+                LOG_E("master_xfer %s write : %d 0x%x %d %d/%d %d", config->bus_name, msg->flags, msg->addr, msg->len, i, num, ret);
                 ret = -RT_EIO;
                 goto out;
             }

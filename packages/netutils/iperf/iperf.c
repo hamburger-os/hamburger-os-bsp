@@ -28,6 +28,12 @@
 #define IPERF_MODE_SERVER   1
 #define IPERF_MODE_CLIENT   2
 
+#if (RT_VER_NUM >= 0x50000)
+#define IPERF_GET_THREAD_NAME(th) (th->parent.name)
+#else
+#define IPERF_GET_THREAD_NAME(th) (th->name)
+#endif
+
 typedef struct
 {
     int mode;
@@ -38,69 +44,39 @@ static IPERF_PARAM param = {IPERF_MODE_STOP, NULL, IPERF_PORT};
 
 static void iperf_udp_client(void *thread_param)
 {
-    int ret;
     int sock;
     rt_uint32_t *buffer;
     struct sockaddr_in server;
     rt_uint32_t packet_count = 0;
-    rt_uint32_t tick1, tick2;
+    rt_uint32_t tick;
     int send_size;
-    rt_uint64_t sentlen;
 
     send_size = IPERF_BUFSZ > 1470 ? 1470 : IPERF_BUFSZ;
     buffer = rt_malloc(IPERF_BUFSZ);
     if (buffer == NULL)
     {
-        LOG_E("can't malloc buffer! exit!");
         return;
     }
     rt_memset(buffer, 0x00, IPERF_BUFSZ);
     sock = socket(PF_INET, SOCK_DGRAM, 0);
     if(sock < 0)
     {
-        LOG_E("can't create socket! exit!");
+        LOG_E("can't create socket!");
+        rt_free(buffer);
         return;
     }
     server.sin_family = PF_INET;
     server.sin_port = htons(param.port);
     server.sin_addr.s_addr = inet_addr(param.host);
-
     LOG_I("iperf udp mode run...");
-
-    sentlen = 0;
-    tick1 = rt_tick_get();
     while (param.mode != IPERF_MODE_STOP)
     {
         packet_count++;
-        tick2 = rt_tick_get();
-        if (tick2 - tick1 >= RT_TICK_PER_SECOND * 5)
-        {
-            long data;
-            int integer, decimal;
-
-            data = sentlen * RT_TICK_PER_SECOND / 125 / (tick2 - tick1);
-            integer = data/1000;
-            decimal = data%1000;
-            LOG_I("%d.%03d0 Mbps!", integer, decimal);
-            tick1 = tick2;
-            sentlen = 0;
-
-            /* TODO:
-                            由于这里cpu不停的sendto，所以导致syswork无法喂狗
-                            任务执行一段时间之后会被看门狗复位
-                            此处的系统延时会消除复位现象，但是会降低udp的测试带宽
-             */
-            rt_thread_delay(0);
-        }
-
+        tick = rt_tick_get();
         buffer[0] = htonl(packet_count);
-        buffer[1] = htonl(tick2 / RT_TICK_PER_SECOND);
-        buffer[2] = htonl((tick2 % RT_TICK_PER_SECOND) * 1000);
-        ret = sendto(sock, buffer, send_size, 0, (struct sockaddr *)&server, sizeof(struct sockaddr_in));
-        if (ret > 0)
-        {
-            sentlen += ret;
-        }
+        buffer[1] = htonl(tick / RT_TICK_PER_SECOND);
+        buffer[2] = htonl((tick % RT_TICK_PER_SECOND) * 1000);
+        sendto(sock, buffer, send_size, 0, (struct sockaddr *)&server, sizeof(struct sockaddr_in));
     }
     closesocket(sock);
     rt_free(buffer);
@@ -122,7 +98,6 @@ static void iperf_udp_server(void *thread_param)
     buffer = rt_malloc(IPERF_BUFSZ);
     if (buffer == NULL)
     {
-        LOG_E("can't malloc buffer! exit!");
         return;
     }
     sock = socket(PF_INET, SOCK_DGRAM, 0);
@@ -182,11 +157,13 @@ static void iperf_udp_server(void *thread_param)
         {
             long data;
             int integer, decimal;
+            rt_thread_t tid;
 
+            tid = rt_thread_self();
             data = sentlen * RT_TICK_PER_SECOND / 125 / (tick2 - tick1);
             integer = data/1000;
             decimal = data%1000;
-            LOG_I("%d.%03d0 Mbps! lost:%lu total:%lu", integer, decimal, lost, total);
+            LOG_I("%s: %d.%03d0 Mbps! lost:%d total:%d\n", IPERF_GET_THREAD_NAME(tid), integer, decimal, lost, total);
         }
     }
     rt_free(buffer);
@@ -205,11 +182,7 @@ static void iperf_client(void *thread_param)
     struct sockaddr_in addr;
 
     send_buf = (uint8_t *) rt_malloc(IPERF_BUFSZ);
-    if (send_buf == NULL)
-    {
-        LOG_E("can't malloc send_buf! exit!");
-        return;
-    }
+    if (!send_buf) return ;
 
     for (i = 0; i < IPERF_BUFSZ; i ++)
         send_buf[i] = i & 0xff;
@@ -263,11 +236,13 @@ static void iperf_client(void *thread_param)
             {
                 long data;
                 int integer, decimal;
+                rt_thread_t tid;
 
+                tid = rt_thread_self();
                 data = sentlen * RT_TICK_PER_SECOND / 125 / (tick2 - tick1);
                 integer = data/1000;
                 decimal = data%1000;
-                LOG_I("%d.%03d0 Mbps!", integer, decimal);
+                LOG_I("%s: %d.%03d0 Mbps!", IPERF_GET_THREAD_NAME(tid), integer, decimal);
                 tick1 = tick2;
                 sentlen = 0;
             }
@@ -374,11 +349,13 @@ void iperf_server(void *thread_param)
             {
                 long data;
                 int integer, decimal;
+                rt_thread_t tid;
 
+                tid = rt_thread_self();
                 data = recvlen * RT_TICK_PER_SECOND / 125 / (tick2 - tick1);
                 integer = data/1000;
                 decimal = data%1000;
-                LOG_I("%d.%03d0 Mbps!", integer, decimal);
+                LOG_I("%s: %d.%03d0 Mbps!", IPERF_GET_THREAD_NAME(tid), integer, decimal);
                 tick1 = tick2;
                 recvlen = 0;
             }

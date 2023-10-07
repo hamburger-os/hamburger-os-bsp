@@ -458,6 +458,7 @@ extern "C" {
 #define MEMTOMEM7_DMA_IRQ                DMA2_Stream7_IRQn
 #endif
 
+/* BDMA Channel0 */
 #if defined(BSP_SPI6_RX_USING_DMA) && !defined(SPI6_RX_DMA_INSTANCE)
 #define SPI6_DMA_RX_IRQHandler           BDMA_Channel0_IRQHandler
 #define SPI6_RX_DMA_RCC                  RCC_AHB4ENR_BDMAEN
@@ -466,6 +467,7 @@ extern "C" {
 #define SPI6_RX_DMA_IRQ                  BDMA_Channel0_IRQn
 #endif
 
+/* BDMA Channel1 */
 #if defined(BSP_SPI6_TX_USING_DMA) && !defined(SPI6_TX_DMA_INSTANCE)
 #define SPI6_DMA_TX_IRQHandler           BDMA_Channel1_IRQHandler
 #define SPI6_TX_DMA_RCC                  RCC_AHB4ENR_BDMAEN

@@ -59,7 +59,6 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define SW3_IRQ_Pin GPIO_PIN_13
 #define SW3_IRQ_GPIO_Port GPIOC
-#define SW3_IRQ_EXTI_IRQn EXTI15_10_IRQn
 #define SW3_RST_Pin GPIO_PIN_9
 #define SW3_RST_GPIO_Port GPIOI
 #define B_SPI5_CS3_Pin GPIO_PIN_10
@@ -68,12 +67,10 @@ void Error_Handler(void);
 #define B_SPI6_CS_GPIO_Port GPIOH
 #define B_SPI2_INT_Pin GPIO_PIN_10
 #define B_SPI2_INT_GPIO_Port GPIOH
-#define B_SPI2_INT_EXTI_IRQn EXTI15_10_IRQn
 #define B_SPI2_CS_Pin GPIO_PIN_11
 #define B_SPI2_CS_GPIO_Port GPIOH
 #define B_SPI6_INT_Pin GPIO_PIN_12
 #define B_SPI6_INT_GPIO_Port GPIOH
-#define B_SPI6_INT_EXTI_IRQn EXTI15_10_IRQn
 #define B_NET1_RST_Pin GPIO_PIN_7
 #define B_NET1_RST_GPIO_Port GPIOG
 #define NET2_RST_Pin GPIO_PIN_6

@@ -69,4 +69,4 @@ static int mpy_init(void)
     return RT_EOK;
 }
 /* 导出到自动初始化 */
-INIT_APP_EXPORT(mpy_init);
+INIT_SERVICE_EXPORT(mpy_init);

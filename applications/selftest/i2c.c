@@ -23,28 +23,26 @@
 #define DATA_LEN    4
 
 //通过读写底板上的eeprom来确认i2c的完整性
-void selftest_i2c_test(SelftestlUserData *puserdata)
+void selftest_i2c_test(SelftestUserData *puserdata)
 {
-    uint8_t data_wr1[DATA_LEN] = {1, 2, 3, 4};
-    uint8_t data_wr2[DATA_LEN] = {11, 12, 13, 14};
-    uint8_t data_rd1[DATA_LEN] = {0};
-    uint8_t data_rd2[DATA_LEN] = {0};
+    uint8_t data_wr[DATA_LEN] = {1, 2, 3, 4};
+    uint8_t data_rd[DATA_LEN] = {0};
 
     puserdata->i2c_dev = (struct fal_partition *)fal_partition_find(puserdata->i2c_devname);
     if (puserdata->i2c_dev != NULL)
     {
-        fal_partition_write(puserdata->i2c_dev, DATA_ADDR, data_wr1, DATA_LEN);
-        fal_partition_read(puserdata->i2c_dev, DATA_ADDR, data_rd1, DATA_LEN);
-        fal_partition_write(puserdata->i2c_dev, DATA_ADDR, data_wr2, DATA_LEN);
-        fal_partition_read(puserdata->i2c_dev, DATA_ADDR, data_rd2, DATA_LEN);
+        fal_partition_write(puserdata->i2c_dev, DATA_ADDR, data_wr, DATA_LEN);
+        fal_partition_read(puserdata->i2c_dev, DATA_ADDR, data_rd, DATA_LEN);
 
-        if (rt_memcmp(data_wr1, data_rd1, DATA_LEN) == 0 && rt_memcmp(data_wr2, data_rd2, DATA_LEN) == 0)
+        if (rt_memcmp(data_wr, data_rd, DATA_LEN) == 0)
         {
             LOG_D("eeprom      pass");
+            puserdata->result[RESULT_EEPROM].result = 0;
         }
         else
         {
             LOG_E("eeprom      error!");
+            puserdata->result[RESULT_EEPROM].result = 1;
         }
     }
     else

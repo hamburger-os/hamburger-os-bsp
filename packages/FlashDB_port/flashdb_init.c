@@ -88,8 +88,14 @@ size_t kvdb_get(const char *key, char *value)
 {
     /* get the KV value */
     char *pvalue = fdb_kv_get(&kvdb, key);
-    rt_strcpy(value, pvalue);
-    return rt_strlen(value);
+    if (pvalue != NULL)
+    {
+        rt_strcpy(value, pvalue);
+        return rt_strlen(value);
+    }
+
+    LOG_E("kvdb get '%s' error!", key);
+    return 0;
 }
 RTM_EXPORT(kvdb_get);
 
@@ -106,6 +112,14 @@ fdb_err_t kvdb_set(const char *key, char *value)
     return fdb_kv_set(&kvdb, key, value);
 }
 RTM_EXPORT(kvdb_set);
+
+fdb_err_t kvdb_del(const char *key)
+{
+    /* del the KV */
+    return fdb_kv_del(&kvdb, key);
+}
+RTM_EXPORT(kvdb_del);
+
 
 #ifdef FLASHDB_PORT_USING_TSDB
 static struct fdb_tsdb tsdb;

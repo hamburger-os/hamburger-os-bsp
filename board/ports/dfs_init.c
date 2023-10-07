@@ -27,7 +27,7 @@ static const struct romfs_dirent _romfs_root_mnt[] =
     {ROMFS_DIRENT_DIR, "nfs"        , RT_NULL, 0},      //nfs
 #endif
 
-#ifdef FM25xx_USING_FS
+#ifdef FM25xx_ENABLE_FS
     {ROMFS_DIRENT_DIR, BLK_FRAM     , RT_NULL, 0},      //fram
 #endif
 
@@ -35,11 +35,11 @@ static const struct romfs_dirent _romfs_root_mnt[] =
     {ROMFS_DIRENT_DIR, BLK_SPI_FLASH, RT_NULL, 0},      //spiflash
 #endif
 
-#ifdef BSP_USING_S25FL512
+#ifdef S25FL512_ENABLE_FS
     {ROMFS_DIRENT_DIR, BLK_S25FL512, RT_NULL, 0},       //S25FL512
 #endif
 
-#ifdef BSP_USING_AT45DB321E
+#ifdef AT45DB321E_ENABLE_FS
     {ROMFS_DIRENT_DIR, BLK_AT45DB321E, RT_NULL, 0},       //AT45DB321E
 #endif
 
@@ -55,7 +55,7 @@ static const struct romfs_dirent _romfs_root_mnt[] =
     {ROMFS_DIRENT_DIR, BLK_NOR      , RT_NULL, 0},      //nor
 #endif
 
-#ifdef BSP_USING_EMMC
+#ifdef EMMC_ENABLE_FS
     {ROMFS_DIRENT_DIR, BLK_EMMC     , RT_NULL, 0},      //emmc
 #endif
 
@@ -89,7 +89,7 @@ static const struct romfs_dirent _romfs_root[] =
 };
 
 //根文件系统
-const struct romfs_dirent romfs_root =
+static const struct romfs_dirent romfs_root =
 {
     ROMFS_DIRENT_DIR , "/"          , (rt_uint8_t *)_romfs_root    , sizeof(_romfs_root) / sizeof(struct romfs_dirent)
 };
@@ -111,7 +111,7 @@ static const struct mount_fs _mount_fs[] =
     {RT_NULL            , BLK_USBH_UDISK    , "tmp"             },
 #endif
 
-#ifdef FM25xx_USING_FS
+#ifdef FM25xx_ENABLE_FS
     {BLK_FRAM           , BLK_FRAM          , FM25xx_FS         },
 #endif
 
@@ -119,11 +119,11 @@ static const struct mount_fs _mount_fs[] =
     {BLK_SPI_FLASH      , BLK_SPI_FLASH     , SPI_FLASH_FS      },
 #endif
 
-#ifdef BSP_USING_S25FL512
+#ifdef S25FL512_ENABLE_FS
     {BLK_S25FL512       , BLK_S25FL512      , S25FL512_FS       },
 #endif
 
-#ifdef BSP_USING_AT45DB321E
+#ifdef AT45DB321E_ENABLE_FS
     {BLK_AT45DB321E     , BLK_AT45DB321E    , AT45DB321E_FS     },
 #endif
 
@@ -139,8 +139,8 @@ static const struct mount_fs _mount_fs[] =
     {BLK_NOR            , BLK_NOR           , NORFLASH_FS       },
 #endif
 
-#ifdef BSP_USING_EMMC
-    {EMMC_DEV_NAME      , BLK_EMMC          , EMMC_FS           },
+#ifdef EMMC_ENABLE_FS
+    {BLK_EMMC           , BLK_EMMC          , EMMC_FS           },
 #endif
 };
 
@@ -166,7 +166,7 @@ static int rt_dfs_init(void)
     ret = dfs_mount(RT_NULL, "/", "rom", 0, &(romfs_root));
     if (ret != 0)
     {
-        LOG_E("root (rom) mount to '/' failed!");
+        LOG_E("root (rom) mount to '/' failed %d!", rt_get_errno());
         return -RT_ERROR;
     }
     else
@@ -252,4 +252,4 @@ static int rt_dfs_init(void)
     return ret;
 }
 /* 导出到自动初始化 */
-INIT_COMPONENT_EXPORT(rt_dfs_init);
+INIT_ENV_EXPORT(rt_dfs_init);

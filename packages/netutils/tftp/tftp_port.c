@@ -205,7 +205,7 @@ static int _tftp_msh(int argc, char *argv[])
         rt_thread_t tid;
         if (server != RT_NULL)
         {
-            printf("tftp server is run");
+            printf("tftp server is run\n");
             return 0;
         }
         if (path[0] == RT_NULL)
@@ -256,3 +256,25 @@ _help:
     return -1;
 }
 MSH_CMD_EXPORT_ALIAS(_tftp_msh, tftp, tftp);
+
+static int tftp_server(void)
+{
+    rt_thread_t tid;
+    if (server != RT_NULL)
+    {
+        printf("tftp server is run\n");
+        return 0;
+    }
+    server = tftp_server_create("/", 69);
+    tftp_server_write_set(server, 1);
+    tid = rt_thread_create("tftps", tftp_server_thread, server, 2048, 18, 20);
+    if (tid == NULL)
+    {
+        printf("tftp server thread create error!\n");
+        return -1;
+    }
+    rt_thread_startup(tid);
+
+    return 0;
+}
+INIT_SERVICE_EXPORT(tftp_server);

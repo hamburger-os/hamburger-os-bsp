@@ -16,7 +16,7 @@ static qlz_state_decompress qbt_quicklz_state;
 
 void qbt_quicklz_state_init(void)
 {
-    rt_memset((u8 *)&qbt_quicklz_state, 0, sizeof(qbt_quicklz_state));
+    memset((u8 *)&qbt_quicklz_state, 0, sizeof(qbt_quicklz_state));
 }
 
 u32 qbt_quicklz_get_block_size(const u8 *comp_datas)

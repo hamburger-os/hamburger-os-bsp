@@ -2120,7 +2120,6 @@ menu "On-chip Peripheral Drivers"
     menuconfig BSP_USING_ONCHIP_RTC
         bool "Enable RTC"
         select RT_USING_RTC
-        select RT_USING_LIBC
         default n
         if BSP_USING_ONCHIP_RTC
             choice
@@ -2453,11 +2452,13 @@ menu "Onboard Peripheral Drivers"
             choice
                 prompt "Select lcd driver"
                 default BSP_USING_LCD_LTDC
+                
+                config BSP_USING_NO_LCD
+                    bool "Disable LCD"
 
                 config BSP_USING_LCD_LTDC
                     bool "Enable LCD LTDC"
                     select BSP_USING_LCD
-                    select RT_TOUCH_PIN_IRQ
                     
                 config BSP_USING_FMCLCD
                     bool "Enable LCD FMC"
@@ -2548,6 +2549,10 @@ menu "Onboard Peripheral Drivers"
             endchoice
             
             if BSP_USING_TOUCH
+                config TOUCH_USING_CALIBRATION
+                    bool "Enable touch calibration"
+                    default n
+                    
                 choice
                     prompt "Select touch driver"
                     default TOUCH_USING_SW
@@ -2576,9 +2581,10 @@ menu "Onboard Peripheral Drivers"
                         int "Set the rate of spi, default: (2 * 1000 *1000)"
                         default (2000000)
                         
-                    config TOUCH_SW_SAMPLE_TIMES
-                        int "Set the number of sampling times, default: (4)"
-                        default (4)
+                    config TOUCH_SW_USING_KVDB
+                        bool "Enable KVDB to save adjust"
+                        select PKG_USING_FLASHDB_PORT
+                        default y
                 endif
                 
                 if TOUCH_USING_XPT2046
@@ -2802,11 +2808,7 @@ menu "Onboard Peripheral Drivers"
                 int "Set BusTurnAroundDuration, default: 0"
                 default (0)
                 
-            config NORFLASH_SIZE_APP
-                int "Set application part size, default: (0 * 1024)"
-                default (0)
-	            
-	        config NORFLASH_SIZE_DOWNLOAD
+            config NORFLASH_SIZE_DOWNLOAD
                 int "Set download part size, default: (2048 * 1024)"
                 default (2097152)
                 
@@ -2858,10 +2860,6 @@ menu "Onboard Peripheral Drivers"
 	        	int "Maximum buffer write length, default: 64"
 	        	depends on NORFLASH_ENABLE_BUFFER_PROGRAM
 	        	default (64)
-	        	
-	        config NORFLASH_ENABLE_TEST
-                bool "Enable test cmd"
-                default n
         endif
 
     menuconfig BSP_USING_FM25xx
@@ -2893,7 +2891,7 @@ menu "Onboard Peripheral Drivers"
                 string "Set the part name, default: fram"
                 default "fram"
             
-            config FM25xx_USING_FS
+            config FM25xx_ENABLE_FS
                 bool "Enable the file system"
                 select RT_USING_DFS
                 select RT_USING_DFS_ROMFS
@@ -2902,7 +2900,7 @@ menu "Onboard Peripheral Drivers"
             
             config FM25xx_FS
 	            string "Set the file system used, default: lfs"
-	            depends on FM25xx_USING_FS
+	            depends on FM25xx_ENABLE_FS
 	            default "lfs"
         endif
         
@@ -2939,17 +2937,10 @@ menu "Onboard Peripheral Drivers"
             config SPI_FLASH_FS
                 string "Set the file system used, default: lfs"
                 default "lfs"
-                
-            config SPI_FLASH_ENABLE_TEST
-                bool "Enable test cmd"
-                default n
         endif
         
     menuconfig BSP_USING_S25FL512
         bool "Enable SPI FLASH (S25FL512)"
-        select RT_USING_DFS
-        select RT_USING_DFS_ROMFS
-        select PKG_USING_LITTLEFS
         default n
         
         if BSP_USING_S25FL512
@@ -2972,17 +2963,54 @@ menu "Onboard Peripheral Drivers"
             config S25FL512_BLK_SIZE
                 int "Set the memory block size, default: (262144)"
                 default (262144)
+                
+            config S25FL512_SIZE_DOWNLOAD
+                int "Set download part size, default: (2048 * 1024)"
+                default (0)
+                
+            config S25FL512_SIZE_FACTORY
+                int "Set factory part size, default: (2048 * 1024)"
+                default (0)
+                
+            config S25FL512_SIZE_BIN
+                int "Set bin part size, default: (2048 * 1024)"
+                default (0)
+                
+            config S25FL512_SIZE_ETC
+                int "Set etc part size, default: (2048 * 1024)"
+                default (0)
+                
+            config S25FL512_SIZE_LIB
+                int "Set lib part size, default: (2048 * 1024)"
+                default (0)
+                
+            config S25FL512_SIZE_USR
+                int "Set usr part size, default: (2048 * 1024)"
+                default (0)
+                
+            config S25FL512_SIZE_KVDB
+                int "Set kvdb part size, default: (2048 * 1024)"
+                default (0)
+                
+            config S25FL512_SIZE_TSDB
+                int "Set tsdb part size, default: (0 * 1024)"
+                default (0)
+                
+            config S25FL512_ENABLE_FS
+                bool "Enable the file system"
+                select RT_USING_DFS
+                select RT_USING_DFS_ROMFS
+                select PKG_USING_LITTLEFS
+                default y
             
             config S25FL512_FS
                 string "Set the file system used, default: lfs"
+                depends on S25FL512_ENABLE_FS
                 default "lfs"
         endif
         
     menuconfig BSP_USING_AT45DB321E
         bool "Enable SPI FLASH (AT45DB321E)"
-        select RT_USING_DFS
-        select RT_USING_DFS_ROMFS
-        select PKG_USING_LITTLEFS
         default n
         
         if BSP_USING_AT45DB321E
@@ -3005,18 +3033,22 @@ menu "Onboard Peripheral Drivers"
             config AT45DB321E_BLK_SIZE
                 int "Set the memory block size, default: (4096)"
                 default (4096)
+
+            config AT45DB321E_ENABLE_FS
+                bool "Enable the file system"
+                select RT_USING_DFS
+                select RT_USING_DFS_ROMFS
+                select PKG_USING_LITTLEFS
+                default y
             
             config AT45DB321E_FS
                 string "Set the file system used, default: lfs"
+                depends on AT45DB321E_ENABLE_FS
                 default "lfs"
         endif
         
     menuconfig BSP_USING_EMMC
         bool "Enable EMMC"
-        select RT_USING_DFS
-        select RT_USING_DFS_ROMFS
-        select PKG_USING_LITTLEFS
-        select RT_USING_DFS_ELMFAT
         default n
         
         if BSP_USING_EMMC            
@@ -3049,10 +3081,43 @@ menu "Onboard Peripheral Drivers"
                 string "Set SDIO power ctrl pin, default: PG.10"
                 depends on BSP_SDIO_USING_CTRL
                 default "PG.10"
+                
+            config EMMC_SIZE_DOWNLOAD
+                int "Set download part size, default: (2048 * 1024)"
+                default (0)
+                
+            config EMMC_SIZE_FACTORY
+                int "Set factory part size, default: (2048 * 1024)"
+                default (0)
+                
+            config EMMC_SIZE_BIN
+                int "Set bin part size, default: (2048 * 1024)"
+                default (0)
+                
+            config EMMC_SIZE_ETC
+                int "Set etc part size, default: (2048 * 1024)"
+                default (0)
+                
+            config EMMC_SIZE_LIB
+                int "Set lib part size, default: (2048 * 1024)"
+                default (0)
+                
+            config EMMC_SIZE_USR
+                int "Set usr part size, default: (2048 * 1024)"
+                default (0)
+	            
+	        config EMMC_ENABLE_FS
+                bool "Enable the file system"
+                select RT_USING_DFS
+                select RT_USING_DFS_ROMFS
+                select PKG_USING_LITTLEFS
+                select RT_USING_DFS_ELMFAT
+                default y
             
             config EMMC_FS
-	            string "Set the file system used, default: elm"
-	            default "elm"
+                string "Set the file system used, default: elm"
+                depends on EMMC_ENABLE_FS
+                default "elm"
         endif
         
     menuconfig BSP_USING_SDCARD
@@ -3124,6 +3189,11 @@ menu "Onboard Peripheral Drivers"
             config BSP_USE_KVDB_NET_IF
                 bool "Enable kvdb set netdev if"
                 select PKG_USING_FLASHDB_PORT
+                default y
+                
+            config BSP_USE_SYSINFO_MAC
+                bool "Enable sysinfo set mac"
+                select PKG_USING_SYSINFO
                 default y
             
             menuconfig BSP_USE_ETH1
@@ -3586,7 +3656,7 @@ menu "Onboard Peripheral Drivers"
         endif
         
 	menuconfig BSP_USING_KSZ8794
-        bool "Enable ksz8794"
+        bool "Enable The KSZ8794 is ethernet switch with gigabit RGMII/MII/RMII interface"
         default n
         
         if BSP_USING_KSZ8794

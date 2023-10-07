@@ -64,7 +64,6 @@ static rt_err_t at45db321e_readDeviceID(uint8_t *id)
     return ret;
 }
 
-
 static void at45db321e_wait_busy(void)
 {
     uint8_t value[2] = {0};

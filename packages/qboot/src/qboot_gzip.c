@@ -17,7 +17,7 @@ static z_stream qbt_strm;
 
 void qbt_gzip_init(void)
 {
-    rt_memset((u8 *)&qbt_strm, 0, sizeof(qbt_strm));
+    memset((u8 *)&qbt_strm, 0, sizeof(qbt_strm));
     inflateInit2(&qbt_strm, 47);
 }
 

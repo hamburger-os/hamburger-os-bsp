@@ -677,7 +677,7 @@ int mp3_player_init(void)
     return RT_EOK;
 }
 
-INIT_APP_EXPORT(mp3_player_init);
+INIT_SERVICE_EXPORT(mp3_player_init);
 
 static char *MP3Decode_ERR_CODE_get(int err_code)
 {

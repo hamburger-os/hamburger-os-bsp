@@ -23,6 +23,6 @@ static int rt_usbh_stm32_init(void)
     return RT_EOK;
 }
 /* 导出到自动初始化 */
-INIT_ENV_EXPORT(rt_usbh_stm32_init);
+INIT_SERVICE_EXPORT(rt_usbh_stm32_init);
 
 #endif

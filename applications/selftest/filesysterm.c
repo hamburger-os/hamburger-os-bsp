@@ -29,39 +29,34 @@
 static char * error_log[] = {
     "fram       ",
     "spinor64   ",
-    "spinor4    ",
     "nor        ",
     "emmc       ",
     "udisk      ",
 };
 
-void selftest_fs_test(SelftestlUserData *puserdata)
-{
-    int fd;
-    char path[128];
-    uint32_t index, length;
+static char write_data[TEST_LEN];
+static char read_data[TEST_LEN];
 
-    char *write_data = rt_malloc(TEST_LEN);
-    char *read_data = rt_malloc(TEST_LEN);
-    if (write_data == NULL || read_data == NULL)
-    {
-        rt_free(write_data);
-        rt_free(read_data);
-        LOG_W("Not enough memory to request a block.");
-        return;
-    }
+void selftest_fs_test(SelftestUserData *puserdata)
+{
+    int fd = -1;
+    char path[256] = { 0 };
+    uint32_t index, length;
+    uint8_t x = 0;
+    uint8_t is_error = 0;
+
     /* plan write data */
     for (index = 0; index < TEST_LEN; index++)
     {
         write_data[index] = index;
     }
 
-    for (int x = 0; x<6; x++)
+    for (x = 0; x<5; x++)
     {
-        uint8_t is_error = 0;
+        is_error = 0;
 
         /* creat file path */
-        rt_memset(path, 0, 128);
+        rt_memset(path, 0, sizeof(path));
         rt_strncpy(path, puserdata->fs_path[x], rt_strlen(puserdata->fs_path[x]));
         rt_strncpy(&path[rt_strlen(puserdata->fs_path[x])], "/selftest.dat", 14);
 
@@ -123,13 +118,12 @@ void selftest_fs_test(SelftestlUserData *puserdata)
         if (is_error == 0)
         {
             LOG_D("%s pass", error_log[x]);
+            puserdata->result[RESULT_FRAM + x].result = 0;
         }
         else
         {
             LOG_E("%s error!", error_log[x]);
+            puserdata->result[RESULT_FRAM + x].result = is_error;
         }
     }
-
-    rt_free(write_data);
-    rt_free(read_data);
 }

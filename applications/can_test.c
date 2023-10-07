@@ -136,7 +136,7 @@ static void can_echo_test(int argc, char **argv)
                 /* 以中断接收及发送方式打开 CAN 设备 */
                 if (rt_device_open(can_test.can_dev, RT_DEVICE_FLAG_INT_TX | RT_DEVICE_FLAG_INT_RX) != RT_EOK)
                 {
-                    LOG_E("open '%s' error!", argv[2]);
+                    LOG_E("open '%s' error!", can_test.can_dev->parent.name);
                 }
                 /* 设置接收回调函数 */
                 rt_device_set_rx_indicate(can_test.can_dev, can_rx_call);

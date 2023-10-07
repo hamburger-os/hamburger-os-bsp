@@ -11,12 +11,12 @@ src     = Split('''
                 gpio.c
                 key.c
                 filesysterm.c
+                spi.c
                 i2c.c
                 i2s.c
                 uart.c
                 can.c
                 eth.c
-                tcpip.c
                 ''')
 if GetDepend(['PKG_USING_LVGL']):
     src     += Glob('gui/generated/*.c');
