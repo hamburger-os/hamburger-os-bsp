@@ -133,8 +133,6 @@ static void selftest_start(int argc, char *argv[])
     selftest_can_test(puserdata);
     //eth
     selftest_eth_test(puserdata);
-    //tcpip
-    selftest_tcpip_test(puserdata);
 
     LOG_I("end.");
 

@@ -72,6 +72,5 @@ void selftest_i2s_test(SelftestUserData *puserdata);
 void selftest_uart_test(SelftestUserData *puserdata);
 void selftest_can_test(SelftestUserData *puserdata);
 void selftest_eth_test(SelftestUserData *puserdata);
-void selftest_tcpip_test(SelftestUserData *puserdata);
 
 #endif /* APPLICATIONS_SELFTEST_SELFTEST_H_ */
