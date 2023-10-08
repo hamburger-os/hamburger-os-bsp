@@ -746,8 +746,9 @@ int32_t FMGetIndexFile(S_FILE_MANAGER *fm, const char *path, uint8_t file_id, fi
     }
 
     /* 无效ID */
-    if ( file_id >= fm->latest_dir_file_info.dir_num )
+    if ( file_id > fm->latest_dir_file_info.dir_num )
     {
+        LOG_E("id > dir_num line %d", __LINE__);
         return -1;
     } /* end if */
 

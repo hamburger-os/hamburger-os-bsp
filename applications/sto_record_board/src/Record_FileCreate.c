@@ -737,6 +737,23 @@ static rt_err_t record_file_create(S_FILE_MANAGER *p_file_manager, uint8_t is_on
             LOG_E("get on lkj file name error");
             return -RT_ERROR;
         }
+        else
+        {
+            p_file_manager->latest_dir_file_info.dir_num += 1u;
+            LOG_I("create offline file dir num %d", p_file_manager->latest_dir_file_info.dir_num);
+            if (p_file_manager->latest_dir_file_info.dir_num > FILE_MAX_NUM)    //目录个数
+            {
+                if (fm_free_emmc_space() < 0)
+                {
+                    LOG_E("fm_free_emmc_space error");
+                    return -RT_ERROR;
+                }
+            } /* end if */
+
+            p_file_manager->current_info->file_dir->u32_over_flag = 0u;
+            p_file_manager->current_info->file_dir->u32_file_size = sizeof(SFile_Head);
+            p_file_manager->current_info->file_dir->file_id = p_file_manager->latest_dir_file_info.dir_num;
+        }
     }
 
     /* 1.生成新的记录文件 */

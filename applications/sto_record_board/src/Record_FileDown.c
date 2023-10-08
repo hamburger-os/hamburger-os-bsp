@@ -926,7 +926,8 @@ static uint32_t Processing_DW_SM_ASSERT_BRIEF( DownloadFileStruct *dwf )
         }
         else
         {
-            dwf->BriefAddress = 0;//Flash_State.u32_fram_start_addr;  //TODO(mingzhao)
+//            dwf->BriefAddress = 0;//Flash_State.u32_fram_start_addr;  //TODO(mingzhao)
+            dwf->BriefAddress  = 1;
 
             dwf->BriefNum = 1U;
 
@@ -996,7 +997,8 @@ static uint32_t Processing_DW_SM_ASSERT_FILE( DownloadFileStruct *dwf )
             /* 查找对应的目录 */
             while (p_file)
             {
-                if(p_file->file_id == ( ( uint32_t )dwf->FileNum - 1U ))
+//                if(p_file->file_id == ( ( uint32_t )dwf->FileNum - 1U ))
+                    if(p_file->file_id == ( ( uint32_t )dwf->FileNum))
                 {
                     break;
                 }
@@ -1009,7 +1011,7 @@ static uint32_t Processing_DW_SM_ASSERT_FILE( DownloadFileStruct *dwf )
             }
             else
             {
-                LOG_E("can not find id %d dir file %d", ( ( uint32_t )dwf->FileNum - 1U ), __LINE__);
+                LOG_E("can not find id %d dir file %d", ( ( uint32_t )dwf->FileNum), __LINE__);
                 free_link(p_file_list_head);
                 return;
             }
@@ -1091,7 +1093,7 @@ static uint32_t Processing_DW_SM_SEND_BRIEF( DownloadFileStruct *dwf )
         else
         {
             memset( dwf->TX_Buffer, 0U, PROTOCOL_LENGTH );
-#if 0
+#if 1
             LOG_I( "$$ 1, dwf->BriefAmount=%d, dwf->BriefNum=%d $$",\
                                 dwf->BriefAmount, dwf->BriefNum );
 #endif
@@ -1241,10 +1243,12 @@ static uint32_t Processing_DW_SM_SEND_FILE( DownloadFileStruct *dwf )
             file_info_t file_info;
             S_FILE_MANAGER *fm = &file_manager;
 
-            if(FMGetIndexFile(fm, DIR_FILE_PATH_NAME, (dwf->FileNum - 1), &file_info) < 0)
+//            if(FMGetIndexFile(fm, DIR_FILE_PATH_NAME, (dwf->FileNum - 1), &file_info) < 0)
+            if(FMGetIndexFile(fm, DIR_FILE_PATH_NAME, (dwf->FileNum), &file_info) < 0)
             {
                 exit_code = 3U;
-                LOG_E("FMGetIndexFile id %d error line %d", (dwf->FileNum - 1), __LINE__);
+//                LOG_E("FMGetIndexFile id %d error line %d", (dwf->FileNum - 1), __LINE__);
+                LOG_E("FMGetIndexFile id %d error line %d", (dwf->FileNum), __LINE__);
                 return exit_code;
             }
             else
@@ -1452,6 +1456,7 @@ static uint32_t AssertAckBrief( DownloadFileStruct *dwf )
                 {
                     dwf->BriefNum = tsn + 1U;
                     dwf->BriefAddress -= ( fsn - tsn );// * sizeof( SFile_Directory );
+                    dwf->BriefAddress += 1;
                     dwf->smDownload = DW_SM_SEND_BRIEF;
                     LOG_I("brieNum %d address %d line %d", dwf->BriefNum, dwf->BriefAddress, __LINE__);
                 } /* end if */
