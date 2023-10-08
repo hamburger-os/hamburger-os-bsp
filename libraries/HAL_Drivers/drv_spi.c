@@ -405,12 +405,7 @@ static rt_size_t spixfer(struct rt_spi_device *device, struct rt_spi_message *me
             }
             else
             {
-                rt_base_t level;
-                level = rt_hw_interrupt_disable();/* 关中断*/
-
                 state = HAL_SPI_TransmitReceive(spi_handle, (uint8_t *)send_buf, (uint8_t *)recv_buf, send_length, send_length);
-
-                rt_hw_interrupt_enable(level); /* 开中断 */
                 LOG_D("HAL_SPI_TransmitReceive: %d %d", send_length, state);
             }
         }
@@ -423,12 +418,7 @@ static rt_size_t spixfer(struct rt_spi_device *device, struct rt_spi_message *me
             }
             else
             {
-                rt_base_t level;
-                level = rt_hw_interrupt_disable();/* 关中断*/
-
                 state = HAL_SPI_Transmit(spi_handle, (uint8_t *)send_buf, send_length, send_length);
-
-                rt_hw_interrupt_enable(level); /* 开中断 */
                 LOG_D("HAL_SPI_Transmit: %d %d", send_length, state);
             }
 
@@ -451,12 +441,7 @@ static rt_size_t spixfer(struct rt_spi_device *device, struct rt_spi_message *me
                 /* clear the old error flag */
                 __HAL_SPI_CLEAR_OVRFLAG(spi_handle);
 
-                rt_base_t level;
-                level = rt_hw_interrupt_disable();/* 关中断*/
-
                 state = HAL_SPI_Receive(spi_handle, (uint8_t *)recv_buf, send_length, send_length);
-
-                rt_hw_interrupt_enable(level); /* 开中断 */
                 LOG_D("HAL_SPI_Receive: %d %d", send_length, state);
             }
         }
@@ -588,9 +573,9 @@ static int rt_hw_spi_bus_init(void)
                 SET_BIT(RCC->AHBENR, spi_config[i].dma_rx->dma_rcc);
                 tmpreg = READ_BIT(RCC->AHBENR, spi_config[i].dma_rx->dma_rcc);
 #elif defined(SOC_SERIES_STM32F2) || defined(SOC_SERIES_STM32F4) || defined(SOC_SERIES_STM32F7) || defined(SOC_SERIES_STM32L4) || defined(SOC_SERIES_STM32WB) || defined(SOC_SERIES_STM32H7)
-                SET_BIT(RCC->AHB4ENR, spi_config[i].dma_rx->dma_rcc);
-                /* Delay after an RCC peripheral clock enabling */
-                tmpreg = READ_BIT(RCC->AHB4ENR, spi_config[i].dma_rx->dma_rcc);
+                __HAL_RCC_DMA1_CLK_ENABLE();
+                __HAL_RCC_DMA2_CLK_ENABLE();
+                __HAL_RCC_BDMA_CLK_ENABLE();
 #elif defined(SOC_SERIES_STM32MP1)
                 __HAL_RCC_DMAMUX_CLK_ENABLE();
                 SET_BIT(RCC->MP_AHB2ENSETR, spi_config[i].dma_rx->dma_rcc);
@@ -632,9 +617,9 @@ static int rt_hw_spi_bus_init(void)
                 SET_BIT(RCC->AHBENR, spi_config[i].dma_tx->dma_rcc);
                 tmpreg = READ_BIT(RCC->AHBENR, spi_config[i].dma_tx->dma_rcc);
 #elif defined(SOC_SERIES_STM32F2) || defined(SOC_SERIES_STM32F4) || defined(SOC_SERIES_STM32F7) || defined(SOC_SERIES_STM32L4) || defined(SOC_SERIES_STM32WB) || defined(SOC_SERIES_STM32H7)
-                SET_BIT(RCC->AHB4ENR, spi_config[i].dma_rx->dma_rcc);
-                /* Delay after an RCC peripheral clock enabling */
-                tmpreg = READ_BIT(RCC->AHB4ENR, spi_config[i].dma_rx->dma_rcc);
+                __HAL_RCC_DMA1_CLK_ENABLE();
+                __HAL_RCC_DMA2_CLK_ENABLE();
+                __HAL_RCC_BDMA_CLK_ENABLE();
 #elif defined(SOC_SERIES_STM32MP1)
                 __HAL_RCC_DMAMUX_CLK_ENABLE();
                 SET_BIT(RCC->MP_AHB2ENSETR, spi_config[i].dma_tx->dma_rcc);

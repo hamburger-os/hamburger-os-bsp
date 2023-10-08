@@ -3189,12 +3189,12 @@ menu "Onboard Peripheral Drivers"
             config BSP_USE_KVDB_NET_IF
                 bool "Enable kvdb set netdev if"
                 select PKG_USING_FLASHDB_PORT
-                default y
+                default n
                 
             config BSP_USE_SYSINFO_MAC
                 bool "Enable sysinfo set mac"
                 select PKG_USING_SYSINFO
-                default y
+                default n
             
             menuconfig BSP_USE_ETH1
                 bool "Enable ETH port 1"
