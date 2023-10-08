@@ -13,7 +13,7 @@
 
 #define DBG_TAG "drv.led"
 #define DBG_LVL DBG_LOG
-#include <ulog.h>
+#include <rtdbg.h>
 
 struct LEDConfig
 {
@@ -74,7 +74,6 @@ static void led_thread_entry(void *parameter)
     uint8_t i = 0;
     rt_tick_t tick = rt_tick_get();
 
-    LOG_I("init succeed.");
     while (1)
     {
         rt_thread_delay_until(&tick, led_cycle);
