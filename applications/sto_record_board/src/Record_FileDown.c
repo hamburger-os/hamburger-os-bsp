@@ -752,7 +752,7 @@ uint32_t GetDownloadDatagram( uint8_t dgm[], uint32_t size )
             memcpy( downloadFileInst.RX_Buffer, dgm, size );
 
             downloadFileInst.udp_recv = UDP_RECV_NOTEMPTY;
-            LOG_I("UDP_RECV_NOTEMPTY");
+//            LOG_I("UDP_RECV_NOTEMPTY");
         } /* end if...else */
     } /* end if...else if...else */
 
@@ -1142,7 +1142,7 @@ static uint32_t Processing_DW_SM_SEND_BRIEF( DownloadFileStruct *dwf )
                 }
             }
             memcpy( &dwf->TX_Buffer[16], fd.ch_file_name, 16U + 8U);
-#if 1
+#if 0
             LOG_I("send file name %s ", fd.ch_file_name);
 #endif
 
@@ -1458,7 +1458,7 @@ static uint32_t AssertAckBrief( DownloadFileStruct *dwf )
                     dwf->BriefAddress -= ( fsn - tsn );// * sizeof( SFile_Directory );
                     dwf->BriefAddress += 1;
                     dwf->smDownload = DW_SM_SEND_BRIEF;
-                    LOG_I("brieNum %d address %d line %d", dwf->BriefNum, dwf->BriefAddress, __LINE__);
+//                    LOG_I("brieNum %d address %d line %d", dwf->BriefNum, dwf->BriefAddress, __LINE__);
                 } /* end if */
             }
             else if ( 0U == strncmp( ACK_RS, ( const char * )&dwf->RX_Buffer[16], 2U ) )
@@ -1471,7 +1471,7 @@ static uint32_t AssertAckBrief( DownloadFileStruct *dwf )
                 {
                     dwf->BriefAddress += 1;//sizeof( SFile_Directory );
                     dwf->smDownload = DW_SM_SEND_BRIEF;
-                    LOG_I("brief address %d, num %d, line %d", dwf->BriefAddress, dwf->BriefNum, __LINE__);
+//                    LOG_I("brief address %d, num %d, line %d", dwf->BriefAddress, dwf->BriefNum, __LINE__);
                 }
                 else
                 {

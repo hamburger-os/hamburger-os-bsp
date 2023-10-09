@@ -1538,7 +1538,7 @@ void WriteFileContantPkt(uint8_t num1, uint8_t num2, uint8_t device_code, uint8_
     file_contant[2u] = lenth;
     file_contant[3u] = device_code;
 
-//    LOG_I("记录事项代码：%x %x", num1, num2);
+    LOG_I("记录事项代码：%x %x", num1, num2);
     rt_memcpy (file_contant + 4U, contant, lenth);
 
     /* 放入缓冲区 */
@@ -1565,10 +1565,10 @@ void WriteFileContantPkt(uint8_t num1, uint8_t num2, uint8_t device_code, uint8_
                 snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_TEMP_FILE_PATH_NAME, file_manager.latest_tmp_file_info.file_name);
                 if(FMWriteTmpFile(&file_manager, full_path, (const void *)&write_buf, sizeof(WRITE_BUF)) < 0)
                 {
-//                    LOG_E("write record pos %d", write_buf.pos);
+                    LOG_E("write record pos %d", write_buf.pos);
                 }
             }
-//            LOG_I("写记录事项位置：%d   剩余空间：%d   内容长度：%d", write_buf.pos, rest_size, contant_size);
+            LOG_I("写记录事项位置：%d 剩余空间：%d 内容长度：%d", write_buf.pos, rest_size, contant_size);
             break;
         }
         else /* 缓存区存满 */

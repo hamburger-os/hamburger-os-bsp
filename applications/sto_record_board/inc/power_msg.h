@@ -67,10 +67,10 @@ extern S_POWER_CAN_FRAME *power_can_frame;
 #define POWER_MSG_VOLTAGE_CURRENT_CH6             (0x65)
 
 
-/* 通道不变 电压变化超过0.3V 或 电流变化超过0.002A 记录
+/* 通道不变 电压变化超过0.5V 或 电流变化超过0.01A 记录
       *   电压单位 0.01V, 电流单位0.001A */
-#define POWER_MSG_VOLTAGE_DIFF                    (30)
-#define POWER_MSG_CURRENT_DIFF                    (2)
+#define POWER_MSG_VOLTAGE_DIFF                    (50)
+#define POWER_MSG_CURRENT_DIFF                    (10)
 
 /* 温度单位为0.1摄氏度 所以变化超过2度才记录 */
 #define POWER_MSG_TEMP_DIFF                    (20)
