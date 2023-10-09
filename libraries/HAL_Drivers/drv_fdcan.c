@@ -524,16 +524,36 @@ void HAL_FDCAN_TxFifoEmptyCallback(FDCAN_HandleTypeDef *hfdcan)
 {
     if (hfdcan->Instance == FDCAN1)
     {
+#ifdef BSP_USING_FDCAN1
         // can1
+        rt_hw_can_isr(&st_DrvCan1.device, RT_CAN_EVENT_TX_FAIL );
+#endif
     }
     else
     {
+#ifdef BSP_USING_FDCAN2
         // can2
+        rt_hw_can_isr(&st_DrvCan2.device, RT_CAN_EVENT_TX_FAIL );
+#endif
     }
 }
 
 void HAL_FDCAN_TxBufferAbortCallback(FDCAN_HandleTypeDef *hfdcan, uint32_t BufferIndexes)
 {
+    if (hfdcan->Instance == FDCAN1)
+    {
+#ifdef BSP_USING_FDCAN1
+        // can1
+        rt_hw_can_isr(&st_DrvCan1.device, RT_CAN_EVENT_TX_FAIL );
+#endif
+    }
+    else
+    {
+#ifdef BSP_USING_FDCAN2
+        // can2
+        rt_hw_can_isr(&st_DrvCan2.device, RT_CAN_EVENT_TX_FAIL );
+#endif
+    }
 }
 
 void HAL_FDCAN_ErrorCallback(FDCAN_HandleTypeDef *hfdcan)

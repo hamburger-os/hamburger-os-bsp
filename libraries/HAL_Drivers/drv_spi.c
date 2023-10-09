@@ -242,7 +242,7 @@ static rt_err_t stm32_spi_init(struct stm32_spi *spi_drv, struct rt_spi_configur
     spi_handle->Init.MasterSSIdleness           = SPI_MASTER_SS_IDLENESS_00CYCLE;
     spi_handle->Init.MasterInterDataIdleness    = SPI_MASTER_INTERDATA_IDLENESS_00CYCLE;
     spi_handle->Init.MasterReceiverAutoSusp     = SPI_MASTER_RX_AUTOSUSP_DISABLE;
-    spi_handle->Init.MasterKeepIOState          = SPI_MASTER_KEEP_IO_STATE_DISABLE;
+    spi_handle->Init.MasterKeepIOState          = SPI_MASTER_KEEP_IO_STATE_ENABLE;
     spi_handle->Init.IOSwap                     = SPI_IO_SWAP_DISABLE;
     spi_handle->Init.FifoThreshold              = SPI_FIFO_THRESHOLD_01DATA;
 #endif
@@ -367,7 +367,6 @@ static rt_size_t spixfer(struct rt_spi_device *device, struct rt_spi_message *me
                 rt_memcpy(dma_aligned_buffer, send_buf, send_length);
                 p_txrx_buffer = dma_aligned_buffer;
             }
-            rt_hw_cpu_dcache_ops(RT_HW_CACHE_FLUSH, p_txrx_buffer, send_length);
 #else
             if (RT_IS_ALIGN((rt_uint32_t)send_buf, 4)) /* aligned with 4 bytes? */
             {
@@ -388,14 +387,18 @@ static rt_size_t spixfer(struct rt_spi_device *device, struct rt_spi_message *me
         {
             if ((spi_drv->spi_dma_flag & SPI_USING_TX_DMA_FLAG) && (spi_drv->spi_dma_flag & SPI_USING_RX_DMA_FLAG) && (send_length >= DMA_TRANS_MIN_LEN))
             {
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+                rt_hw_cpu_dcache_ops(RT_HW_CACHE_FLUSH, dma_aligned_buffer, send_length);
+#endif
                 state = HAL_SPI_TransmitReceive_DMA(spi_handle, (uint8_t *)p_txrx_buffer, (uint8_t *)p_txrx_buffer, send_length);
-                LOG_D("HAL_SPI_TransmitReceive_DMA: %d %d", send_length, state);
             }
             else if ((spi_drv->spi_dma_flag & SPI_USING_TX_DMA_FLAG) && (send_length >= DMA_TRANS_MIN_LEN))
             {
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+                rt_hw_cpu_dcache_ops(RT_HW_CACHE_FLUSH, dma_aligned_buffer, send_length);
+#endif
                 /* same as Tx ONLY. It will not receive SPI data any more. */
                 state = HAL_SPI_Transmit_DMA(spi_handle, (uint8_t *)p_txrx_buffer, send_length);
-                LOG_D("HAL_SPI_Transmit_DMA: %d %d", send_length, state);
             }
             else if ((spi_drv->spi_dma_flag & SPI_USING_RX_DMA_FLAG) && (send_length >= DMA_TRANS_MIN_LEN))
             {
@@ -406,20 +409,20 @@ static rt_size_t spixfer(struct rt_spi_device *device, struct rt_spi_message *me
             else
             {
                 state = HAL_SPI_TransmitReceive(spi_handle, (uint8_t *)send_buf, (uint8_t *)recv_buf, send_length, send_length);
-                LOG_D("HAL_SPI_TransmitReceive: %d %d", send_length, state);
             }
         }
         else if (message->send_buf)
         {
             if ((spi_drv->spi_dma_flag & SPI_USING_TX_DMA_FLAG) && (send_length >= DMA_TRANS_MIN_LEN))
             {
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+                rt_hw_cpu_dcache_ops(RT_HW_CACHE_FLUSH, dma_aligned_buffer, send_length);
+#endif
                 state = HAL_SPI_Transmit_DMA(spi_handle, (uint8_t *)p_txrx_buffer, send_length);
-                LOG_D("HAL_SPI_Transmit_DMA: %d %d", send_length, state);
             }
             else
             {
                 state = HAL_SPI_Transmit(spi_handle, (uint8_t *)send_buf, send_length, send_length);
-                LOG_D("HAL_SPI_Transmit: %d %d", send_length, state);
             }
 
             if (message->cs_release && (device->config.mode & RT_SPI_3WIRE))
@@ -433,8 +436,10 @@ static rt_size_t spixfer(struct rt_spi_device *device, struct rt_spi_message *me
             rt_memset((uint8_t *)recv_buf, 0xff, send_length);
             if ((spi_drv->spi_dma_flag & SPI_USING_RX_DMA_FLAG) && (send_length >= DMA_TRANS_MIN_LEN))
             {
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+                rt_hw_cpu_dcache_ops(RT_HW_CACHE_FLUSH, dma_aligned_buffer, send_length);
+#endif
                 state = HAL_SPI_Receive_DMA(spi_handle, (uint8_t *)p_txrx_buffer, send_length);
-                LOG_D("HAL_SPI_Receive_DMA: %d %d", send_length, state);
             }
             else
             {
@@ -442,7 +447,6 @@ static rt_size_t spixfer(struct rt_spi_device *device, struct rt_spi_message *me
                 __HAL_SPI_CLEAR_OVRFLAG(spi_handle);
 
                 state = HAL_SPI_Receive(spi_handle, (uint8_t *)recv_buf, send_length, send_length);
-                LOG_D("HAL_SPI_Receive: %d %d", send_length, state);
             }
         }
         else
@@ -485,9 +489,9 @@ static rt_size_t spixfer(struct rt_spi_device *device, struct rt_spi_message *me
         {
             if(recv_buf != RT_NULL)
             {
-#if defined(SOC_SERIES_STM32H7) || defined(SOC_SERIES_STM32F7)
-                rt_hw_cpu_dcache_ops(RT_HW_CACHE_INVALIDATE, p_txrx_buffer, send_length);
-#endif /* SOC_SERIES_STM32H7 || SOC_SERIES_STM32F7 */
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+                rt_hw_cpu_dcache_ops(RT_HW_CACHE_INVALIDATE, dma_aligned_buffer, send_length);
+#endif
                 rt_memcpy(recv_buf, p_txrx_buffer, send_length);
             }
 #if defined(SOC_SERIES_STM32H7) || defined(SOC_SERIES_STM32F7)
@@ -573,9 +577,9 @@ static int rt_hw_spi_bus_init(void)
                 SET_BIT(RCC->AHBENR, spi_config[i].dma_rx->dma_rcc);
                 tmpreg = READ_BIT(RCC->AHBENR, spi_config[i].dma_rx->dma_rcc);
 #elif defined(SOC_SERIES_STM32F2) || defined(SOC_SERIES_STM32F4) || defined(SOC_SERIES_STM32F7) || defined(SOC_SERIES_STM32L4) || defined(SOC_SERIES_STM32WB) || defined(SOC_SERIES_STM32H7)
-                __HAL_RCC_DMA1_CLK_ENABLE();
-                __HAL_RCC_DMA2_CLK_ENABLE();
-                __HAL_RCC_BDMA_CLK_ENABLE();
+                SET_BIT(RCC->AHB1ENR, spi_config[i].dma_rx->dma_rcc);
+                /* Delay after an RCC peripheral clock enabling */
+                tmpreg = READ_BIT(RCC->AHB1ENR, spi_config[i].dma_rx->dma_rcc);
 #elif defined(SOC_SERIES_STM32MP1)
                 __HAL_RCC_DMAMUX_CLK_ENABLE();
                 SET_BIT(RCC->MP_AHB2ENSETR, spi_config[i].dma_rx->dma_rcc);
@@ -617,9 +621,9 @@ static int rt_hw_spi_bus_init(void)
                 SET_BIT(RCC->AHBENR, spi_config[i].dma_tx->dma_rcc);
                 tmpreg = READ_BIT(RCC->AHBENR, spi_config[i].dma_tx->dma_rcc);
 #elif defined(SOC_SERIES_STM32F2) || defined(SOC_SERIES_STM32F4) || defined(SOC_SERIES_STM32F7) || defined(SOC_SERIES_STM32L4) || defined(SOC_SERIES_STM32WB) || defined(SOC_SERIES_STM32H7)
-                __HAL_RCC_DMA1_CLK_ENABLE();
-                __HAL_RCC_DMA2_CLK_ENABLE();
-                __HAL_RCC_BDMA_CLK_ENABLE();
+                SET_BIT(RCC->AHB1ENR, spi_config[i].dma_tx->dma_rcc);
+                /* Delay after an RCC peripheral clock enabling */
+                tmpreg = READ_BIT(RCC->AHB1ENR, spi_config[i].dma_tx->dma_rcc);
 #elif defined(SOC_SERIES_STM32MP1)
                 __HAL_RCC_DMAMUX_CLK_ENABLE();
                 SET_BIT(RCC->MP_AHB2ENSETR, spi_config[i].dma_tx->dma_rcc);

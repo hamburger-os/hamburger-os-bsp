@@ -30,8 +30,7 @@ struct stm32_emmc
     struct rt_mutex hmmc_mutex;
     struct rt_completion hmmc_completion;
 
-    uint8_t aTxBuffer[MMC_BLOCKSIZE];
-    uint8_t aRxBuffer[MMC_BLOCKSIZE];
+    uint8_t dmaBuffer[MMC_BLOCKSIZE];
 
 #ifdef BSP_SDIO_RX_USING_DMA
     struct dma_config *dma_rx;
@@ -119,7 +118,7 @@ void SDIO_DMA_RX_IRQHandler(void)
 void HAL_MMC_RxCpltCallback(MMC_HandleTypeDef *hmmc)
 {
 #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
-    SCB_InvalidateDCache_by_Addr((uint32_t*)emmc_obj.aRxBuffer, MMC_BLOCKSIZE);
+    SCB_InvalidateDCache_by_Addr((uint32_t*)emmc_obj.dmaBuffer, MMC_BLOCKSIZE);
 #endif
     rt_completion_done(&emmc_obj.hmmc_completion);
 }
@@ -141,6 +140,9 @@ void SDIO_DMA_TX_IRQHandler(void)
 
 void HAL_MMC_TxCpltCallback(MMC_HandleTypeDef *hmmc)
 {
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+    SCB_InvalidateDCache_by_Addr((uint32_t*)emmc_obj.dmaBuffer, MMC_BLOCKSIZE);
+#endif
     rt_completion_done(&emmc_obj.hmmc_completion);
 }
 
@@ -456,16 +458,13 @@ static int fal_emmc_32read(long offset, uint8_t *buffer, size_t size)
         rt_mutex_release(&emmc_obj.hmmc_mutex);
         return -RT_EINVAL;
     }
-    if (size < emmc_fal_flash.blk_size)
-    {
-        LOG_W("read size %d! addr is (0x%x)", size, (uint32_t)(addr + size));
-        rt_mutex_release(&emmc_obj.hmmc_mutex);
-        return 0;
-    }
-    LOG_D("read (0x%x) %d", (uint32_t)(addr), size);
 
     uint32_t blk_addr = addr/emmc_fal_flash.blk_size;
-    uint32_t blk_size = size/emmc_fal_flash.blk_size;
+    uint32_t blk_offset = addr%emmc_fal_flash.blk_size;
+    uint32_t blk_size = (size % emmc_fal_flash.blk_size == 0)?(size/emmc_fal_flash.blk_size):(size/emmc_fal_flash.blk_size + 1);
+    uint32_t less_size = size;
+
+    LOG_D("read (0x%x) %d %d 0x%x %d", (uint32_t)(addr), size, blk_addr, blk_offset, blk_size);
 
 #if defined(BSP_SDIO_RX_USING_DMA) || defined(SOC_SERIES_STM32H7)
     rt_size_t nblk = blk_size;
@@ -479,11 +478,11 @@ static int fal_emmc_32read(long offset, uint8_t *buffer, size_t size)
             return -RT_EIO;
         }
 
-        rt_memset(emmc_obj.aRxBuffer, 0, MMC_BLOCKSIZE);
+        rt_memset(emmc_obj.dmaBuffer, 0, MMC_BLOCKSIZE);
 #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
-        SCB_CleanDCache_by_Addr((uint32_t*)emmc_obj.aRxBuffer, MMC_BLOCKSIZE);
+        SCB_CleanDCache_by_Addr((uint32_t*)emmc_obj.dmaBuffer, MMC_BLOCKSIZE);
 #endif
-        ret = HAL_MMC_ReadBlocks_DMA(&emmc_obj.hmmc, emmc_obj.aRxBuffer, blk_addr, 1);
+        ret = HAL_MMC_ReadBlocks_DMA(&emmc_obj.hmmc, emmc_obj.dmaBuffer, blk_addr, 1);
         if(ret != HAL_OK)
         {
             LOG_E("ReadBlocks Error (0x%p) %d %d", blk_addr, 1, ret);
@@ -495,8 +494,16 @@ static int fal_emmc_32read(long offset, uint8_t *buffer, size_t size)
         {
             LOG_E("ReadBlocks comple Error (0x%p) %d %d", blk_addr, 1, ret);
         }
-        rt_memcpy(buffer, emmc_obj.aRxBuffer, MMC_BLOCKSIZE);
-        LOG_HEX("rd", 16, (uint8_t *)buffer, MMC_BLOCKSIZE);
+
+        if (less_size > MMC_BLOCKSIZE)
+        {
+            less_size -= MMC_BLOCKSIZE;
+            rt_memcpy(buffer, emmc_obj.dmaBuffer, MMC_BLOCKSIZE);
+        }
+        else
+        {
+            rt_memcpy(buffer, &emmc_obj.dmaBuffer[blk_offset], less_size);
+        }
 
         nblk--;
         blk_addr++;
@@ -542,7 +549,7 @@ static uint32_t fal_emmc_read(uint64_t offset, uint8_t *buffer, uint32_t size)
         rt_mutex_release(&emmc_obj.hmmc_mutex);
         return 0;
     }
-    LOG_D("read (0x%x %x) %d", (uint32_t)(addr) >> 32, (uint32_t)(addr), size);
+    LOG_D("read (0x%x %x) %d", (uint32_t)(addr >> 32), (uint32_t)(addr), size);
 
     uint64_t blk_addr = addr/emmc_flash[0].blk_size;
     uint32_t blk_size = size/emmc_flash[0].blk_size;
@@ -559,11 +566,11 @@ static uint32_t fal_emmc_read(uint64_t offset, uint8_t *buffer, uint32_t size)
             return -RT_EIO;
         }
 
-        rt_memset(emmc_obj.aRxBuffer, 0, MMC_BLOCKSIZE);
+        rt_memset(emmc_obj.dmaBuffer, 0, MMC_BLOCKSIZE);
 #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
-        SCB_CleanDCache_by_Addr((uint32_t*)emmc_obj.aRxBuffer, MMC_BLOCKSIZE);
+        SCB_CleanDCache_by_Addr((uint32_t*)emmc_obj.dmaBuffer, MMC_BLOCKSIZE);
 #endif
-        ret = HAL_MMC_ReadBlocks_DMA(&emmc_obj.hmmc, emmc_obj.aRxBuffer, blk_addr, 1);
+        ret = HAL_MMC_ReadBlocks_DMA(&emmc_obj.hmmc, emmc_obj.dmaBuffer, blk_addr, 1);
         if(ret != HAL_OK)
         {
             LOG_E("ReadBlocks Error (0x%p) %d %d", blk_addr, 1, ret);
@@ -575,7 +582,7 @@ static uint32_t fal_emmc_read(uint64_t offset, uint8_t *buffer, uint32_t size)
         {
             LOG_E("ReadBlocks comple Error (0x%p) %d %d", blk_addr, 1, ret);
         }
-        rt_memcpy(buffer, emmc_obj.aRxBuffer, MMC_BLOCKSIZE);
+        rt_memcpy(buffer, emmc_obj.dmaBuffer, MMC_BLOCKSIZE);
         LOG_HEX("rd", 16, (uint8_t *)buffer, MMC_BLOCKSIZE);
 
         nblk--;
@@ -616,16 +623,13 @@ static int fal_emmc_32write(long offset, const uint8_t *buffer, size_t size)
         rt_mutex_release(&emmc_obj.hmmc_mutex);
         return -RT_EINVAL;
     }
-    if (size < emmc_fal_flash.blk_size)
-    {
-        LOG_W("write size %d! addr is (0x%x)", size, (uint32_t)(addr + size));
-        rt_mutex_release(&emmc_obj.hmmc_mutex);
-        return 0;
-    }
-    LOG_D("write (0x%x) %d", (uint32_t)(addr), size);
 
     uint32_t blk_addr = addr/emmc_fal_flash.blk_size;
-    uint32_t blk_size = size/emmc_fal_flash.blk_size;
+    uint32_t blk_offset = addr%emmc_fal_flash.blk_size;
+    uint32_t blk_size = (size % emmc_fal_flash.blk_size == 0)?(size/emmc_fal_flash.blk_size):(size/emmc_fal_flash.blk_size + 1);
+    uint32_t less_size = size;
+
+    LOG_D("write (0x%x) %d %d 0x%x %d", (uint32_t)(addr), size, blk_addr, blk_offset, blk_size);
 
 #if defined(BSP_SDIO_TX_USING_DMA) || defined(SOC_SERIES_STM32H7)
     rt_size_t nblk = blk_size;
@@ -639,11 +643,37 @@ static int fal_emmc_32write(long offset, const uint8_t *buffer, size_t size)
             return -RT_EIO;
         }
 
-        rt_memcpy(emmc_obj.aTxBuffer, buffer, MMC_BLOCKSIZE);
+        rt_memset(emmc_obj.dmaBuffer, 0, MMC_BLOCKSIZE);
+        if (less_size > MMC_BLOCKSIZE)
+        {
+            less_size -= MMC_BLOCKSIZE;
+            rt_memcpy(emmc_obj.dmaBuffer, buffer, MMC_BLOCKSIZE);
+        }
+        else
+        {
 #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
-        SCB_CleanDCache_by_Addr((uint32_t*)emmc_obj.aTxBuffer, MMC_BLOCKSIZE);
+            SCB_CleanDCache_by_Addr((uint32_t*)emmc_obj.dmaBuffer, MMC_BLOCKSIZE);
 #endif
-        ret = HAL_MMC_WriteBlocks_DMA(&emmc_obj.hmmc, (uint8_t *)emmc_obj.aTxBuffer, blk_addr, 1);
+            ret = HAL_MMC_ReadBlocks_DMA(&emmc_obj.hmmc, emmc_obj.dmaBuffer, blk_addr, 1);
+            if(ret != HAL_OK)
+            {
+                LOG_E("ReadBlocks Error (0x%p) %d %d", blk_addr, 1, ret);
+                rt_mutex_release(&emmc_obj.hmmc_mutex);
+                return -RT_EIO;
+            }
+
+            if (rt_completion_wait(&emmc_obj.hmmc_completion, RT_WAITING_FOREVER) != HAL_OK)
+            {
+                LOG_E("ReadBlocks comple Error (0x%p) %d %d", blk_addr, 1, ret);
+            }
+
+            rt_memcpy(&emmc_obj.dmaBuffer[blk_offset], buffer, less_size);
+        }
+
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+        SCB_CleanDCache_by_Addr((uint32_t*)emmc_obj.dmaBuffer, MMC_BLOCKSIZE);
+#endif
+        ret = HAL_MMC_WriteBlocks_DMA(&emmc_obj.hmmc, (uint8_t *)emmc_obj.dmaBuffer, blk_addr, 1);
         if(ret != HAL_OK)
         {
             LOG_E("WriteBlocks Error (0x%p) %d %d", blk_addr, 1, ret);
@@ -655,7 +685,6 @@ static int fal_emmc_32write(long offset, const uint8_t *buffer, size_t size)
         {
             LOG_E("WriteBlocks comple Error (0x%p) %d %d", blk_addr, 1, ret);
         }
-        LOG_HEX("wr", 16, (uint8_t *)buffer, MMC_BLOCKSIZE);
 
         nblk--;
         blk_addr++;
@@ -701,7 +730,7 @@ static uint32_t fal_emmc_write(uint64_t offset, const rt_uint8_t *buffer, uint32
         rt_mutex_release(&emmc_obj.hmmc_mutex);
         return 0;
     }
-    LOG_D("write (0x%x %x) %d", (uint32_t)(addr) >> 32, (uint32_t)(addr), size);
+    LOG_D("write (0x%x %x) %d", (uint32_t)(addr >> 32), (uint32_t)(addr), size);
 
     uint64_t blk_addr = addr/emmc_flash[0].blk_size;
     uint32_t blk_size = size/emmc_flash[0].blk_size;
@@ -718,11 +747,11 @@ static uint32_t fal_emmc_write(uint64_t offset, const rt_uint8_t *buffer, uint32
             return -RT_EIO;
         }
 
-        rt_memcpy(emmc_obj.aTxBuffer, buffer, MMC_BLOCKSIZE);
+        rt_memcpy(emmc_obj.dmaBuffer, buffer, MMC_BLOCKSIZE);
 #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
-        SCB_CleanDCache_by_Addr((uint32_t*)emmc_obj.aTxBuffer, MMC_BLOCKSIZE);
+        SCB_CleanDCache_by_Addr((uint32_t*)emmc_obj.dmaBuffer, MMC_BLOCKSIZE);
 #endif
-        ret = HAL_MMC_WriteBlocks_DMA(&emmc_obj.hmmc, (uint8_t *)emmc_obj.aTxBuffer, blk_addr, 1);
+        ret = HAL_MMC_WriteBlocks_DMA(&emmc_obj.hmmc, (uint8_t *)emmc_obj.dmaBuffer, blk_addr, 1);
         if(ret != HAL_OK)
         {
             LOG_E("WriteBlocks Error (0x%p) %d %d", blk_addr, 1, ret);
@@ -773,12 +802,14 @@ static int fal_emmc_32erase(long offset, size_t size)
         rt_mutex_release(&emmc_obj.hmmc_mutex);
         return -RT_EINVAL;
     }
-    if (size < emmc_fal_flash.blk_size)
+
+    if (addr % emmc_fal_flash.blk_size != 0)
     {
-        LOG_W("erase size %d! addr is (0x%x)", size, (uint32_t)(addr + size));
+        LOG_E("erase addr is (0x%x) %d", (uint32_t)(addr), addr % emmc_fal_flash.blk_size);
         rt_mutex_release(&emmc_obj.hmmc_mutex);
         return 0;
     }
+
     LOG_D("erase (0x%x) %d", (uint32_t)(addr), size);
 
     rt_mutex_release(&emmc_obj.hmmc_mutex);
@@ -802,7 +833,7 @@ static uint32_t fal_emmc_erase(uint64_t offset, uint32_t size)
         rt_mutex_release(&emmc_obj.hmmc_mutex);
         return 0;
     }
-    LOG_D("erase (0x%x %x) %d", (uint32_t)(addr) >> 32, (uint32_t)(addr), size);
+    LOG_D("erase (0x%x %x) %d", (uint32_t)(addr >> 32), (uint32_t)(addr), size);
 
     rt_mutex_release(&emmc_obj.hmmc_mutex);
     return size;

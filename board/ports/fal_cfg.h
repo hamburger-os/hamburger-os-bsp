@@ -132,7 +132,9 @@ extern "C" {
 #define EMMC_OFFSET_ETC                 (EMMC_OFFSET_BIN + EMMC_SIZE_BIN)
 #define EMMC_OFFSET_LIB                 (EMMC_OFFSET_ETC + EMMC_SIZE_ETC)
 #define EMMC_OFFSET_USR                 (EMMC_OFFSET_LIB + EMMC_SIZE_LIB)
-#define EMMC_OFFSET_FS                  (EMMC_OFFSET_USR + EMMC_SIZE_USR)
+#define EMMC_OFFSET_KVDB                (EMMC_OFFSET_USR + EMMC_SIZE_USR)
+#define EMMC_OFFSET_TSDB                (EMMC_OFFSET_KVDB + EMMC_SIZE_KVDB)
+#define EMMC_OFFSET_FS                  (EMMC_OFFSET_TSDB + EMMC_SIZE_TSDB)
 #ifndef EMMC_ENABLE_FS
 #define EMMC_FS                         ""
 #endif

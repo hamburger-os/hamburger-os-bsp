@@ -13,7 +13,9 @@
 
 #include "selftest.h"
 
+#ifdef PKG_USING_WAVPLAYER
 #include "wavplayer.h"
+#endif
 
 #define DBG_TAG "i2s "
 #define DBG_LVL DBG_LOG
@@ -21,5 +23,7 @@
 
 void selftest_i2s_test(SelftestUserData *puserdata)
 {
+#ifdef PKG_USING_WAVPLAYER
     wavplayer_play(puserdata->wav_path);
+#endif
 }

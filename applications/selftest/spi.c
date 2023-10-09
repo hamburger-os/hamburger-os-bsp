@@ -47,7 +47,7 @@ void selftest_spi_test(SelftestUserData *puserdata)
     struct rt_spi_configuration cfg = {0};
     cfg.data_width = 8;
     cfg.mode = RT_SPI_MASTER | RT_SPI_MODE_0 | RT_SPI_MSB;
-    cfg.max_hz = BSP_AT45DB321E_SPI_SPEED;
+    cfg.max_hz = 2000000;
     if (rt_spi_configure(spidev, &cfg) != RT_EOK)
     {
         LOG_E("device %s configure error!", dev_name);

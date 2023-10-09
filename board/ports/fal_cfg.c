@@ -231,6 +231,12 @@ const struct fal_partition partition_table_def[] =
 #if EMMC_SIZE_USR > 0
     {FAL_PART_MAGIC_WORD,       "usr",     EMMC_DEV_NAME,           EMMC_OFFSET_USR,                   EMMC_SIZE_USR, 0},
 #endif
+#if EMMC_SIZE_KVDB > 0
+    {FAL_PART_MAGIC_WORD,      "kvdb",     EMMC_DEV_NAME,          EMMC_OFFSET_KVDB,                  EMMC_SIZE_KVDB, 0},
+#endif
+#if EMMC_SIZE_TSDB > 0
+    {FAL_PART_MAGIC_WORD,      "tsdb",     EMMC_DEV_NAME,          EMMC_OFFSET_TSDB,                  EMMC_SIZE_TSDB, 0},
+#endif
 #endif
 
 #ifdef BSP_USING_EEPROM_24Cxx

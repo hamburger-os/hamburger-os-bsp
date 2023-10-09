@@ -3105,6 +3105,14 @@ menu "Onboard Peripheral Drivers"
             config EMMC_SIZE_USR
                 int "Set usr part size, default: (2048 * 1024)"
                 default (0)
+                
+            config EMMC_SIZE_KVDB
+                int "Set kvdb part size, default: (2048 * 1024)"
+                default (0)
+                
+            config EMMC_SIZE_TSDB
+                int "Set tsdb part size, default: (0 * 1024)"
+                default (0)
 	            
 	        config EMMC_ENABLE_FS
                 bool "Enable the file system"

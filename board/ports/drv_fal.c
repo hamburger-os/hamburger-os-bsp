@@ -32,7 +32,6 @@ static rt_size_t mtd_nor_dev_read(struct rt_mtd_nor_device* device, rt_off_t off
 {
     int ret = 0;
     struct fal_mtd_nor_device *dev = (struct fal_mtd_nor_device*) device;
-    assert(dev != RT_NULL);
 
     uint64_t phy_offset;
     uint32_t phy_length;
@@ -59,7 +58,6 @@ static rt_size_t mtd_nor_dev_write(struct rt_mtd_nor_device* device, rt_off_t of
 {
     int ret = 0;
     struct fal_mtd_nor_device *dev = (struct fal_mtd_nor_device*) device;
-    assert(dev != RT_NULL);
 
     uint64_t phy_offset;
     uint32_t phy_length;
@@ -86,7 +84,6 @@ static rt_err_t mtd_nor_dev_erase(struct rt_mtd_nor_device* device, rt_off_t off
 {
     int ret = 0;
     struct fal_mtd_nor_device *dev = (struct fal_mtd_nor_device*) device;
-    assert(dev != RT_NULL);
 
     uint64_t phy_offset;
     uint32_t phy_length;
@@ -117,7 +114,6 @@ static const struct rt_mtd_nor_driver_ops _ops =
 
 struct rt_device *fal_dev_mtd_nor_device_create(struct fal_flash64_dev *fal_dev)
 {
-    assert(fal_dev != NULL);
     fal_dev->ops.init();
 
     struct fal_mtd_nor_device *mtd_nor_dev;
@@ -183,7 +179,6 @@ static rt_err_t blk_dev_control(rt_device_t dev, rt_uint8_t cmd, void *args)
 #endif
 {
     struct fal_blk_device *fal_dev = (struct fal_blk_device*) dev;
-    assert(fal_dev != RT_NULL);
 
     if (cmd == RT_DEVICE_CTRL_BLK_GETGEOME)
     {
@@ -232,7 +227,6 @@ static rt_size_t blk_dev_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_si
 {
     int ret = 0;
     struct fal_blk_device *fal_dev = (struct fal_blk_device*) dev;
-    assert(fal_dev != RT_NULL);
 
     uint64_t phy_pos;
     uint32_t phy_size;
@@ -259,7 +253,6 @@ static rt_size_t blk_dev_write(rt_device_t dev, rt_off_t pos, const void *buffer
 {
     int ret = 0;
     struct fal_blk_device *fal_dev = (struct fal_blk_device*) dev;
-    assert(fal_dev != RT_NULL);
 
     uint64_t phy_pos;
     uint32_t phy_size;
@@ -289,7 +282,6 @@ static rt_size_t blk_dev_write(rt_device_t dev, rt_off_t pos, const void *buffer
 
 struct rt_device *fal_dev_blk_device_create(struct fal_flash64_dev *fal_dev)
 {
-    assert(fal_dev != NULL);
     fal_dev->ops.init();
 
     struct fal_blk_device *blk_dev;
