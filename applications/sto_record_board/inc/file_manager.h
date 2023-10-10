@@ -26,7 +26,7 @@
 #define LATEST_TMP_FILE_SIZE          (1024)
 
 #if FILE_MANAGER_TEST
-#define FILE_MAX_NUM               (2)            /* 最大文件个数 */
+#define FILE_MAX_NUM               (3)            /* 最大文件个数 */
 #define RECORD_FILE_MAN_SIZE      (512)           /* 单个记录文件大小 单位 KB */
 #else
 #define FILE_MAX_NUM               (128)                    /* 最大文件个数 */

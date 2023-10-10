@@ -833,6 +833,7 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info, uint8
     char full_path[PATH_NAME_MAX_LEN] = { 0 };
     sint32_t ret = 0;
     struct stat stat_l;
+    uint8_t last_off_line_fie_index = 0;
 
     /* 确认新文件生成标记，置位开始记录文件标志 */
     if(is_creat_new_file)
@@ -902,8 +903,10 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info, uint8
 
             } /* end if */
             /* 初始化write buf */
+            last_off_line_fie_index = s_File_Directory.off_line_fie_index;
             memset(&write_buf, 0u, sizeof(WRITE_BUF));
             memset(&s_File_Directory, 0, sizeof(SFile_Directory));
+            s_File_Directory.off_line_fie_index = last_off_line_fie_index;
 
             Create_Flag = 1u;
             CheCi_Count1 = 0u;

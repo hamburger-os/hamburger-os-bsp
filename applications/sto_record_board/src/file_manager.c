@@ -375,7 +375,7 @@ sint32_t fm_free_emmc_space(void)
     p_file_list_head = get_org_file_info(DIR_FILE_PATH_NAME);
     if(p_file_list_head != NULL)
     {
-//        p_file_list_head = sort_link(p_file_list_head, SORT_UP); /* 按照文件序号,由小到大排序,先删除序号最小的文件 */
+        p_file_list_head = sort_link(p_file_list_head, SORT_UP); /* 按照文件序号,由小到大排序,先删除序号最小的文件 */
 //        show_link(p_file_list_head);
         p = p_file_list_head;
         while(p != NULL)
