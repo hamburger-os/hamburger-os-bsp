@@ -25,7 +25,7 @@ struct fal_dev_init
 };
 
 #ifdef BSP_USING_EMMC
-    extern struct fal_flash64_dev emmc_flash[];
+    extern struct fal_flash64_dev emmc_flash;
 #endif
 
 static const struct fal_dev_init _fal_dev[] =
@@ -59,7 +59,7 @@ static const struct fal_dev_init _fal_dev[] =
 #endif
 
 #ifdef BSP_USING_EMMC
-    {EMMC_DEV_NAME, EMMC_FS, emmc_flash},
+    {BLK_EMMC, EMMC_FS, &emmc_flash},
 #endif
 
 #ifdef BSP_USING_EEPROM_24Cxx
@@ -91,7 +91,7 @@ static int rt_fal_init(void)
         {
             if (node.p != NULL)
             {
-                if (fal_dev_mtd_nor_devices_create(node.p) == NULL)
+                if (fal_dev_mtd_nor_device_create(node.p) == NULL)
                 {
                     LOG_E("Failed to creat nor %s!", node.dev_name);
                 }
@@ -108,7 +108,7 @@ static int rt_fal_init(void)
         {
             if (node.p != NULL)
             {
-                if (fal_dev_blk_devices_create(node.p) == NULL)
+                if (fal_dev_blk_device_create(node.p) == NULL)
                 {
                     LOG_E("Failed to creat blk %s!", node.dev_name);
                 }
@@ -125,7 +125,7 @@ static int rt_fal_init(void)
         {
             if (node.p != NULL)
             {
-                if (fal_dev_blk_devices_create(node.p) == NULL)
+                if (fal_dev_blk_device_create(node.p) == NULL)
                 {
                     LOG_E("Failed to creat blk %s!", node.dev_name);
                 }

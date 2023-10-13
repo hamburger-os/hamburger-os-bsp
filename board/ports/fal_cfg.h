@@ -187,9 +187,7 @@ extern const size_t partition_table_def_len;
 #include "drv_fal.h"
 
 struct rt_device *fal_dev_mtd_nor_device_create(struct fal_flash64_dev *fal_dev);
-struct rt_device *fal_dev_mtd_nor_devices_create(struct fal_flash64_dev *fal_dev);
 struct rt_device *fal_dev_blk_device_create(struct fal_flash64_dev *fal_dev);
-struct rt_device *fal_dev_blk_devices_create(struct fal_flash64_dev *fal_dev);
 
 #ifdef __cplusplus
 }

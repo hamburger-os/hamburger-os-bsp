@@ -152,19 +152,6 @@ struct rt_device *fal_dev_mtd_nor_device_create(struct fal_flash64_dev *fal_dev)
     return RT_DEVICE(&mtd_nor_dev->parent);
 }
 
-struct rt_device *fal_dev_mtd_nor_devices_create(struct fal_flash64_dev *fal_dev)
-{
-    struct rt_device * ret = NULL;
-    for (int i = 1; i < 16; i++)
-    {
-        if (fal_dev[i].len == 0)
-            break;
-        ret = fal_dev_mtd_nor_device_create(&fal_dev[i]);
-    }
-
-    return ret;
-}
-
 struct fal_blk_device
 {
     struct rt_device                parent;
@@ -319,17 +306,4 @@ struct rt_device *fal_dev_blk_device_create(struct fal_flash64_dev *fal_dev)
     }
 
     return RT_DEVICE(blk_dev);
-}
-
-struct rt_device *fal_dev_blk_devices_create(struct fal_flash64_dev *fal_dev)
-{
-    struct rt_device * ret = NULL;
-    for (int i = 1; i < 16; i++)
-    {
-        if (fal_dev[i].len == 0)
-            break;
-        ret = fal_dev_blk_device_create(&fal_dev[i]);
-    }
-
-    return ret;
 }
