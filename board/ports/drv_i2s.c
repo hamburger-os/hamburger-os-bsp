@@ -18,11 +18,6 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-#ifdef SOC_SERIES_STM32H7
-#define TX_DMA_FIFO_SIZE (2048)
-#define RX_DMA_FIFO_SIZE (2048)
-#endif
-
 struct stm32_i2s
 {
     I2S_HandleTypeDef hi2s;
@@ -35,10 +30,8 @@ struct stm32_i2s
     void (*RxCpltCallback)(void);
     void (*ErrorCallback)(void);
 
-#ifdef SOC_SERIES_STM32H7
-    uint8_t tx_fifo[TX_DMA_FIFO_SIZE];
-    uint8_t rx_fifo[RX_DMA_FIFO_SIZE];
-#endif
+    uint8_t tx_fifo[I2S_TX_DMA_FIFO_SIZE];
+    uint8_t rx_fifo[I2S_RX_DMA_FIFO_SIZE];
 };
 static struct stm32_i2s i2s_config;
 
@@ -139,22 +132,8 @@ void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
 void HAL_I2S_RxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
 {
 #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
-    SCB_InvalidateDCache_by_Addr((uint32_t*)i2s_config.rx_fifo, RX_DMA_FIFO_SIZE/2);
+    SCB_InvalidateDCache_by_Addr((uint32_t*)i2s_config.rx_fifo, I2S_RX_DMA_FIFO_SIZE/2);
 #endif
-    if (i2s_config.RxHalfCpltCallback != NULL)
-    {
-        i2s_config.RxHalfCpltCallback();
-    }
-}
-
-/**
- * @brief  Rx Transfer half completed callbacks
- * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
- *         the configuration information for I2S module
- * @retval None
- */
-void HAL_I2SEx_TxRxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
-{
     if (i2s_config.RxHalfCpltCallback != NULL)
     {
         i2s_config.RxHalfCpltCallback();
@@ -169,9 +148,29 @@ void HAL_I2SEx_TxRxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
   */
 void HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+    SCB_InvalidateDCache_by_Addr((uint32_t*)i2s_config.rx_fifo, I2S_RX_DMA_FIFO_SIZE);
+#endif
     if (i2s_config.RxCpltCallback != NULL)
     {
         i2s_config.RxCpltCallback();
+    }
+}
+
+/**
+ * @brief  Rx Transfer half completed callbacks
+ * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
+ *         the configuration information for I2S module
+ * @retval None
+ */
+void HAL_I2SEx_TxRxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
+{
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+    SCB_InvalidateDCache_by_Addr((uint32_t*)i2s_config.rx_fifo, I2S_RX_DMA_FIFO_SIZE/2);
+#endif
+    if (i2s_config.RxHalfCpltCallback != NULL)
+    {
+        i2s_config.RxHalfCpltCallback();
     }
 }
 
@@ -184,7 +183,7 @@ void HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *hi2s)
 void HAL_I2SEx_TxRxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
 #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
-    SCB_InvalidateDCache_by_Addr((uint32_t*)i2s_config.rx_fifo, RX_DMA_FIFO_SIZE);
+    SCB_InvalidateDCache_by_Addr((uint32_t*)i2s_config.rx_fifo, I2S_RX_DMA_FIFO_SIZE);
 #endif
     if (i2s_config.RxCpltCallback != NULL)
     {
@@ -550,7 +549,7 @@ void I2S_Play_Start(const uint8_t *pData, uint16_t Size)
     if (Size > 0 && pData != NULL)
     {
 #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
-        SCB_CleanDCache_by_Addr((uint32_t*)i2s_config.tx_fifo, TX_DMA_FIFO_SIZE);
+        SCB_CleanDCache_by_Addr((uint32_t*)i2s_config.tx_fifo, I2S_TX_DMA_FIFO_SIZE);
 #endif
         HAL_I2S_Transmit_DMA(&i2s_config.hi2s, (uint16_t *) pData, Size);
     }
@@ -562,21 +561,21 @@ void I2S_Play_Stop(void)
     HAL_I2S_DMAStop(&i2s_config.hi2s);
 }
 
+uint8_t *I2S_Get_Txbuffer(void)
+{
+    return i2s_config.tx_fifo;
+}
+
 //I2S开始录音
 void I2S_Rec_Start(uint8_t *pData, uint16_t Size)
 {
     HAL_I2S_DMAStop(&i2s_config.hi2s);
     if (Size > 0 && pData != NULL)
     {
-#ifdef SOC_SERIES_STM32H7
 #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
-        SCB_CleanDCache_by_Addr((uint32_t*)i2s_config.rx_fifo, RX_DMA_FIFO_SIZE);
+        SCB_CleanDCache_by_Addr((uint32_t*)i2s_config.rx_fifo, I2S_RX_DMA_FIFO_SIZE);
 #endif
-//        HAL_I2S_Receive_DMA(&i2s_config.hi2s, (uint16_t *) pData, Size);
         HAL_I2SEx_TransmitReceive_DMA(&i2s_config.hi2s, (uint16_t *) pData, (uint16_t *) pData, Size);
-#else
-        HAL_I2SEx_TransmitReceive_DMA(&i2s_config.hi2s, (uint16_t *) pData, (uint16_t *) pData, Size);
-#endif
     }
 }
 
@@ -584,4 +583,9 @@ void I2S_Rec_Start(uint8_t *pData, uint16_t Size)
 void I2S_Rec_Stop(void)
 {
     HAL_I2S_DMAStop(&i2s_config.hi2s);
+}
+
+uint8_t *I2S_Get_Rxbuffer(void)
+{
+    return i2s_config.tx_fifo;
 }

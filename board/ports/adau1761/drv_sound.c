@@ -20,12 +20,6 @@
 
 #define CODEC_I2C_NAME  ADAU1761_I2C_DEV
 
-#define TX_DMA_FIFO_SIZE (2048)
-static uint8_t tx_fifo[TX_DMA_FIFO_SIZE];
-
-#define RX_DMA_FIFO_SIZE (2048)
-static uint8_t rx_fifo[RX_DMA_FIFO_SIZE];
-
 struct stm32_audio
 {
     struct rt_i2c_bus_device *i2c_bus;
@@ -318,7 +312,7 @@ static rt_err_t  stm32_player_configure(struct rt_audio_device *audio, struct rt
             break;
         }
         /* start record */
-        I2S_Rec_Start(_stm32_audio_play.rx_fifo, RX_DMA_FIFO_SIZE/2);
+        I2S_Rec_Start(_stm32_audio_play.rx_fifo, I2S_RX_DMA_FIFO_SIZE/2);
         break;
     }
 
@@ -349,7 +343,7 @@ static void player_RxCpltCallback(void)
 {
     if (_stm32_audio_play.audio.record->activated == RT_TRUE)
     {
-        rt_audio_rx_done(&(_stm32_audio_play.audio), &_stm32_audio_play.rx_fifo[0], RX_DMA_FIFO_SIZE / 2);
+        rt_audio_rx_done(&(_stm32_audio_play.audio), &_stm32_audio_play.rx_fifo[0], I2S_RX_DMA_FIFO_SIZE / 2);
     }
 }
 
@@ -357,7 +351,7 @@ static void player_RxHalfCpltCallback(void)
 {
     if (_stm32_audio_play.audio.record->activated == RT_TRUE)
     {
-        rt_audio_rx_done(&(_stm32_audio_play.audio), &_stm32_audio_play.rx_fifo[RX_DMA_FIFO_SIZE / 2], RX_DMA_FIFO_SIZE / 2);
+        rt_audio_rx_done(&(_stm32_audio_play.audio), &_stm32_audio_play.rx_fifo[I2S_RX_DMA_FIFO_SIZE / 2], I2S_RX_DMA_FIFO_SIZE / 2);
     }
 }
 
@@ -398,7 +392,7 @@ static rt_err_t stm32_player_start(struct rt_audio_device *audio, int stream)
     if (stream == AUDIO_STREAM_REPLAY)
     {
         adau1761_player_start();
-        I2S_Play_Start(_stm32_audio_play.tx_fifo, TX_DMA_FIFO_SIZE/2);
+        I2S_Play_Start(_stm32_audio_play.tx_fifo, I2S_TX_DMA_FIFO_SIZE/2);
         LOG_D("start replay");
     }
     else if (stream == AUDIO_STREAM_RECORD)
@@ -436,8 +430,8 @@ static void stm32_player_buffer_info(struct rt_audio_device *audio, struct rt_au
      *  \  block_size  /
      */
     info->buffer = _stm32_audio_play.tx_fifo;
-    info->total_size = TX_DMA_FIFO_SIZE;
-    info->block_size = TX_DMA_FIFO_SIZE / 2;
+    info->total_size = I2S_TX_DMA_FIFO_SIZE;
+    info->block_size = I2S_TX_DMA_FIFO_SIZE / 2;
     info->block_count = 2;
 }
 static struct rt_audio_ops _p_audio_ops =
@@ -459,12 +453,10 @@ static int rt_hw_sound_init(void)
     _stm32_audio_play.config.samplebits = 16;
 
     /* player */
-    rt_memset(tx_fifo, 0, TX_DMA_FIFO_SIZE);
-    _stm32_audio_play.tx_fifo = tx_fifo;
+    _stm32_audio_play.tx_fifo = I2S_Get_Txbuffer();
 
     /* record */
-    rt_memset(rx_fifo, 0, RX_DMA_FIFO_SIZE);
-    _stm32_audio_play.rx_fifo = rx_fifo;
+    _stm32_audio_play.rx_fifo = I2S_Get_Rxbuffer();
 
     /* register sound device */
     _stm32_audio_play.audio.ops = &_p_audio_ops;

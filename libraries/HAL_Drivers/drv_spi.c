@@ -237,8 +237,8 @@ static rt_err_t stm32_spi_init(struct stm32_spi *spi_drv, struct rt_spi_configur
     spi_handle->Init.NSSPMode                   = SPI_NSS_PULSE_DISABLE;
     spi_handle->Init.NSSPolarity                = SPI_NSS_POLARITY_LOW;
     spi_handle->Init.CRCPolynomial              = 0x0;
-    spi_handle->Init.TxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
-    spi_handle->Init.RxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
+    spi_handle->Init.TxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ONE_PATTERN;
+    spi_handle->Init.RxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ONE_PATTERN;
     spi_handle->Init.MasterSSIdleness           = SPI_MASTER_SS_IDLENESS_00CYCLE;
     spi_handle->Init.MasterInterDataIdleness    = SPI_MASTER_INTERDATA_IDLENESS_00CYCLE;
     spi_handle->Init.MasterReceiverAutoSusp     = SPI_MASTER_RX_AUTOSUSP_DISABLE;
@@ -385,6 +385,7 @@ static rt_size_t spixfer(struct rt_spi_device *device, struct rt_spi_message *me
         /* start once data exchange in DMA mode */
         if (message->send_buf && message->recv_buf)
         {
+            rt_memset((uint8_t *)recv_buf, 0xff, send_length);
             if ((spi_drv->spi_dma_flag & SPI_USING_TX_DMA_FLAG) && (spi_drv->spi_dma_flag & SPI_USING_RX_DMA_FLAG) && (send_length >= DMA_TRANS_MIN_LEN))
             {
 #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
@@ -457,7 +458,7 @@ static rt_size_t spixfer(struct rt_spi_device *device, struct rt_spi_message *me
 
         if (state != HAL_OK)
         {
-            LOG_E("SPI transfer error: %d", state);
+            LOG_E("SPI transfer error: %d 0x%p 0x%p 0x%p %d", state, send_buf, recv_buf, p_txrx_buffer, send_length);
             message->length = 0;
             spi_handle->State = HAL_SPI_STATE_READY;
             break;

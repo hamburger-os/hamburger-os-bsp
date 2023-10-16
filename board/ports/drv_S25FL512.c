@@ -110,6 +110,11 @@ static void s25fl512_wait_busy(void)
             break;
         }
         rt_thread_delay(1);   // 等待BUSY位清空
+        if (rt_tick_get() - tick > 1000)
+        {
+            LOG_E("wait busy timeout!");
+            break;
+        }
     }
     LOG_D("wait 0x%x %d ms", value, rt_tick_get() - tick);
 }

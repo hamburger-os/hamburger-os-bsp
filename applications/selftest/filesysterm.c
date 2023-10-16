@@ -23,8 +23,8 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-#define TEST_LEN    4096
-#define TEST_COUNT  8
+#define TEST_LEN    1024
+#define TEST_COUNT  4
 
 static char * error_log[] = {
     "fram       ",

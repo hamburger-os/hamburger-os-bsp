@@ -69,6 +69,8 @@ static struct stm32_i2c_config i2c_config[] =
 
 static struct stm32_i2c i2c_obj[sizeof(i2c_config) / sizeof(i2c_config[0])];
 
+static void stm32_i2c_hal_init(struct stm32_i2c_config *config);
+
 static rt_size_t stm32_master_xfer(struct rt_i2c_bus_device *bus,
                                  struct rt_i2c_msg msgs[],
                                  rt_uint32_t num)
@@ -99,6 +101,7 @@ static rt_size_t stm32_master_xfer(struct rt_i2c_bus_device *bus,
                 }
                 LOG_E("master_xfer %s read : %d 0x%x %d %d/%d %d", config->bus_name, msg->flags, msg->addr, msg->len, i, num, ret);
                 ret = -RT_EIO;
+                stm32_i2c_hal_init(config);
                 goto out;
             }
             else
@@ -122,6 +125,7 @@ static rt_size_t stm32_master_xfer(struct rt_i2c_bus_device *bus,
                 }
                 LOG_E("master_xfer %s write : %d 0x%x %d %d/%d %d", config->bus_name, msg->flags, msg->addr, msg->len, i, num, ret);
                 ret = -RT_EIO;
+                stm32_i2c_hal_init(config);
                 goto out;
             }
             else
