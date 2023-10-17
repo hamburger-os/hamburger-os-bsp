@@ -409,7 +409,7 @@ static rt_size_t spixfer(struct rt_spi_device *device, struct rt_spi_message *me
             }
             else
             {
-                state = HAL_SPI_TransmitReceive(spi_handle, (uint8_t *)send_buf, (uint8_t *)recv_buf, send_length, send_length);
+                state = HAL_SPI_TransmitReceive(spi_handle, (uint8_t *)send_buf, (uint8_t *)recv_buf, send_length, send_length * 8);
             }
         }
         else if (message->send_buf)
@@ -423,7 +423,7 @@ static rt_size_t spixfer(struct rt_spi_device *device, struct rt_spi_message *me
             }
             else
             {
-                state = HAL_SPI_Transmit(spi_handle, (uint8_t *)send_buf, send_length, send_length);
+                state = HAL_SPI_Transmit(spi_handle, (uint8_t *)send_buf, send_length, send_length * 8);
             }
 
             if (message->cs_release && (device->config.mode & RT_SPI_3WIRE))
@@ -447,7 +447,7 @@ static rt_size_t spixfer(struct rt_spi_device *device, struct rt_spi_message *me
                 /* clear the old error flag */
                 __HAL_SPI_CLEAR_OVRFLAG(spi_handle);
 
-                state = HAL_SPI_Receive(spi_handle, (uint8_t *)recv_buf, send_length, send_length);
+                state = HAL_SPI_Receive(spi_handle, (uint8_t *)recv_buf, send_length, send_length * 8);
             }
         }
         else
@@ -460,7 +460,6 @@ static rt_size_t spixfer(struct rt_spi_device *device, struct rt_spi_message *me
         {
             LOG_E("SPI transfer error: %d 0x%p 0x%p 0x%p %d", state, send_buf, recv_buf, p_txrx_buffer, send_length);
             message->length = 0;
-            spi_handle->State = HAL_SPI_STATE_READY;
             break;
         }
         else
@@ -476,23 +475,19 @@ static rt_size_t spixfer(struct rt_spi_device *device, struct rt_spi_message *me
             /* blocking the thread,and the other tasks can run */
             if (rt_completion_wait(&spi_drv->cpt, send_length) != RT_EOK)
             {
-                state = HAL_ERROR;
+                state = HAL_TIMEOUT;
                 LOG_E("wait for DMA interrupt overtime!");
                 break;
             }
-        }
-        else
-        {
-            while (HAL_SPI_GetState(spi_handle) != HAL_SPI_STATE_READY);
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+            rt_hw_cpu_dcache_ops(RT_HW_CACHE_INVALIDATE, dma_aligned_buffer, send_length);
+#endif
         }
 
         if(dma_aligned_buffer != RT_NULL) /* re-aligned, so need to copy the data to recv_buf */
         {
             if(recv_buf != RT_NULL)
             {
-#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
-                rt_hw_cpu_dcache_ops(RT_HW_CACHE_INVALIDATE, dma_aligned_buffer, send_length);
-#endif
                 rt_memcpy(recv_buf, p_txrx_buffer, send_length);
             }
 #if defined(SOC_SERIES_STM32H7) || defined(SOC_SERIES_STM32F7)
@@ -1054,6 +1049,28 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
 {
     struct stm32_spi *spi_drv =  rt_container_of(hspi, struct stm32_spi, handle);
     rt_completion_done(&spi_drv->cpt);
+}
+
+void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
+{
+    struct stm32_spi *spi_drv =  rt_container_of(hspi, struct stm32_spi, handle);
+    uint32_t error = HAL_SPI_GetError(hspi);
+
+    switch(error)
+    {
+    case HAL_SPI_ERROR_DMA:
+        rt_completion_done(&spi_drv->cpt);
+        LOG_E("ErrorCallback 0x%x HAL_SPI_ERROR_DMA", error);
+        break;
+    default:
+        LOG_E("ErrorCallback 0x%x", error);
+        break;
+    }
+}
+
+void HAL_SPI_AbortCpltCallback(SPI_HandleTypeDef *hspi)
+{
+    LOG_E("AbortCpltCallback 0x%x", HAL_SPI_GetState(hspi));
 }
 
 #if defined(SOC_SERIES_STM32F0)

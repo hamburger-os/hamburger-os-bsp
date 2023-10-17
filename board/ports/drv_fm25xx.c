@@ -398,6 +398,8 @@ static int fal_fram_write(long offset, const rt_uint8_t *buf, size_t size)
 
     return size;
 }
+
+static uint8_t buf[FM25xx_BLK_SIZE];
 static int fal_fram_erase(long offset, size_t size)
 {
     rt_uint32_t addr = fm25xx_fram.addr + offset;
@@ -411,6 +413,27 @@ static int fal_fram_erase(long offset, size_t size)
 //        LOG_W("erase size %d! addr is (0x%p)", size, (void*)(addr + size));
         return 0;
     }
+
+    fm25xx_writeEnable();
+
+    /* 发送写命令 */
+    uint8_t cmd[] = {FM25xx_CMD_WRITE, (uint8_t)((addr) >> 16U), (uint8_t)((addr) >> 8U), (uint8_t)((addr))};
+
+    rt_memset(buf, 0xff, sizeof(buf));
+    uint32_t nblk = size / fm25xx_fram.blk_size;
+
+    while(nblk --)
+    {
+        /* 写数据 */
+        rt_err_t ret = rt_spi_send_then_send(fm25xx_spidev, cmd, sizeof(cmd), buf, sizeof(buf));
+        if (ret != RT_EOK)
+        {
+            LOG_E("erase data error %d!", ret);
+            return -RT_EIO;
+        }
+    }
+
+    fm25xx_writeDisable();
 
     LOG_D("erase (0x%p) %d", (void*)(addr), size);
 
