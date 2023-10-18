@@ -2448,6 +2448,11 @@ menu "Onboard Peripheral Drivers"
             config LCD_BITS_PER_PIXEL
                 int "Set lcd bits per pixel, default: 16"
                 default (16)
+                
+            config BSP_USING_GPU_STM32_DMA2D
+                int "Set GPU STM32 DMA2D enable, default: 1"
+                depends on PKG_USING_LVGL
+                default (1)
             
             choice
                 prompt "Select lcd driver"
@@ -2553,6 +2558,12 @@ menu "Onboard Peripheral Drivers"
                     bool "Enable touch calibration"
                     default n
                     
+                config TOUCH_USING_KVDB
+                    bool "Enable KVDB to save adjust"
+                    depends on TOUCH_USING_CALIBRATION
+                    select PKG_USING_FLASHDB_PORT
+                    default n
+                    
                 choice
                     prompt "Select touch driver"
                     default TOUCH_USING_SW
@@ -2580,11 +2591,6 @@ menu "Onboard Peripheral Drivers"
                     config TOUCH_SW_SPI_SPEED
                         int "Set the rate of spi, default: (2 * 1000 *1000)"
                         default (2000000)
-                        
-                    config TOUCH_SW_USING_KVDB
-                        bool "Enable KVDB to save adjust"
-                        select PKG_USING_FLASHDB_PORT
-                        default y
                 endif
                 
                 if TOUCH_USING_XPT2046
@@ -2934,8 +2940,48 @@ menu "Onboard Peripheral Drivers"
                 int "Set the memory block size, default: (262144)"
                 default (262144)
             
+            config SPI_FLASH_SIZE_DOWNLOAD
+                int "Set download part size, default: (2048 * 1024)"
+                default (0)
+                
+            config SPI_FLASH_SIZE_FACTORY
+                int "Set factory part size, default: (2048 * 1024)"
+                default (0)
+                
+            config SPI_FLASH_SIZE_BIN
+                int "Set bin part size, default: (2048 * 1024)"
+                default (2097152)
+                
+            config SPI_FLASH_SIZE_ETC
+                int "Set etc part size, default: (2048 * 1024)"
+                default (2097152)
+                
+            config SPI_FLASH_SIZE_LIB
+                int "Set lib part size, default: (2048 * 1024)"
+                default (2097152)
+                
+            config SPI_FLASH_SIZE_USR
+                int "Set usr part size, default: (2048 * 1024)"
+                default (2097152)
+                
+            config SPI_FLASH_SIZE_KVDB
+                int "Set kvdb part size, default: (2048 * 1024)"
+                default (2097152)
+                
+            config SPI_FLASH_SIZE_TSDB
+                int "Set tsdb part size, default: (0 * 1024)"
+                default (0)
+                
+            config SPI_FLASH_ENABLE_FS
+                bool "Enable the file system"
+                select RT_USING_DFS
+                select RT_USING_DFS_ROMFS
+                select PKG_USING_LITTLEFS
+                default y
+            
             config SPI_FLASH_FS
                 string "Set the file system used, default: lfs"
+                depends on SPI_FLASH_ENABLE_FS
                 default "lfs"
         endif
         

@@ -31,7 +31,7 @@ static const struct romfs_dirent _romfs_root_mnt[] =
     {ROMFS_DIRENT_DIR, BLK_FRAM     , RT_NULL, 0},      //fram
 #endif
 
-#ifdef BSP_USING_SPI_FLASH
+#ifdef SPI_FLASH_ENABLE_FS
     {ROMFS_DIRENT_DIR, BLK_SPI_FLASH, RT_NULL, 0},      //spiflash
 #endif
 
@@ -115,7 +115,7 @@ static const struct mount_fs _mount_fs[] =
     {BLK_FRAM           , BLK_FRAM          , FM25xx_FS         },
 #endif
 
-#ifdef BSP_USING_SPI_FLASH
+#ifdef SPI_FLASH_ENABLE_FS
     {BLK_SPI_FLASH      , BLK_SPI_FLASH     , SPI_FLASH_FS      },
 #endif
 

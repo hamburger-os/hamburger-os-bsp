@@ -137,7 +137,33 @@ const struct fal_partition partition_table_def[] =
 #endif
 
 #ifdef BSP_USING_SPI_FLASH
-    {FAL_PART_MAGIC_WORD,BLK_SPI_FLASH,   SPI_FLASH_DEV_NAME,                             0,    SPI_FLASH_SIZE_GRANULARITY_TOTAL, 0},
+#if SPI_FLASH_SIZE_DOWNLOAD > 0
+    {FAL_PART_MAGIC_WORD,  "download",     SPI_FLASH_DEV_NAME,      SPI_FLASH_OFFSET_DOWNLOAD,              SPI_FLASH_SIZE_DOWNLOAD, 0},
+#endif
+#if SPI_FLASH_SIZE_FACTORY > 0
+    {FAL_PART_MAGIC_WORD,   "factory",     SPI_FLASH_DEV_NAME,       SPI_FLASH_OFFSET_FACTORY,               SPI_FLASH_SIZE_FACTORY, 0},
+#endif
+#if SPI_FLASH_SIZE_BIN > 0
+    {FAL_PART_MAGIC_WORD,       "bin",     SPI_FLASH_DEV_NAME,           SPI_FLASH_OFFSET_BIN,                   SPI_FLASH_SIZE_BIN, 0},
+#endif
+#if SPI_FLASH_SIZE_ETC > 0
+    {FAL_PART_MAGIC_WORD,       "etc",     SPI_FLASH_DEV_NAME,           SPI_FLASH_OFFSET_ETC,                   SPI_FLASH_SIZE_ETC, 0},
+#endif
+#if SPI_FLASH_SIZE_LIB > 0
+    {FAL_PART_MAGIC_WORD,       "lib",     SPI_FLASH_DEV_NAME,           SPI_FLASH_OFFSET_LIB,                   SPI_FLASH_SIZE_LIB, 0},
+#endif
+#if SPI_FLASH_SIZE_USR > 0
+    {FAL_PART_MAGIC_WORD,       "usr",     SPI_FLASH_DEV_NAME,           SPI_FLASH_OFFSET_USR,                   SPI_FLASH_SIZE_USR, 0},
+#endif
+#if SPI_FLASH_SIZE_KVDB > 0
+    {FAL_PART_MAGIC_WORD,      "kvdb",     SPI_FLASH_DEV_NAME,          SPI_FLASH_OFFSET_KVDB,                  SPI_FLASH_SIZE_KVDB, 0},
+#endif
+#if SPI_FLASH_SIZE_TSDB > 0
+    {FAL_PART_MAGIC_WORD,      "tsdb",     SPI_FLASH_DEV_NAME,          SPI_FLASH_OFFSET_TSDB,                  SPI_FLASH_SIZE_TSDB, 0},
+#endif
+#if SPI_FLASH_SIZE_FS > 0
+    {FAL_PART_MAGIC_WORD,BLK_SPI_FLASH,     SPI_FLASH_DEV_NAME,            SPI_FLASH_OFFSET_FS,                    SPI_FLASH_SIZE_FS, 0},
+#endif
 #endif
 
 #ifdef BSP_USING_S25FL512

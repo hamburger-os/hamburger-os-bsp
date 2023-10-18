@@ -14,12 +14,24 @@
 #include "rtthread.h"
 #include "rtdevice.h"
 
+struct TouchAdjuct
+{
+    float A;
+    float B;
+    float C;
+    float D;
+    float E;
+    float F;
+};
+
 struct _rt_drv_touch
 {
     struct rt_touch_device dev;
     struct rt_spi_device *spidev;
 
     rt_thread_t  touch_thread;
+
+    struct TouchAdjuct adjuct;
 };
 
 int drv_touch_bus_init(struct _rt_drv_touch *config);
