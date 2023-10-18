@@ -3296,17 +3296,28 @@ menu "Onboard Peripheral Drivers"
         default n
         
         if BSP_USING_ETH
-            config PHY_RST_PIN
-                string "Set phy rst pin, default: PD.3"
+            choice
+                prompt "Select eth mode"
+                default ETH_USING_MII_MODE
+                
+                config ETH_USING_MII_MODE
+                    bool "Select MII MODE"
+                    
+                config ETH_USING_RMII_MODE
+                    bool "Select RMII MODE"
+            endchoice
+            
+            config ETH_RST_PIN
+                string "Set ETH rst pin, default: PD.3"
                 default "PD.3"
         
-            config PHY_USING_INTERRUPT_MODE
+            config ETH_USING_INTERRUPT_MODE
                 bool "Enable interrupt mode"
                 default n
                 
-            config PHY_INT_PIN
-                string "Set phy int pin, default: PA.1"
-                depends on PHY_USING_INTERRUPT_MODE
+            config ETH_INT_PIN
+                string "Set ETH int pin, default: PA.1"
+                depends on ETH_USING_INTERRUPT_MODE
                 default "PA.1"
             
             config ETH_RX_DUMP
@@ -3323,15 +3334,6 @@ menu "Onboard Peripheral Drivers"
                 
                 config PHY_USING_LAN8720A
                     bool "Select phy LAN8720A"
-                    
-                config PHY_USING_LAN8742A
-                    bool "Select phy LAN8742A"
-    
-                config PHY_USING_DM9161CEP
-                    bool "Select phy DM9161CEP"
-                    
-                config PHY_USING_DP83848C
-                    bool "Select phy DP83848C"
             endchoice
         endif
         

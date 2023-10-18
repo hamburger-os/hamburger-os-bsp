@@ -256,11 +256,15 @@ if GetDepend(['BSP_USING_USBH_STM32']):
 if GetDepend(['BSP_USING_KSZ8851']):
     src += Glob('ports/ksz8851/drv_fmc_eth.c')
     src += Glob('ports/ksz8851/ksz8851.c')
+    if GetDepend(['BSP_USE_LINK_LAYER_COMMUNICATION']):
+        src += Glob('ports/ksz8851/ksz8851_lep.c')
     path += [cwd + '/ports/ksz8851']
     
-if GetDepend(['BSP_USE_LINK_LAYER_COMMUNICATION']):
-    src += Glob('ports/ksz8851/ksz8851_lep.c')
-    path += [cwd + '/ports/ksz8851']
+if GetDepend(['BSP_USING_ETH']):
+    src += Glob('ports/eth/drv_eth.c')
+    if GetDepend(['PHY_USING_LAN8720A']):
+        src += Glob('ports/eth/lan8720.c')
+    path += [cwd + '/ports/eth']
  
 if GetDepend(['BSP_USING_MAX31826']):
     src += Glob('ports/drv_max31826.c')

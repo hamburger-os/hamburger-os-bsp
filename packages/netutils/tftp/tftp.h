@@ -27,7 +27,7 @@
 #define TFTP_MAX_RETRY (3)
 #define TFTP_SERVER_CONNECT_MAX (5)
 
-#define tftp_printf printf
+#define tftp_printf rt_kprintf
 
 struct tftp_client
 {
