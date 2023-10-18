@@ -484,6 +484,8 @@ static void ota_thread_entry(void* parameter)
                 {
                     ota_from_file_handle(OTA_HANDLE_FINISH);
                     LOG_D("Download firmware to flash success.");
+                    close(ops->fd);
+                    dfs_file_unlink(ops->path[MODE_TFTP]);
 
                     LOG_I("System now will restart...");
 
