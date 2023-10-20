@@ -27,13 +27,7 @@
 #define LOG_TAG             "drv.emac"
 #include <drv_log.h>
 
-enum {
-    PHY_DOWN = 0,
-    PHY_LINK,
-};
-
 struct rt_stm32_eth stm32_eth_device = {
-    .linkchanged = PHY_DOWN,
     .phy_addr = LAN8720_ADDR,
 };
 
@@ -71,7 +65,7 @@ static rt_err_t rt_stm32_eth_init(rt_device_t dev)
     {
         Error_Handler();
     }
-    HAL_ETH_SetMDIOClockRange(&eth->heth);
+//    HAL_ETH_SetMDIOClockRange(&eth->heth);
 
     rt_memset(&eth->TxConfig, 0 , sizeof(ETH_TxPacketConfig));
     eth->TxConfig.Attributes = ETH_TX_PACKETS_FEATURES_CSUM | ETH_TX_PACKETS_FEATURES_CRCPAD;
@@ -79,7 +73,7 @@ static rt_err_t rt_stm32_eth_init(rt_device_t dev)
     eth->TxConfig.CRCPadCtrl = ETH_CRC_PAD_INSERT;
 
     /* ETH interrupt Init */
-    HAL_NVIC_SetPriority(ETH_IRQn, 0x07, 0);
+    HAL_NVIC_SetPriority(ETH_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(ETH_IRQn);
 
     if (LAN8720_Init() != LAN8720_STATUS_OK)
@@ -196,6 +190,7 @@ rt_err_t rt_stm32_eth_tx(rt_device_t dev, struct pbuf *p)
 #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
     SCB_CleanInvalidateDCache();    //无效化并清除Dcache
 #endif
+
     HAL_ETH_Transmit_IT(&eth->heth, &eth->TxConfig);
     if (rt_completion_wait(&eth->TxPkt_completion, eth->TxConfig.Length * 8) != RT_EOK)
     {
@@ -285,11 +280,18 @@ void HAL_ETH_TxCpltCallback(ETH_HandleTypeDef *handlerEth)
  */
 void HAL_ETH_ErrorCallback(ETH_HandleTypeDef *handlerEth)
 {
-    if ((HAL_ETH_GetDMAError(handlerEth) & ETH_DMACSR_RBU) == ETH_DMACSR_RBU)
+    uint32_t error = HAL_ETH_GetError(handlerEth);
+    uint32_t dmaerror = HAL_ETH_GetDMAError(handlerEth);
+
+    switch(error)
     {
+    case HAL_ETH_ERROR_DMA:
         rt_completion_done(&stm32_eth_device.RxPkt_completion);
+        break;
+    default:
+        break;
     }
-    LOG_E("ErrorCallback 0x%x", HAL_ETH_GetError(handlerEth));
+    LOG_E("ErrorCallback 0x%x 0x%x", error, dmaerror);
 }
 
 static void phy_linkchange(void *parameter)
@@ -301,17 +303,15 @@ static void phy_linkchange(void *parameter)
 
     PHYLinkState = LAN8720_GetLinkState();    //获取连接状态
     //如果检测到连接断开或者不正常就关闭网口
-    if ((eth->linkchanged == PHY_LINK) && (PHYLinkState <= LAN8720_STATUS_LINK_DOWN))
+    if ((eth->parent.link_status == RT_TRUE) && (PHYLinkState <= LAN8720_STATUS_LINK_DOWN))
     {
-        eth->linkchanged = PHY_DOWN;
         HAL_ETH_Stop_IT(&eth->heth);
         LOG_W("link down");
         eth_device_linkchange(&eth->parent, RT_FALSE);
     }
     //LWIP网卡还未打开，但是LAN8720已经协商成功
-    else if ((eth->linkchanged == PHY_DOWN) && (PHYLinkState > LAN8720_STATUS_LINK_DOWN))
+    else if ((eth->parent.link_status == RT_FALSE) && (PHYLinkState > LAN8720_STATUS_LINK_DOWN))
     {
-        eth->linkchanged = PHY_LINK;
         switch (PHYLinkState)
         {
         case LAN8720_STATUS_100MBITS_FULLDUPLEX:    //100M全双工
@@ -335,19 +335,16 @@ static void phy_linkchange(void *parameter)
             LOG_I("link up 100Mb/s HalfDuplex");
             break;
         default:
-            eth->linkchanged = PHY_DOWN;
+            LOG_W("link up unknown");
             break;
         }
 
-        if (eth->linkchanged == PHY_LINK)           //连接正常
-        {
-            HAL_ETH_GetMACConfig(&eth->heth, &MACConf);
-            MACConf.DuplexMode = duplex;
-            MACConf.Speed = speed;
-            HAL_ETH_SetMACConfig(&eth->heth, &MACConf);  //设置MAC
-            HAL_ETH_Start_IT(&eth->heth);
-            eth_device_linkchange(&eth->parent, RT_TRUE);
-        }
+        HAL_ETH_GetMACConfig(&eth->heth, &MACConf);
+        MACConf.DuplexMode = duplex;
+        MACConf.Speed = speed;
+        HAL_ETH_SetMACConfig(&eth->heth, &MACConf);  //设置MAC
+        HAL_ETH_Start_IT(&eth->heth);
+        eth_device_linkchange(&eth->parent, RT_TRUE);
     }
 }
 

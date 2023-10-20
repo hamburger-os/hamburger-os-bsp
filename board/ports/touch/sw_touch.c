@@ -21,8 +21,6 @@
 #define DBG_LVL DBG_INFO
 #include <rtdbg.h>
 
-//static struct SWAdjuct sw_adjuct = {0.23f, 0.00f, -62.91f, 0.01f, 0.15f, 1.03f};
-
 rt_err_t touch_Read_toucX(struct rt_touch_device *touch, uint16_t *value)
 {
     rt_err_t ret = RT_EOK;
@@ -89,6 +87,14 @@ int drv_touch_bus_init(struct _rt_drv_touch *config)
         LOG_E("device %s configure error!", dev_name);
         return -RT_EIO;
     }
+
+    //初始化默认参数
+    config->adjuct.A = 0.23f;
+    config->adjuct.B = 0.00f;
+    config->adjuct.C = -62.91f;
+    config->adjuct.D = 0.01f;
+    config->adjuct.E = 0.15f;
+    config->adjuct.F = 1.03f;
 
     return RT_EOK;
 }

@@ -46,6 +46,7 @@ __weak rt_err_t touch_Read_toucY(struct rt_touch_device *touch, uint16_t *value)
 
     return ret;
 }
+
 static rt_size_t touch_readpoint(struct rt_touch_device *touch, void *buf, rt_size_t touch_num)
 {
     struct _rt_drv_touch *config = (struct _rt_drv_touch *)touch->parent.user_data;
@@ -74,7 +75,6 @@ static rt_size_t touch_readpoint(struct rt_touch_device *touch, void *buf, rt_si
         {
             touch_Read_toucX(touch, &xa[i]);
             touch_Read_toucY(touch, &ya[i]);
-            LOG_D("press: read (%d, %d)", xa[i], ya[i]);
         }
 
         for (i = 0; i < 3; i++)

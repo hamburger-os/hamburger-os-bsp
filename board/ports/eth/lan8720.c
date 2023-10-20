@@ -13,7 +13,6 @@ int32_t LAN8720_Init(void)
 {
     uint32_t timeout = 0;
     uint32_t regval = 0;
-    uint32_t phylink = 0;
     int32_t status = LAN8720_STATUS_OK;
 
     if (LAN8720_WritePHY(LAN8720_BCR, LAN8720_BCR_SOFT_RESET) >= 0) // LAN8720软件复位
@@ -45,22 +44,6 @@ int32_t LAN8720_Init(void)
     }
 
     LAN8720_StartAutoNego(); // 开启自动协商功能
-
-    if (status == LAN8720_STATUS_OK) // 如果前面运行正常就延时1s
-        rt_thread_mdelay(1000);              // 等待1s
-
-    // 等待网络连接成功
-    timeout = 0;
-    while (LAN8720_GetLinkState() <= LAN8720_STATUS_LINK_DOWN)
-    {
-        rt_thread_mdelay(10);
-        timeout++;
-        if (timeout >= LAN8720_TIMEOUT)
-        {
-            status = LAN8720_STATUS_LINK_DOWN;
-            break; // 超时跳出,5S
-        }
-    }
 
     return status;
 }

@@ -33,7 +33,6 @@ struct rt_stm32_eth
     uint8_t phy_addr;
     /* interface address info, hw address */
     uint8_t mac[MAC_ADDR_LEN];
-    uint32_t linkchanged;
 };
 
 #endif /* __DRV_ETH_H__ */

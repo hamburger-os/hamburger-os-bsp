@@ -506,14 +506,14 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
     R31_0x4025_Line_output_left_vol r31 = {
         .LOMODE = 0,
         .LOUTM = 1,
-        .LOUTVOL = 0b111111,
+        .LOUTVOL = 0b011111,
     };
     adau1761_program(ADDR_R31_0x4025_Line_output_left_vol, (uint8_t *)&r31, sizeof(R31_0x4025_Line_output_left_vol));
 
     R32_0x4026_Line_output_right_vol r32 = {
         .ROMODE = 0,
         .ROUTM = 1,
-        .ROUTVOL = 0b111111,
+        .ROUTVOL = 0b011111,
     };
     adau1761_program(ADDR_R32_0x4026_Line_output_right_vol, (uint8_t *)&r32, sizeof(R32_0x4026_Line_output_right_vol));
 
@@ -684,7 +684,7 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
     };
     adau1761_program(ADDR_R66_0x40FA_Clock_Enable_1, (uint8_t *)&r66, sizeof(R66_0x40FA_Clock_Enable_1));
 
-    // adau1761_show();
+//    adau1761_show();
 
     return 0;
 }
