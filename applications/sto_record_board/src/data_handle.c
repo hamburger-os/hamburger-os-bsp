@@ -140,6 +140,12 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
 
     CAN_FRAME  can_tmp;
 
+    if(RT_NULL == p_data_handle->can_data_mq)
+    {
+        LOG_E("can_data_mq is null");
+        return -RT_EEMPTY;
+    }
+
     ret = rt_mq_recv(p_data_handle->can_data_mq, (void *)&can_tmp, sizeof(CAN_FRAME), 0);
     if(ret != RT_EOK)
     {
@@ -455,7 +461,7 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
 
 uint8_t DataHandleLKJIsOnline(void)
 {
-    if(read_time_flag > 0)
+    if(read_time_flag > 0 || file_manager.latest_dir_file_info.dir_num != 0)
     {
         return 1;
     }

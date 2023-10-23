@@ -34,9 +34,9 @@ typedef struct {
     uint32_t rx_szie;
 } S_ETH_THREAD;
 
-extern S_DATA_HANDLE eth0_can_data_handle;
+extern volatile S_DATA_HANDLE eth0_can_data_handle;
 
-static S_ETH_THREAD eth0_thread;
+static volatile S_ETH_THREAD eth0_thread;
 
 static void ETHChannelSetRXCallback(S_ETH_THREAD *p_thread, rt_err_t (*rx_ind)(rt_device_t dev,rt_size_t size))
 {
@@ -96,7 +96,6 @@ static void *ETH0ThreadEntry(void *parameter)
 
     while(1)
     {
-//        ret = rt_mq_recv(eth0_thread.size_mq, (void *)&eth0_thread.rx_szie, sizeof(uint32_t), 0);
         ret = rt_mq_recv(eth0_thread.size_mq, (void *)&eth0_thread.rx_szie, sizeof(uint32_t), RT_WAITING_FOREVER);
         if(RT_EOK == ret)
         {

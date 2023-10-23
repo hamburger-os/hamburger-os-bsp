@@ -226,6 +226,11 @@ rt_err_t UDPServerRcvMQData(void)
     S_UDP_SERVER *dev = &udp_server_dev;
     uint32_t udp_recv_len;
 
+    if(RT_NULL == dev->rcv_mq)
+    {
+        LOG_E("usp rcv mq null");
+        return -RT_EEMPTY;
+    }
     ret = rt_mq_recv(dev->rcv_mq, (void *)dev->recv_data_by_mq, sizeof(uint8_t) * UDP_RCV_BUFSZ, 0);
     if(ret != RT_EOK)
     {

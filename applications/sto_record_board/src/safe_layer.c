@@ -37,7 +37,7 @@ rt_err_t rx_safe_layer_check(S_DATA_HANDLE * data_handle, uint8_t *pBuf, uint8_t
     if (pBuf != NULL)
     {
         pSafe_layer = (r_safe_layer *) &pBuf[0];
-//LOG_I("sizeof(r_safe_layer) = %d", sizeof(r_safe_layer));16
+
         if ((pSafe_layer->src_adr == Safe_ZK_I_ADR) || (pSafe_layer->src_adr == Safe_ZK_II_ADR)) /* 主控插件发送的数据 */
         {
             /*判断安全层数据长度合法  1480负载最大长度+4CRC32+4CRC32+安全层头*/
@@ -51,6 +51,14 @@ rt_err_t rx_safe_layer_check(S_DATA_HANDLE * data_handle, uint8_t *pBuf, uint8_t
                     /*校验安全层第二次CRC值*/
                     if (recv_crc_u32 == generate_CRC32(&pBuf[0], pSafe_layer->lenth - 4 - 4, (uint32_t) 0x5A5A5A5A))
                     {
+//                        if(pBuf[0] == 0x47 && pBuf[1] == 3)
+//                        {
+//                            LOG_I("rcv 0x47 ok");
+//                        }
+//                        else if(pBuf[0] == 0x48 && pBuf[1] == 3)
+//                        {
+//                            LOG_I("rcv 0x48 ok");
+//                        }
                         /*把来源的通道号暂存到预留 字段*/
                         pSafe_layer->res = from_chl;
                         /*把源地址和目标地址进行交换，方便处理后回传 到VCP平台*/
@@ -59,6 +67,7 @@ rt_err_t rx_safe_layer_check(S_DATA_HANDLE * data_handle, uint8_t *pBuf, uint8_t
                         pSafe_layer->des_adr = tmp_adr;
                         app_layer_check(data_handle, &pBuf[sizeof(r_safe_layer)], pBuf);
                         ret = RT_EOK;
+//                        LOG_I("CRC Check OK");
                     }
                     else
                     {
@@ -70,7 +79,10 @@ rt_err_t rx_safe_layer_check(S_DATA_HANDLE * data_handle, uint8_t *pBuf, uint8_t
                 }
                 else
                 {
-                    LOG_E("safe_layer_check CRC1 err !");
+//                    rt_kprintf("src %x, id %x, %x, %x, %x\r\n", pBuf[0], pBuf[4], pBuf[5], pBuf[6], pBuf[7]);
+//                    LOG_HEX("data", 8, pBuf, pSafe_layer->lenth);
+                    LOG_E("safe_layer_check CRC1 err ! src %x, des %x, len %d", pSafe_layer->src_adr, pSafe_layer->des_adr, pSafe_layer->lenth);
+//                    LOG_E("safe_layer_check CRC1 err !");
 #if 0   //TODO(mingzhao)
                     set_CrcErr_state(from_chl);
 #endif
