@@ -27,6 +27,26 @@
 #define LOG_TAG             "drv.emac"
 #include <drv_log.h>
 
+/* Data Type Definitions */
+typedef enum
+{
+    RX_ALLOC_OK = 0x00,
+    RX_ALLOC_ERROR = 0x01
+} RxAllocStatusTypeDef;
+
+typedef struct
+{
+    struct pbuf_custom pbuf_custom;
+    uint8_t buff[(ETH_MAX_PACKET_SIZE + 31) & ~31] __ALIGNED(32);
+} RxBuff_t;
+
+/* Memory Pool Declaration */
+#define ETH_RX_BUFFER_CNT             12U
+LWIP_MEMPOOL_DECLARE(RX_POOL, ETH_RX_BUFFER_CNT, sizeof(RxBuff_t), "Zero-copy RX PBUF pool");
+
+/* Variable Definitions */
+static uint8_t RxAllocStatus;
+
 struct rt_stm32_eth stm32_eth_device = {
     .phy_addr = LAN8720_ADDR,
 };
@@ -65,16 +85,15 @@ static rt_err_t rt_stm32_eth_init(rt_device_t dev)
     {
         Error_Handler();
     }
-//    HAL_ETH_SetMDIOClockRange(&eth->heth);
+    HAL_ETH_SetMDIOClockRange(&eth->heth);
 
     rt_memset(&eth->TxConfig, 0 , sizeof(ETH_TxPacketConfig));
     eth->TxConfig.Attributes = ETH_TX_PACKETS_FEATURES_CSUM | ETH_TX_PACKETS_FEATURES_CRCPAD;
     eth->TxConfig.ChecksumCtrl = ETH_CHECKSUM_IPHDR_PAYLOAD_INSERT_PHDR_CALC;
     eth->TxConfig.CRCPadCtrl = ETH_CRC_PAD_INSERT;
 
-    /* ETH interrupt Init */
-    HAL_NVIC_SetPriority(ETH_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(ETH_IRQn);
+    /* Initialize the RX POOL */
+    LWIP_MEMPOOL_INIT(RX_POOL);
 
     if (LAN8720_Init() != LAN8720_STATUS_OK)
     {
@@ -83,7 +102,7 @@ static rt_err_t rt_stm32_eth_init(rt_device_t dev)
 
     phy_linkchange(eth);
 
-    LOG_D("init success");
+    LOG_D("init success 0x%x 0x%x", eth->heth.Init.TxDesc, eth->heth.Init.RxDesc);
     return RT_EOK;
 }
 
@@ -200,9 +219,9 @@ rt_err_t rt_stm32_eth_tx(rt_device_t dev, struct pbuf *p)
     HAL_ETH_ReleaseTxPacket(&eth->heth);
 
 #ifdef ETH_TX_DUMP
+    LOG_D("tx start >>>>>>>>>>>>>>>>");
     if (p != NULL)
     {
-        LOG_D("tx start >>>>>>>>>>>>>>>>");
         struct pbuf *q = NULL;
         for (q = p; q != NULL; q = q->next)
         {
@@ -211,6 +230,7 @@ rt_err_t rt_stm32_eth_tx(rt_device_t dev, struct pbuf *p)
         }
         LOG_D("tx tot_len %d >>>>>>>>>>>>>>>>", p->tot_len);
     }
+    LOG_D("tx end <<<<<<<<<<<<<<<<");
 #endif
 
     return errval;
@@ -223,10 +243,15 @@ struct pbuf *rt_stm32_eth_rx(rt_device_t dev)
 
     struct pbuf *p = NULL;
 
+    if (RxAllocStatus == RX_ALLOC_OK)
+    {
+        HAL_ETH_ReadData(&eth->heth, (void **) &p);
+    }
+
 #ifdef ETH_RX_DUMP
+    LOG_D("rx start >>>>>>>>>>>>>>>>");
     if (p != NULL)
     {
-        LOG_D("rx start >>>>>>>>>>>>>>>>");
         struct pbuf *q = NULL;
         for (q = p; q != NULL; q = q->next)
         {
@@ -235,8 +260,29 @@ struct pbuf *rt_stm32_eth_rx(rt_device_t dev)
         }
         LOG_D("rx tot_len %d >>>>>>>>>>>>>>>>", p->tot_len);
     }
+    LOG_D("rx end <<<<<<<<<<<<<<<<");
 #endif
     return p;
+}
+
+/**
+ * @brief  Custom Rx pbuf free callback
+ * @param  pbuf: pbuf to be freed
+ * @retval None
+ */
+static void pbuf_free_custom(struct pbuf *p)
+{
+    struct pbuf_custom* custom_pbuf = (struct pbuf_custom*) p;
+    LWIP_MEMPOOL_FREE(RX_POOL, custom_pbuf);
+
+    /* If the Rx Buffer Pool was exhausted, signal the ethernetif_input task to
+     * call HAL_ETH_GetRxDataBuffer to rebuild the Rx descriptors. */
+
+    if (RxAllocStatus == RX_ALLOC_ERROR)
+    {
+        RxAllocStatus = RX_ALLOC_OK;
+        eth_device_ready(&stm32_eth_device.parent);
+    }
 }
 
 /* interrupt service routine */
@@ -258,8 +304,7 @@ void ETH_IRQHandler(void)
  */
 void HAL_ETH_RxCpltCallback(ETH_HandleTypeDef *handlerEth)
 {
-    rt_completion_done(&stm32_eth_device.RxPkt_completion);
-    LOG_D("RxCpltCallback");
+    eth_device_ready(&stm32_eth_device.parent);
 }
 
 /**
@@ -270,7 +315,16 @@ void HAL_ETH_RxCpltCallback(ETH_HandleTypeDef *handlerEth)
 void HAL_ETH_TxCpltCallback(ETH_HandleTypeDef *handlerEth)
 {
     rt_completion_done(&stm32_eth_device.TxPkt_completion);
-    LOG_D("TxCpltCallback");
+}
+
+/**
+ * @brief  Tx Free callback.
+ * @param  buff: pointer to buffer to free
+ * @retval None
+ */
+void HAL_ETH_TxFreeCallback(uint32_t * buff)
+{
+    pbuf_free((struct pbuf *) buff);
 }
 
 /**
@@ -286,12 +340,90 @@ void HAL_ETH_ErrorCallback(ETH_HandleTypeDef *handlerEth)
     switch(error)
     {
     case HAL_ETH_ERROR_DMA:
-        rt_completion_done(&stm32_eth_device.RxPkt_completion);
+#ifdef SOC_SERIES_STM32F4
+        if((dmaerror & ETH_DMASR_RBUS) == ETH_DMASR_RBUS)
+#endif
+#ifdef SOC_SERIES_STM32H7
+        if((dmaerror & ETH_DMACSR_RBU) == ETH_DMACSR_RBU)
+#endif
+        {
+            eth_device_ready(&stm32_eth_device.parent);
+            LOG_E("ErrorCallback DMA RX Error!");
+        }
+
+#ifdef SOC_SERIES_STM32F4
+        if((dmaerror & ETH_DMASR_TBUS) == ETH_DMASR_TBUS)
+#endif
+#ifdef SOC_SERIES_STM32H7
+        if((dmaerror & ETH_DMACSR_TBU) == ETH_DMACSR_TBU)
+#endif
+        {
+            rt_completion_done(&stm32_eth_device.TxPkt_completion);
+            LOG_E("ErrorCallback DMA TX Error!");
+        }
         break;
     default:
+        LOG_E("ErrorCallback 0x%x 0x%x", error, dmaerror);
         break;
     }
-    LOG_E("ErrorCallback 0x%x 0x%x", error, dmaerror);
+}
+
+void HAL_ETH_RxAllocateCallback(uint8_t **buff)
+{
+    struct pbuf_custom *p = LWIP_MEMPOOL_ALLOC(RX_POOL);
+    if (p)
+    {
+        /* Get the buff from the struct pbuf address. */
+        *buff = (uint8_t *) p + offsetof(RxBuff_t, buff);
+        p->custom_free_function = pbuf_free_custom;
+        /* Initialize the struct pbuf.
+         * This must be performed whenever a buffer's allocated because it may be
+         * changed by lwIP or the app, e.g., pbuf_free decrements ref. */
+        pbuf_alloced_custom(PBUF_RAW, 0, PBUF_REF, p, *buff, ETH_MAX_PACKET_SIZE);
+    }
+    else
+    {
+        RxAllocStatus = RX_ALLOC_ERROR;
+        *buff = NULL;
+    }
+}
+
+void HAL_ETH_RxLinkCallback(void **pStart, void **pEnd, uint8_t *buff, uint16_t Length)
+{
+    struct pbuf **ppStart = (struct pbuf **) pStart;
+    struct pbuf **ppEnd = (struct pbuf **) pEnd;
+    struct pbuf *p = NULL;
+
+    /* Get the struct pbuf from the buff address. */
+    p = (struct pbuf *) (buff - offsetof(RxBuff_t, buff));
+    p->next = NULL;
+    p->tot_len = 0;
+    p->len = Length;
+
+    /* Chain the buffer. */
+    if (!*ppStart)
+    {
+        /* The first buffer of the packet. */
+        *ppStart = p;
+    }
+    else
+    {
+        /* Chain the buffer to the end of the packet. */
+        (*ppEnd)->next = p;
+    }
+    *ppEnd = p;
+
+    /* Update the total length of all the buffers of the chain. Each pbuf in the chain should have its tot_len
+     * set to its own length, plus the length of all the following pbufs in the chain. */
+    for (p = *ppStart; p != NULL; p = p->next)
+    {
+        p->tot_len += Length;
+    }
+
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+    /* Invalidate data cache because Rx DMA's writing to physical memory makes it stale. */
+    SCB_InvalidateDCache_by_Addr((uint32_t *) buff, Length);
+#endif
 }
 
 static void phy_linkchange(void *parameter)
@@ -343,6 +475,7 @@ static void phy_linkchange(void *parameter)
         MACConf.DuplexMode = duplex;
         MACConf.Speed = speed;
         HAL_ETH_SetMACConfig(&eth->heth, &MACConf);  //设置MAC
+
         HAL_ETH_Start_IT(&eth->heth);
         eth_device_linkchange(&eth->parent, RT_TRUE);
     }
@@ -391,7 +524,6 @@ static int rt_hw_stm32_eth_init(void)
     rt_err_t state = RT_EOK;
 
     /* 初始化完成量 */
-    rt_completion_init(&stm32_eth_device.RxPkt_completion);
     rt_completion_init(&stm32_eth_device.TxPkt_completion);
 
     /* OUI 00-80-E1 STMICROELECTRONICS.前三个字节为厂商ID */
@@ -448,4 +580,4 @@ __exit:
 
     return state;
 }
-INIT_DEVICE_EXPORT(rt_hw_stm32_eth_init);
+INIT_COMPONENT_EXPORT(rt_hw_stm32_eth_init);

@@ -28,7 +28,7 @@ struct rt_stm32_eth
     ETH_DMADescTypeDef DMARxDscrTab[ETH_RX_DESC_CNT], DMATxDscrTab[ETH_RX_DESC_CNT];
     ETH_TxPacketConfig TxConfig;
 
-    struct rt_completion RxPkt_completion, TxPkt_completion;
+    struct rt_completion TxPkt_completion;
 
     uint8_t phy_addr;
     /* interface address info, hw address */
