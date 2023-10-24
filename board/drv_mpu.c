@@ -76,7 +76,7 @@ static MPU_Region_InitTypeDef mpu_cfg[] =
         .AccessPermission = MPU_REGION_FULL_ACCESS,
         .DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE,
         .IsCacheable = MPU_ACCESS_NOT_CACHEABLE,
-        .IsBufferable = MPU_ACCESS_NOT_BUFFERABLE,
+        .IsBufferable = MPU_ACCESS_BUFFERABLE,
     },
 #endif
 

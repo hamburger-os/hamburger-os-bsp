@@ -27,6 +27,14 @@
 #define LOG_TAG             "drv.emac"
 #include <drv_log.h>
 
+#ifdef SOC_SERIES_STM32H7
+#define ETH_NOCACHE_RAM_SECTION     __attribute__((section(".bss.noncacheable")))
+#else
+#define ETH_NOCACHE_RAM_SECTION
+#endif
+
+#define ETH_RX_BUFFER_SIZE 1536
+
 /* Data Type Definitions */
 typedef enum
 {
@@ -37,7 +45,7 @@ typedef enum
 typedef struct
 {
     struct pbuf_custom pbuf_custom;
-    uint8_t buff[(ETH_MAX_PACKET_SIZE + 31) & ~31] __ALIGNED(32);
+    uint8_t buff[(ETH_RX_BUFFER_SIZE + 31) & ~31] __ALIGNED(32);
 } RxBuff_t;
 
 /* Memory Pool Declaration */
@@ -46,6 +54,25 @@ LWIP_MEMPOOL_DECLARE(RX_POOL, ETH_RX_BUFFER_CNT, sizeof(RxBuff_t), "Zero-copy RX
 
 /* Variable Definitions */
 static uint8_t RxAllocStatus;
+
+#if defined ( __ICCARM__ ) /*!< IAR Compiler */
+
+#pragma location=0x30000000
+ETH_DMADescTypeDef DMARxDscrTab[ETH_RX_DESC_CNT]; /* Ethernet Rx DMA Descriptors */
+#pragma location=0x30000200
+ETH_DMADescTypeDef DMATxDscrTab[ETH_TX_DESC_CNT]; /* Ethernet Tx DMA Descriptors */
+
+#elif defined ( __CC_ARM )  /* MDK ARM Compiler */
+
+__attribute__((at(0x30000000))) ETH_DMADescTypeDef DMARxDscrTab[ETH_RX_DESC_CNT]; /* Ethernet Rx DMA Descriptors */
+__attribute__((at(0x30000200))) ETH_DMADescTypeDef DMATxDscrTab[ETH_TX_DESC_CNT]; /* Ethernet Tx DMA Descriptors */
+
+#elif defined ( __GNUC__ ) /* GNU Compiler */
+
+static ETH_DMADescTypeDef DMARxDscrTab[ETH_RX_DESC_CNT] ETH_NOCACHE_RAM_SECTION; /* Ethernet Rx DMA Descriptors */
+static ETH_DMADescTypeDef DMATxDscrTab[ETH_TX_DESC_CNT] ETH_NOCACHE_RAM_SECTION; /* Ethernet Tx DMA Descriptors */
+
+#endif
 
 struct rt_stm32_eth stm32_eth_device = {
     .phy_addr = LAN8720_ADDR,
@@ -58,7 +85,6 @@ static void phy_reset(void)
     rt_pin_write(rst_pin, PIN_LOW);
     rt_thread_mdelay(100);
     rt_pin_write(rst_pin, PIN_HIGH);
-    rt_thread_mdelay(100);
 }
 
 static void phy_linkchange(void *parameter);
@@ -77,9 +103,9 @@ static rt_err_t rt_stm32_eth_init(rt_device_t dev)
 #ifdef ETH_USING_RMII_MODE
     eth->heth.Init.MediaInterface = HAL_ETH_RMII_MODE;
 #endif
-    eth->heth.Init.TxDesc = eth->DMATxDscrTab;
-    eth->heth.Init.RxDesc = eth->DMARxDscrTab;
-    eth->heth.Init.RxBuffLen = ETH_MAX_PACKET_SIZE - ETH_CRC;
+    eth->heth.Init.TxDesc = DMATxDscrTab;
+    eth->heth.Init.RxDesc = DMARxDscrTab;
+    eth->heth.Init.RxBuffLen = ETH_RX_BUFFER_SIZE;
 
     if (HAL_ETH_Init(&eth->heth) != HAL_OK)
     {
@@ -207,7 +233,7 @@ rt_err_t rt_stm32_eth_tx(rt_device_t dev, struct pbuf *p)
     pbuf_ref(p);
 
 #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
-    SCB_CleanInvalidateDCache();    //无效化并清除Dcache
+    SCB_CleanInvalidateDCache();
 #endif
 
     HAL_ETH_Transmit_IT(&eth->heth, &eth->TxConfig);
@@ -379,7 +405,7 @@ void HAL_ETH_RxAllocateCallback(uint8_t **buff)
         /* Initialize the struct pbuf.
          * This must be performed whenever a buffer's allocated because it may be
          * changed by lwIP or the app, e.g., pbuf_free decrements ref. */
-        pbuf_alloced_custom(PBUF_RAW, 0, PBUF_REF, p, *buff, ETH_MAX_PACKET_SIZE);
+        pbuf_alloced_custom(PBUF_RAW, 0, PBUF_REF, p, *buff, ETH_RX_BUFFER_SIZE);
     }
     else
     {

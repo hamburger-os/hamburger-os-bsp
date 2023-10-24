@@ -3339,6 +3339,7 @@ menu "Onboard Peripheral Drivers"
         select RT_USING_LWIP
         select RT_USING_POSIX_FS
         select RT_USING_POSIX_SOCKET
+        select RT_LWIP_REASSEMBLY_FRAG
         default n
         
         if BSP_USING_ETH

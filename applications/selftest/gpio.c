@@ -51,6 +51,7 @@ void selftest_gpio_test(SelftestUserData *puserdata)
         rt_pin_mode(puserdata->gpio_pin[x][0], PIN_MODE_OUTPUT);
         rt_pin_write(puserdata->gpio_pin[x][0], PIN_LOW);
 
+        rt_pin_write(puserdata->gpio_pin[x][1], PIN_HIGH);
         rt_pin_mode(puserdata->gpio_pin[x][1], PIN_MODE_INPUT);
         if (rt_pin_read(puserdata->gpio_pin[x][1]) != PIN_LOW)
         {
@@ -63,6 +64,7 @@ void selftest_gpio_test(SelftestUserData *puserdata)
         rt_pin_mode(puserdata->gpio_pin[x][0], PIN_MODE_OUTPUT);
         rt_pin_write(puserdata->gpio_pin[x][0], PIN_HIGH);
 
+        rt_pin_write(puserdata->gpio_pin[x][1], PIN_LOW);
         rt_pin_mode(puserdata->gpio_pin[x][1], PIN_MODE_INPUT);
         if (rt_pin_read(puserdata->gpio_pin[x][1]) != PIN_HIGH)
         {
@@ -75,6 +77,7 @@ void selftest_gpio_test(SelftestUserData *puserdata)
         rt_pin_mode(puserdata->gpio_pin[x][1], PIN_MODE_OUTPUT);
         rt_pin_write(puserdata->gpio_pin[x][1], PIN_LOW);
 
+        rt_pin_write(puserdata->gpio_pin[x][0], PIN_HIGH);
         rt_pin_mode(puserdata->gpio_pin[x][0], PIN_MODE_INPUT);
         if (rt_pin_read(puserdata->gpio_pin[x][0]) != PIN_LOW)
         {
@@ -87,6 +90,7 @@ void selftest_gpio_test(SelftestUserData *puserdata)
         rt_pin_mode(puserdata->gpio_pin[x][1], PIN_MODE_OUTPUT);
         rt_pin_write(puserdata->gpio_pin[x][1], PIN_HIGH);
 
+        rt_pin_write(puserdata->gpio_pin[x][0], PIN_LOW);
         rt_pin_mode(puserdata->gpio_pin[x][0], PIN_MODE_INPUT);
         if (rt_pin_read(puserdata->gpio_pin[x][0]) != PIN_HIGH)
         {
@@ -126,7 +130,7 @@ void selftest_gpio_test(SelftestUserData *puserdata)
     else
     {
         LOG_E("gpio r LOW  error!");
-        puserdata->result[RESULT_GPIO_LOW_R].result = is_f_l_error;
+        puserdata->result[RESULT_GPIO_LOW_R].result = is_r_l_error;
     }
 
     if (is_r_h_error == 0)
@@ -137,6 +141,6 @@ void selftest_gpio_test(SelftestUserData *puserdata)
     else
     {
         LOG_E("gpio r HIGH error!");
-        puserdata->result[RESULT_GPIO_HIGH_R].result = is_f_h_error;
+        puserdata->result[RESULT_GPIO_HIGH_R].result = is_r_h_error;
     }
 }

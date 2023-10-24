@@ -25,7 +25,6 @@ struct rt_stm32_eth
 #endif
 
     ETH_HandleTypeDef heth;
-    ETH_DMADescTypeDef DMARxDscrTab[ETH_RX_DESC_CNT], DMATxDscrTab[ETH_RX_DESC_CNT];
     ETH_TxPacketConfig TxConfig;
 
     struct rt_completion TxPkt_completion;

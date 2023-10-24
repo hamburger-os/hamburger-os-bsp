@@ -88,6 +88,14 @@ int drv_touch_bus_init(struct _rt_drv_touch *config)
         return -RT_EIO;
     }
 
+    //初始化默认参数
+    config->adjuct.A = 0.23f;
+    config->adjuct.B = 0.00f;
+    config->adjuct.C = -62.91f;
+    config->adjuct.D = 0.01f;
+    config->adjuct.E = 0.15f;
+    config->adjuct.F = 1.03f;
+
     return RT_EOK;
 }
 

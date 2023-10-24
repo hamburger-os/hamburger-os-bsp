@@ -3,19 +3,23 @@
  * bernard.xiong 2009-10-14
  */
 
+/* Entry Point */
+ENTRY(Reset_Handler)
+
+/* Highest address of the user mode stack */
+_system_stack_size = 0x200;
+
 /* Program Entry, set to mark it as "used" and avoid gc */
 MEMORY
 {
 ROM  (rx) : ORIGIN =0x08020000,LENGTH =1920k
-RAM  (rw) : ORIGIN =0x24000000,LENGTH =512k
-RAM1 (rw) : ORIGIN =0x20000000,LENGTH =128k
-RAM2 (rw) : ORIGIN =0x00000000,LENGTH =64K
-RAM3 (rw) : ORIGIN =0x30000000,LENGTH =256k
-RAM4 (rw) : ORIGIN =0x30040000,LENGTH =32k
-RAM5 (rw) : ORIGIN =0x38000000,LENGTH =64k
+RAM  (xrw) : ORIGIN =0x24000000,LENGTH =512k
+RAM1 (xrw) : ORIGIN =0x20000000,LENGTH =128k
+RAM2 (xrw) : ORIGIN =0x00000000,LENGTH =64K
+RAM3 (xrw) : ORIGIN =0x30000000,LENGTH =256k
+RAM4 (xrw) : ORIGIN =0x30040000,LENGTH =32k
+RAM5 (xrw) : ORIGIN =0x38000000,LENGTH =64k
 }
-ENTRY(Reset_Handler)
-_system_stack_size = 0x200;
 
 SECTIONS
 {
