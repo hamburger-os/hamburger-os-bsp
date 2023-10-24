@@ -51,7 +51,9 @@ void selftest_gpio_test(SelftestUserData *puserdata)
         rt_pin_mode(puserdata->gpio_pin[x][0], PIN_MODE_OUTPUT);
         rt_pin_write(puserdata->gpio_pin[x][0], PIN_LOW);
 
+        rt_pin_mode(puserdata->gpio_pin[x][1], PIN_MODE_OUTPUT);
         rt_pin_write(puserdata->gpio_pin[x][1], PIN_HIGH);
+        rt_thread_delay(1);
         rt_pin_mode(puserdata->gpio_pin[x][1], PIN_MODE_INPUT);
         if (rt_pin_read(puserdata->gpio_pin[x][1]) != PIN_LOW)
         {
@@ -64,7 +66,9 @@ void selftest_gpio_test(SelftestUserData *puserdata)
         rt_pin_mode(puserdata->gpio_pin[x][0], PIN_MODE_OUTPUT);
         rt_pin_write(puserdata->gpio_pin[x][0], PIN_HIGH);
 
+        rt_pin_mode(puserdata->gpio_pin[x][1], PIN_MODE_OUTPUT);
         rt_pin_write(puserdata->gpio_pin[x][1], PIN_LOW);
+        rt_thread_delay(1);
         rt_pin_mode(puserdata->gpio_pin[x][1], PIN_MODE_INPUT);
         if (rt_pin_read(puserdata->gpio_pin[x][1]) != PIN_HIGH)
         {
@@ -77,7 +81,9 @@ void selftest_gpio_test(SelftestUserData *puserdata)
         rt_pin_mode(puserdata->gpio_pin[x][1], PIN_MODE_OUTPUT);
         rt_pin_write(puserdata->gpio_pin[x][1], PIN_LOW);
 
+        rt_pin_mode(puserdata->gpio_pin[x][0], PIN_MODE_OUTPUT);
         rt_pin_write(puserdata->gpio_pin[x][0], PIN_HIGH);
+        rt_thread_delay(1);
         rt_pin_mode(puserdata->gpio_pin[x][0], PIN_MODE_INPUT);
         if (rt_pin_read(puserdata->gpio_pin[x][0]) != PIN_LOW)
         {
@@ -90,7 +96,9 @@ void selftest_gpio_test(SelftestUserData *puserdata)
         rt_pin_mode(puserdata->gpio_pin[x][1], PIN_MODE_OUTPUT);
         rt_pin_write(puserdata->gpio_pin[x][1], PIN_HIGH);
 
+        rt_pin_mode(puserdata->gpio_pin[x][0], PIN_MODE_OUTPUT);
         rt_pin_write(puserdata->gpio_pin[x][0], PIN_LOW);
+        rt_thread_delay(1);
         rt_pin_mode(puserdata->gpio_pin[x][0], PIN_MODE_INPUT);
         if (rt_pin_read(puserdata->gpio_pin[x][0]) != PIN_HIGH)
         {

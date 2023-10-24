@@ -242,7 +242,7 @@ static void stm32_pin_mode(rt_device_t dev, rt_base_t pin, rt_base_t mode)
     GPIO_InitStruct.Pin = PIN_STPIN(pin);
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
 
     if (mode == PIN_MODE_OUTPUT)
     {
