@@ -33,7 +33,7 @@
 #define ETH_NOCACHE_RAM_SECTION
 #endif
 
-#define ETH_RX_BUFFER_SIZE 1536
+#define ETH_RX_BUFFER_SIZE 1524
 
 /* Data Type Definitions */
 typedef enum
@@ -271,6 +271,10 @@ struct pbuf *rt_stm32_eth_rx(rt_device_t dev)
 
     if (RxAllocStatus == RX_ALLOC_OK)
     {
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+        SCB_CleanInvalidateDCache();    //无效化并且清除Dcache
+#endif
+
         HAL_ETH_ReadData(&eth->heth, (void **) &p);
     }
 
@@ -445,11 +449,6 @@ void HAL_ETH_RxLinkCallback(void **pStart, void **pEnd, uint8_t *buff, uint16_t 
     {
         p->tot_len += Length;
     }
-
-#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
-    /* Invalidate data cache because Rx DMA's writing to physical memory makes it stale. */
-    SCB_InvalidateDCache_by_Addr((uint32_t *) buff, Length);
-#endif
 }
 
 static void phy_linkchange(void *parameter)
