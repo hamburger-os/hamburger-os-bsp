@@ -21,8 +21,10 @@
 #include "if_gpio.h"
 
 #define CAN_RX_THREAD_PRIORITY         20
-#define CAN_RX_THREAD_STACK_SIZE       (1024)
+#define CAN_RX_THREAD_STACK_SIZE       (1024 * 4)
 #define CAN_RX_THREAD_TIMESLICE        5
+
+#define CAN_MQ_NUM          (256)
 
 #define CAN_CH_RX_FLAG_1    (0x10000000)
 #define CAN_CH_RX_FLAG_2    (0x20000000)
@@ -34,6 +36,7 @@ typedef struct {
     const char* dev_name;
     rt_device_t can_dev;
     rt_err_t (*rx_ind)(rt_device_t dev, rt_size_t size);
+    rt_mq_t can_mq;
 } S_CAN_INFO;
 
 typedef struct {
@@ -42,7 +45,6 @@ typedef struct {
     uint8_t ch_num;
 
     struct rt_mailbox mailbox;
-    rt_mq_t mq;
 } S_CAN_DEV;
 
 static S_CAN_DEV can_dev;
@@ -56,6 +58,7 @@ static rt_err_t swos2_can_ch1_rx_call(rt_device_t dev, rt_size_t size)
     rt_uint32_t mb_data;
 
     mb_data = CAN_CH_RX_FLAG_1 | size;
+
     rt_mb_send(&can_dev.mailbox, mb_data);
     return RT_EOK;
 }
@@ -66,6 +69,7 @@ static rt_err_t swos2_can_ch2_rx_call(rt_device_t dev, rt_size_t size)
     rt_uint32_t mb_data;
 
     mb_data = CAN_CH_RX_FLAG_2 | size;
+
     rt_mb_send(&can_dev.mailbox, mb_data);
     return RT_EOK;
 }
@@ -76,6 +80,7 @@ static rt_err_t swos2_can_ch3_rx_call(rt_device_t dev, rt_size_t size)
     rt_uint32_t mb_data;
 
     mb_data = CAN_CH_RX_FLAG_3 | size;
+
     rt_mb_send(&can_dev.mailbox, mb_data);
     return RT_EOK;
 }
@@ -86,6 +91,7 @@ static rt_err_t swos2_can_ch4_rx_call(rt_device_t dev, rt_size_t size)
     rt_uint32_t mb_data;
 
     mb_data = CAN_CH_RX_FLAG_4 | size;
+
     rt_mb_send(&can_dev.mailbox, mb_data);
     return RT_EOK;
 }
@@ -96,6 +102,7 @@ static rt_err_t swos2_can_ch5_rx_call(rt_device_t dev, rt_size_t size)
     rt_uint32_t mb_data;
 
     mb_data = CAN_CH_RX_FLAG_5 | size;
+
     rt_mb_send(&can_dev.mailbox, mb_data);
     return RT_EOK;
 }
@@ -106,15 +113,40 @@ static void *CanRxThreadEntry(void *parameter)
     rt_uint32_t mb_rcv_data;
     uint8_t can_rx_ch;
     uint32_t can_rx_size;
+    rt_err_t ret = RT_EOK;
 
-    LOG_I("init ok");
+    struct rt_can_msg rxmsg = {0};
+
     while(1)
     {
         if(rt_mb_recv(&p_can_dev->mailbox, &mb_rcv_data, RT_WAITING_FOREVER) == RT_EOK)
         {
-            can_rx_ch   = mb_rcv_data & 0xF0000000;
+            can_rx_ch   = (mb_rcv_data & 0xF0000000) >> 28;
             can_rx_size = mb_rcv_data & 0x0FFFFFFF;
-            LOG_I("mb rx ch %d, size %d", can_rx_ch, can_rx_size);
+            LOG_I("mb rx data %x, ch %d, size %d", mb_rcv_data, can_rx_ch, can_rx_size);
+
+            if(can_rx_ch > (can_dev.ch_num + 1))
+            {
+                LOG_E("ch %d > can_dev.ch_num %d", can_rx_ch, (can_dev.ch_num + 1));
+                continue;
+            }
+
+            if (rt_device_read(can_dev.info[can_rx_ch - 1].can_dev, 0, &rxmsg, sizeof(rxmsg)) == sizeof(rxmsg))
+            {
+//                LOG_D("read %x %d %d %d", rxmsg.id, rxmsg.ide, rxmsg.rtr, rxmsg.len);
+//                LOG_HEX("read", 16, rxmsg.data, 8);
+
+                ret = rt_mq_send(can_dev.info[can_rx_ch - 1].can_mq, (const void *)&rxmsg, sizeof(rxmsg));
+                if(ret != RT_EOK)
+                {
+                    LOG_E("can mq send error");
+                    continue;
+                }
+            }
+            else
+            {
+                LOG_E("read %x %d %d %d", rxmsg.id, rxmsg.ide, rxmsg.rtr, rxmsg.len);
+            }
         }
         rt_thread_mdelay(10);
     }
@@ -124,7 +156,7 @@ static int CanRxThreadInit(void)
 {
     rt_thread_t tid;
 
-    tid = rt_thread_create("can rx",
+    tid = rt_thread_create("if can rx",
                             CanRxThreadEntry, RT_NULL,
                             CAN_RX_THREAD_STACK_SIZE,
                             CAN_RX_THREAD_PRIORITY, CAN_RX_THREAD_TIMESLICE);
@@ -160,6 +192,15 @@ static BOOL swos2_can_cfg(S_CAN_DEV *p_can_dev)
     case E_SLOT_ID_2:
         break;
     case E_SLOT_ID_3:
+        p_can_dev->info[E_CAN_CH_1].dev_name = "can1";
+        p_can_dev->info[E_CAN_CH_1].rx_ind = swos2_can_ch1_rx_call;
+        p_can_dev->info[E_CAN_CH_2].dev_name = "can2";
+        p_can_dev->info[E_CAN_CH_2].rx_ind = swos2_can_ch2_rx_call;
+        p_can_dev->info[E_CAN_CH_3].dev_name = "mcp2517fd1";
+        p_can_dev->info[E_CAN_CH_3].rx_ind = swos2_can_ch3_rx_call;
+        p_can_dev->info[E_CAN_CH_4].dev_name = "mcp2517fd2";
+        p_can_dev->info[E_CAN_CH_4].rx_ind = swos2_can_ch4_rx_call;
+        p_can_dev->ch_num = 4;
         break;
     case E_SLOT_ID_4:
         break;
@@ -181,6 +222,7 @@ static BOOL swos2_can_cfg(S_CAN_DEV *p_can_dev)
 static BOOL swos2_can_init(S_CAN_DEV *p_can_dev)
 {
     uint8_t i;
+    uint8_t can_mq_name[20];
 
     if(NULL == p_can_dev)
     {
@@ -218,6 +260,15 @@ static BOOL swos2_can_init(S_CAN_DEV *p_can_dev)
             }
             /* 设置接收回调函数 */
             rt_device_set_rx_indicate(p_can_dev->info[i].can_dev, p_can_dev->info[i].rx_ind);
+
+            /* 初始化消息队列 */
+            sprintf(can_mq_name, "can %d mq", i);
+            p_can_dev->info[i].can_mq = rt_mq_create(can_mq_name, sizeof(struct rt_can_msg), CAN_MQ_NUM, RT_IPC_FLAG_FIFO);
+            if(RT_NULL == p_can_dev->info[i].can_mq)
+            {
+                LOG_E("can %d mq null", i);
+                return FALSE;
+            }
         }
         else
         {
@@ -242,7 +293,8 @@ BOOL if_can_init( void )
 
     memset(p_can_dev, 0 , sizeof(S_CAN_DEV));
 
-    p_can_dev->id = if_gpio_getSlotId();
+//    p_can_dev->id = if_gpio_getSlotId();
+    p_can_dev->id = E_SLOT_ID_3;
     result = swos2_can_cfg(p_can_dev);
     if(result != TRUE)
     {
@@ -256,18 +308,49 @@ BOOL if_can_init( void )
         LOG_E("swos2_can_init error");
         return result;
     }
-
+    LOG_I("swos2_can_init ok");
     return TRUE;
 }
 
 BOOL if_can_send( E_CAN_CH ch, S_CAN_MSG *pMsg )
 {
+    struct rt_can_msg rxmsg = {0};
 
-    return TRUE;
+    rxmsg.id = pMsg->id_u32;
+    rxmsg.len = pMsg->len_u8;
+    memcpy(rxmsg.data, pMsg->data_u8, sizeof(pMsg->data_u8));
+
+    if (rt_device_write(can_dev.info[ch].can_dev, 0, &rxmsg, sizeof(rxmsg)) == sizeof(rxmsg))
+    {
+        return TRUE;
+    }
+    else
+    {
+        return FALSE;
+    }
 }
 
 BOOL if_can_get( E_CAN_CH ch, S_CAN_MSG *pMsg )
 {
+    rt_err_t ret = RT_EOK;
+    struct rt_can_msg rx_msg;
 
-    return TRUE;
+    if(NULL == pMsg)
+    {
+        return FALSE;
+    }
+
+    ret = rt_mq_recv(can_dev.info[ch].can_mq, (void *)&rx_msg, sizeof(struct rt_can_msg), RT_WAITING_NO);
+    if(RT_EOK == ret)
+    {
+        pMsg->id_u32 = rx_msg.id;
+        pMsg->len_u8 = rx_msg.len;
+        memcpy(pMsg->data_u8, rx_msg.data, sizeof(pMsg->data_u8));
+
+        return TRUE;
+    }
+    else
+    {
+        return FALSE;
+    }
 }
