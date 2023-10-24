@@ -11,6 +11,7 @@
 #include "support_init.h"
 #include "support_timer.h"
 #include "support_gpio.h"
+#include "support_can.h"
 /*******************************************************************************************
  *        Local definitions
  *******************************************************************************************/
@@ -34,6 +35,7 @@ extern int support_init( void )
 	MY_Printf("\r\n+++++++++++++++++support Init.....>>>>>>>>>>>>>>\r\n");
 	
 	support_timer_init();
+	support_can_init(E_CAN_ID_MAX);
 	return 0;
 }
 /**************************************end file*********************************************/

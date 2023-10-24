@@ -37,10 +37,19 @@ static void test_task01( void )
 {
 	static uint32 cnt = 0U;
 	static S_TIMER_INFO timer = { FALSE, 0U };
+	S_CAN_FRAME can_frame;
 
 	if( TRUE == support_timer_timeoutM( &timer, 1000U ))
 	{
-		MY_Printf("task01-->running:%d\r\n", cnt++ );
+//		MY_Printf("task01-->running:%d\r\n", cnt++ );
+	    if(supprot_can_getData(E_CAN_ID_2, &can_frame) == E_CAN_OK)
+	    {
+	        if(E_CAN_OK != support_can_sendData(E_CAN_ID_2, &can_frame))
+	        {
+	            MY_Printf("send error\r\n");
+	        }
+	    }
+
 	}
 }
 
