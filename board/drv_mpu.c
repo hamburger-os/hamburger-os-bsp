@@ -70,7 +70,17 @@ static MPU_Region_InitTypeDef mpu_cfg[] =
     },
     {
         .BaseAddress = BSP_AHBSRAM_D2_ADDR + 0x40000,
-        .Size = MPU_REGION_SIZE_32KB,
+        .Size = MPU_REGION_SIZE_16KB,
+        .SubRegionDisable = 0x0,
+        .TypeExtField = MPU_TEX_LEVEL1,
+        .AccessPermission = MPU_REGION_FULL_ACCESS,
+        .DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE,
+        .IsCacheable = MPU_ACCESS_NOT_CACHEABLE,
+        .IsBufferable = MPU_ACCESS_NOT_BUFFERABLE,
+    },
+    {
+        .BaseAddress = BSP_AHBSRAM_D2_ADDR + 0x44000,
+        .Size = MPU_REGION_SIZE_16KB,
         .SubRegionDisable = 0x0,
         .TypeExtField = MPU_TEX_LEVEL0,
         .AccessPermission = MPU_REGION_FULL_ACCESS,

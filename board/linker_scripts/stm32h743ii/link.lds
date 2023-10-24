@@ -17,8 +17,9 @@ RAM  (xrw) : ORIGIN =0x24000000,LENGTH =512k
 RAM1 (xrw) : ORIGIN =0x20000000,LENGTH =128k
 RAM2 (xrw) : ORIGIN =0x00000000,LENGTH =64K
 RAM3 (xrw) : ORIGIN =0x30000000,LENGTH =256k
-RAM4 (xrw) : ORIGIN =0x30040000,LENGTH =32k
-RAM5 (xrw) : ORIGIN =0x38000000,LENGTH =64k
+RAM4 (xrw) : ORIGIN =0x30040000,LENGTH =16k
+RAM5 (xrw) : ORIGIN =0x30044000,LENGTH =16k
+RAM6 (xrw) : ORIGIN =0x38000000,LENGTH =64k
 }
 
 SECTIONS
@@ -129,6 +130,21 @@ SECTIONS
         . = ALIGN(4);
         _eusb = .;
     } > RAM4
+    
+    .eth (NOLOAD):
+    {
+        . = ALIGN(4);
+        _seth = .;
+
+        /* section information for bufferable */
+        *(.bufferable)     /* .data sections */
+        *(.bufferable.*)    /* .data* sections */
+        *(.bss.bufferable) /* .bss sections */
+        *(.gnu.linkonce.d*)
+        
+        . = ALIGN(4);
+        _eeth = .;
+    } > RAM5
 
     .stack : 
     {

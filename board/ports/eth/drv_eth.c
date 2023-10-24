@@ -28,7 +28,7 @@
 #include <drv_log.h>
 
 #ifdef SOC_SERIES_STM32H7
-#define ETH_NOCACHE_RAM_SECTION     __attribute__((section(".bss.noncacheable")))
+#define ETH_NOCACHE_RAM_SECTION     __attribute__((section(".bss.bufferable")))
 #else
 #define ETH_NOCACHE_RAM_SECTION
 #endif
