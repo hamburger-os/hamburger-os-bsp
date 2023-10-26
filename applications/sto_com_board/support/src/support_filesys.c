@@ -1,11 +1,11 @@
 /*******************************************************************************************
-                                file information
-********************************************************************************************
-**@file  : support_filesys.c
-**@author: Created By chengt
-**@date  : 2023.09.06
-**@brief : Implement the function interfaces of support_filesys
-********************************************************************************************/
+ file information
+ ********************************************************************************************
+ **@file  : support_filesys.c
+ **@author: Created By chengt
+ **@date  : 2023.09.06
+ **@brief : Implement the function interfaces of support_filesys
+ ********************************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -15,7 +15,6 @@
  *        Local definitions
  *******************************************************************************************/
 
-
 /*******************************************************************************************
  *        Local variables
  *******************************************************************************************/
@@ -24,38 +23,36 @@
  *        Local functions
  *******************************************************************************************/
 
-
-
 /*******************************************************************************************
  ** @brief: support_can_init
  ** @param: null
  *******************************************************************************************/
-extern sint32 support_fileSys_readFile( const uint8 *filePath, const uint8 *fileName, const void *buf, uint32 len, uint32 offset )
+extern sint32 support_fileSys_readFile(const uint8 *filePath, const uint8 *fileName, const void *buf, uint32 len,
+        uint32 offset)
 {
-	sint32 ret = -1;
-	
-	return ret;
+    sint32 ret = -1;
+
+    return ret;
 }
 /*******************************************************************************************
  ** @brief: support_can_init
  ** @param: null
  *******************************************************************************************/
-extern sint32 support_fileSys_writeFile( const uint8 *filePath, const uint8 *fileName, const void *buf, uint32 len )
+extern sint32 support_fileSys_writeFile(const uint8 *filePath, const uint8 *fileName, const void *buf, uint32 len)
 {
-	sint32 ret = -1;
+    sint32 ret = -1;
 
-
-	return ret;
+    return ret;
 }
 
 /*******************************************************************************************
  ** @brief: support_can_init
  ** @param: null
  *******************************************************************************************/
-extern sint32 support_fileSys_getFileSize( uint8 *filePathName, uint8 *filePath, uint8 *fileName )
+extern sint32 support_fileSys_getFileSize(uint8 *filePathName, uint8 *filePath, uint8 *fileName)
 {
-	sint32 ret_size = -1;
-	
-	return ret_size;
+    sint32 ret_size = -1;
+
+    return ret_size;
 }
 /**************************************end file*********************************************/

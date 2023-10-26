@@ -17,7 +17,7 @@
 #include <rtdevice.h>
 
 static char fmt_buf[HAL_OS_FMT_BUF_SIZE] = { 0 };
-sint32 MY_Printf( const char *fmt,... )
+sint32 MY_Printf(const char *fmt, ...)
 {
 
     sint32 vsn_len_s32 = 0;
@@ -25,11 +25,11 @@ sint32 MY_Printf( const char *fmt,... )
 
     va_start(args, fmt);
 
-    vsn_len_s32 = rt_vsnprintf((char *)fmt_buf, HAL_OS_FMT_BUF_SIZE - 1, fmt, args );
+    vsn_len_s32 = rt_vsnprintf((char *) fmt_buf, HAL_OS_FMT_BUF_SIZE - 1, fmt, args);
 
-    if( vsn_len_s32 > (sint32)( HAL_OS_FMT_BUF_SIZE - 1U ))
+    if (vsn_len_s32 > (sint32) ( HAL_OS_FMT_BUF_SIZE - 1U))
     {
-        vsn_len_s32 = (sint32)( HAL_OS_FMT_BUF_SIZE - 1U );
+        vsn_len_s32 = (sint32) ( HAL_OS_FMT_BUF_SIZE - 1U);
     }
 
     va_end(args);
@@ -37,7 +37,7 @@ sint32 MY_Printf( const char *fmt,... )
     return rt_kprintf("%s", fmt_buf);
 }
 
-sint32 MY_PrintfLog( const char *fmt,... )
+sint32 MY_PrintfLog(const char *fmt, ...)
 {
     va_list args;
 

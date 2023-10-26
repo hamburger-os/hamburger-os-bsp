@@ -16,17 +16,17 @@
 #include <rtthread.h>
 #include <rtdevice.h>
 
-BOOL if_mvb_init( void )
+BOOL if_mvb_init(void)
 {
     return TRUE;
 }
 
-BOOL if_mvb_send( E_MVB_CH ch, uint8 *pdata, uint16 len )
+BOOL if_mvb_send(E_MVB_CH ch, uint8 *pdata, uint16 len)
 {
     return TRUE;
 }
 
-uint16 if_mvb_get( E_MVB_CH ch, uint8 *pdata, uint16 len )
+uint16 if_mvb_get(E_MVB_CH ch, uint8 *pdata, uint16 len)
 {
     return 0;
 }

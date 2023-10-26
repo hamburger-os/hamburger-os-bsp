@@ -20,11 +20,11 @@
 
 S_APP_ARCH_IF g_appArchIf;
 
-BOOL app_archRunning( p_init appArchIf_init )
+BOOL app_archRunning(p_init appArchIf_init)
 {
     appArchIf_init();
 
-    if(TaskInit() < 0)
+    if (TaskInit() < 0)
     {
         LOG_E("TaskInit Error");
         return FALSE;
@@ -35,13 +35,10 @@ BOOL app_archRunning( p_init appArchIf_init )
     return TRUE;
 }
 
+extern void test_main_init(void);
 
-extern void test_main_init( void );
-
-void app_archInit( void )
+void app_archInit(void)
 {
-    support_osRunning( test_main_init );
+    support_osRunning(test_main_init);
 }
-
-
 

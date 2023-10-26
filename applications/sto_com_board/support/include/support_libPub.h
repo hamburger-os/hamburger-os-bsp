@@ -1,16 +1,14 @@
 /********************************************************************
-文件名：supprot_libPub.h
-模块：支持层通用库头文件，常用公用函数接口定义
-*********************************************************************/
+ 文件名：supprot_libPub.h
+ 模块：支持层通用库头文件，常用公用函数接口定义
+ *********************************************************************/
 #ifndef SUPPORT_LIBPUB_H
 #define SUPPORT_LIBPUB_H
 
 #include "common.h"
 
-
 /* 以指定字节内容，对内存区域进行填充操作 */
 void *support_memset(void *p_areaPara, uint8 u8_fillPara, uint32 u32_lenPara);
-
 
 /* 内存拷贝 */
 void *support_memcpy(void *p_destPara, const void *p_srcPara, uint32 u32_lenPara);

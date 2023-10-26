@@ -16,17 +16,17 @@
 #include <rtthread.h>
 #include <rtdevice.h>
 
-BOOL if_eth_init( void )
+BOOL if_eth_init(void)
 {
     return TRUE;
 }
 
-BOOL if_eth_send( E_ETH_CH ch, uint8 *pdata, uint16 len )
+BOOL if_eth_send(E_ETH_CH ch, uint8 *pdata, uint16 len)
 {
     return TRUE;
 }
 
-uint16 if_eth_get( E_ETH_CH ch, uint8 *pdata, uint16 len )
+uint16 if_eth_get(E_ETH_CH ch, uint8 *pdata, uint16 len)
 {
     return TRUE;
 }
