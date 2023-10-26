@@ -3334,7 +3334,6 @@ menu "Onboard Peripheral Drivers"
         
     menuconfig BSP_USING_ETH
         bool "Enable Ethernet"
-        select RT_LWIP_USING_HW_CHECKSUM
         select RT_USING_SAL
         select RT_USING_LWIP
         select RT_USING_POSIX_FS

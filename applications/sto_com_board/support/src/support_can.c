@@ -50,7 +50,15 @@ static E_CAN_CH get_can_channelId( E_CAN_ID id )
  *******************************************************************************************/
 extern E_CAN_STATE support_can_init( E_CAN_ID id )
 {
-	return E_CAN_OK;
+    if(if_can_init() == TRUE)
+    {
+        return E_CAN_OK;
+    }
+    else
+    {
+        MY_Printf("if_can_init error\r\n");
+        return FALSE;
+    }
 }
 
 /*******************************************************************************************
@@ -114,7 +122,6 @@ extern E_CAN_STATE supprot_can_getData( E_CAN_ID id, S_CAN_FRAME *p_can_frame )
 		p_can_frame->no_u8 = ( uint8 )(( msg.id_u32 & 0x07 ) & 0xFF );
 		p_can_frame->length_u8 =  msg.len_u8;
 		support_memcpy( &p_can_frame->data_u8[0U], &msg.data_u8[0U], msg.len_u8 );
-
 		valid_ret = E_CAN_OK;
 	}
 	else
