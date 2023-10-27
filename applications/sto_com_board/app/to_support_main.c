@@ -38,17 +38,39 @@ static void test_task01(void)
     static uint32 cnt = 0U;
     static S_TIMER_INFO timer = { FALSE, 0U };
     S_CAN_FRAME can_frame;
+    int i = 0;
+    static uint8 data_init = 0;
 
-    if ( TRUE == support_timer_timeoutM(&timer, 1000U))
+    static uint8 eth_txbuf[1024];
+    static uint8 eth_rxbuf[1024];
+
+    if ( TRUE == support_timer_timeoutM(&timer, 10U))
     {
-//		MY_Printf("task01-->running:%d\r\n", cnt++ );
-        if (supprot_can_getData(E_CAN_ID_2, &can_frame) == E_CAN_OK)
+////		MY_Printf("task01-->running:%d\r\n", cnt++ );
+//        if (supprot_can_getData(E_CAN_ID_2, &can_frame) == E_CAN_OK)
+//        {
+//            if (E_CAN_OK != support_can_sendData(E_CAN_ID_2, &can_frame))
+//            {
+//                MY_Printf("send error\r\n");
+//            }
+//        }
+
+        if(0 == data_init)
         {
-            if (E_CAN_OK != support_can_sendData(E_CAN_ID_2, &can_frame))
-            {
-                MY_Printf("send error\r\n");
-            }
+            for(i=0; i<1024; i++)
+                eth_txbuf[i] = i;
+            data_init = 1;
         }
+
+        if(support_eth_sendData(E_ETH_ID_1, eth_txbuf, 10) != E_ETH_OK)
+        {
+            MY_Printf("E_ETH_ID_1 send error\r\n");
+        }
+
+//        if(support_eth_sendData(E_ETH_ID_2, eth_txbuf, 10) != E_ETH_OK)
+//        {
+//            MY_Printf("E_ETH_ID_2 send error\r\n");
+//        }
 
     }
 }

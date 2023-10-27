@@ -109,7 +109,7 @@ static rt_err_t swos2_can_ch5_rx_call(rt_device_t dev, rt_size_t size)
     return RT_EOK;
 }
 
-static void *CanRxThreadEntry(void *parameter)
+static void CanRxThreadEntry(void *parameter)
 {
     S_CAN_DEV *p_can_dev = &can_dev;
     rt_uint32_t mb_rcv_data;

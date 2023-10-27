@@ -52,7 +52,14 @@ static E_ETH_CH get_eth_channelId(E_ETH_ID id)
  *******************************************************************************************/
 extern E_ETH_STATE support_eth_init(E_ETH_ID id)
 {
-    return E_ETH_OK;
+    if(if_eth_init() == TRUE)
+    {
+        return E_ETH_OK;
+    }
+    else
+    {
+        return E_ETH_ERR;
+    }
 }
 /*******************************************************************************************
  ** @brief: support_eth_sendData
