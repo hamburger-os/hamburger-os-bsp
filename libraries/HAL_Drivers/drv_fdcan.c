@@ -471,12 +471,11 @@ static int _inline_can_recvmsg(struct rt_can_device *can, void *buf, rt_uint32_t
     }
 }
 
-static const struct rt_can_ops _can_ops =
-    {
-        _inline_can_config,
-        _inline_can_control,
-        _inline_can_sendmsg,
-        _inline_can_recvmsg,
+static const struct rt_can_ops _can_ops = {
+    _inline_can_config,
+    _inline_can_control,
+    _inline_can_sendmsg,
+    _inline_can_recvmsg,
 };
 
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
@@ -560,13 +559,13 @@ void HAL_FDCAN_ErrorCallback(FDCAN_HandleTypeDef *hfdcan)
 {
     rt_uint32_t tmp_u32Errcount;
     rt_uint32_t tmp_u32status;
-    uint32_t ret = HAL_FDCAN_GetError(hfdcan);
+    uint32_t Error = HAL_FDCAN_GetError(hfdcan);
 
     if (hfdcan->Instance == FDCAN1)
     {
 #ifdef BSP_USING_FDCAN1
         // can1
-        if ((ret & FDCAN_IT_ARB_PROTOCOL_ERROR) &&
+        if ((Error & FDCAN_IT_ARB_PROTOCOL_ERROR) &&
             (hfdcan->Instance->CCCR & FDCAN_CCCR_INIT_Msk))
         {
             // hfdcan->Instance->CCCR |= FDCAN_CCCR_CCE_Msk;
@@ -582,12 +581,13 @@ void HAL_FDCAN_ErrorCallback(FDCAN_HandleTypeDef *hfdcan)
             st_DrvCan1.device.status.snderrcnt = (tmp_u32Errcount)&0x000000ff;
             st_DrvCan1.device.status.lasterrtype = tmp_u32status & 0x000000007;
         }
+        rt_hw_can_isr(&st_DrvCan1.device, RT_CAN_EVENT_TX_FAIL );
 #endif /*BSP_USING_FDCAN1*/
     }
     else
     {
 #ifdef BSP_USING_FDCAN2
-        if ((ret & FDCAN_IT_ARB_PROTOCOL_ERROR) &&
+        if ((Error & FDCAN_IT_ARB_PROTOCOL_ERROR) &&
             (hfdcan->Instance->CCCR & FDCAN_CCCR_INIT_Msk))
         {
             // hfdcan->Instance->CCCR |= FDCAN_CCCR_CCE_Msk;
@@ -603,6 +603,7 @@ void HAL_FDCAN_ErrorCallback(FDCAN_HandleTypeDef *hfdcan)
             st_DrvCan2.device.status.snderrcnt = (tmp_u32Errcount)&0x000000ff;
             st_DrvCan2.device.status.lasterrtype = tmp_u32status & 0x000000007;
         }
+        rt_hw_can_isr(&st_DrvCan2.device, RT_CAN_EVENT_TX_FAIL );
 #endif /*BSP_USING_FDCAN2*/
     }
 }
