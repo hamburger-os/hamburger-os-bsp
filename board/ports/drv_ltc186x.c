@@ -130,7 +130,7 @@ static const struct rt_adc_ops ltc186x_adc_ops =
     .get_vref = ltc186x_adc_get_vref,
 };
 
-static int rt_hw_ltc186x_init(void)
+static int rt_hw_ltc186x_spi_device_init(void)
 {
     rt_err_t ret = RT_EOK;
 
@@ -145,8 +145,8 @@ static int rt_hw_ltc186x_init(void)
         }
     } while (rt_device_find(dev_name));
 
-    rt_hw_soft_spi_device_attach(ltc186x_dev.spibus, dev_name, ltc186x_dev.cspin);
-//    rt_hw_spi_device_attach(ltc186x_dev.spibus, dev_name, rt_pin_get(ltc186x_dev.cspin));
+//    rt_hw_soft_spi_device_attach(ltc186x_dev.spibus, dev_name, ltc186x_dev.cspin);
+    rt_hw_spi_device_attach(ltc186x_dev.spibus, dev_name, rt_pin_get(ltc186x_dev.cspin));
     ltc186x_dev.spidev = (struct rt_spi_device *)rt_device_find(dev_name);
     if (ltc186x_dev.spidev == NULL)
     {
@@ -164,6 +164,12 @@ static int rt_hw_ltc186x_init(void)
         return -RT_EIO;
     }
 
+    return RT_EOK;
+}
+INIT_PREV_EXPORT(rt_hw_ltc186x_spi_device_init);
+
+static int rt_hw_ltc186x_init(void)
+{
     /* register ADC device */
     if (rt_hw_adc_register(&ltc186x_dev.adcdev, "ltc186x", &ltc186x_adc_ops, &ltc186x_dev) == RT_EOK)
     {

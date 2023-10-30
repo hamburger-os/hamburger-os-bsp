@@ -314,6 +314,9 @@ if GetDepend(['BSP_USING_LTC186X']):
 if GetDepend(['BSP_USING_GNSS']):
     src += Glob('ports/drv_gnss.c')
     
+if GetDepend(['BSP_USING_LORA']):
+    src += Glob('ports/drv_lora.c')
+    
 if GetDepend(['BSP_USING_KSZ8794']):
     src += Glob('ports/drv_ksz8794.c')
   
@@ -323,6 +326,9 @@ if GetDepend(['BSP_USING_MCP2517FD']):
   
 if GetDepend(['BSP_USING_LTC4281I']):
     src += Glob('ports/drv_ltc4281i.c')
+    
+if GetDepend(['BSP_USING_SC16IS752']):
+    src += Glob('ports/drv_SC16IS752.c')
 
 group = DefineGroup('Drivers', src, depend = [''], CPPPATH = path, CPPDEFINES = CPPDEFINES)
 

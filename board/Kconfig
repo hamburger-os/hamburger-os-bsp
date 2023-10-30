@@ -3606,8 +3606,8 @@ menu "Onboard Peripheral Drivers"
               default (10)
                   
           menuconfig BSP_USE_MCP2517FD_CAN1
-          bool "Enable The MCP2517FD CAN FD Port 1"
-          default n
+              bool "Enable The MCP2517FD CAN FD Port 1"
+              default n
           
           if BSP_USE_MCP2517FD_CAN1
               config BSP_MCP2517FD_CAN1_SPI_BUS
@@ -3624,8 +3624,8 @@ menu "Onboard Peripheral Drivers"
           endif
         
           menuconfig BSP_USE_MCP2517FD_CAN2
-          bool "Enable The MCP2517FD CAN FD Port 2"
-          default n
+              bool "Enable The MCP2517FD CAN FD Port 2"
+              default n
           
           if BSP_USE_MCP2517FD_CAN2
               config BSP_MCP2517FD_CAN2_SPI_BUS
@@ -3642,8 +3642,8 @@ menu "Onboard Peripheral Drivers"
           endif
         
           menuconfig BSP_USE_MCP2517FD_CAN3
-          bool "Enable The MCP2517FD CAN FD Port 3"
-          default n
+              bool "Enable The MCP2517FD CAN FD Port 3"
+              default n
           
           if BSP_USE_MCP2517FD_CAN3
               config BSP_MCP2517FD_CAN3_SPI_BUS
@@ -3660,8 +3660,8 @@ menu "Onboard Peripheral Drivers"
           endif
         
           menuconfig BSP_USE_MCP2517FD_CAN4
-          bool "Enable The MCP2517FD CAN FD Port 4"
-          default n
+              bool "Enable The MCP2517FD CAN FD Port 4"
+              default n
           
           if BSP_USE_MCP2517FD_CAN4
               config BSP_MCP2517FD_CAN4_SPI_BUS
@@ -3711,7 +3711,38 @@ menu "Onboard Peripheral Drivers"
                 default "PC.13"
         endif
         
-	menuconfig BSP_USING_KSZ8794
+    menuconfig BSP_USING_LORA
+        bool "Enable S30 Series LoRa Module"
+        default n
+        
+        if BSP_USING_LORA
+            config BSP_LORA_DEVNAME
+                string "Set the uart used, default: uart4"
+                default "uart4"
+                
+            config BSP_LORA_DEFAULT_RATE
+                int "Set the uart default baudrate, default: (9600)"
+                default (9600)
+                
+            config BSP_LORA_RATE
+                int "Set the uart baudrate, default: (115200)"
+                default (115200)
+                
+            config BSP_LORA_BUFFER_SIZE
+                int "Set the uart buffer size, default: (1024)"
+                default (1024)
+                
+            config BSP_LORA_USING_POWER_PIN
+                bool "Enable LORA power pin"
+                default n
+                
+            config BSP_LORA_POWER_PIN
+                string "Set the pin of the power, default: PC.2"
+                depends on BSP_LORA_USING_POWER_PIN
+                default "PC.2"
+        endif
+        
+    menuconfig BSP_USING_KSZ8794
         bool "Enable The KSZ8794 is ethernet switch with gigabit RGMII/MII/RMII interface"
         default n
         
@@ -3737,21 +3768,45 @@ menu "Onboard Peripheral Drivers"
               default "PI.7"
         endif
         
-	menuconfig BSP_USING_LTC4281I
+    menuconfig BSP_USING_LTC4281I
         bool "Enable ltc4281i"
         default n
         
         if BSP_USING_LTC4281I
-			config LTC4281I_I2C_DEV
-				string "Set the i2c device name used, default: i2c3"
-				default "i2c3"
-			  
-			config LTC4281I_I2C_ADD
-				hex "Set the i2c device address, default: 0x44"
-				default (0x44)
+            config LTC4281I_I2C_DEV
+                string "Set the i2c device name used, default: i2c3"
+                default "i2c3"
+              
+            config LTC4281I_I2C_ADD
+                hex "Set the i2c device address, default: 0x44"
+                default (0x44)
         endif
-    
         
+    menuconfig BSP_USING_SC16IS752
+        bool "Enable The SC16IS752/SC16IS762 is Dual UART with I2C-bus/SPI interface, 64-byte FIFOs, IrDA SIR."
+        default n
+        
+        if BSP_USING_SC16IS752
+            config SC16IS752_SPI_BUS
+                string "Set the spi bus used, default: spi5"
+                default "spi5"
+                
+            config SC16IS752_SPI_CS_PIN
+                string "Set the pin of the chip select, default: PC.5"
+                default "PC.5"
+                
+            config SC16IS752_SPI_SPEED
+                int "Set the rate of spi, default: (4 * 1000 *1000)"
+                default (4000000)
+                
+            config SC16IS752_IRQ_PIN
+                string "Set the pin of irq, default: PA.8"
+                default "PA.8"
+                
+            config SC16IS752_RST_PIN
+                string "Set the pin of reset, default: PA.15"
+                default "PA.15"
+        endif
 endmenu
 
 endmenu
