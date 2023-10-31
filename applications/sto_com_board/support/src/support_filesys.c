@@ -24,7 +24,7 @@
  *******************************************************************************************/
 
 /*******************************************************************************************
- ** @brief: support_can_init
+ ** @brief: support_fileSys_readFile
  ** @param: null
  *******************************************************************************************/
 extern sint32 support_fileSys_readFile(const uint8 *filePath, const uint8 *fileName, const void *buf, uint32 len,
@@ -35,7 +35,7 @@ extern sint32 support_fileSys_readFile(const uint8 *filePath, const uint8 *fileN
     return ret;
 }
 /*******************************************************************************************
- ** @brief: support_can_init
+ ** @brief: support_fileSys_writeFile
  ** @param: null
  *******************************************************************************************/
 extern sint32 support_fileSys_writeFile(const uint8 *filePath, const uint8 *fileName, const void *buf, uint32 len)
@@ -46,7 +46,7 @@ extern sint32 support_fileSys_writeFile(const uint8 *filePath, const uint8 *file
 }
 
 /*******************************************************************************************
- ** @brief: support_can_init
+ ** @brief: support_fileSys_getFileSize
  ** @param: null
  *******************************************************************************************/
 extern sint32 support_fileSys_getFileSize(uint8 *filePathName, uint8 *filePath, uint8 *fileName)

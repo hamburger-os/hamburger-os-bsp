@@ -34,7 +34,13 @@ extern int support_init(void)
     MY_Printf("\r\n+++++++++++++++++support Init.....>>>>>>>>>>>>>>\r\n");
 
     support_timer_init();
-    support_can_init(E_CAN_ID_MAX);
+
+    if(support_can_init(E_CAN_ID_MAX) != E_ETH_OK)
+    {
+        MY_Printf("support_can_init error");
+        return -1;
+    }
+
     if(support_eth_init(E_ETH_ID_MAX) != E_ETH_OK)
     {
         MY_Printf("support_eth_init error");

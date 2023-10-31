@@ -311,7 +311,6 @@ BOOL if_can_init(void)
         LOG_E("swos2_can_init error");
         return result;
     }
-    LOG_I("swos2_can_init ok");
     return TRUE;
 }
 
