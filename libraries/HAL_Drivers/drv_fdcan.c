@@ -560,6 +560,7 @@ void HAL_FDCAN_ErrorCallback(FDCAN_HandleTypeDef *hfdcan)
     rt_uint32_t tmp_u32Errcount;
     rt_uint32_t tmp_u32status;
     uint32_t Error = HAL_FDCAN_GetError(hfdcan);
+//    LOG_E("ErrorCallback : 0x%x", Error);
 
     if (hfdcan->Instance == FDCAN1)
     {
