@@ -3198,7 +3198,17 @@ menu "Onboard Peripheral Drivers"
                 string "Set the file system used, default: elm"
                 default "elm"
         endif
-        
+
+    menuconfig BSP_USE_LINK_LAYER_COMMUNICATION
+        bool "Enable Link Layer Communication"
+        default n
+                
+        if BSP_USE_LINK_LAYER_COMMUNICATION
+            config BSP_LINK_LAYER_RX_BUF_NUM
+                int "Set the Link Layer Rx buf, default: 8"
+                default (8)
+        endif 
+            
     menuconfig BSP_USING_KSZ8851
         bool "Enable NETDEV KSZ8851 (KSZ8851-16MLLU)"
         select BSP_USING_FMC
@@ -3229,16 +3239,6 @@ menu "Onboard Peripheral Drivers"
             config BSP_USING_KSZ8851_BUSTURNAROUNDDURATION
                 int "Set the BusTurnAroundDuration, default: 8"
                 default (8)
-                
-            config BSP_USE_LINK_LAYER_COMMUNICATION
-                bool "Enable Link Layer Communication"
-                default n
-                
-                if BSP_USE_LINK_LAYER_COMMUNICATION
-                    config BSP_LINK_LAYER_RX_BUF_NUM
-                        int "Set the Link Layer Rx buf, default: 8"
-                        default (8)
-                endif
                 
             config BSP_USE_KVDB_NET_IF
                 bool "Enable kvdb set netdev if"

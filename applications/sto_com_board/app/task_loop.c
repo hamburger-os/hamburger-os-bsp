@@ -21,7 +21,7 @@
 #define TASK_LOW_THREAD_PRIORITY         20
 #define TASK_LOW_THREAD_STACK_SIZE       (1024 * 10)
 
-static void *TaskHighThreadEntry(void *parameter)
+static void TaskHighThreadEntry(void *parameter)
 {
     while (1)
     {
@@ -36,8 +36,8 @@ static void *TaskHighThreadEntry(void *parameter)
 static sint32 TaskHighThreadInit(void)
 {
     if (if_OSTaskCreate("task high", TaskHighThreadEntry, NULL,
-    TASK_HIGH_THREAD_STACK_SIZE,
-    TASK_HIGH_THREAD_PRIORITY) < 0)
+                        TASK_HIGH_THREAD_STACK_SIZE,
+                        TASK_HIGH_THREAD_PRIORITY) < 0)
     {
         return -1;
     }
@@ -47,7 +47,7 @@ static sint32 TaskHighThreadInit(void)
     }
 }
 
-static void *TaskLowThreadEntry(void *parameter)
+static void TaskLowThreadEntry(void *parameter)
 {
     while (1)
     {
@@ -62,8 +62,8 @@ static void *TaskLowThreadEntry(void *parameter)
 static sint32 TaskLowThreadInit(void)
 {
     if (if_OSTaskCreate("task low", TaskLowThreadEntry, NULL,
-    TASK_LOW_THREAD_STACK_SIZE,
-    TASK_LOW_THREAD_PRIORITY) < 0)
+                        TASK_LOW_THREAD_STACK_SIZE,
+                        TASK_LOW_THREAD_PRIORITY) < 0)
     {
         return -1;
     }

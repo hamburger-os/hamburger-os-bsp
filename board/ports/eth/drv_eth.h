@@ -13,7 +13,7 @@
 
 #include <board.h>
 #include <netif/ethernetif.h>
-#include "ksz8851_lep.h"
+#include "drv_link_layer_list.h"
 
 #define MAC_ADDR_LEN 6
 

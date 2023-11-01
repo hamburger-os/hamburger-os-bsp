@@ -57,12 +57,12 @@ static rt_err_t sw_eth1_rx_callback(rt_device_t dev, rt_size_t size)
     rt_err_t ret = RT_EOK;
     S_ETH_LEN_INFO *info = &swos2_eth_dev.dev[E_ETH_CH_1].eth_info;
 
-//    if(size != 0)
-//    {
-//        info->channel = E_ETH_CH_1;
-//        info->len = size;
-//        rt_mb_send(&swos2_eth_dev.mailbox, (rt_uint32_t)info);
-//    }
+    if(size != 0)
+    {
+        info->channel = E_ETH_CH_1;
+        info->len = size;
+        rt_mb_send(&swos2_eth_dev.mailbox, (rt_uint32_t)info);
+    }
     return ret;
 }
 
@@ -70,12 +70,12 @@ static rt_err_t sw_eth2_rx_callback(rt_device_t dev, rt_size_t size)
 {
     rt_err_t ret = RT_EOK;
     S_ETH_LEN_INFO *info = &swos2_eth_dev.dev[E_ETH_CH_2].eth_info;
-    if(size != 0)
-    {
-        info->channel = E_ETH_CH_2;
-        info->len = size;
-        rt_mb_send(&swos2_eth_dev.mailbox, (rt_uint32_t)info);
-    }
+//    if(size != 0)
+//    {
+//        info->channel = E_ETH_CH_2;
+//        info->len = size;
+//        rt_mb_send(&swos2_eth_dev.mailbox, (rt_uint32_t)info);
+//    }
     return ret;
 }
 
@@ -102,14 +102,14 @@ static void sw_ethrx_thread_entry(void *param)
             RT_ASSERT(info != RT_NULL);
             LOG_I("ETH:%d,size = %d", info->channel, info->len);
 
-            if(rt_device_read(swos2_eth_dev.dev[info->channel].dev, 0, (const void *)swos2_eth_dev.dev[info->channel].rx_buf, info->len) != info->len)
+            if(rt_device_read(swos2_eth_dev.dev[info->channel].dev, 0, (void *)swos2_eth_dev.dev[info->channel].rx_buf, info->len) != info->len)
             {
                 LOG_E("eth %d rcv error", info->channel);
             }
             else
             {
-//                LOG_HEX("read", 16, swos2_eth_dev.dev[info->channel].rx_buf, info->len);
-                LOG_I("ch %d, len %d", info->channel, info->len);
+                LOG_HEX("read", 16, swos2_eth_dev.dev[info->channel].rx_buf, info->len);
+//                LOG_I("ch %d, len %d", info->channel, info->len);
             }
 
             info = RT_NULL;

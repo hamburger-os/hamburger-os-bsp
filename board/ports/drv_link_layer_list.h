@@ -6,10 +6,10 @@
  * Change Logs:
  * Date           Author       Notes
  * 2023-07-21     zm       the first version
- * 2023-11-01     zm       change the file name from ksz8851_lep to drv_linl_layer
+ * 2023-11-01     zm       change the file name from ksz8851_lep to drv_link_layer
  */
-#ifndef BOARD_PORTS_KSZ8851_KSZ8851_LEP_H_
-#define BOARD_PORTS_KSZ8851_KSZ8851_LEP_H_
+#ifndef BOARD_PORTS_DRV_LINK_LAYER_H_
+#define BOARD_PORTS_DRV_LINK_LAYER_H_
 
 #include <board.h>
 #include <rtthread.h>

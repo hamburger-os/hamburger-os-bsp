@@ -190,39 +190,46 @@ static uint8 send_data = 0;
 
 static void support_eth_test(int argc, char **argv)
 {
+//    eth_txbuf[0] = 0xF8;
+//    eth_txbuf[1] = 0x09;
+//    eth_txbuf[2] = 0xA4;
+//    eth_txbuf[3] = 0x27;
+//    eth_txbuf[4] = 0x00;
+//    eth_txbuf[5] = 0x44;
+//
+//    eth_txbuf[6] = 0xF8;
+//    eth_txbuf[7] = 0x09;
+//    eth_txbuf[8] = 0xA4;
+//    eth_txbuf[9] = 0x51;
+//    eth_txbuf[10] = 0x0e;
+//    eth_txbuf[11] = 0x00;
+
+
     eth_txbuf[0] = 0xF8;
     eth_txbuf[1] = 0x09;
     eth_txbuf[2] = 0xA4;
-    eth_txbuf[3] = 0x27;
-    eth_txbuf[4] = 0x00;
-    eth_txbuf[5] = 0x44;
+    eth_txbuf[3] = 0x51;
+    eth_txbuf[4] = 0x0e;
+    eth_txbuf[5] = 0x00;
 
     eth_txbuf[6] = 0xF8;
     eth_txbuf[7] = 0x09;
     eth_txbuf[8] = 0xA4;
-    eth_txbuf[9] = 0x51;
-    eth_txbuf[10] = 0x0e;
-    eth_txbuf[11] = 0x00;
-
-//    eth_txbuf[6] = 0xF8;
-//    eth_txbuf[7] = 0x09;
-//    eth_txbuf[8] = 0xA4;
-//    eth_txbuf[9] = 0x27;
-//    eth_txbuf[10] = 0x00;
-//    eth_txbuf[11] = 0x44;
-//
-//    eth_txbuf[0] = 0xF8;
-//    eth_txbuf[1] = 0x09;
-//    eth_txbuf[2] = 0xA4;
-//    eth_txbuf[3] = 0x51;
-//    eth_txbuf[4] = 0x0e;
-//    eth_txbuf[5] = 0x00;
+    eth_txbuf[9] = 0x27;
+    eth_txbuf[10] = 0x00;
+    eth_txbuf[11] = 0x44;
 
 //    eth_txbuf[12] = send_data;
 //    send_data++;
-    if(support_eth_sendData(E_ETH_ID_1, eth_txbuf, 64) != E_ETH_OK)
+//    if(support_eth_sendData(E_ETH_ID_1, eth_txbuf, 64) != E_ETH_OK)
+//    {
+//        MY_Printf("E_ETH_ID_1 send error\r\n");
+//    }
+
+
+    if(support_eth_sendData(E_ETH_ID_2, eth_txbuf, 64) != E_ETH_OK)
     {
-        MY_Printf("E_ETH_ID_1 send error\r\n");
+        MY_Printf("E_ETH_ID_2 send error\r\n");
     }
 }
 #include <rtthread.h>

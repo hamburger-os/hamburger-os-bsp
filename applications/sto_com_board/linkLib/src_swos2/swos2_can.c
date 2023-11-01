@@ -17,6 +17,7 @@
 #include <rtdevice.h>
 
 #include <string.h>
+#include <stdio.h>
 
 #include "if_gpio.h"
 
@@ -264,9 +265,8 @@ static BOOL swos2_can_init(S_CAN_DEV *p_can_dev)
             rt_device_set_rx_indicate(p_can_dev->info[i].can_dev, p_can_dev->info[i].rx_ind);
 
             /* 初始化消息队列 */
-            sprintf(can_mq_name, "can %d mq", i);
-            p_can_dev->info[i].can_mq = rt_mq_create(can_mq_name, sizeof(struct rt_can_msg), CAN_MQ_NUM,
-                    RT_IPC_FLAG_FIFO);
+            sprintf((char *)can_mq_name, "can %d mq", i);
+            p_can_dev->info[i].can_mq = rt_mq_create((const char *)can_mq_name, sizeof(struct rt_can_msg), CAN_MQ_NUM, RT_IPC_FLAG_FIFO);
             if (RT_NULL == p_can_dev->info[i].can_mq)
             {
                 LOG_E("can %d mq null", i);

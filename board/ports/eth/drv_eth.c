@@ -136,9 +136,7 @@ static rt_err_t rt_stm32_eth_open(rt_device_t dev, rt_uint16_t oflag)
 {
     struct rt_stm32_eth *eth = dev->user_data;
 
-//    return lep_eth_if_clear(&eth->link_layer_buf, E_ETH_IF_CLER_MODE_ALL);
-
-    return RT_EOK;
+    return lep_eth_if_clear(&eth->link_layer_buf, E_ETH_IF_CLER_MODE_ALL);
 }
 
 static rt_err_t rt_stm32_eth_close(rt_device_t dev)
@@ -150,9 +148,7 @@ static rt_err_t rt_stm32_eth_close(rt_device_t dev)
         return -RT_EEMPTY;
     }
 
-//    return lep_eth_if_clear(&eth->link_layer_buf, E_ETH_IF_CLER_MODE_ALL);
-
-    return RT_EOK;
+    return lep_eth_if_clear(&eth->link_layer_buf, E_ETH_IF_CLER_MODE_ALL);
 }
 
 static rt_size_t rt_stm32_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t size)

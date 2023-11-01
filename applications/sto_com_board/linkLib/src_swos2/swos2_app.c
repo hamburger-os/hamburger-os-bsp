@@ -17,6 +17,7 @@
 #include <rtdevice.h>
 
 #include "task_loop.h"
+#include "support_libOS.h"
 
 S_APP_ARCH_IF g_appArchIf;
 
