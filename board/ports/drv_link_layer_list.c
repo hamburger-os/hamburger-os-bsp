@@ -9,7 +9,7 @@
  * 2023-11-01     zm       change the file name from ksz8851_lep to drv_link_layer
  */
 
-#include "ksz8851_lep.h"
+#include "drv_link_layer_list.h"
 
 #ifdef BSP_USE_LINK_LAYER_COMMUNICATION
 

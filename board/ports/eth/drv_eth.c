@@ -355,32 +355,36 @@ struct pbuf *rt_stm32_eth_rx(rt_device_t dev)
 
         HAL_ETH_ReadData(&eth->heth, (void **) &p);
 
-        for(q = p; q != NULL; q = q->next)
+        if(RT_NULL == p->next && p->tot_len < LEP_MAC_PKT_MAX_LEN)
         {
-            if (eth->rx_num >= BSP_LINK_LAYER_RX_BUF_NUM)
+            for(q = p; q != NULL; q = q->next)
             {
-                lep_eth_if_clear(&eth->link_layer_buf, E_ETH_IF_CLER_MODE_ONE);
-            }
-
-            S_LEP_BUF *ps_lep_buf = rt_malloc(sizeof(S_LEP_BUF));
-            if(RT_NULL != ps_lep_buf)
-            {
-                eth->rx_num++;
-                ps_lep_buf->flag = 0;
-                ps_lep_buf->flag |= LEP_RBF_RV;
-                ps_lep_buf->len = q->len;
-                rt_memcpy(ps_lep_buf->buf, q->payload, q->len);
-                rt_list_insert_before(&eth->link_layer_buf.rx_head->list, &ps_lep_buf->list);
-                if(dev->rx_indicate != NULL)
+                if (eth->rx_num >= BSP_LINK_LAYER_RX_BUF_NUM)
                 {
-                    dev->rx_indicate(dev, q->len);
+                    lep_eth_if_clear(&eth->link_layer_buf, E_ETH_IF_CLER_MODE_ONE);
+                }
+
+                S_LEP_BUF *ps_lep_buf = rt_malloc(sizeof(S_LEP_BUF));
+                if(RT_NULL != ps_lep_buf)
+                {
+                    eth->rx_num++;
+                    ps_lep_buf->flag = 0;
+                    ps_lep_buf->flag |= LEP_RBF_RV;
+                    ps_lep_buf->len = q->len;
+                    rt_memcpy(ps_lep_buf->buf, q->payload, q->len);
+                    rt_list_insert_before(&eth->link_layer_buf.rx_head->list, &ps_lep_buf->list);
+                    if(dev->rx_indicate != NULL)
+                    {
+                        dev->rx_indicate(dev, q->len);
+                    }
+                }
+                else
+                {
+                    LOG_E("ps_lep_buf rx null");
                 }
             }
-            else
-            {
-                LOG_E("ps_lep_buf rx null");
-            }
         }
+
     }
 
 #ifdef ETH_RX_DUMP

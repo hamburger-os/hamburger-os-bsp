@@ -9,16 +9,6 @@
  */
 #include "linklib/inc/if_eth.h"
 
-#include <rtthread.h>
-
-#if RT_VER_NUM >= 0x40100
-#include <unistd.h>
-#else
-#include <dfs_posix.h>
-#endif /* RT_VER_NUM >= 0x40100 */
-#include "netif/ethernetif.h"
-#include "netif/ethernet.h"
-
 #define DBG_TAG "if_eth"
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
@@ -27,6 +17,18 @@
 #include <rtdevice.h>
 
 #define SW_ETH_RX_BUF_MAX_NUM (1500U)
+#define SW_ETH_RX_MQ_MAX_NUM  (10U)
+
+/* 单字节对齐 */
+#pragma pack(1)
+
+typedef struct
+{
+    uint16 len;
+    uint8 data_u8[SW_ETH_RX_BUF_MAX_NUM];
+} S_SW_ETH_BUF;
+
+#pragma pack()
 
 typedef struct
 {
@@ -39,7 +41,8 @@ typedef struct
     rt_device_t dev;
     const char *name;
     S_ETH_LEN_INFO eth_info;
-    uint8_t rx_buf[SW_ETH_RX_BUF_MAX_NUM];
+    S_SW_ETH_BUF rx_buf;
+    rt_mq_t eth_rx_mq;
 } S_SWOS2_ETH;
 
 typedef struct
@@ -70,12 +73,12 @@ static rt_err_t sw_eth2_rx_callback(rt_device_t dev, rt_size_t size)
 {
     rt_err_t ret = RT_EOK;
     S_ETH_LEN_INFO *info = &swos2_eth_dev.dev[E_ETH_CH_2].eth_info;
-//    if(size != 0)
-//    {
-//        info->channel = E_ETH_CH_2;
-//        info->len = size;
-//        rt_mb_send(&swos2_eth_dev.mailbox, (rt_uint32_t)info);
-//    }
+    if(size != 0)
+    {
+        info->channel = E_ETH_CH_2;
+        info->len = size;
+        rt_mb_send(&swos2_eth_dev.mailbox, (rt_uint32_t)info);
+    }
     return ret;
 }
 
@@ -93,6 +96,7 @@ static void sw_ethrx_thread_entry(void *param)
     rt_uint32_t mbval;
     rt_err_t ret;
 
+
     while (1)
     {
         ret = rt_mb_recv(&swos2_eth_dev.mailbox, &mbval, RT_WAITING_FOREVER);
@@ -100,16 +104,17 @@ static void sw_ethrx_thread_entry(void *param)
         {
             info = (S_ETH_LEN_INFO *) mbval;
             RT_ASSERT(info != RT_NULL);
-            LOG_I("ETH:%d,size = %d", info->channel, info->len);
+//            LOG_I("ETH:%d,size = %d", info->channel, info->len);
 
-            if(rt_device_read(swos2_eth_dev.dev[info->channel].dev, 0, (void *)swos2_eth_dev.dev[info->channel].rx_buf, info->len) != info->len)
+            if(rt_device_read(swos2_eth_dev.dev[info->channel].dev, 0, (void *)swos2_eth_dev.dev[info->channel].rx_buf.data_u8, info->len) == info->len)
             {
-                LOG_E("eth %d rcv error", info->channel);
-            }
-            else
-            {
-                LOG_HEX("read", 16, swos2_eth_dev.dev[info->channel].rx_buf, info->len);
-//                LOG_I("ch %d, len %d", info->channel, info->len);
+                swos2_eth_dev.dev[info->channel].rx_buf.len = info->len;
+                ret = rt_mq_send(swos2_eth_dev.dev[info->channel].eth_rx_mq,
+                                (const void *)&swos2_eth_dev.dev[info->channel].rx_buf, sizeof(S_SW_ETH_BUF));
+                if (ret != RT_EOK)
+                {
+                    LOG_E("eth %d mq send error", info->channel);
+                }
             }
 
             info = RT_NULL;
@@ -125,61 +130,81 @@ static void sw_ethrx_thread_entry(void *param)
 
 BOOL if_eth_init(void)
 {
-    rt_thread_t tid;
-
-
-    if (rt_mb_init(&swos2_eth_dev.mailbox, "eth_rx_t_mb", &eth_mb_pool[0], sizeof(eth_mb_pool) / 4, RT_IPC_FLAG_PRIO) != RT_EOK)
-    {
-        LOG_E("eth mb init error");
-        return FALSE;
-    }
-
-    tid = rt_thread_create("sw_eth_rx", sw_ethrx_thread_entry, RT_NULL, 2048, 12, 5);
-    if (tid == RT_NULL)
-    {
-        LOG_E("sw_eth_rx thread create fail!");
-        return FALSE;
-    }
-
-    rt_thread_startup(tid);
-
-    swos2_eth_dev.dev[E_ETH_CH_1].dev = rt_device_find("e");
-    if (RT_NULL != swos2_eth_dev.dev[E_ETH_CH_1].dev)
-    {
-        if(rt_device_open(swos2_eth_dev.dev[E_ETH_CH_1].dev, RT_DEVICE_FLAG_RDWR) != RT_EOK)
-        {
-            LOG_E("e open error.");
-            return FALSE;
-        }
-        else
-        {
-            sw_eth_set_rx_callback(&swos2_eth_dev.dev[E_ETH_CH_1], sw_eth1_rx_callback);
-        }
-    }
-    else
-    {
-        LOG_E("can not find e if!");
-        return FALSE;
-    }
-
-    swos2_eth_dev.dev[E_ETH_CH_2].dev = rt_device_find("e0");
-    if (RT_NULL != swos2_eth_dev.dev[E_ETH_CH_2].dev)
-    {
-        if(rt_device_open(swos2_eth_dev.dev[E_ETH_CH_2].dev, RT_DEVICE_FLAG_RDWR) != RT_EOK)
-        {
-            LOG_E("e0 open error.");
-            return FALSE;
-        }
-        else
-        {
-            sw_eth_set_rx_callback(&swos2_eth_dev.dev[E_ETH_CH_2], sw_eth2_rx_callback);
-        }
-    }
-    else
-    {
-        LOG_E("can not find e0 if!");
-        return FALSE;
-    }
+//    rt_thread_t tid;
+//
+//
+//    /* 1.创建邮箱 */
+//    if (rt_mb_init(&swos2_eth_dev.mailbox, "eth_rx_t_mb", &eth_mb_pool[0], sizeof(eth_mb_pool) / 4, RT_IPC_FLAG_PRIO) != RT_EOK)
+//    {
+//        LOG_E("eth mb init error");
+//        return FALSE;
+//    }
+//
+//    /* 2.创建，启动接收线程 */
+//    tid = rt_thread_create("sw_eth_rx", sw_ethrx_thread_entry, RT_NULL, 2048, 12, 5);
+//    if (tid == RT_NULL)
+//    {
+//        LOG_E("sw_eth_rx thread create fail!");
+//        return FALSE;
+//    }
+//
+//    rt_thread_startup(tid);
+//
+//    /* 3.打开网口e */
+//    swos2_eth_dev.dev[E_ETH_CH_1].dev = rt_device_find("e");
+//    if (RT_NULL != swos2_eth_dev.dev[E_ETH_CH_1].dev)
+//    {
+//        if(rt_device_open(swos2_eth_dev.dev[E_ETH_CH_1].dev, RT_DEVICE_FLAG_RDWR) != RT_EOK)
+//        {
+//            LOG_E("e open error.");
+//            return FALSE;
+//        }
+//        else
+//        {
+//            sw_eth_set_rx_callback(&swos2_eth_dev.dev[E_ETH_CH_1], sw_eth1_rx_callback);
+//        }
+//    }
+//    else
+//    {
+//        LOG_E("can not find e if!");
+//        return FALSE;
+//    }
+//
+//    /* 4.打开网口e0 */
+//    swos2_eth_dev.dev[E_ETH_CH_2].dev = rt_device_find("e0");
+//    if (RT_NULL != swos2_eth_dev.dev[E_ETH_CH_2].dev)
+//    {
+//        if(rt_device_open(swos2_eth_dev.dev[E_ETH_CH_2].dev, RT_DEVICE_FLAG_RDWR) != RT_EOK)
+//        {
+//            LOG_E("e0 open error.");
+//            return FALSE;
+//        }
+//        else
+//        {
+//            sw_eth_set_rx_callback(&swos2_eth_dev.dev[E_ETH_CH_2], sw_eth2_rx_callback);
+//        }
+//    }
+//    else
+//    {
+//        LOG_E("can not find e0 if!");
+//        return FALSE;
+//    }
+//
+//    swos2_eth_dev.dev[E_ETH_CH_1].eth_rx_mq = rt_mq_create((const char *)"e mq",
+//                                                sizeof(S_SW_ETH_BUF), SW_ETH_RX_MQ_MAX_NUM, RT_IPC_FLAG_FIFO);
+//    if (RT_NULL == swos2_eth_dev.dev[E_ETH_CH_1].eth_rx_mq)
+//    {
+//        LOG_E("e mq null");
+//        return FALSE;
+//    }
+//
+//    swos2_eth_dev.dev[E_ETH_CH_2].eth_rx_mq = rt_mq_create((const char *)"e0 mq",
+//                                                sizeof(S_SW_ETH_BUF), SW_ETH_RX_MQ_MAX_NUM, RT_IPC_FLAG_FIFO);
+//    if (RT_NULL == swos2_eth_dev.dev[E_ETH_CH_2].eth_rx_mq)
+//    {
+//        LOG_E("e0 mq null");
+//        return FALSE;
+//    }
 
     return TRUE;
 }
@@ -200,6 +225,18 @@ BOOL if_eth_send(E_ETH_CH ch, uint8 *pdata, uint16 len)
 
 uint16 if_eth_get(E_ETH_CH ch, uint8 *pdata, uint16 len)
 {
-//    rt_device_read
-    return TRUE;
+    rt_err_t ret;
+    S_SW_ETH_BUF rx_buf;
+
+    ret = rt_mq_recv(swos2_eth_dev.dev[ch].eth_rx_mq, (void *) &rx_buf, sizeof(S_SW_ETH_BUF), RT_WAITING_NO);
+    if (RT_EOK == ret)
+    {
+        rt_memcpy(pdata, rx_buf.data_u8, rx_buf.len);
+        return rx_buf.len;
+    }
+    else
+    {
+        return 0;
+    }
+    return 0;
 }
