@@ -466,7 +466,7 @@ void HAL_ETH_TxFreeCallback(uint32_t * buff)
 {
     if(buff != RT_NULL)
     {
-        if(0 == ((struct pbuf *) buff)->ref)
+        if(((struct pbuf *) buff)->ref > 0)
         {
             pbuf_free((struct pbuf *) buff);
         }

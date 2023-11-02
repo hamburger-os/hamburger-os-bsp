@@ -130,81 +130,81 @@ static void sw_ethrx_thread_entry(void *param)
 
 BOOL if_eth_init(void)
 {
-//    rt_thread_t tid;
-//
-//
-//    /* 1.创建邮箱 */
-//    if (rt_mb_init(&swos2_eth_dev.mailbox, "eth_rx_t_mb", &eth_mb_pool[0], sizeof(eth_mb_pool) / 4, RT_IPC_FLAG_PRIO) != RT_EOK)
-//    {
-//        LOG_E("eth mb init error");
-//        return FALSE;
-//    }
-//
-//    /* 2.创建，启动接收线程 */
-//    tid = rt_thread_create("sw_eth_rx", sw_ethrx_thread_entry, RT_NULL, 2048, 12, 5);
-//    if (tid == RT_NULL)
-//    {
-//        LOG_E("sw_eth_rx thread create fail!");
-//        return FALSE;
-//    }
-//
-//    rt_thread_startup(tid);
-//
-//    /* 3.打开网口e */
-//    swos2_eth_dev.dev[E_ETH_CH_1].dev = rt_device_find("e");
-//    if (RT_NULL != swos2_eth_dev.dev[E_ETH_CH_1].dev)
-//    {
-//        if(rt_device_open(swos2_eth_dev.dev[E_ETH_CH_1].dev, RT_DEVICE_FLAG_RDWR) != RT_EOK)
-//        {
-//            LOG_E("e open error.");
-//            return FALSE;
-//        }
-//        else
-//        {
-//            sw_eth_set_rx_callback(&swos2_eth_dev.dev[E_ETH_CH_1], sw_eth1_rx_callback);
-//        }
-//    }
-//    else
-//    {
-//        LOG_E("can not find e if!");
-//        return FALSE;
-//    }
-//
-//    /* 4.打开网口e0 */
-//    swos2_eth_dev.dev[E_ETH_CH_2].dev = rt_device_find("e0");
-//    if (RT_NULL != swos2_eth_dev.dev[E_ETH_CH_2].dev)
-//    {
-//        if(rt_device_open(swos2_eth_dev.dev[E_ETH_CH_2].dev, RT_DEVICE_FLAG_RDWR) != RT_EOK)
-//        {
-//            LOG_E("e0 open error.");
-//            return FALSE;
-//        }
-//        else
-//        {
-//            sw_eth_set_rx_callback(&swos2_eth_dev.dev[E_ETH_CH_2], sw_eth2_rx_callback);
-//        }
-//    }
-//    else
-//    {
-//        LOG_E("can not find e0 if!");
-//        return FALSE;
-//    }
-//
-//    swos2_eth_dev.dev[E_ETH_CH_1].eth_rx_mq = rt_mq_create((const char *)"e mq",
-//                                                sizeof(S_SW_ETH_BUF), SW_ETH_RX_MQ_MAX_NUM, RT_IPC_FLAG_FIFO);
-//    if (RT_NULL == swos2_eth_dev.dev[E_ETH_CH_1].eth_rx_mq)
-//    {
-//        LOG_E("e mq null");
-//        return FALSE;
-//    }
-//
-//    swos2_eth_dev.dev[E_ETH_CH_2].eth_rx_mq = rt_mq_create((const char *)"e0 mq",
-//                                                sizeof(S_SW_ETH_BUF), SW_ETH_RX_MQ_MAX_NUM, RT_IPC_FLAG_FIFO);
-//    if (RT_NULL == swos2_eth_dev.dev[E_ETH_CH_2].eth_rx_mq)
-//    {
-//        LOG_E("e0 mq null");
-//        return FALSE;
-//    }
+    rt_thread_t tid;
+
+
+    /* 1.创建邮箱 */
+    if (rt_mb_init(&swos2_eth_dev.mailbox, "eth_rx_t_mb", &eth_mb_pool[0], sizeof(eth_mb_pool) / 4, RT_IPC_FLAG_PRIO) != RT_EOK)
+    {
+        LOG_E("eth mb init error");
+        return FALSE;
+    }
+
+    /* 2.创建，启动接收线程 */
+    tid = rt_thread_create("sw_eth_rx", sw_ethrx_thread_entry, RT_NULL, 2048, 12, 5);
+    if (tid == RT_NULL)
+    {
+        LOG_E("sw_eth_rx thread create fail!");
+        return FALSE;
+    }
+
+    rt_thread_startup(tid);
+
+    /* 3.打开网口e */
+    swos2_eth_dev.dev[E_ETH_CH_1].dev = rt_device_find("e");
+    if (RT_NULL != swos2_eth_dev.dev[E_ETH_CH_1].dev)
+    {
+        if(rt_device_open(swos2_eth_dev.dev[E_ETH_CH_1].dev, RT_DEVICE_FLAG_RDWR) != RT_EOK)
+        {
+            LOG_E("e open error.");
+            return FALSE;
+        }
+        else
+        {
+            sw_eth_set_rx_callback(&swos2_eth_dev.dev[E_ETH_CH_1], sw_eth1_rx_callback);
+        }
+    }
+    else
+    {
+        LOG_E("can not find e if!");
+        return FALSE;
+    }
+
+    /* 4.打开网口e0 */
+    swos2_eth_dev.dev[E_ETH_CH_2].dev = rt_device_find("e0");
+    if (RT_NULL != swos2_eth_dev.dev[E_ETH_CH_2].dev)
+    {
+        if(rt_device_open(swos2_eth_dev.dev[E_ETH_CH_2].dev, RT_DEVICE_FLAG_RDWR) != RT_EOK)
+        {
+            LOG_E("e0 open error.");
+            return FALSE;
+        }
+        else
+        {
+            sw_eth_set_rx_callback(&swos2_eth_dev.dev[E_ETH_CH_2], sw_eth2_rx_callback);
+        }
+    }
+    else
+    {
+        LOG_E("can not find e0 if!");
+        return FALSE;
+    }
+
+    swos2_eth_dev.dev[E_ETH_CH_1].eth_rx_mq = rt_mq_create((const char *)"e mq",
+                                                sizeof(S_SW_ETH_BUF), SW_ETH_RX_MQ_MAX_NUM, RT_IPC_FLAG_FIFO);
+    if (RT_NULL == swos2_eth_dev.dev[E_ETH_CH_1].eth_rx_mq)
+    {
+        LOG_E("e mq null");
+        return FALSE;
+    }
+
+    swos2_eth_dev.dev[E_ETH_CH_2].eth_rx_mq = rt_mq_create((const char *)"e0 mq",
+                                                sizeof(S_SW_ETH_BUF), SW_ETH_RX_MQ_MAX_NUM, RT_IPC_FLAG_FIFO);
+    if (RT_NULL == swos2_eth_dev.dev[E_ETH_CH_2].eth_rx_mq)
+    {
+        LOG_E("e0 mq null");
+        return FALSE;
+    }
 
     return TRUE;
 }

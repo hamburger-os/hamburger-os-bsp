@@ -34,7 +34,7 @@ struct rt_stm32_eth
     /* interface address info, hw address */
     uint8_t mac[MAC_ADDR_LEN];
 
-    struct rt_mutex eth_mux;    /** 鎺ユ敹鍙戦�佷簰鏂ヤ俊鍙烽噺 */
+    struct rt_mutex eth_mux;    /** 接收发送互斥信号量 */
 
     S_ETH_IF link_layer_buf;
     uint32_t rx_num;
