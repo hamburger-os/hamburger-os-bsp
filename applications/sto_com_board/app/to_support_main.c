@@ -40,66 +40,17 @@ static void test_task01(void)
     static uint32 cnt = 0U;
     static S_TIMER_INFO timer = { FALSE, 0U };
     S_CAN_FRAME can_frame;
-    int i = 0;
-    static uint8 data_init = 0;
 
 
     if ( TRUE == support_timer_timeoutM(&timer, 1000U))
     {
-////		MY_Printf("task01-->running:%d\r\n", cnt++ );
-//        if (supprot_can_getData(E_CAN_ID_2, &can_frame) == E_CAN_OK)
-//        {
-//            if (E_CAN_OK != support_can_sendData(E_CAN_ID_2, &can_frame))
-//            {
-//                MY_Printf("send error\r\n");
-//            }
-//        }
-
-        if(0 == data_init)
+        if (supprot_can_getData(E_CAN_ID_2, &can_frame) == E_CAN_OK)
         {
-            for(i=0; i<1500; i++)
-                eth_txbuf[i] = i;
-            data_init = 1;
+            if (E_CAN_OK != support_can_sendData(E_CAN_ID_2, &can_frame))
+            {
+                MY_Printf("send error\r\n");
+            }
         }
-
-//        eth_txbuf[0] = 0xF8;
-//        eth_txbuf[1] = 0x09;
-//        eth_txbuf[2] = 0xA4;
-//        eth_txbuf[3] = 0x27;
-//        eth_txbuf[4] = 0x00;
-//        eth_txbuf[5] = 0x44;
-//
-//        eth_txbuf[6] = 0xF8;
-//        eth_txbuf[7] = 0x09;
-//        eth_txbuf[8] = 0xA4;
-//        eth_txbuf[9] = 0x51;
-//        eth_txbuf[10] = 0x0e;
-//        eth_txbuf[11] = 0x00;
-//        if(support_eth_sendData(E_ETH_ID_1, eth_txbuf, 64) != E_ETH_OK)
-//        {
-//            MY_Printf("E_ETH_ID_1 send error\r\n");
-//        }
-
-
-//        eth_txbuf[0] = 0xF8;
-//        eth_txbuf[1] = 0x09;
-//        eth_txbuf[2] = 0xA4;
-//        eth_txbuf[3] = 0x51;
-//        eth_txbuf[4] = 0x0e;
-//        eth_txbuf[5] = 0x00;
-//
-//        eth_txbuf[6] = 0xF8;
-//        eth_txbuf[7] = 0x09;
-//        eth_txbuf[8] = 0xA4;
-//        eth_txbuf[9] = 0x27;
-//        eth_txbuf[10] = 0x00;
-//        eth_txbuf[11] = 0x44;
-//
-//        if(support_eth_sendData(E_ETH_ID_2, eth_txbuf, 64) != E_ETH_OK)
-//        {
-//            MY_Printf("E_ETH_ID_2 send error\r\n");
-//        }
-
     }
 }
 
@@ -111,10 +62,85 @@ static void test_task02(void)
 {
     static uint32 cnt = 0U;
     static S_TIMER_INFO timer = { FALSE, 0U };
+    int i = 0;
+    static uint8 data_init = 0;
+    S_ETH_FRAME rx_msg;
 
-    if ( TRUE == support_timer_timeoutM(&timer, 1000U))
+    if ( TRUE == support_timer_timeoutM(&timer, 10U))
     {
-//		MY_Printf("task02-->running:%d\r\n", cnt++ );
+
+
+        if(0 == data_init)
+        {
+            for(i=0; i<1500; i++)
+                eth_txbuf[i] = i;
+            data_init = 1;
+        }
+#if 0
+        eth_txbuf[0] = 0xF8;
+        eth_txbuf[1] = 0x09;
+        eth_txbuf[2] = 0xA4;
+        eth_txbuf[3] = 0x27;
+        eth_txbuf[4] = 0x00;
+        eth_txbuf[5] = 0x44;
+
+        eth_txbuf[6] = 0xF8;
+        eth_txbuf[7] = 0x09;
+        eth_txbuf[8] = 0xA4;
+        eth_txbuf[9] = 0x51;
+        eth_txbuf[10] = 0x0e;
+        eth_txbuf[11] = 0x00;
+        if(support_eth_sendData(E_ETH_ID_1, eth_txbuf, 64) != E_ETH_OK)
+        {
+            MY_Printf("E_ETH_ID_1 send error\r\n");
+        }
+
+        eth_txbuf[0] = 0xF8;
+        eth_txbuf[1] = 0x09;
+        eth_txbuf[2] = 0xA4;
+        eth_txbuf[3] = 0x51;
+        eth_txbuf[4] = 0x0e;
+        eth_txbuf[5] = 0x00;
+
+        eth_txbuf[6] = 0xF8;
+        eth_txbuf[7] = 0x09;
+        eth_txbuf[8] = 0xA4;
+        eth_txbuf[9] = 0x27;
+        eth_txbuf[10] = 0x00;
+        eth_txbuf[11] = 0x44;
+
+        if(support_eth_sendData(E_ETH_ID_2, eth_txbuf, 64) != E_ETH_OK)
+        {
+            MY_Printf("E_ETH_ID_2 send error\r\n");
+        }
+
+        if(supprot_eth_getData(E_ETH_ID_1, &rx_msg) != E_ETH_OK)
+        {
+            MY_Printf("E_ETH_ID_1 recv error\r\n");
+        }
+        else
+        {
+            MY_Printf("eth 1 recv len %d\r\n", rx_msg.len);
+            for(int i = 0; i <rx_msg.len; i++)
+            {
+                MY_Printf("%x ", rx_msg.data_u8[i]);
+            }
+            MY_Printf("\r\n");
+        }
+#endif
+        if(supprot_eth_getData(E_ETH_ID_2, &rx_msg) != E_ETH_OK)
+        {
+            MY_Printf("E_ETH_ID_2 recv error\r\n");
+        }
+        else
+        {
+            MY_Printf("eth 2 recv len %d\r\n", rx_msg.len);
+            for(int i = 0; i <rx_msg.len; i++)
+            {
+                MY_Printf("%x ", rx_msg.data_u8[i]);
+            }
+            MY_Printf("\r\n");
+        }
     }
 }
 
