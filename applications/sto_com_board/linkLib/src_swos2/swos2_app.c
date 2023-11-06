@@ -25,6 +25,7 @@ BOOL app_archRunning(p_init appArchIf_init)
 {
     appArchIf_init();
 
+    LOG_I("app_archRunning");
     if (TaskInit() < 0)
     {
         LOG_E("TaskInit Error");
@@ -37,9 +38,13 @@ BOOL app_archRunning(p_init appArchIf_init)
 }
 
 extern void test_main_init(void);
-
+extern void com_app_main_init(void);
 void app_archInit(void)
 {
+#if 1
     support_osRunning(test_main_init);
+#else
+    support_osRunning(com_app_main_init);
+#endif
 }
 

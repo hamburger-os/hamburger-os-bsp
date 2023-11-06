@@ -31,7 +31,6 @@
  *******************************************************************************************/
 extern BOOL support_timer_init(void)
 {
-    MY_Printf("support_timer_init==>OK!!!\n");
     return TRUE;
 }
 

@@ -3381,6 +3381,38 @@ menu "Onboard Peripheral Drivers"
                 config PHY_USING_LAN8720A
                     bool "Select phy LAN8720A"
             endchoice
+            
+            config BSP_USING_ETH_SET_MAC
+                bool "Enable set mac addr"
+                default n
+                
+        		if BSP_USING_ETH_SET_MAC
+        		
+		            config BSP_ETH_MAC_ADDR1
+		                hex "Set ETH addr1, default: 0xF8"
+		                default (0xF8)
+        		
+		            config BSP_ETH_MAC_ADDR2
+		                hex "Set ETH addr2, default: 0x09"
+		                default (0x09)
+        		
+		            config BSP_ETH_MAC_ADDR3
+		                hex "Set ETH addr3, default: 0xA4"
+		                default (0xA4)
+        		
+		            config BSP_ETH_MAC_ADDR4
+		                hex "Set ETH addr4, default: 0x51"
+		                default (0x51)
+        		
+		            config BSP_ETH_MAC_ADDR5
+		                hex "Set ETH addr5, default: 0x0E"
+		                default (0x0E)
+        		
+		            config BSP_ETH_MAC_ADDR6
+		                hex "Set ETH addr6, default: 0x00"
+		                default (0x00)
+        		
+        		endif
         endif
         
     menuconfig BSP_USING_MAX31826

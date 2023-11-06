@@ -44,6 +44,7 @@ static E_IO_ID get_ctl_id(E_GPIO_ID id)
         io_id = E_IO_ID_4;
         break;
     default:
+        io_id = E_IO_ID_MAX;
         break;
     }
 
@@ -56,7 +57,8 @@ static E_IO_ID get_ctl_id(E_GPIO_ID id)
  *******************************************************************************************/
 extern E_GPIO_RET support_gpio_init(E_GPIO_ID id, E_GPIO_STATE state)
 {
-    MY_Printf("support_gpio_init==>OK!!!\r\n");
+    if_gpio_init();
+
     return IO_OK;
 }
 
@@ -73,7 +75,7 @@ extern E_GPIO_RET support_gpio_set(E_GPIO_ID id, E_GPIO_STATE state)
         return IO_ERR;
     }
 
-    ctl_id = get_io_id(id);
+    ctl_id = get_ctl_id(id);
     if (E_IO_ID_MAX == ctl_id)
     {
         return IO_ERR;
@@ -111,7 +113,7 @@ extern E_GPIO_RET support_gpio_get(E_GPIO_ID id, E_GPIO_STATE *state)
         return IO_ERR;
     }
 
-    ctl_id = get_io_id(id);
+    ctl_id = get_ctl_id(id);
     if (E_IO_ID_MAX == ctl_id)
     {
         return IO_ERR;
@@ -144,7 +146,7 @@ extern E_GPIO_RET support_gpio_toggle(E_GPIO_ID id)
         return IO_ERR;
     }
 
-    ctl_id = get_io_id(id);
+    ctl_id = get_ctl_id(id);
     if (E_IO_ID_MAX == ctl_id)
     {
         return IO_ERR;
@@ -172,27 +174,31 @@ extern E_BOARD_ID support_gpio_getBoardId(void)
     switch (slot_id)
     {
     case E_SLOT_ID_1:
+    case E_SLOT_ID_5:
         boardId = ID_TX1_Load;
         break;
     case E_SLOT_ID_2:
+    case E_SLOT_ID_6:
         boardId = ID_TX1_Child;
         break;
     case E_SLOT_ID_3:
+    case E_SLOT_ID_7:
         boardId = ID_TX2_Load;
         break;
     case E_SLOT_ID_4:
+    case E_SLOT_ID_8:
         boardId = ID_TX2_Child;
         break;
-    case E_SLOT_ID_5:
+    case E_SLOT_ID_9:
         boardId = ID_RD;
         break;
-    case E_SLOT_ID_6:
+    case E_SLOT_ID_10:
         boardId = ID_WX;
         break;
     default:
         break;
     }
-
+    boardId = ID_TX2_Load;
     /* 3.返回boardId */
     return boardId;
 }

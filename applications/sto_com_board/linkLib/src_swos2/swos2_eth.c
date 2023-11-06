@@ -16,8 +16,11 @@
 #include <rtthread.h>
 #include <rtdevice.h>
 
+#include "if_gpio.h"
+
 #define SW_ETH_RX_BUF_MAX_NUM (1500U)
 #define SW_ETH_RX_MQ_MAX_NUM  (10U)
+#define SW_ETH_LINK_LAYER_MAC_LENTH   (12U)
 
 /* 单字节对齐 */
 #pragma pack(1)
@@ -25,7 +28,7 @@
 typedef struct
 {
     uint16 len;
-    uint8 data_u8[SW_ETH_RX_BUF_MAX_NUM];
+    uint8_t data_u8[SW_ETH_RX_BUF_MAX_NUM];
 } S_SW_ETH_BUF;
 
 #pragma pack()
@@ -40,14 +43,19 @@ typedef struct
 {
     rt_device_t dev;
     const char *name;
+    const char *mq_name;
     S_ETH_LEN_INFO eth_info;
     S_SW_ETH_BUF rx_buf;
+    S_SW_ETH_BUF tx_buf;
     rt_mq_t eth_rx_mq;
+    rt_err_t (*rx_indicate)(rt_device_t dev, rt_size_t size);
 } S_SWOS2_ETH;
 
 typedef struct
 {
-    S_SWOS2_ETH dev[E_ETH_CH_MAX];
+    E_SLOT_ID id; /* 板子id */
+    S_SWOS2_ETH *dev[E_ETH_CH_MAX];
+    uint8_t ch_num;
     struct rt_mailbox mailbox;
 } S_SWOS2_ETH_DEV;
 
@@ -55,10 +63,44 @@ static char eth_mb_pool[1024];
 
 static S_SWOS2_ETH_DEV swos2_eth_dev;
 
+static S_SWOS2_ETH swos2_eth[] =
+{
+        {
+                .name = "e0",
+                .mq_name = "e0 mq",
+        },
+        {
+                .name = "e1",
+                .mq_name = "e1 mq",
+        },
+        {
+                .name = "e",
+                .mq_name = "e mq",
+        },
+};
+
+/* 通信2底板I系mac配置 */
+static uint8_t com_2_load_1_mac_addr[E_ETH_CH_MAX][SW_ETH_LINK_LAYER_MAC_LENTH] =
+{
+        /* 目的地址    源地址  */
+    {0xF8, 0x09, 0xA4, 0x51, 0x0e, 0x01, 0xf8, 0x09, 0xa4, 0x27, 0x00, 0x44},
+    {0xF8, 0x09, 0xA4, 0x27, 0x00, 0x44, 0xf8, 0x09, 0xa4, 0x51, 0x0e, 0x01},
+    {0xF8, 0x09, 0xA4, 0x27, 0x00, 0x46, 0xf8, 0x09, 0xa4, 0x51, 0x0e, 0x02}, /* 未使用 */
+};
+
+/* II系mac配置 */
+static uint8_t com_2_load_2_mac_addr[E_ETH_CH_MAX][SW_ETH_LINK_LAYER_MAC_LENTH] =
+{
+        /* 目的地址    源地址  */
+    {0xF8, 0x09, 0xA4, 0x51, 0x0e, 0x01, 0xf8, 0x09, 0xa4, 0x27, 0x00, 0x44},
+    {0xF8, 0x09, 0xA4, 0x27, 0x00, 0x44, 0xf8, 0x09, 0xa4, 0x51, 0x0e, 0x01},
+    {0xF8, 0x09, 0xA4, 0x27, 0x00, 0x46, 0xf8, 0x09, 0xa4, 0x51, 0x0e, 0x02}, /* 未使用 */
+};
+
 static rt_err_t sw_eth1_rx_callback(rt_device_t dev, rt_size_t size)
 {
     rt_err_t ret = RT_EOK;
-    S_ETH_LEN_INFO *info = &swos2_eth_dev.dev[E_ETH_CH_1].eth_info;
+    S_ETH_LEN_INFO *info = &swos2_eth_dev.dev[E_ETH_CH_1]->eth_info;
 
     if(size != 0)
     {
@@ -72,10 +114,25 @@ static rt_err_t sw_eth1_rx_callback(rt_device_t dev, rt_size_t size)
 static rt_err_t sw_eth2_rx_callback(rt_device_t dev, rt_size_t size)
 {
     rt_err_t ret = RT_EOK;
-    S_ETH_LEN_INFO *info = &swos2_eth_dev.dev[E_ETH_CH_2].eth_info;
+    S_ETH_LEN_INFO *info = &swos2_eth_dev.dev[E_ETH_CH_2]->eth_info;
+
     if(size != 0)
     {
         info->channel = E_ETH_CH_2;
+        info->len = size;
+        rt_mb_send(&swos2_eth_dev.mailbox, (rt_uint32_t)info);
+    }
+    return ret;
+}
+
+static rt_err_t sw_eth3_rx_callback(rt_device_t dev, rt_size_t size)
+{
+    rt_err_t ret = RT_EOK;
+    S_ETH_LEN_INFO *info = &swos2_eth_dev.dev[E_ETH_CH_3]->eth_info;
+
+    if(size != 0)
+    {
+        info->channel = E_ETH_CH_3;
         info->len = size;
         rt_mb_send(&swos2_eth_dev.mailbox, (rt_uint32_t)info);
     }
@@ -96,7 +153,6 @@ static void sw_ethrx_thread_entry(void *param)
     rt_uint32_t mbval;
     rt_err_t ret;
 
-
     while (1)
     {
         ret = rt_mb_recv(&swos2_eth_dev.mailbox, &mbval, RT_WAITING_FOREVER);
@@ -104,17 +160,42 @@ static void sw_ethrx_thread_entry(void *param)
         {
             info = (S_ETH_LEN_INFO *) mbval;
             RT_ASSERT(info != RT_NULL);
-//            LOG_I("ETH:%d,size = %d", info->channel, info->len);
 
-            if(rt_device_read(swos2_eth_dev.dev[info->channel].dev, 0, (void *)swos2_eth_dev.dev[info->channel].rx_buf.data_u8, info->len) == info->len)
+            if(rt_device_read(swos2_eth_dev.dev[info->channel]->dev, 0, (void *)swos2_eth_dev.dev[info->channel]->rx_buf.data_u8, info->len) == info->len)
             {
-                swos2_eth_dev.dev[info->channel].rx_buf.len = info->len;
-                ret = rt_mq_send(swos2_eth_dev.dev[info->channel].eth_rx_mq,
-                                (const void *)&swos2_eth_dev.dev[info->channel].rx_buf, sizeof(S_SW_ETH_BUF));
-                if (ret != RT_EOK)
+                if(swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[0] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[6] && \
+                   swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[1] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[7] && \
+                   swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[2] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[8] && \
+                   swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[3] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[9] && \
+                   swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[4] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[10] && \
+                   swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[5] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[11])
                 {
-                    LOG_E("eth %d mq send error", info->channel);
+                    LOG_I("ch %d, len %d", info->channel, info->len);
+                    swos2_eth_dev.dev[info->channel]->rx_buf.len = info->len;
+                    ret = rt_mq_send(swos2_eth_dev.dev[info->channel]->eth_rx_mq,
+                                    (const void *)&swos2_eth_dev.dev[info->channel]->rx_buf, sizeof(S_SW_ETH_BUF));
+                    if (ret != RT_EOK)
+                    {
+                        LOG_E("eth %d mq send error", info->channel);
+                    }
                 }
+//                else
+//                {
+//                    LOG_E("rx %x %x %x %x %x %x",
+//                            swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[0],
+//                            swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[1],
+//                            swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[2],
+//                            swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[3],
+//                            swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[4],
+//                            swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[5]);
+//                    LOG_E("tx %x %x %x %x %x %x",
+//                            swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[6],
+//                            swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[7],
+//                            swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[8],
+//                            swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[9],
+//                            swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[10],
+//                            swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[11]);
+//                }
             }
 
             info = RT_NULL;
@@ -128,86 +209,182 @@ static void sw_ethrx_thread_entry(void *param)
     }
 }
 
+static BOOL swos2_eth_dev_init(S_SWOS2_ETH_DEV *dev)
+{
+    if (NULL == dev)
+    {
+        return FALSE;
+    }
+
+    switch (dev->id)
+    {
+    case E_SLOT_ID_1:
+    case E_SLOT_ID_5:
+        swos2_eth[E_ETH_CH_1].rx_indicate = sw_eth1_rx_callback;
+        swos2_eth[E_ETH_CH_2].rx_indicate = sw_eth2_rx_callback;
+        swos2_eth[E_ETH_CH_3].rx_indicate = sw_eth3_rx_callback;
+
+        dev->dev[E_ETH_CH_1] = &swos2_eth[E_ETH_CH_1];
+        dev->dev[E_ETH_CH_2] = &swos2_eth[E_ETH_CH_2];
+        dev->dev[E_ETH_CH_3] = &swos2_eth[E_ETH_CH_3];
+        dev->ch_num = 3;
+        break;
+    case E_SLOT_ID_3:
+    case E_SLOT_ID_7:
+        swos2_eth[E_ETH_CH_1].rx_indicate = sw_eth1_rx_callback;
+        swos2_eth[E_ETH_CH_3].rx_indicate = sw_eth2_rx_callback;
+
+        dev->dev[E_ETH_CH_1] = &swos2_eth[E_ETH_CH_1];
+        dev->dev[E_ETH_CH_2] = &swos2_eth[E_ETH_CH_3];
+        dev->ch_num = 2;
+        break;
+    case E_SLOT_ID_2:
+    case E_SLOT_ID_4:
+    case E_SLOT_ID_6:
+    case E_SLOT_ID_8:
+        swos2_eth[E_ETH_CH_1].rx_indicate = sw_eth1_rx_callback;
+        swos2_eth[E_ETH_CH_2].rx_indicate = sw_eth2_rx_callback;
+        swos2_eth[E_ETH_CH_3].rx_indicate = sw_eth3_rx_callback;
+
+        dev->dev[E_ETH_CH_1] = &swos2_eth[E_ETH_CH_1];
+        dev->dev[E_ETH_CH_2] = &swos2_eth[E_ETH_CH_2];
+        dev->dev[E_ETH_CH_3] = &swos2_eth[E_ETH_CH_3];
+        dev->ch_num = 3;
+        break;
+    default:
+        LOG_E("eth cfg slot id error");
+        return FALSE;
+    }
+    return TRUE;
+}
+
 BOOL if_eth_init(void)
 {
     rt_thread_t tid;
+    uint8_t i;
 
+    memset(&swos2_eth_dev, 0, sizeof(S_SWOS2_ETH_DEV));
 
-    /* 1.创建邮箱 */
+    /* 1.识别板子类型 */
+    swos2_eth_dev.id = if_gpio_getSlotId();
+    swos2_eth_dev.id = E_SLOT_ID_3;
+
+    /* 2.配置板子网络通道信息 */
+    if(swos2_eth_dev_init(&swos2_eth_dev) != TRUE)
+    {
+        LOG_E("eth slot id error");
+        return FALSE;
+    }
+
+    /* 3.创建邮箱 */
     if (rt_mb_init(&swos2_eth_dev.mailbox, "eth_rx_t_mb", &eth_mb_pool[0], sizeof(eth_mb_pool) / 4, RT_IPC_FLAG_PRIO) != RT_EOK)
     {
         LOG_E("eth mb init error");
         return FALSE;
     }
 
-    /* 2.创建，启动接收线程 */
+    /* 4.创建，启动接收线程 */
     tid = rt_thread_create("sw_eth_rx", sw_ethrx_thread_entry, RT_NULL, 2048, 12, 5);
     if (tid == RT_NULL)
     {
         LOG_E("sw_eth_rx thread create fail!");
         return FALSE;
     }
-
-    rt_thread_startup(tid);
-
-    /* 3.打开网口e */
-    swos2_eth_dev.dev[E_ETH_CH_1].dev = rt_device_find("e");
-    if (RT_NULL != swos2_eth_dev.dev[E_ETH_CH_1].dev)
+    else
     {
-        if(rt_device_open(swos2_eth_dev.dev[E_ETH_CH_1].dev, RT_DEVICE_FLAG_RDWR) != RT_EOK)
+        rt_thread_startup(tid);
+    }
+
+    for(i = 0; i < swos2_eth_dev.ch_num; i++)
+    {
+        /* 5.查找并打开网口 */
+        swos2_eth_dev.dev[i]->dev = rt_device_find(swos2_eth_dev.dev[i]->name);
+        if (RT_NULL != swos2_eth_dev.dev[i]->dev)
         {
-            LOG_E("e open error.");
-            return FALSE;
+            if(rt_device_open(swos2_eth_dev.dev[i]->dev, RT_DEVICE_FLAG_RDWR) != RT_EOK)
+            {
+                LOG_E("%s open error", swos2_eth_dev.dev[i]->name);
+                return FALSE;
+            }
+            else
+            {
+                if(swos2_eth_dev.dev[i]->rx_indicate != NULL)
+                {
+                    sw_eth_set_rx_callback(swos2_eth_dev.dev[i], swos2_eth_dev.dev[i]->rx_indicate);
+                }
+                else
+                {
+                    LOG_E("%s set rx callbac error", swos2_eth_dev.dev[i]->name);
+                }
+            }
         }
         else
         {
-            sw_eth_set_rx_callback(&swos2_eth_dev.dev[E_ETH_CH_1], sw_eth1_rx_callback);
-        }
-    }
-    else
-    {
-        LOG_E("can not find e if!");
-        return FALSE;
-    }
-
-    /* 4.打开网口e0 */
-    swos2_eth_dev.dev[E_ETH_CH_2].dev = rt_device_find("e0");
-    if (RT_NULL != swos2_eth_dev.dev[E_ETH_CH_2].dev)
-    {
-        if(rt_device_open(swos2_eth_dev.dev[E_ETH_CH_2].dev, RT_DEVICE_FLAG_RDWR) != RT_EOK)
-        {
-            LOG_E("e0 open error.");
+            LOG_E("can not find %s if!", swos2_eth_dev.dev[i]->name);
             return FALSE;
         }
-        else
+
+        /* 6.创建队列 */
+        swos2_eth_dev.dev[i]->eth_rx_mq = rt_mq_create(swos2_eth_dev.dev[i]->mq_name,
+                                                    sizeof(S_SW_ETH_BUF), SW_ETH_RX_MQ_MAX_NUM, RT_IPC_FLAG_FIFO);
+        if (RT_NULL == swos2_eth_dev.dev[i]->eth_rx_mq)
         {
-            sw_eth_set_rx_callback(&swos2_eth_dev.dev[E_ETH_CH_2], sw_eth2_rx_callback);
+            LOG_E("%s null", swos2_eth_dev.dev[i]->mq_name);
+            return FALSE;
         }
-    }
-    else
-    {
-        LOG_E("can not find e0 if!");
-        return FALSE;
-    }
 
-    swos2_eth_dev.dev[E_ETH_CH_1].eth_rx_mq = rt_mq_create((const char *)"e mq",
-                                                sizeof(S_SW_ETH_BUF), SW_ETH_RX_MQ_MAX_NUM, RT_IPC_FLAG_FIFO);
-    if (RT_NULL == swos2_eth_dev.dev[E_ETH_CH_1].eth_rx_mq)
-    {
-        LOG_E("e mq null");
-        return FALSE;
-    }
+        /* 7.设置MAC地址 */
+        //目的地址
+        swos2_eth_dev.dev[i]->tx_buf.data_u8[0] = com_2_load_1_mac_addr[i][0];
+        swos2_eth_dev.dev[i]->tx_buf.data_u8[1] = com_2_load_1_mac_addr[i][1];
+        swos2_eth_dev.dev[i]->tx_buf.data_u8[2] = com_2_load_1_mac_addr[i][2];
+        swos2_eth_dev.dev[i]->tx_buf.data_u8[3] = com_2_load_1_mac_addr[i][3];
+        swos2_eth_dev.dev[i]->tx_buf.data_u8[4] = com_2_load_1_mac_addr[i][4];
+        swos2_eth_dev.dev[i]->tx_buf.data_u8[5] = com_2_load_1_mac_addr[i][5];
 
-    swos2_eth_dev.dev[E_ETH_CH_2].eth_rx_mq = rt_mq_create((const char *)"e0 mq",
-                                                sizeof(S_SW_ETH_BUF), SW_ETH_RX_MQ_MAX_NUM, RT_IPC_FLAG_FIFO);
-    if (RT_NULL == swos2_eth_dev.dev[E_ETH_CH_2].eth_rx_mq)
-    {
-        LOG_E("e0 mq null");
-        return FALSE;
+        //源地址
+        swos2_eth_dev.dev[i]->tx_buf.data_u8[6] = com_2_load_1_mac_addr[i][6];
+        swos2_eth_dev.dev[i]->tx_buf.data_u8[7] = com_2_load_1_mac_addr[i][7];
+        swos2_eth_dev.dev[i]->tx_buf.data_u8[8] = com_2_load_1_mac_addr[i][8];
+        swos2_eth_dev.dev[i]->tx_buf.data_u8[9] = com_2_load_1_mac_addr[i][9];
+        swos2_eth_dev.dev[i]->tx_buf.data_u8[10] = com_2_load_1_mac_addr[i][10];
+        swos2_eth_dev.dev[i]->tx_buf.data_u8[11] = com_2_load_1_mac_addr[i][11];
     }
 
     return TRUE;
 }
+
+#if 1  //底层处理mac
+BOOL if_eth_send(E_ETH_CH ch, uint8 *pdata, uint16 len)
+{
+    if(ch >= E_ETH_CH_MAX)
+    {
+        return FALSE;
+    }
+
+    if(len >= (SW_ETH_RX_BUF_MAX_NUM - SW_ETH_LINK_LAYER_MAC_LENTH))
+    {
+        return FALSE;
+    }
+
+//    for(int i = 0; i < SW_ETH_LINK_LAYER_MAC_LENTH; i++)
+//    {
+//        MY_Printf("%x ", swos2_eth_dev.dev[ch]->tx_buf.data_u8[i]);
+//    }
+//    MY_Printf("\r\n");
+
+    rt_memcpy(&swos2_eth_dev.dev[ch]->tx_buf.data_u8[SW_ETH_LINK_LAYER_MAC_LENTH], (const void *)pdata, len);
+    swos2_eth_dev.dev[ch]->tx_buf.len = len + SW_ETH_LINK_LAYER_MAC_LENTH;
+    LOG_I("len %d, %d,", len, swos2_eth_dev.dev[ch]->tx_buf.len);
+
+    if(rt_device_write(swos2_eth_dev.dev[ch]->dev, 0, (const void *)swos2_eth_dev.dev[ch]->tx_buf.data_u8, swos2_eth_dev.dev[ch]->tx_buf.len)
+            != swos2_eth_dev.dev[ch]->tx_buf.len)
+    {
+        return FALSE;
+    }
+    return TRUE;
+}
+#else
 
 BOOL if_eth_send(E_ETH_CH ch, uint8 *pdata, uint16 len)
 {
@@ -216,19 +393,30 @@ BOOL if_eth_send(E_ETH_CH ch, uint8 *pdata, uint16 len)
         return FALSE;
     }
 
-    if(rt_device_write( swos2_eth_dev.dev[ch].dev, 0, (const void *)pdata, len) != len)
+    if(len >= (SW_ETH_RX_BUF_MAX_NUM - SW_ETH_LINK_LAYER_MAC_LENTH))
+    {
+        return FALSE;
+    }
+
+//    rt_memcpy(&swos2_eth_dev.dev[ch]->tx_buf.data_u8[SW_ETH_LINK_LAYER_MAC_LENTH], (const void *)pdata, len);
+//    swos2_eth_dev.dev[ch]->tx_buf.len = len + SW_ETH_LINK_LAYER_MAC_LENTH;
+
+    if(rt_device_write(swos2_eth_dev.dev[ch]->dev, 0, (const void *)pdata, len)
+            != len)
     {
         return FALSE;
     }
     return TRUE;
 }
 
+#endif
+
 uint16 if_eth_get(E_ETH_CH ch, uint8 *pdata, uint16 len)
 {
     rt_err_t ret;
     S_SW_ETH_BUF rx_buf;
 
-    ret = rt_mq_recv(swos2_eth_dev.dev[ch].eth_rx_mq, (void *) &rx_buf, sizeof(S_SW_ETH_BUF), RT_WAITING_NO);
+    ret = rt_mq_recv(swos2_eth_dev.dev[ch]->eth_rx_mq, (void *) &rx_buf, sizeof(S_SW_ETH_BUF), RT_WAITING_NO);
     if (RT_EOK == ret)
     {
         rt_memcpy(pdata, rx_buf.data_u8, rx_buf.len);

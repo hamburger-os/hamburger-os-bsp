@@ -181,6 +181,19 @@ static BOOL swos2_can_cfg(S_CAN_DEV *p_can_dev)
     switch (p_can_dev->id)
     {
     case E_SLOT_ID_1:
+    case E_SLOT_ID_5:
+        p_can_dev->info[E_CAN_CH_1].dev_name = "can1";
+        p_can_dev->info[E_CAN_CH_1].rx_ind = swos2_can_ch1_rx_call;
+        p_can_dev->info[E_CAN_CH_2].dev_name = "can2";
+        p_can_dev->info[E_CAN_CH_2].rx_ind = swos2_can_ch2_rx_call;
+        p_can_dev->info[E_CAN_CH_3].dev_name = "mcp2517fd1";
+        p_can_dev->info[E_CAN_CH_3].rx_ind = swos2_can_ch3_rx_call;
+        p_can_dev->info[E_CAN_CH_4].dev_name = "mcp2517fd2";
+        p_can_dev->info[E_CAN_CH_4].rx_ind = swos2_can_ch4_rx_call;
+        p_can_dev->ch_num = 4;
+        break;
+    case E_SLOT_ID_3:
+    case E_SLOT_ID_7:
         p_can_dev->info[E_CAN_CH_1].dev_name = "can1";
         p_can_dev->info[E_CAN_CH_1].rx_ind = swos2_can_ch1_rx_call;
         p_can_dev->info[E_CAN_CH_2].dev_name = "can2";
@@ -192,8 +205,9 @@ static BOOL swos2_can_cfg(S_CAN_DEV *p_can_dev)
         p_can_dev->ch_num = 4;
         break;
     case E_SLOT_ID_2:
-        break;
-    case E_SLOT_ID_3:
+    case E_SLOT_ID_4:
+    case E_SLOT_ID_6:
+    case E_SLOT_ID_8:
         p_can_dev->info[E_CAN_CH_1].dev_name = "can1";
         p_can_dev->info[E_CAN_CH_1].rx_ind = swos2_can_ch1_rx_call;
         p_can_dev->info[E_CAN_CH_2].dev_name = "can2";
@@ -202,17 +216,9 @@ static BOOL swos2_can_cfg(S_CAN_DEV *p_can_dev)
         p_can_dev->info[E_CAN_CH_3].rx_ind = swos2_can_ch3_rx_call;
         p_can_dev->info[E_CAN_CH_4].dev_name = "mcp2517fd2";
         p_can_dev->info[E_CAN_CH_4].rx_ind = swos2_can_ch4_rx_call;
-        p_can_dev->ch_num = 4;
-        break;
-    case E_SLOT_ID_4:
-        break;
-    case E_SLOT_ID_5:
-        break;
-    case E_SLOT_ID_6:
-        break;
-    case E_SLOT_ID_7:
-        break;
-    case E_SLOT_ID_8:
+        p_can_dev->info[E_CAN_CH_5].dev_name = "mcp2517fd3";
+        p_can_dev->info[E_CAN_CH_5].rx_ind = swos2_can_ch5_rx_call;
+        p_can_dev->ch_num = 5;
         break;
     default:
         LOG_E("can cfg slot id error");
@@ -261,6 +267,7 @@ static BOOL swos2_can_init(S_CAN_DEV *p_can_dev)
             {
                 LOG_E("open '%s' error!", p_can_dev->info[i].dev_name);
             }
+
             /* 设置接收回调函数 */
             rt_device_set_rx_indicate(p_can_dev->info[i].can_dev, p_can_dev->info[i].rx_ind);
 
@@ -296,8 +303,9 @@ BOOL if_can_init(void)
 
     memset(p_can_dev, 0, sizeof(S_CAN_DEV));
 
-//    p_can_dev->id = if_gpio_getSlotId();
+    p_can_dev->id = if_gpio_getSlotId();
     p_can_dev->id = E_SLOT_ID_3;
+
     result = swos2_can_cfg(p_can_dev);
     if (result != TRUE)
     {

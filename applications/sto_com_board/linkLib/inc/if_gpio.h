@@ -22,6 +22,8 @@ typedef enum
     E_SLOT_ID_6, /* II系通信1 子板 */
     E_SLOT_ID_7, /* II系通信2 底板 */
     E_SLOT_ID_8, /* II系通信2 子板 */
+    E_SLOT_ID_9, /* 记录插件 */
+    E_SLOT_ID_10, /* 无线插件 */
     E_SLOT_ID_MAX
 } E_SLOT_ID;
 

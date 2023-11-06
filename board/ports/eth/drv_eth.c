@@ -355,36 +355,39 @@ struct pbuf *rt_stm32_eth_rx(rt_device_t dev)
 
         HAL_ETH_ReadData(&eth->heth, (void **) &p);
 
-        if(RT_NULL == p->next && p->tot_len < LEP_MAC_PKT_MAX_LEN)
+        if(p != RT_NULL)
         {
-            for(q = p; q != NULL; q = q->next)
+            if(RT_NULL == p->next && p->tot_len < LEP_MAC_PKT_MAX_LEN)
             {
-                if (eth->rx_num >= BSP_LINK_LAYER_RX_BUF_NUM)
+                for(q = p; q != NULL; q = q->next)
                 {
-                    lep_eth_if_clear(&eth->link_layer_buf, E_ETH_IF_CLER_MODE_ONE);
-                }
-
-                S_LEP_BUF *ps_lep_buf = rt_malloc(sizeof(S_LEP_BUF));
-                if(RT_NULL != ps_lep_buf)
-                {
-                    eth->rx_num++;
-                    ps_lep_buf->flag = 0;
-                    ps_lep_buf->flag |= LEP_RBF_RV;
-                    ps_lep_buf->len = q->len;
-                    rt_memcpy(ps_lep_buf->buf, q->payload, q->len);
-                    rt_list_insert_before(&eth->link_layer_buf.rx_head->list, &ps_lep_buf->list);
-                    if(dev->rx_indicate != NULL)
+                    if (eth->rx_num >= BSP_LINK_LAYER_RX_BUF_NUM)
                     {
-                        dev->rx_indicate(dev, q->len);
+                        lep_eth_if_clear(&eth->link_layer_buf, E_ETH_IF_CLER_MODE_ONE);
                     }
-                }
-                else
-                {
-                    LOG_E("ps_lep_buf rx null");
+
+                    S_LEP_BUF *ps_lep_buf = rt_malloc(sizeof(S_LEP_BUF));
+                    if(RT_NULL != ps_lep_buf)
+                    {
+                        eth->rx_num++;
+                        ps_lep_buf->flag = 0;
+                        ps_lep_buf->flag |= LEP_RBF_RV;
+                        ps_lep_buf->len = q->len;
+                        LOG_I("len %d", q->len);
+                        rt_memcpy(ps_lep_buf->buf, q->payload, q->len);
+                        rt_list_insert_before(&eth->link_layer_buf.rx_head->list, &ps_lep_buf->list);
+                        if(dev->rx_indicate != NULL)
+                        {
+                            dev->rx_indicate(dev, q->len);
+                        }
+                    }
+                    else
+                    {
+                        LOG_E("ps_lep_buf rx null");
+                    }
                 }
             }
         }
-
     }
 
 #ifdef ETH_RX_DUMP
@@ -615,6 +618,7 @@ static void phy_linkchange(void *parameter)
         HAL_ETH_GetMACConfig(&eth->heth, &MACConf);
         MACConf.DuplexMode = duplex;
         MACConf.Speed = speed;
+        MACConf.SourceAddrControl = ETH_SRC_ADDR_REPLACE;
         HAL_ETH_SetMACConfig(&eth->heth, &MACConf);  //设置MAC
 
         HAL_ETH_Start_IT(&eth->heth);
@@ -676,6 +680,14 @@ static int rt_hw_stm32_eth_init(void)
         return -RT_ERROR;
     }
 
+#ifdef BSP_USING_ETH_SET_MAC
+    stm32_eth_device.mac[0] = BSP_ETH_MAC_ADDR1;
+    stm32_eth_device.mac[1] = BSP_ETH_MAC_ADDR2;
+    stm32_eth_device.mac[2] = BSP_ETH_MAC_ADDR3;
+    stm32_eth_device.mac[3] = BSP_ETH_MAC_ADDR4;
+    stm32_eth_device.mac[4] = BSP_ETH_MAC_ADDR5;
+    stm32_eth_device.mac[5] = BSP_ETH_MAC_ADDR6;
+#else
     /* OUI 00-80-E1 STMICROELECTRONICS.前三个字节为厂商ID */
     stm32_eth_device.mac[0] = 0xF8;
     stm32_eth_device.mac[1] = 0x09;
@@ -684,6 +696,7 @@ static int rt_hw_stm32_eth_init(void)
     stm32_eth_device.mac[3] = *(uint8_t *)(UID_BASE + 2 + 3);
     stm32_eth_device.mac[4] = *(uint8_t *)(UID_BASE + 1 + 3);
     stm32_eth_device.mac[5] = *(uint8_t *)(UID_BASE + 0 + 3);
+#endif
 
     stm32_eth_device.parent.parent.init       = rt_stm32_eth_init;
     stm32_eth_device.parent.parent.open       = rt_stm32_eth_open;

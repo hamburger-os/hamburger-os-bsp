@@ -437,6 +437,7 @@ struct pbuf *fmc_eth_rx(rt_device_t dev)
         struct pbuf *q = NULL;
         if(RT_NULL == p->next && p->tot_len < LEP_MAC_PKT_MAX_LEN)
         {
+            LOG_I("len %d to_len %d", p->len, p->tot_len);
             for (q = p; q != NULL; q = q->next)
             {
                 if (fmc_eth->link_layer_buf.rx_lep_buf_num >= BSP_LINK_LAYER_RX_BUF_NUM)
@@ -450,12 +451,13 @@ struct pbuf *fmc_eth_rx(rt_device_t dev)
                     fmc_eth->link_layer_buf.rx_lep_buf_num++;
                     ps_lep_buf->flag = 0;
                     ps_lep_buf->flag |= LEP_RBF_RV;
-                    ps_lep_buf->len = q->len;
-                    rt_memcpy(ps_lep_buf->buf, q->payload, q->len);
+                    ps_lep_buf->len = q->len - 4;  /* CRC 4 bytes */
+                    rt_memcpy(ps_lep_buf->buf, q->payload, ps_lep_buf->len);
+                    LOG_I(" q_len %d", ps_lep_buf->len);
                     rt_list_insert_before(&fmc_eth->link_layer_buf.rx_head->list, &ps_lep_buf->list);
                     if(dev->rx_indicate != NULL)
                     {
-                        dev->rx_indicate(dev, q->len);
+                        dev->rx_indicate(dev, ps_lep_buf->len);
                     }
                 }
                 else

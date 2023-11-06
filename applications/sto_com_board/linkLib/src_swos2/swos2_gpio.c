@@ -31,11 +31,8 @@ typedef struct
 typedef struct
 {
     S_GPIO_INFO *cpu_type_pin;
-    S_GPIO_INFO *board_type_pin_1;
-    S_GPIO_INFO *board_type_pin_2;
-    S_GPIO_INFO *board_type_pin_3;
-    S_GPIO_INFO *led_pin_1;
-    S_GPIO_INFO *led_pin_2;
+    S_GPIO_INFO *board_type_pin[3];
+    S_GPIO_INFO *led_pin[E_IO_ID_MAX];
 
     E_CPU_TYPE cpu_type;
 } S_BOARD_GPIO;
@@ -48,24 +45,26 @@ E_SLOT_ID if_gpio_getSlotId(void);
 
 void if_gpio_init(void)
 {
+    uint8_t i;
+
     /* 1. 配置底板子板识别引脚 */
     board_gpio.cpu_type_pin = &pin_cfg[0];
 
     board_gpio.cpu_type_pin->pin_index = rt_pin_get(board_gpio.cpu_type_pin->pin_name);
 
-    rt_pin_mode(board_gpio.cpu_type_pin->pin_index, PIN_MODE_INPUT); //PIN_MODE_OUTPUT
+    rt_pin_mode(board_gpio.cpu_type_pin->pin_index, PIN_MODE_INPUT);
     if (PIN_HIGH == rt_pin_read(board_gpio.cpu_type_pin->pin_index))
     {
         /* 子板 */
         board_gpio.cpu_type = CPU_CHILD;
 
-        pin_cfg[1].pin_name = "PH.8";
-        pin_cfg[2].pin_name = "PH.7";
+        pin_cfg[1].pin_name = "PH.7";
+        pin_cfg[2].pin_name = "PH.8";
         pin_cfg[3].pin_name = "PD.11";
 
         /* led */
-        pin_cfg[4].pin_name = "PH.3";
-        pin_cfg[5].pin_name = "PH.4";
+        pin_cfg[4].pin_name = "PE.4";
+        pin_cfg[5].pin_name = "PE.3";
     }
     else
     {
@@ -82,28 +81,21 @@ void if_gpio_init(void)
     }
 
     /* 2. 配置板子类型识别引脚 */
-    board_gpio.board_type_pin_1 = &pin_cfg[1];
-    board_gpio.board_type_pin_2 = &pin_cfg[2];
-    board_gpio.board_type_pin_3 = &pin_cfg[3];
 
-    board_gpio.board_type_pin_1->pin_index = rt_pin_get(board_gpio.board_type_pin_1->pin_name);
-    board_gpio.board_type_pin_2->pin_index = rt_pin_get(board_gpio.board_type_pin_2->pin_name);
-    board_gpio.board_type_pin_3->pin_index = rt_pin_get(board_gpio.board_type_pin_3->pin_name);
-
-    rt_pin_mode(board_gpio.board_type_pin_1->pin_index, PIN_MODE_INPUT);
-    rt_pin_mode(board_gpio.board_type_pin_2->pin_index, PIN_MODE_INPUT);
-    rt_pin_mode(board_gpio.board_type_pin_3->pin_index, PIN_MODE_INPUT);
+    for(i = 0; i < 3; i++)
+    {
+        board_gpio.board_type_pin[i] = &pin_cfg[i + 1];
+        board_gpio.board_type_pin[i]->pin_index = rt_pin_get(board_gpio.board_type_pin[i]->pin_name);
+        rt_pin_mode(board_gpio.board_type_pin[i]->pin_index, PIN_MODE_INPUT);
+    }
 
     /* 3. 配置LED引脚 */
-    board_gpio.led_pin_1 = &pin_cfg[4];
-    board_gpio.led_pin_2 = &pin_cfg[5];
-
-    board_gpio.led_pin_1->pin_index = rt_pin_get(board_gpio.led_pin_1->pin_name);
-    board_gpio.led_pin_2->pin_index = rt_pin_get(board_gpio.led_pin_2->pin_name);
-
-    rt_pin_mode(board_gpio.led_pin_1->pin_index, PIN_MODE_OUTPUT);
-    rt_pin_mode(board_gpio.led_pin_2->pin_index, PIN_MODE_OUTPUT);
-
+    for(i = 0; i < 2; i++)
+    {
+        board_gpio.led_pin[i] = &pin_cfg[i + 4];
+        board_gpio.led_pin[i]->pin_index = rt_pin_get(board_gpio.led_pin[i]->pin_name);
+        rt_pin_mode(board_gpio.led_pin[i]->pin_index, PIN_MODE_OUTPUT);
+    }
 }
 
 void if_gpio_set(E_IO_ID id)
@@ -115,19 +107,7 @@ void if_gpio_set(E_IO_ID id)
     }
     else
     {
-        if (E_IO_ID_1 == id)
-        {
-            rt_pin_write(board_gpio.led_pin_1->pin_index, PIN_HIGH);
-        }
-        else if (E_IO_ID_2 == id)
-        {
-            rt_pin_write(board_gpio.led_pin_2->pin_index, PIN_HIGH);
-        }
-        else
-        {
-            LOG_E("id is error");
-            return;
-        }
+        rt_pin_write(board_gpio.led_pin[id]->pin_index, PIN_HIGH);
     }
 }
 
@@ -140,19 +120,7 @@ void if_gpio_reset(E_IO_ID id)
     }
     else
     {
-        if (E_IO_ID_1 == id)
-        {
-            rt_pin_write(board_gpio.led_pin_1->pin_index, PIN_LOW);
-        }
-        else if (E_IO_ID_2 == id)
-        {
-            rt_pin_write(board_gpio.led_pin_2->pin_index, PIN_LOW);
-        }
-        else
-        {
-            LOG_E("id is error");
-            return;
-        }
+        rt_pin_write(board_gpio.led_pin[id]->pin_index, PIN_LOW);
     }
 }
 
@@ -165,32 +133,13 @@ void if_gpio_toggle(E_IO_ID id)
     }
     else
     {
-        if (E_IO_ID_1 == id)
+        if (rt_pin_read(board_gpio.led_pin[id]->pin_index) == 1)
         {
-            if (rt_pin_read(board_gpio.led_pin_1->pin_index) == 1)
-            {
-                rt_pin_write(board_gpio.led_pin_1->pin_index, PIN_LOW);
-            }
-            else
-            {
-                rt_pin_write(board_gpio.led_pin_1->pin_index, PIN_HIGH);
-            }
-        }
-        else if (E_IO_ID_2 == id)
-        {
-            if (rt_pin_read(board_gpio.led_pin_2->pin_index) == 1)
-            {
-                rt_pin_write(board_gpio.led_pin_2->pin_index, PIN_LOW);
-            }
-            else
-            {
-                rt_pin_write(board_gpio.led_pin_2->pin_index, PIN_HIGH);
-            }
+            rt_pin_write(board_gpio.led_pin[id]->pin_index, PIN_LOW);
         }
         else
         {
-            LOG_E("id is error");
-            return;
+            rt_pin_write(board_gpio.led_pin[id]->pin_index, PIN_HIGH);
         }
     }
 }
@@ -204,19 +153,7 @@ BOOL if_gpio_get(E_IO_ID id)
     }
     else
     {
-        if (E_IO_ID_1 == id)
-        {
-            return rt_pin_read(board_gpio.led_pin_1->pin_index);
-        }
-        else if (E_IO_ID_2 == id)
-        {
-            return rt_pin_read(board_gpio.led_pin_1->pin_index);
-        }
-        else
-        {
-            LOG_E("id is error");
-            return FALSE;
-        }
+        return rt_pin_read(board_gpio.led_pin[id]->pin_index);
     }
 }
 
@@ -232,13 +169,13 @@ E_SLOT_ID if_gpio_getSlotId(void)
     }
     else
     {
-        gpio_status = rt_pin_read(board_gpio.board_type_pin_1->pin_index);
+        gpio_status = rt_pin_read(board_gpio.board_type_pin[0]->pin_index);
         board_data |= gpio_status;
 
-        gpio_status = rt_pin_read(board_gpio.board_type_pin_2->pin_index);
+        gpio_status = rt_pin_read(board_gpio.board_type_pin[1]->pin_index);
         board_data |= gpio_status << 1;
 
-        gpio_status = rt_pin_read(board_gpio.board_type_pin_2->pin_index);
+        gpio_status = rt_pin_read(board_gpio.board_type_pin[2]->pin_index);
         board_data |= gpio_status << 2;
 
         switch ((board_data & 0x07))
@@ -287,6 +224,5 @@ E_SLOT_ID if_gpio_getSlotId(void)
             return E_SLOT_ID_MAX;
         }
     }
-
     return slot_id;
 }
