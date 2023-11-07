@@ -3720,10 +3720,6 @@ menu "Onboard Peripheral Drivers"
                 string "Set the uart used, default: uart4"
                 default "uart4"
                 
-            config BSP_LORA_DEFAULT_RATE
-                int "Set the uart default baudrate, default: (9600)"
-                default (9600)
-                
             config BSP_LORA_RATE
                 int "Set the uart baudrate, default: (115200)"
                 default (115200)

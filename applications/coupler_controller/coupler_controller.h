@@ -43,6 +43,7 @@ typedef struct
     char *ctrl_devname[4];
     char *bat_devname[2];
     char *gnss_devname;
+    char *lora_devname;
 
     rt_device_t station_dev;
     rt_device_t module_dev;

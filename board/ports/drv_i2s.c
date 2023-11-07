@@ -103,6 +103,9 @@ void SPI3_IRQHandler(void)
  */
 void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
 {
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+    SCB_CleanDCache_by_Addr((uint32_t*)i2s_config.tx_fifo, I2S_TX_DMA_FIFO_SIZE);
+#endif
     if (i2s_config.TxHalfCpltCallback != NULL)
     {
         i2s_config.TxHalfCpltCallback();
@@ -117,6 +120,9 @@ void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
  */
 void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+    SCB_CleanDCache_by_Addr((uint32_t*)i2s_config.tx_fifo, I2S_TX_DMA_FIFO_SIZE);
+#endif
     if (i2s_config.TxCpltCallback != NULL)
     {
         i2s_config.TxCpltCallback();
@@ -132,7 +138,7 @@ void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
 void HAL_I2S_RxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
 {
 #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
-    SCB_InvalidateDCache_by_Addr((uint32_t*)i2s_config.rx_fifo, I2S_RX_DMA_FIFO_SIZE/2);
+    SCB_InvalidateDCache_by_Addr((uint32_t*)i2s_config.rx_fifo, I2S_RX_DMA_FIFO_SIZE);
 #endif
     if (i2s_config.RxHalfCpltCallback != NULL)
     {
@@ -166,7 +172,7 @@ void HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *hi2s)
 void HAL_I2SEx_TxRxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
 {
 #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
-    SCB_InvalidateDCache_by_Addr((uint32_t*)i2s_config.rx_fifo, I2S_RX_DMA_FIFO_SIZE/2);
+    SCB_InvalidateDCache_by_Addr((uint32_t*)i2s_config.rx_fifo, I2S_RX_DMA_FIFO_SIZE);
 #endif
     if (i2s_config.RxHalfCpltCallback != NULL)
     {
@@ -212,7 +218,7 @@ static void MX_DMA_Init(I2S_HandleTypeDef* hi2s)
 {
     /* DMA controller clock enable */
     __HAL_RCC_DMA1_CLK_ENABLE();
-//    __HAL_RCC_DMA2_CLK_ENABLE();
+    __HAL_RCC_DMA2_CLK_ENABLE();
 
     /* DMA interrupt init */
 #ifdef BSP_USING_I2S1
@@ -587,5 +593,5 @@ void I2S_Rec_Stop(void)
 
 uint8_t *I2S_Get_Rxbuffer(void)
 {
-    return i2s_config.tx_fifo;
+    return i2s_config.rx_fifo;
 }

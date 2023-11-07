@@ -334,6 +334,8 @@ static int fal_fram_init(void)
 
     return ret;
 }
+
+#define READ_SIZE 16
 static int fal_fram_read(long offset, rt_uint8_t *buf, size_t size)
 {
     uint32_t addr = fm25xx_fram.addr + offset;
@@ -348,15 +350,38 @@ static int fal_fram_read(long offset, rt_uint8_t *buf, size_t size)
         return 0;
     }
 
-    /* 发送读命令 */
-    uint8_t cmd[] = {FM25xx_CMD_READ, (uint8_t)((addr) >> 16U), (uint8_t)((addr) >> 8U), (uint8_t)((addr))};
+    uint32_t addr_page = addr;
+    uint8_t *buf_page = (uint8_t *) buf;
+    size_t size_less = size;
+    size_t size_page = READ_SIZE;
+    size_t countmax = (size % READ_SIZE == 0) ? (size / READ_SIZE) : (size / READ_SIZE + 1);
 
-    /* 读数据 */
-    rt_err_t ret = rt_spi_send_then_recv(fm25xx_spidev, cmd, sizeof(cmd), buf, size);
-    if (ret != RT_EOK)
+    for (size_t count = 0; count < countmax; count++)
     {
-        LOG_E("read data error %d!", ret);
-        return -RT_EIO;
+        /* 计算页长度 */
+        if (size_less >= READ_SIZE)
+        {
+            size_page = READ_SIZE;
+        }
+        else
+        {
+            size_page = size_less % READ_SIZE;
+        }
+
+        /* 发送读命令 */
+        uint8_t cmd[] = { FM25xx_CMD_READ, (uint8_t) ((addr_page) >> 16U), (uint8_t) ((addr_page) >> 8U), (uint8_t) ((addr_page)) };
+
+        /* 读数据 */
+        rt_err_t ret = rt_spi_send_then_recv(fm25xx_spidev, cmd, sizeof(cmd), buf_page, size_page);
+        if (ret != RT_EOK)
+        {
+            LOG_E("read data error %d!", ret);
+            return -RT_EIO;
+        }
+
+        addr_page += size_page;
+        buf_page += size_page;
+        size_less -= size_page;
     }
 
     LOG_HEX("read", 16, buf, (size > 64)?(64):(size));

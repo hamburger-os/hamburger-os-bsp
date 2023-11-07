@@ -237,12 +237,12 @@ static rt_err_t stm32_spi_init(struct stm32_spi *spi_drv, struct rt_spi_configur
     spi_handle->Init.NSSPMode                   = SPI_NSS_PULSE_DISABLE;
     spi_handle->Init.NSSPolarity                = SPI_NSS_POLARITY_LOW;
     spi_handle->Init.CRCPolynomial              = 0x0;
-    spi_handle->Init.TxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ONE_PATTERN;
-    spi_handle->Init.RxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ONE_PATTERN;
+    spi_handle->Init.TxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
+    spi_handle->Init.RxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
     spi_handle->Init.MasterSSIdleness           = SPI_MASTER_SS_IDLENESS_00CYCLE;
     spi_handle->Init.MasterInterDataIdleness    = SPI_MASTER_INTERDATA_IDLENESS_00CYCLE;
     spi_handle->Init.MasterReceiverAutoSusp     = SPI_MASTER_RX_AUTOSUSP_DISABLE;
-    spi_handle->Init.MasterKeepIOState          = SPI_MASTER_KEEP_IO_STATE_ENABLE;
+    spi_handle->Init.MasterKeepIOState          = SPI_MASTER_KEEP_IO_STATE_DISABLE;
     spi_handle->Init.IOSwap                     = SPI_IO_SWAP_DISABLE;
     spi_handle->Init.FifoThreshold              = SPI_FIFO_THRESHOLD_01DATA;
 #endif
@@ -290,7 +290,8 @@ static rt_err_t stm32_spi_init(struct stm32_spi *spi_drv, struct rt_spi_configur
     return RT_EOK;
 }
 
-static rt_size_t spixfer(struct rt_spi_device *device, struct rt_spi_message *message)
+#define ALIGN_SIZE(x)   (((x + (sizeof(void*) - 1)) & ~(sizeof(void*) - 1)) + 32)
+static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *message)
 {
     #define DMA_TRANS_MIN_LEN  16 /* only buffer length >= DMA_TRANS_MIN_LEN will use DMA mode */
 
@@ -390,14 +391,14 @@ static rt_size_t spixfer(struct rt_spi_device *device, struct rt_spi_message *me
             if ((spi_drv->spi_dma_flag & SPI_USING_TX_DMA_FLAG) && (spi_drv->spi_dma_flag & SPI_USING_RX_DMA_FLAG) && (send_length >= DMA_TRANS_MIN_LEN))
             {
 #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
-                rt_hw_cpu_dcache_ops(RT_HW_CACHE_FLUSH, dma_aligned_buffer, send_length);
+                SCB_CleanInvalidateDCache_by_Addr((uint32_t *)dma_aligned_buffer, ALIGN_SIZE(send_length));
 #endif
                 state = HAL_SPI_TransmitReceive_DMA(spi_handle, (uint8_t *)p_txrx_buffer, (uint8_t *)p_txrx_buffer, send_length);
             }
             else if ((spi_drv->spi_dma_flag & SPI_USING_TX_DMA_FLAG) && (send_length >= DMA_TRANS_MIN_LEN))
             {
 #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
-                rt_hw_cpu_dcache_ops(RT_HW_CACHE_FLUSH, dma_aligned_buffer, send_length);
+                SCB_CleanInvalidateDCache_by_Addr((uint32_t *)dma_aligned_buffer, ALIGN_SIZE(send_length));
 #endif
                 /* same as Tx ONLY. It will not receive SPI data any more. */
                 state = HAL_SPI_Transmit_DMA(spi_handle, (uint8_t *)p_txrx_buffer, send_length);
@@ -410,7 +411,7 @@ static rt_size_t spixfer(struct rt_spi_device *device, struct rt_spi_message *me
             }
             else
             {
-                state = HAL_SPI_TransmitReceive(spi_handle, (uint8_t *)send_buf, (uint8_t *)recv_buf, send_length, send_length * 8);
+                state = HAL_SPI_TransmitReceive(spi_handle, (uint8_t *)send_buf, (uint8_t *)recv_buf, send_length, send_length);
             }
         }
         else if (message->send_buf)
@@ -418,13 +419,13 @@ static rt_size_t spixfer(struct rt_spi_device *device, struct rt_spi_message *me
             if ((spi_drv->spi_dma_flag & SPI_USING_TX_DMA_FLAG) && (send_length >= DMA_TRANS_MIN_LEN))
             {
 #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
-                rt_hw_cpu_dcache_ops(RT_HW_CACHE_FLUSH, dma_aligned_buffer, send_length);
+                SCB_CleanInvalidateDCache_by_Addr((uint32_t *)dma_aligned_buffer, ALIGN_SIZE(send_length));
 #endif
                 state = HAL_SPI_Transmit_DMA(spi_handle, (uint8_t *)p_txrx_buffer, send_length);
             }
             else
             {
-                state = HAL_SPI_Transmit(spi_handle, (uint8_t *)send_buf, send_length, send_length * 8);
+                state = HAL_SPI_Transmit(spi_handle, (uint8_t *)send_buf, send_length, send_length);
             }
 
             if (message->cs_release && (device->config.mode & RT_SPI_3WIRE))
@@ -439,16 +440,13 @@ static rt_size_t spixfer(struct rt_spi_device *device, struct rt_spi_message *me
             if ((spi_drv->spi_dma_flag & SPI_USING_RX_DMA_FLAG) && (send_length >= DMA_TRANS_MIN_LEN))
             {
 #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
-                rt_hw_cpu_dcache_ops(RT_HW_CACHE_FLUSH, dma_aligned_buffer, send_length);
+                SCB_CleanInvalidateDCache_by_Addr((uint32_t *)dma_aligned_buffer, ALIGN_SIZE(send_length));
 #endif
                 state = HAL_SPI_Receive_DMA(spi_handle, (uint8_t *)p_txrx_buffer, send_length);
             }
             else
             {
-                /* clear the old error flag */
-                __HAL_SPI_CLEAR_OVRFLAG(spi_handle);
-
-                state = HAL_SPI_Receive(spi_handle, (uint8_t *)recv_buf, send_length, send_length * 8);
+                state = HAL_SPI_Receive(spi_handle, (uint8_t *)recv_buf, send_length, send_length);
             }
         }
         else
@@ -459,9 +457,16 @@ static rt_size_t spixfer(struct rt_spi_device *device, struct rt_spi_message *me
 
         if (state != HAL_OK)
         {
-            LOG_E("SPI transfer error: %d 0x%p 0x%p 0x%p %d", state, send_buf, recv_buf, p_txrx_buffer, send_length);
-            message->length = 0;
-            break;
+            if (state == HAL_TIMEOUT)
+            {
+                LOG_W("SPI transfer timeout: 0x%p 0x%p 0x%p %d", send_buf, recv_buf, p_txrx_buffer, send_length);
+            }
+            else
+            {
+                LOG_E("SPI transfer error: %d 0x%p 0x%p 0x%p %d", state, send_buf, recv_buf, p_txrx_buffer, send_length);
+                message->length = 0;
+                break;
+            }
         }
         else
         {
@@ -480,9 +485,6 @@ static rt_size_t spixfer(struct rt_spi_device *device, struct rt_spi_message *me
                 LOG_E("wait for DMA interrupt overtime!");
                 break;
             }
-#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
-            rt_hw_cpu_dcache_ops(RT_HW_CACHE_INVALIDATE, dma_aligned_buffer, send_length);
-#endif
         }
 
         if(dma_aligned_buffer != RT_NULL) /* re-aligned, so need to copy the data to recv_buf */

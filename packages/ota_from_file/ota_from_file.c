@@ -216,6 +216,7 @@ static int ota_fd_fw_check(int fd, fw_info_t *fw_info)
         LOG_E("firmware check fail. firmware infomation check fail.");
         return(0);
     }
+    ota_fw_info_show(fw_info);
 
     if ( ! ota_fd_fw_crc_check(fd, sizeof(fw_info_t), fw_info->pkg_size, fw_info->pkg_crc))
     {

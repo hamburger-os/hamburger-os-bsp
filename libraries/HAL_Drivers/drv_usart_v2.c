@@ -1217,6 +1217,9 @@ static void stm32_dma_config(struct rt_serial_device *serial, rt_ubase_t flag)
         rx_fifo = (struct rt_serial_rx_fifo *)serial->serial_rx;
         RT_ASSERT(rx_fifo != RT_NULL);
         /* Start DMA transfer */
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+        SCB_CleanDCache_by_Addr((uint32_t *)rx_fifo->buffer, serial->config.rx_bufsz);
+#endif
         if (HAL_UART_Receive_DMA(&(uart->handle), rx_fifo->buffer, serial->config.rx_bufsz) != HAL_OK)
         {
             /* Transfer error in reception process */

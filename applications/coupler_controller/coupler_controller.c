@@ -22,13 +22,14 @@
 #define HDLC_RX_MAX_LEN 512
 
 CouplerCtrlUserData coupler_controller_userdata = {
-    .station_devname = BSP_DEV_TABLE_UART1,
+    .station_devname = BSP_DEV_TABLE_UART2,
     .module_devname = BSP_DEV_TABLE_UART4,
     .adc_devname = "ltc186x",
     .led_devname = {BSP_GPIO_TABLE_GPIO5, BSP_GPIO_TABLE_SPI1_CS2, BSP_GPIO_TABLE_SPI1_CS1, BSP_GPIO_TABLE_SPI1_CS0, BSP_GPIO_TABLE_GPIO4},
     .ctrl_devname = {BSP_GPIO_TABLE_I2S1_SDO, BSP_GPIO_TABLE_I2S1_CK, BSP_GPIO_TABLE_PWM3, BSP_GPIO_TABLE_PWM4},
     .bat_devname = {BSP_GPIO_TABLE_GPIO3, BSP_GPIO_TABLE_GPIO8},
     .gnss_devname = "gnss",
+    .lora_devname = "lora",
 
     .isThreadRun = 1,
 };

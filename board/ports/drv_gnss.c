@@ -172,7 +172,7 @@ static void gnss_thread_entry(void *parameter)
                     rt_mutex_release(pgnss->mutex);
 
                     /* Print messages */
-                    LOG_D("[%d %d] %d/%d/%d %d:%d:%d %d.%06d %d.%06d %d.%03d %d.%03d %d.%03d"
+                    LOG_I("[%d %d] %d/%d/%d %d:%d:%d %d.%06d %d.%06d %d.%03d %d.%03d %d.%03d"
                             , pgnss->hgps.is_valid, pgnss->hgps.sats_in_use
                             , pgnss->hgps.year, pgnss->hgps.month, pgnss->hgps.date
                             , pgnss->hgps.hours, pgnss->hgps.minutes, pgnss->hgps.seconds

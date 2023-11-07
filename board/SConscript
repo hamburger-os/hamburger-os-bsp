@@ -328,7 +328,8 @@ if GetDepend(['BSP_USING_LTC4281I']):
     src += Glob('ports/drv_ltc4281i.c')
     
 if GetDepend(['BSP_USING_SC16IS752']):
-    src += Glob('ports/drv_SC16IS752.c')
+    src += Glob('ports/sc16is7xx/sc16is7xx.c')
+    src += Glob('ports/sc16is7xx/drv_SC16IS752.c')
 
 group = DefineGroup('Drivers', src, depend = [''], CPPPATH = path, CPPDEFINES = CPPDEFINES)
 

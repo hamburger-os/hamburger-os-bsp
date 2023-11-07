@@ -634,6 +634,7 @@ static int fal_emmc_32write(long offset, const uint8_t *buffer, size_t size)
             return -RT_EIO;
         }
 
+        rt_memset(emmc_obj.RxBuffer, 0, MMC_BLOCKSIZE);
 #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
         SCB_CleanDCache_by_Addr((uint32_t*)emmc_obj.RxBuffer, MMC_BLOCKSIZE);
 #endif
