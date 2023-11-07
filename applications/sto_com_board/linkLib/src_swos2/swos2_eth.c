@@ -83,7 +83,7 @@ static S_SWOS2_ETH swos2_eth[] =
 };
 
 /* 通信1底板I系mac配置 */
-static uint8_t com_2_load_1_mac_addr[E_ETH_CH_MAX][SW_ETH_LINK_LAYER_MAC_LENTH] =
+static uint8_t com_1_load_1_mac_addr[E_ETH_CH_MAX][SW_ETH_LINK_LAYER_MAC_LENTH] =
 {
         /* 目的地址    源地址  */
     {0xF8, 0x09, 0xA4, 0x51, 0x0e, 0x01, 0xf8, 0x09, 0xa4, 0x27, 0x00, 0x44},
@@ -92,7 +92,7 @@ static uint8_t com_2_load_1_mac_addr[E_ETH_CH_MAX][SW_ETH_LINK_LAYER_MAC_LENTH] 
 };
 
 /* 通信1底板II系mac配置 */
-static uint8_t com_2_load_2_mac_addr[E_ETH_CH_MAX][SW_ETH_LINK_LAYER_MAC_LENTH] =
+static uint8_t com_1_load_2_mac_addr[E_ETH_CH_MAX][SW_ETH_LINK_LAYER_MAC_LENTH] =
 {
         /* 目的地址    源地址  */
     {0xF8, 0x09, 0xA4, 0x51, 0x0e, 0x01, 0xf8, 0x09, 0xa4, 0x27, 0x00, 0x44},

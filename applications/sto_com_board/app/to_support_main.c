@@ -223,7 +223,7 @@ static void support_eth_test(int argc, char **argv)
 
 #if 1  //底层处理mac
 
-#if 0
+#if 1
     if(support_eth_sendData(E_ETH_ID_1, eth_txbuf, 1024) != E_ETH_OK)
     {
         MY_Printf("E_ETH_ID_1 send error\r\n");
