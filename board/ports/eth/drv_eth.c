@@ -209,7 +209,7 @@ static rt_size_t rt_stm32_eth_write(rt_device_t dev, rt_off_t pos, const void *b
     if(size <= 0)
     {
         LOG_E("size error");
-        return size;
+        return 0;
     }
 
     rt_mutex_take(&eth->eth_mux, RT_WAITING_FOREVER);
