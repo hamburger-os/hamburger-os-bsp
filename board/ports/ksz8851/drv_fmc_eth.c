@@ -437,7 +437,6 @@ struct pbuf *fmc_eth_rx(rt_device_t dev)
         struct pbuf *q = NULL;
         if(RT_NULL == p->next && p->tot_len < LEP_MAC_PKT_MAX_LEN)
         {
-            LOG_I("len %d to_len %d", p->len, p->tot_len);
             for (q = p; q != NULL; q = q->next)
             {
                 if (fmc_eth->link_layer_buf.rx_lep_buf_num >= BSP_LINK_LAYER_RX_BUF_NUM)
