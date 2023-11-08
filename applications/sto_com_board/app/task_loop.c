@@ -21,11 +21,11 @@
 #define TASK_LOW_THREAD_PRIORITY         20
 #define TASK_LOW_THREAD_STACK_SIZE       (1024 * 10)
 
-static void *TaskHighThreadEntry(void *parameter)
+static void TaskHighThreadEntry(void *parameter)
 {
-    while(1)
+    while (1)
     {
-        if(NULL != g_appArchIf.app_polling_proc)
+        if (NULL != g_appArchIf.app_polling_proc)
         {
             g_appArchIf.app_polling_proc();
         }
@@ -35,10 +35,9 @@ static void *TaskHighThreadEntry(void *parameter)
 
 static sint32 TaskHighThreadInit(void)
 {
-    if(if_OSTaskCreate("task high",
-            TaskHighThreadEntry, NULL,
-            TASK_HIGH_THREAD_STACK_SIZE,
-            TASK_HIGH_THREAD_PRIORITY) < 0)
+    if (if_OSTaskCreate("task high", TaskHighThreadEntry, NULL,
+                        TASK_HIGH_THREAD_STACK_SIZE,
+                        TASK_HIGH_THREAD_PRIORITY) < 0)
     {
         return -1;
     }
@@ -48,12 +47,11 @@ static sint32 TaskHighThreadInit(void)
     }
 }
 
-
-static void *TaskLowThreadEntry(void *parameter)
+static void TaskLowThreadEntry(void *parameter)
 {
-    while(1)
+    while (1)
     {
-        if(NULL != g_appArchIf.app_idle_proc)
+        if (NULL != g_appArchIf.app_idle_proc)
         {
             g_appArchIf.app_idle_proc();
         }
@@ -63,10 +61,9 @@ static void *TaskLowThreadEntry(void *parameter)
 
 static sint32 TaskLowThreadInit(void)
 {
-    if(if_OSTaskCreate("task low",
-            TaskLowThreadEntry, NULL,
-            TASK_LOW_THREAD_STACK_SIZE,
-            TASK_LOW_THREAD_PRIORITY) < 0)
+    if (if_OSTaskCreate("task low", TaskLowThreadEntry, NULL,
+                        TASK_LOW_THREAD_STACK_SIZE,
+                        TASK_LOW_THREAD_PRIORITY) < 0)
     {
         return -1;
     }
@@ -79,7 +76,7 @@ static sint32 TaskLowThreadInit(void)
 sint32 TaskInit(void)
 {
 
-    if(NULL != g_appArchIf.app_init)
+    if (NULL != g_appArchIf.app_init)
     {
         g_appArchIf.app_init();
     }
@@ -88,13 +85,13 @@ sint32 TaskInit(void)
         LOG_E("app_init is null");
     }
 
-    if(TaskHighThreadInit() < 0)
+    if (TaskHighThreadInit() < 0)
     {
         LOG_E("task high thread init error");
         return -1;
     }
 
-    if(TaskLowThreadInit() < 0)
+    if (TaskLowThreadInit() < 0)
     {
         LOG_E("task low thread init error");
         return -1;

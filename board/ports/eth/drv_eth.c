@@ -135,35 +135,107 @@ static rt_err_t rt_stm32_eth_init(rt_device_t dev)
 static rt_err_t rt_stm32_eth_open(rt_device_t dev, rt_uint16_t oflag)
 {
     struct rt_stm32_eth *eth = dev->user_data;
-    LOG_D("open");
 
-    return RT_EOK;
+    return lep_eth_if_clear(&eth->link_layer_buf, E_ETH_IF_CLER_MODE_ALL);
 }
 
 static rt_err_t rt_stm32_eth_close(rt_device_t dev)
 {
     struct rt_stm32_eth *eth = dev->user_data;
-    LOG_D("close");
 
-    return RT_EOK;
+    if(NULL == eth)
+    {
+        return -RT_EEMPTY;
+    }
+
+    return lep_eth_if_clear(&eth->link_layer_buf, E_ETH_IF_CLER_MODE_ALL);
 }
 
 static rt_size_t rt_stm32_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t size)
 {
     struct rt_stm32_eth *eth = dev->user_data;
-    LOG_D("read");
 
-    rt_set_errno(-RT_ENOSYS);
+    rt_uint16_t read_size = 0;
+    S_LEP_BUF *p_s_LepBuf = RT_NULL;
+    rt_list_t *list_pos = NULL;
+    rt_list_t *list_next = NULL;
+
+    rt_mutex_take(&eth->eth_mux, RT_WAITING_FOREVER);
+
+    /* step1：遍历链表 */
+    rt_list_for_each_safe(list_pos, list_next, &eth->link_layer_buf.rx_head->list)
+    {
+        p_s_LepBuf = rt_list_entry(list_pos, struct tagLEP_BUF, list);
+        if (p_s_LepBuf != RT_NULL)
+        {
+            if ((p_s_LepBuf->flag & LEP_RBF_RV) != 0U)
+            {
+                /* step2：获取接收包数据长度 */
+                if(p_s_LepBuf->len > LEP_MAC_PKT_MAX_LEN)
+                {
+                    read_size = LEP_MAC_PKT_MAX_LEN;
+                }
+                else
+                {
+                    read_size = p_s_LepBuf->len;
+                    if (read_size > size)
+                    {
+                        read_size = size;
+                    }
+                }
+
+                /* step3：提取包数据 */
+                rt_memcpy(buffer, p_s_LepBuf->buf, read_size);
+                rt_list_remove(list_pos);
+                /* step4：释放接收接收缓冲区 */
+                rt_free(p_s_LepBuf);
+                eth->link_layer_buf.rx_lep_buf_num--;
+
+                rt_mutex_release(&eth->eth_mux);
+                return read_size;
+            }
+        }
+    }
+
+    rt_mutex_release(&eth->eth_mux);
     return 0;
 }
 
 static rt_size_t rt_stm32_eth_write(rt_device_t dev, rt_off_t pos, const void *buffer, rt_size_t size)
 {
     struct rt_stm32_eth *eth = dev->user_data;
-    LOG_D("write");
+    ETH_BufferTypeDef tx_buffer;
 
-    rt_set_errno(-RT_ENOSYS);
-    return 0;
+    if(size <= 0)
+    {
+        LOG_E("size error");
+        return 0;
+    }
+
+    rt_mutex_take(&eth->eth_mux, RT_WAITING_FOREVER);
+
+    rt_memset((void *)&tx_buffer, 0, sizeof(ETH_BufferTypeDef));
+    tx_buffer.buffer = (uint8_t *)buffer;
+    tx_buffer.len = size;
+    tx_buffer.next = RT_NULL;
+
+    eth->TxConfig.Length = size;
+    eth->TxConfig.TxBuffer = &tx_buffer;
+
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+    SCB_CleanInvalidateDCache();
+#endif
+
+    HAL_ETH_Transmit_IT(&eth->heth, &eth->TxConfig);
+    if (rt_completion_wait(&eth->TxPkt_completion, eth->TxConfig.Length * 8) != RT_EOK)
+    {
+        LOG_E("eth link tx timeout %d!", eth->TxConfig.Length);
+    }
+
+    HAL_ETH_ReleaseTxPacket(&eth->heth);
+
+    rt_mutex_release(&eth->eth_mux);
+    return size;
 }
 
 static rt_err_t rt_stm32_eth_control(rt_device_t dev, int cmd, void *args)
@@ -202,6 +274,8 @@ rt_err_t rt_stm32_eth_tx(rt_device_t dev, struct pbuf *p)
     struct pbuf *q = NULL;
     err_t errval = ERR_OK;
     ETH_BufferTypeDef Txbuffer[ETH_TX_DESC_CNT] = { 0 };
+
+    rt_mutex_take(&eth->eth_mux, RT_WAITING_FOREVER);
 
     rt_memset(Txbuffer, 0, ETH_TX_DESC_CNT * sizeof(ETH_BufferTypeDef));
 
@@ -259,6 +333,7 @@ rt_err_t rt_stm32_eth_tx(rt_device_t dev, struct pbuf *p)
     LOG_D("tx end <<<<<<<<<<<<<<<<");
 #endif
 
+    rt_mutex_release(&eth->eth_mux);
     return errval;
 }
 
@@ -268,6 +343,9 @@ struct pbuf *rt_stm32_eth_rx(rt_device_t dev)
     struct rt_stm32_eth *eth = dev->user_data;
 
     struct pbuf *p = NULL;
+    struct pbuf *q= NULL;
+
+    rt_mutex_take(&eth->eth_mux, RT_WAITING_FOREVER);
 
     if (RxAllocStatus == RX_ALLOC_OK)
     {
@@ -276,6 +354,40 @@ struct pbuf *rt_stm32_eth_rx(rt_device_t dev)
 #endif
 
         HAL_ETH_ReadData(&eth->heth, (void **) &p);
+
+        if(p != RT_NULL)
+        {
+            if(RT_NULL == p->next && p->tot_len < LEP_MAC_PKT_MAX_LEN)
+            {
+                for(q = p; q != NULL; q = q->next)
+                {
+                    if (eth->rx_num >= BSP_LINK_LAYER_RX_BUF_NUM)
+                    {
+                        lep_eth_if_clear(&eth->link_layer_buf, E_ETH_IF_CLER_MODE_ONE);
+                    }
+
+                    S_LEP_BUF *ps_lep_buf = rt_malloc(sizeof(S_LEP_BUF));
+                    if(RT_NULL != ps_lep_buf)
+                    {
+                        eth->rx_num++;
+                        ps_lep_buf->flag = 0;
+                        ps_lep_buf->flag |= LEP_RBF_RV;
+                        ps_lep_buf->len = q->len;
+                        LOG_I("len %d", q->len);
+                        rt_memcpy(ps_lep_buf->buf, q->payload, q->len);
+                        rt_list_insert_before(&eth->link_layer_buf.rx_head->list, &ps_lep_buf->list);
+                        if(dev->rx_indicate != NULL)
+                        {
+                            dev->rx_indicate(dev, q->len);
+                        }
+                    }
+                    else
+                    {
+                        LOG_E("ps_lep_buf rx null");
+                    }
+                }
+            }
+        }
     }
 
 #ifdef ETH_RX_DUMP
@@ -292,6 +404,7 @@ struct pbuf *rt_stm32_eth_rx(rt_device_t dev)
     }
     LOG_D("rx end <<<<<<<<<<<<<<<<");
 #endif
+    rt_mutex_release(&eth->eth_mux);
     return p;
 }
 
@@ -354,7 +467,13 @@ void HAL_ETH_TxCpltCallback(ETH_HandleTypeDef *handlerEth)
  */
 void HAL_ETH_TxFreeCallback(uint32_t * buff)
 {
-    pbuf_free((struct pbuf *) buff);
+    if(buff != RT_NULL)
+    {
+        if(((struct pbuf *) buff)->ref > 0)
+        {
+            pbuf_free((struct pbuf *) buff);
+        }
+    }
 }
 
 /**
@@ -499,6 +618,7 @@ static void phy_linkchange(void *parameter)
         HAL_ETH_GetMACConfig(&eth->heth, &MACConf);
         MACConf.DuplexMode = duplex;
         MACConf.Speed = speed;
+        MACConf.SourceAddrControl = ETH_SRC_ADDR_REPLACE;
         HAL_ETH_SetMACConfig(&eth->heth, &MACConf);  //设置MAC
 
         HAL_ETH_Start_IT(&eth->heth);
@@ -551,6 +671,23 @@ static int rt_hw_stm32_eth_init(void)
     /* 初始化完成量 */
     rt_completion_init(&stm32_eth_device.TxPkt_completion);
 
+    /* 初始化 eth 互斥 */
+
+    state = rt_mutex_init(&stm32_eth_device.eth_mux, "e", RT_IPC_FLAG_PRIO);
+    if (state != RT_EOK)
+    {
+        LOG_E("mutex init error %d!", state);
+        return -RT_ERROR;
+    }
+
+#ifdef BSP_USING_ETH_SET_MAC
+    stm32_eth_device.mac[0] = BSP_ETH_MAC_ADDR1;
+    stm32_eth_device.mac[1] = BSP_ETH_MAC_ADDR2;
+    stm32_eth_device.mac[2] = BSP_ETH_MAC_ADDR3;
+    stm32_eth_device.mac[3] = BSP_ETH_MAC_ADDR4;
+    stm32_eth_device.mac[4] = BSP_ETH_MAC_ADDR5;
+    stm32_eth_device.mac[5] = BSP_ETH_MAC_ADDR6;
+#else
     /* OUI 00-80-E1 STMICROELECTRONICS.前三个字节为厂商ID */
     stm32_eth_device.mac[0] = 0xF8;
     stm32_eth_device.mac[1] = 0x09;
@@ -559,6 +696,7 @@ static int rt_hw_stm32_eth_init(void)
     stm32_eth_device.mac[3] = *(uint8_t *)(UID_BASE + 2 + 3);
     stm32_eth_device.mac[4] = *(uint8_t *)(UID_BASE + 1 + 3);
     stm32_eth_device.mac[5] = *(uint8_t *)(UID_BASE + 0 + 3);
+#endif
 
     stm32_eth_device.parent.parent.init       = rt_stm32_eth_init;
     stm32_eth_device.parent.parent.open       = rt_stm32_eth_open;
@@ -570,6 +708,13 @@ static int rt_hw_stm32_eth_init(void)
 
     stm32_eth_device.parent.eth_rx     = rt_stm32_eth_rx;
     stm32_eth_device.parent.eth_tx     = rt_stm32_eth_tx;
+
+    state = lep_eth_if_init(&stm32_eth_device.link_layer_buf);
+    if(state != RT_EOK)
+    {
+        LOG_E("e init linklayer faild: %d", state);
+        return state;
+    }
 
     /* register eth device */
     state = eth_device_init(&(stm32_eth_device.parent), "e");

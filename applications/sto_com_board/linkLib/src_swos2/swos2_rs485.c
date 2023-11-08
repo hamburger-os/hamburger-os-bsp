@@ -16,17 +16,17 @@
 #include <rtthread.h>
 #include <rtdevice.h>
 
-BOOL if_rs485_init( void )
+BOOL if_rs485_init(void)
 {
     return TRUE;
 }
 
-BOOL if_rs485_send( E_RS485_CH ch, uint8 *pdata, uint16 len )
+BOOL if_rs485_send(E_RS485_CH ch, uint8 *pdata, uint16 len)
 {
     return TRUE;
 }
 
-uint16 if_rs485_get( E_RS485_CH ch, uint8 *pdata, uint16 len )
+uint16 if_rs485_get(E_RS485_CH ch, uint8 *pdata, uint16 len)
 {
     return 0;
 }

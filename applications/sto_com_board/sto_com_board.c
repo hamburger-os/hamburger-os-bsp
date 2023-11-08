@@ -20,7 +20,7 @@
 #define BOARD_INIT_THREAD_PRIORITY         20
 #define BOARD_INIT_THREAD_STACK_SIZE       (1024)
 
-static void *BoardInitThreadEntry(void *parameter)
+static void BoardInitThreadEntry(void *parameter)
 {
     if(TaskInit() < 0)
     {

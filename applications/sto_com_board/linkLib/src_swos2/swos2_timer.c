@@ -16,12 +16,12 @@
 #include <rtthread.h>
 #include <rtdevice.h>
 
-BOOL if_timer_init( void )
+BOOL if_timer_init(void)
 {
     return TRUE;
 }
 
-uint32 if_timer_getTicks( void )
+uint32 if_timer_getTicks(void)
 {
     return rt_tick_get();
 }

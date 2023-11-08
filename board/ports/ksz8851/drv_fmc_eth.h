@@ -18,7 +18,7 @@
 #include <netif/ethernetif.h>
 #include <lwipopts.h>
 
-#include "ksz8851_lep.h"
+#include "drv_link_layer_list.h"
 
 #ifdef __cplusplus
 extern "C" {

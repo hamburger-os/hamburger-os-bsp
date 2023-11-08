@@ -17,14 +17,16 @@
 #include <rtdevice.h>
 
 #include "task_loop.h"
+#include "support_libOS.h"
 
 S_APP_ARCH_IF g_appArchIf;
 
-BOOL app_archRunning( p_init appArchIf_init )
+BOOL app_archRunning(p_init appArchIf_init)
 {
     appArchIf_init();
 
-    if(TaskInit() < 0)
+    LOG_I("app_archRunning");
+    if (TaskInit() < 0)
     {
         LOG_E("TaskInit Error");
         return FALSE;
@@ -35,13 +37,14 @@ BOOL app_archRunning( p_init appArchIf_init )
     return TRUE;
 }
 
-
-extern void test_main_init( void );
-
-void app_archInit( void )
+extern void test_main_init(void);
+extern void com_app_main_init(void);
+void app_archInit(void)
 {
-    support_osRunning( test_main_init );
+#if 1
+    support_osRunning(test_main_init);
+#else
+    support_osRunning(com_app_main_init);
+#endif
 }
-
-
 
