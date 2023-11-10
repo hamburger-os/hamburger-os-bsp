@@ -452,7 +452,7 @@ struct pbuf *fmc_eth_rx(rt_device_t dev)
                     ps_lep_buf->flag |= LEP_RBF_RV;
                     ps_lep_buf->len = q->len - 4;  /* CRC 4 bytes */
                     rt_memcpy(ps_lep_buf->buf, q->payload, ps_lep_buf->len);
-                    LOG_I(" q_len %d", ps_lep_buf->len);
+
                     rt_list_insert_before(&fmc_eth->link_layer_buf.rx_head->list, &ps_lep_buf->list);
                     if(dev->rx_indicate != NULL)
                     {
