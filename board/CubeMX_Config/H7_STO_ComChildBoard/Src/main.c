@@ -1073,13 +1073,13 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(A_SPI5_CS1_GPIO_Port, A_SPI5_CS1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOD, A_ETH1_RST_Pin|A_ETH1_IRQ_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOG, A_ETH2_RST_Pin|A_SW2_RST_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOH, A_SW1_RST_Pin|A_SPI1_CS_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(A_ETH1_IRQ_GPIO_Port, A_ETH1_IRQ_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : A_LED_ERR_Pin A_SPI6_CS_Pin */
   GPIO_InitStruct.Pin = A_LED_ERR_Pin|A_SPI6_CS_Pin;
@@ -1121,6 +1121,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(A_BAD2IN_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : A_ETH1_RST_Pin A_ETH1_IRQ_Pin */
+  GPIO_InitStruct.Pin = A_ETH1_RST_Pin|A_ETH1_IRQ_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
   /*Configure GPIO pins : A_ETH2_RST_Pin A_SW2_RST_Pin */
   GPIO_InitStruct.Pin = A_ETH2_RST_Pin|A_SW2_RST_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -1140,13 +1147,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOI, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : A_ETH1_IRQ_Pin */
-  GPIO_InitStruct.Pin = A_ETH1_IRQ_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(A_ETH1_IRQ_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : A_ETH3_RST_Pin */
   GPIO_InitStruct.Pin = A_ETH3_RST_Pin;
