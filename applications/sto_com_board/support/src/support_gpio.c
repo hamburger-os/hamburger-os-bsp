@@ -198,7 +198,6 @@ extern E_BOARD_ID support_gpio_getBoardId(void)
     default:
         break;
     }
-    boardId = ID_TX2_Load;
     /* 3.返回boardId */
     return boardId;
 }

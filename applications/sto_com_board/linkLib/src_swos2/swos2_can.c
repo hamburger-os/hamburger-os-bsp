@@ -126,7 +126,6 @@ static void CanRxThreadEntry(void *parameter)
         {
             can_rx_ch = (mb_rcv_data & 0xF0000000) >> 28;
             can_rx_size = mb_rcv_data & 0x0FFFFFFF;
-            LOG_I("mb rx data %x, ch %d, size %d", mb_rcv_data, can_rx_ch, can_rx_size);
 
             if (can_rx_ch > (can_dev.ch_num + 1))
             {
@@ -304,7 +303,6 @@ BOOL if_can_init(void)
     memset(p_can_dev, 0, sizeof(S_CAN_DEV));
 
     p_can_dev->id = if_gpio_getSlotId();
-    p_can_dev->id = E_SLOT_ID_3;
 
     result = swos2_can_cfg(p_can_dev);
     if (result != TRUE)
