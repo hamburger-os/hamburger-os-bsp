@@ -44,9 +44,41 @@ static void test_task01(void)
 
     if ( TRUE == support_timer_timeoutM(&timer, 1000U))
     {
+        if (supprot_can_getData(E_CAN_ID_1, &can_frame) == E_CAN_OK)
+        {
+            if (E_CAN_OK != support_can_sendData(E_CAN_ID_1, &can_frame))
+            {
+                MY_Printf("send error\r\n");
+            }
+        }
+
         if (supprot_can_getData(E_CAN_ID_2, &can_frame) == E_CAN_OK)
         {
             if (E_CAN_OK != support_can_sendData(E_CAN_ID_2, &can_frame))
+            {
+                MY_Printf("send error\r\n");
+            }
+        }
+
+        if (supprot_can_getData(E_CAN_ID_3, &can_frame) == E_CAN_OK)
+        {
+            if (E_CAN_OK != support_can_sendData(E_CAN_ID_3, &can_frame))
+            {
+                MY_Printf("send error\r\n");
+            }
+        }
+
+        if (supprot_can_getData(E_CAN_ID_4, &can_frame) == E_CAN_OK)
+        {
+            if (E_CAN_OK != support_can_sendData(E_CAN_ID_4, &can_frame))
+            {
+                MY_Printf("send error\r\n");
+            }
+        }
+
+        if (supprot_can_getData(E_CAN_ID_5, &can_frame) == E_CAN_OK)
+        {
+            if (E_CAN_OK != support_can_sendData(E_CAN_ID_5, &can_frame))
             {
                 MY_Printf("send error\r\n");
             }

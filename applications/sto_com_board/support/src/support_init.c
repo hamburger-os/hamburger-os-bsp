@@ -76,15 +76,15 @@ extern int support_init(void)
         MY_Printf("can init ok\r\n");
     }
 
-    if(support_eth_init(E_ETH_ID_MAX) != E_ETH_OK)
-    {
-        MY_Printf("support_eth_init error\r\n");
-        return -1;
-    }
-    else
-    {
-        MY_Printf("eth init ok\r\n");
-    }
+//    if(support_eth_init(E_ETH_ID_MAX) != E_ETH_OK)
+//    {
+//        MY_Printf("support_eth_init error\r\n");
+//        return -1;
+//    }
+//    else
+//    {
+//        MY_Printf("eth init ok\r\n");
+//    }
 
     return 0;
 }

@@ -307,7 +307,6 @@ BOOL if_eth_init(void)
 
     /* 1.识别板子类型 */
     swos2_eth_dev.id = if_gpio_getSlotId();
-    swos2_eth_dev.id = E_SLOT_ID_3;
 
     /* 2.配置板子网络通道信息 */
     if(swos2_eth_dev_init(&swos2_eth_dev) != TRUE)

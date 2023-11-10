@@ -81,7 +81,6 @@ void if_gpio_init(void)
     }
 
     /* 2. 配置板子类型识别引脚 */
-
     for(i = 0; i < 3; i++)
     {
         board_gpio.board_type_pin[i] = &pin_cfg[i + 1];

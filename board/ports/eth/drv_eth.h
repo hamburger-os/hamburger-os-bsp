@@ -34,10 +34,11 @@ struct rt_stm32_eth
     /* interface address info, hw address */
     uint8_t mac[MAC_ADDR_LEN];
 
-    struct rt_mutex eth_mux;    /** 接收发送互斥信号量 */
-
+    struct rt_mutex eth_mux;
+#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
     S_ETH_IF link_layer_buf;
     uint32_t rx_num;
+#endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
 };
 
 #endif /* __DRV_ETH_H__ */

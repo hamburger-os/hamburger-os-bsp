@@ -102,7 +102,8 @@ static MCP2517_Dev mcp2517_can_port[] = {
         .spi_cs_pin_name = BSP_MCP2517FD_CAN1_CS_PIN,
         .spi_irq_pin_name = BSP_MCP2517FD_CAN1_INT_PIN,
         .channel = MCP2517FD_CH_1,
-        .baud = CAN_500K_2M, .mode = CAN_NORMAL_MODE,
+        .baud = CAN_500K_2M,
+        .mode = CAN_NORMAL_MODE,
     },
 #endif  /* BSP_USE_MCP2517FD_CAN1 */
 
@@ -875,7 +876,7 @@ static rt_err_t can_spi_transmit_channel_load(MCP2517_Dev *mcp2517_dev,
     // Get FIFO registers
     a = cREGADDR_CiFIFOCON + (channel * CiFIFO_OFFSET);
 
-    ret = can_spi_read_word_array(mcp2517_can_port, a, fifoReg, 3);
+    ret = can_spi_read_word_array(mcp2517_dev, a, fifoReg, 3);
     if (ret != RT_EOK)
     {
         return ret;
@@ -1721,7 +1722,7 @@ static rt_err_t can_spi_ecc_enable(MCP2517_Dev *mcp2517_dev)
         return ret;
     }
 
-    return 0;
+    return ret;
 }
 
 //DRV_CANFDSPI_RamInit
@@ -2872,7 +2873,13 @@ static rt_err_t mcp2517_open(rt_device_t dev, rt_uint16_t oflag)
     }
 
     /* enable ECC and initialize RAM */
-    can_spi_ecc_enable(mcp2517_dev);
+    ret = can_spi_ecc_enable(mcp2517_dev);
+    if(ret != RT_EOK)
+    {
+        LOG_E("can_spi_ecc_enable error!");
+        return ret;
+    }
+
     ret = can_spi_ram_init(mcp2517_dev, 0xff);
     if (ret != RT_EOK)
     {
