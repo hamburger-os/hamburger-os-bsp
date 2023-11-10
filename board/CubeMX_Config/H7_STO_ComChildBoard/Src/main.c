@@ -60,6 +60,8 @@ ETH_DMADescTypeDef DMATxDscrTab[ETH_TX_DESC_CNT] __attribute__((section(".TxDecr
 
 ETH_TxPacketConfig TxConfig;
 
+ADC_HandleTypeDef hadc3;
+
 CRC_HandleTypeDef hcrc;
 
 DMA2D_HandleTypeDef hdma2d;
@@ -112,6 +114,7 @@ static void MX_SPI1_Init(void);
 static void MX_ETH_Init(void);
 static void MX_CRC_Init(void);
 static void MX_DMA2D_Init(void);
+static void MX_ADC3_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -200,8 +203,9 @@ void PeriphCommonClock_Config(void)
 
   /** Initializes the peripherals clock
   */
-  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SPI6|RCC_PERIPHCLK_SPI2
-                              |RCC_PERIPHCLK_SPI1|RCC_PERIPHCLK_SPI5;
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SPI6|RCC_PERIPHCLK_ADC
+                              |RCC_PERIPHCLK_SPI2|RCC_PERIPHCLK_SPI1
+                              |RCC_PERIPHCLK_SPI5;
   PeriphClkInitStruct.PLL2.PLL2M = 25;
   PeriphClkInitStruct.PLL2.PLL2N = 256;
   PeriphClkInitStruct.PLL2.PLL2P = 4;
@@ -212,11 +216,70 @@ void PeriphCommonClock_Config(void)
   PeriphClkInitStruct.PLL2.PLL2FRACN = 0;
   PeriphClkInitStruct.Spi123ClockSelection = RCC_SPI123CLKSOURCE_PLL2;
   PeriphClkInitStruct.Spi45ClockSelection = RCC_SPI45CLKSOURCE_PLL2;
+  PeriphClkInitStruct.AdcClockSelection = RCC_ADCCLKSOURCE_PLL2;
   PeriphClkInitStruct.Spi6ClockSelection = RCC_SPI6CLKSOURCE_PLL2;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief ADC3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC3_Init(void)
+{
+
+  /* USER CODE BEGIN ADC3_Init 0 */
+
+  /* USER CODE END ADC3_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC3_Init 1 */
+
+  /* USER CODE END ADC3_Init 1 */
+
+  /** Common config
+  */
+  hadc3.Instance = ADC3;
+  hadc3.Init.Resolution = ADC_RESOLUTION_16B;
+  hadc3.Init.ScanConvMode = ADC_SCAN_DISABLE;
+  hadc3.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc3.Init.LowPowerAutoWait = DISABLE;
+  hadc3.Init.ContinuousConvMode = DISABLE;
+  hadc3.Init.NbrOfConversion = 1;
+  hadc3.Init.DiscontinuousConvMode = DISABLE;
+  hadc3.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc3.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc3.Init.ConversionDataManagement = ADC_CONVERSIONDATA_DR;
+  hadc3.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+  hadc3.Init.LeftBitShift = ADC_LEFTBITSHIFT_NONE;
+  hadc3.Init.OversamplingMode = DISABLE;
+  if (HAL_ADC_Init(&hadc3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  sConfig.SingleDiff = ADC_SINGLE_ENDED;
+  sConfig.OffsetNumber = ADC_OFFSET_NONE;
+  sConfig.Offset = 0;
+  sConfig.OffsetSignedSaturation = DISABLE;
+  if (HAL_ADC_ConfigChannel(&hadc3, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC3_Init 2 */
+
+  /* USER CODE END ADC3_Init 2 */
+
 }
 
 /**
@@ -461,7 +524,7 @@ static void MX_I2C2_Init(void)
 
   /* USER CODE END I2C2_Init 1 */
   hi2c2.Instance = I2C2;
-  hi2c2.Init.Timing = 0x307075B1;
+  hi2c2.Init.Timing = 0x00B03FDB;
   hi2c2.Init.OwnAddress1 = 0;
   hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;

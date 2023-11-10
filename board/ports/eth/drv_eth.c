@@ -134,13 +134,18 @@ static rt_err_t rt_stm32_eth_init(rt_device_t dev)
 
 static rt_err_t rt_stm32_eth_open(rt_device_t dev, rt_uint16_t oflag)
 {
+#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
     struct rt_stm32_eth *eth = dev->user_data;
 
     return lep_eth_if_clear(&eth->link_layer_buf, E_ETH_IF_CLER_MODE_ALL);
+#else
+    return RT_EOK;
+#endif
 }
 
 static rt_err_t rt_stm32_eth_close(rt_device_t dev)
 {
+#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
     struct rt_stm32_eth *eth = dev->user_data;
 
     if(NULL == eth)
@@ -149,10 +154,14 @@ static rt_err_t rt_stm32_eth_close(rt_device_t dev)
     }
 
     return lep_eth_if_clear(&eth->link_layer_buf, E_ETH_IF_CLER_MODE_ALL);
+#else
+    return RT_EOK;
+#endif
 }
 
 static rt_size_t rt_stm32_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t size)
 {
+#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
     struct rt_stm32_eth *eth = dev->user_data;
 
     rt_uint16_t read_size = 0;
@@ -198,6 +207,7 @@ static rt_size_t rt_stm32_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, 
     }
 
     rt_mutex_release(&eth->eth_mux);
+#endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
     return 0;
 }
 
@@ -211,7 +221,7 @@ static rt_size_t rt_stm32_eth_write(rt_device_t dev, rt_off_t pos, const void *b
         LOG_E("size error");
         return 0;
     }
-
+#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
     rt_mutex_take(&eth->eth_mux, RT_WAITING_FOREVER);
 
     rt_memset((void *)&tx_buffer, 0, sizeof(ETH_BufferTypeDef));
@@ -235,6 +245,7 @@ static rt_size_t rt_stm32_eth_write(rt_device_t dev, rt_off_t pos, const void *b
     HAL_ETH_ReleaseTxPacket(&eth->heth);
 
     rt_mutex_release(&eth->eth_mux);
+#endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
     return size;
 }
 
@@ -354,7 +365,7 @@ struct pbuf *rt_stm32_eth_rx(rt_device_t dev)
 #endif
 
         HAL_ETH_ReadData(&eth->heth, (void **) &p);
-
+#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
         if(p != RT_NULL)
         {
             if(RT_NULL == p->next && p->tot_len < LEP_MAC_PKT_MAX_LEN)
@@ -373,7 +384,6 @@ struct pbuf *rt_stm32_eth_rx(rt_device_t dev)
                         ps_lep_buf->flag = 0;
                         ps_lep_buf->flag |= LEP_RBF_RV;
                         ps_lep_buf->len = q->len;
-                        LOG_I("len %d", q->len);
                         rt_memcpy(ps_lep_buf->buf, q->payload, q->len);
                         rt_list_insert_before(&eth->link_layer_buf.rx_head->list, &ps_lep_buf->list);
                         if(dev->rx_indicate != NULL)
@@ -388,6 +398,7 @@ struct pbuf *rt_stm32_eth_rx(rt_device_t dev)
                 }
             }
         }
+#endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
     }
 
 #ifdef ETH_RX_DUMP
@@ -709,12 +720,14 @@ static int rt_hw_stm32_eth_init(void)
     stm32_eth_device.parent.eth_rx     = rt_stm32_eth_rx;
     stm32_eth_device.parent.eth_tx     = rt_stm32_eth_tx;
 
+#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
     state = lep_eth_if_init(&stm32_eth_device.link_layer_buf);
     if(state != RT_EOK)
     {
         LOG_E("e init linklayer faild: %d", state);
         return state;
     }
+#endif
 
     /* register eth device */
     state = eth_device_init(&(stm32_eth_device.parent), "e");
