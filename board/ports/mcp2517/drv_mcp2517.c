@@ -2697,6 +2697,7 @@ static rt_err_t mcp2517_can_get_frame(MCP2517_Dev *mcp2517_dev)
             else
             {
                 LOG_E("mcp2517_can_buf malloc null");
+                return -RT_EEMPTY;
             }
         }
         else
@@ -2714,11 +2715,13 @@ static rt_err_t mcp2517_can_get_frame(MCP2517_Dev *mcp2517_dev)
                 else
                 {
                     LOG_E("mcp2517_can_buf clear and malloc null");
+                    return -RT_EEMPTY;
                 }
             }
             else
             {
                 LOG_E("mcp2517_can_list_clear one error");
+                return -RT_EEMPTY;
             }
         }
 
@@ -3339,8 +3342,8 @@ static int rt_hw_mcp2517_init(void)
 
         /* set irq pin */
         rt_pin_mode(mcp2517_can_port[i].spi_irq_pin_index, PIN_MODE_INPUT_PULLUP);
-        rt_pin_attach_irq(mcp2517_can_port[i].spi_irq_pin_index, PIN_IRQ_MODE_FALLING, mcp2517_spi_irq_callback,
-                (void *) &mcp2517_can_port[i]);
+        rt_pin_attach_irq(mcp2517_can_port[i].spi_irq_pin_index, PIN_IRQ_MODE_FALLING,
+                            mcp2517_spi_irq_callback, (void *) &mcp2517_can_port[i]);
 
         /* set user data */
         mcp2517_can_port[i].dev.user_data = &mcp2517_can_port[i];
