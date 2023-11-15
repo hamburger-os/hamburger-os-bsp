@@ -3130,7 +3130,7 @@ static rt_size_t mcp2517_write(rt_device_t dev, rt_off_t pos, const void *buffer
 
     txObj_tmp.bF.ctrl.BRS = 1; /* 数据区加速 */
     txObj_tmp.bF.ctrl.DLC = can_spi_data_bytes_to_dlc(can_msg->len);
-    txObj_tmp.bF.ctrl.FDF = 1;
+    txObj_tmp.bF.ctrl.FDF = can_msg->fd_frame;  /* 0: CAN2.0模式发送 / 1: FDCAN模式发送 */
     txObj_tmp.bF.ctrl.ESI = 0;
     txObj_tmp.bF.ctrl.SEQ = 2;
 
