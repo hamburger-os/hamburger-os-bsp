@@ -3782,6 +3782,44 @@ menu "Onboard Peripheral Drivers"
 				hex "Set the i2c device address, default: 0x44"
 				default (0x44)
         endif
+        
+    menuconfig BSP_USING_MVB
+        bool "Enable mvb"
+        default n
+                
+        if BSP_USING_MVB
+            config MVB_NE
+                  hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
+                  default (0x4)
+                  
+            config MVB_CMD
+                hex "Set the cmd address, default: NE3 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE3 - 1)) | (1 << (A0 + 1))))"
+                default (0x68000002)
+                
+            config BSP_USING_MVB_ADDRESSSETUPTIME
+                int "Set the AddressSetupTime, default: 6"
+                default (6)
+                
+            config BSP_USING_MVB_DATASETUPTIME
+                int "Set the DataSetupTime, default: 21"
+                default (21)
+                
+            config BSP_USING_MVB_BUSTURNAROUNDDURATION
+                int "Set the BusTurnAroundDuration, default: 7"
+                default (7)
+                
+            config MVB_RST_PIN
+                string "Set the GPIO of the reset pin, default: PE.6"
+                default "PE.6"
+            
+            config MVB_ISR_PIN
+                string "Set the GPIO of the isr pin, default: PE.5"
+                default "PE.5"
+            
+            config MVB_RDY_PIN
+                string "Set the GPIO of the rdy pin, default: PE.4"
+                default "PE.4"
+        endif
     
         
 endmenu

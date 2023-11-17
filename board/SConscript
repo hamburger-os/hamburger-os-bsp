@@ -325,6 +325,15 @@ if GetDepend(['BSP_USING_MCP2517FD']):
   
 if GetDepend(['BSP_USING_LTC4281I']):
     src += Glob('ports/drv_ltc4281i.c')
+    
+if GetDepend(['BSP_USING_MVB']):
+    src += Glob('ports/mvb/src/drv_mvb.c')
+    src += Glob('ports/mvb/src/mue_sv.c')
+    src += Glob('ports/mvb/src/mue_pd_full.c')
+    src += Glob('ports/mvb/src/mue_cch.c')
+    src += Glob('ports/mvb/src/mue_app.c')
+    src += Glob('ports/mvb/src/mue_acc.c')
+    path += [cwd + '/ports/mvb/inc']
 
 group = DefineGroup('Drivers', src, depend = [''], CPPPATH = path, CPPDEFINES = CPPDEFINES)
 
