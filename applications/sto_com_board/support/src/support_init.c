@@ -13,6 +13,7 @@
 #include "support_gpio.h"
 #include "support_can.h"
 #include "support_eth.h"
+#include "support_rs485.h"
 /*******************************************************************************************
  *        Local definitions
  *******************************************************************************************/
@@ -76,15 +77,26 @@ extern int support_init(void)
         MY_Printf("can init ok\r\n");
     }
 
-//    if(support_eth_init(E_ETH_ID_MAX) != E_ETH_OK)
-//    {
-//        MY_Printf("support_eth_init error\r\n");
-//        return -1;
-//    }
-//    else
-//    {
-//        MY_Printf("eth init ok\r\n");
-//    }
+    if(support_eth_init(E_ETH_ID_MAX) != E_ETH_OK)
+    {
+        MY_Printf("support_eth_init error\r\n");
+        return -1;
+    }
+    else
+    {
+        MY_Printf("eth init ok\r\n");
+    }
+
+//    if(support_rs485_init(E_RS485_ID_MAX, E_RS_DEV_485_TYPE) != E_RS485_OK)
+    if(support_rs485_init(E_RS485_ID_MAX, E_RS_DEV_422_TYPE) != E_RS485_OK)
+    {
+        MY_Printf("support_rs485_init error\r\n");
+        return -1;
+    }
+    else
+    {
+        MY_Printf("rs485 init ok\r\n");
+    }
 
     return 0;
 }

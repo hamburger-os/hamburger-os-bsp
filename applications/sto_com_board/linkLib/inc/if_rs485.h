@@ -17,7 +17,14 @@ typedef enum
     E_RS485_CH_MAX
 } E_RS485_CH;
 
-extern BOOL if_rs485_init(void);
+/***************rs485 type*****************/
+typedef enum
+{
+    E_RS_485_TYPE = 0U,
+    E_RS_422_TYPE
+} E_RS_TYPE;
+
+extern BOOL if_rs485_init(E_RS485_CH ch, E_RS_TYPE type);
 extern BOOL if_rs485_send(E_RS485_CH ch, uint8 *pdata, uint16 len);
 extern uint16 if_rs485_get(E_RS485_CH ch, uint8 *pdata, uint16 len);
 

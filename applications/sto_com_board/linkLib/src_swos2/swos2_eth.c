@@ -59,7 +59,8 @@ typedef struct
     S_SWOS2_ETH *dev[E_ETH_CH_MAX];
     uint8_t ch_num;
     struct rt_mailbox mailbox;
-    uint8_t (*p_mac_addr)[SW_ETH_LINK_LAYER_MAC_LENTH];
+    uint8_t (*p_src_mac)[6];
+    uint8_t (*p_dst_mac)[6];
 } S_SWOS2_ETH_DEV;
 
 static char eth_mb_pool[1024];
@@ -83,39 +84,67 @@ static S_SWOS2_ETH swos2_eth[] =
 };
 
 /* 通信1底板I系mac配置 */
-static uint8_t com_1_load_1_mac_addr[E_ETH_CH_MAX][SW_ETH_LINK_LAYER_MAC_LENTH] =
+static uint8_t com_1_load_1_mac_addr[E_ETH_CH_MAX][6] =
 {
-        /* 目的地址    源地址  */
-    {0xF8, 0x09, 0xA4, 0x51, 0x0e, 0x01, 0xf8, 0x09, 0xa4, 0x27, 0x00, 0x44},
-    {0xF8, 0x09, 0xA4, 0x27, 0x00, 0x44, 0xf8, 0x09, 0xa4, 0x51, 0x0e, 0x01},
-    {0xF8, 0x09, 0xA4, 0x27, 0x00, 0x46, 0xf8, 0x09, 0xa4, 0x51, 0x0e, 0x02}, /* 未使用 */
+    {0x4c, 0x53, 0x57, 0x00, 0x10, 0x30},
+    {0x4c, 0x53, 0x57, 0x00, 0x10, 0x40},
+    {0x4c, 0x53, 0x57, 0x00, 0x02, 0x20},
+};
+
+/* 通信1子板I系mac配置 */
+static uint8_t com_1_child_1_mac_addr[E_ETH_CH_MAX][6] =
+{
+    {0x4c, 0x53, 0x57, 0x00, 0x03, 0x11},
+    {0x4c, 0x53, 0x57, 0x00, 0x01, 0x21},
+    {0xf8, 0x09, 0xa4, 0x51, 0x0e, 0x02}, /* 未使用 */
 };
 
 /* 通信1底板II系mac配置 */
-static uint8_t com_1_load_2_mac_addr[E_ETH_CH_MAX][SW_ETH_LINK_LAYER_MAC_LENTH] =
+static uint8_t com_1_load_2_mac_addr[E_ETH_CH_MAX][6] =
 {
-        /* 目的地址    源地址  */
-    {0xF8, 0x09, 0xA4, 0x51, 0x0e, 0x01, 0xf8, 0x09, 0xa4, 0x27, 0x00, 0x44},
-    {0xF8, 0x09, 0xA4, 0x27, 0x00, 0x44, 0xf8, 0x09, 0xa4, 0x51, 0x0e, 0x01},
-    {0xF8, 0x09, 0xA4, 0x27, 0x00, 0x46, 0xf8, 0x09, 0xa4, 0x51, 0x0e, 0x02}, /* 未使用 */
+    {0x4c, 0x53, 0x57, 0x00, 0x10, 0x31},
+    {0x4c, 0x53, 0x57, 0x00, 0x10, 0x41},
+    {0x4c, 0x53, 0x57, 0x00, 0x02, 0x21},
+};
+
+/* 通信1子板II系mac配置 */
+static uint8_t com_1_child_2_mac_addr[E_ETH_CH_MAX][6] =
+{
+    {0x4c, 0x53, 0x57, 0x00, 0x03, 0x11},
+    {0x4c, 0x53, 0x57, 0x00, 0x01, 0x22},
+    {0xf8, 0x09, 0xa4, 0x51, 0x0e, 0x02}, /* 未使用 */
 };
 
 /* 通信2底板I系mac配置 */
-static uint8_t com_2_load_1_mac_addr[E_ETH_CH_MAX][SW_ETH_LINK_LAYER_MAC_LENTH] =
+static uint8_t com_2_load_1_mac_addr[E_ETH_CH_MAX][6] =
 {
-        /* 目的地址    源地址  */
-    {0xF8, 0x09, 0xA4, 0x51, 0x0e, 0x01, 0xf8, 0x09, 0xa4, 0x27, 0x00, 0x44},
-    {0xF8, 0x09, 0xA4, 0x27, 0x00, 0x44, 0xf8, 0x09, 0xa4, 0x51, 0x0e, 0x01},
-    {0xF8, 0x09, 0xA4, 0x27, 0x00, 0x46, 0xf8, 0x09, 0xa4, 0x51, 0x0e, 0x02}, /* 未使用 */
+    {0x4c, 0x53, 0x57, 0x00, 0x07, 0xA3},
+    {0x4c, 0x53, 0x57, 0x00, 0x01, 0x23},
+    {0xf8, 0x09, 0xa4, 0x51, 0x0e, 0x02}, /* 未使用 */
+};
+
+/* 通信2子板I系mac配置 */
+static uint8_t com_2_child_1_mac_addr[E_ETH_CH_MAX][6] =
+{
+    {0x4c, 0x53, 0x57, 0x00, 0x09, 0xD1},
+    {0x4c, 0x53, 0x57, 0x00, 0x09, 0xC1},
+    {0x4c, 0x53, 0x57, 0x00, 0x02, 0x30},
 };
 
 /* 通信2底板II系mac配置 */
-static uint8_t com_2_load_2_mac_addr[E_ETH_CH_MAX][SW_ETH_LINK_LAYER_MAC_LENTH] =
+static uint8_t com_2_load_2_mac_addr[E_ETH_CH_MAX][6] =
 {
-        /* 目的地址    源地址  */
-    {0xF8, 0x09, 0xA4, 0x51, 0x0e, 0x01, 0xf8, 0x09, 0xa4, 0x27, 0x00, 0x44},
-    {0xF8, 0x09, 0xA4, 0x27, 0x00, 0x44, 0xf8, 0x09, 0xa4, 0x51, 0x0e, 0x01},
-    {0xF8, 0x09, 0xA4, 0x27, 0x00, 0x46, 0xf8, 0x09, 0xa4, 0x51, 0x0e, 0x02}, /* 未使用 */
+    {0x4c, 0x53, 0x57, 0x00, 0x17, 0xA4},
+    {0x4c, 0x53, 0x57, 0x00, 0x01, 0x24},
+    {0xf8, 0x09, 0xa4, 0x51, 0x0e, 0x02}, /* 未使用 */
+};
+
+/* 通信2子板II系mac配置 */
+static uint8_t com_2_child_2_mac_addr[E_ETH_CH_MAX][6] =
+{
+    {0x4c, 0x53, 0x57, 0x00, 0x09, 0xD2},
+    {0x4c, 0x53, 0x57, 0x00, 0x09, 0xC2},
+    {0x4c, 0x53, 0x57, 0x00, 0x02, 0x31},
 };
 
 static rt_err_t sw_eth1_rx_callback(rt_device_t dev, rt_size_t size)
@@ -243,11 +272,13 @@ static BOOL swos2_eth_dev_init(S_SWOS2_ETH_DEV *dev)
 
         if(E_SLOT_ID_1 == dev->id)
         {
-            dev->p_mac_addr = com_1_load_1_mac_addr;
+            dev->p_dst_mac = com_1_load_1_mac_addr;
+            dev->p_src_mac = com_1_load_1_mac_addr;
         }
         else
         {
-            dev->p_mac_addr = com_1_load_2_mac_addr;
+            dev->p_dst_mac = com_1_load_2_mac_addr;
+            dev->p_src_mac = com_1_load_2_mac_addr;
         }
 
         swos2_eth[E_ETH_CH_1].rx_indicate = sw_eth1_rx_callback;
@@ -264,11 +295,13 @@ static BOOL swos2_eth_dev_init(S_SWOS2_ETH_DEV *dev)
 
         if(E_SLOT_ID_3 == dev->id)
         {
-            dev->p_mac_addr = com_2_load_1_mac_addr;
+            dev->p_dst_mac = com_2_load_1_mac_addr;
+            dev->p_src_mac = com_2_load_1_mac_addr;
         }
         else
         {
-            dev->p_mac_addr = com_2_load_2_mac_addr;
+            dev->p_dst_mac = com_2_load_2_mac_addr;
+            dev->p_src_mac = com_2_load_2_mac_addr;
         }
 
         swos2_eth[E_ETH_CH_1].rx_indicate = sw_eth1_rx_callback;
@@ -282,6 +315,29 @@ static BOOL swos2_eth_dev_init(S_SWOS2_ETH_DEV *dev)
     case E_SLOT_ID_4:
     case E_SLOT_ID_6:
     case E_SLOT_ID_8:
+
+        if(E_SLOT_ID_2 == dev->id)
+        {
+            dev->p_dst_mac = com_1_child_1_mac_addr;
+            dev->p_src_mac = com_1_child_1_mac_addr;
+        }
+        else if(E_SLOT_ID_4 == dev->id)
+        {
+            dev->p_dst_mac = com_2_child_1_mac_addr;
+            dev->p_src_mac = com_2_child_1_mac_addr;
+        }
+        else if(E_SLOT_ID_6 == dev->id)
+        {
+            dev->p_dst_mac = com_1_child_2_mac_addr;
+            dev->p_src_mac = com_1_child_2_mac_addr;
+        }
+        else
+        {
+            dev->p_dst_mac = com_2_child_2_mac_addr;
+            dev->p_src_mac = com_2_child_2_mac_addr;
+        }
+
+
         swos2_eth[E_ETH_CH_1].rx_indicate = sw_eth1_rx_callback;
         swos2_eth[E_ETH_CH_2].rx_indicate = sw_eth2_rx_callback;
         swos2_eth[E_ETH_CH_3].rx_indicate = sw_eth3_rx_callback;
@@ -323,7 +379,7 @@ BOOL if_eth_init(void)
     }
 
     /* 4.创建，启动接收线程 */
-    tid = rt_thread_create("sw_eth_rx", sw_ethrx_thread_entry, RT_NULL, 2048, 12, 5);
+    tid = rt_thread_create("if eth rx", sw_ethrx_thread_entry, RT_NULL, 2048, 12, 5);
     if (tid == RT_NULL)
     {
         LOG_E("sw_eth_rx thread create fail!");
@@ -374,20 +430,20 @@ BOOL if_eth_init(void)
 
         /* 7.设置MAC地址 */
         //目的地址
-        swos2_eth_dev.dev[i]->tx_buf.data_u8[0] = *(*(swos2_eth_dev.p_mac_addr + i) + 0);
-        swos2_eth_dev.dev[i]->tx_buf.data_u8[1] = *(*(swos2_eth_dev.p_mac_addr + i) + 1);
-        swos2_eth_dev.dev[i]->tx_buf.data_u8[2] = *(*(swos2_eth_dev.p_mac_addr + i) + 2);
-        swos2_eth_dev.dev[i]->tx_buf.data_u8[3] = *(*(swos2_eth_dev.p_mac_addr + i) + 3);
-        swos2_eth_dev.dev[i]->tx_buf.data_u8[4] = *(*(swos2_eth_dev.p_mac_addr + i) + 4);
-        swos2_eth_dev.dev[i]->tx_buf.data_u8[5] = *(*(swos2_eth_dev.p_mac_addr + i) + 5);
+        swos2_eth_dev.dev[i]->tx_buf.data_u8[0] = *(*(swos2_eth_dev.p_dst_mac + i) + 0);
+        swos2_eth_dev.dev[i]->tx_buf.data_u8[1] = *(*(swos2_eth_dev.p_dst_mac + i) + 1);
+        swos2_eth_dev.dev[i]->tx_buf.data_u8[2] = *(*(swos2_eth_dev.p_dst_mac + i) + 2);
+        swos2_eth_dev.dev[i]->tx_buf.data_u8[3] = *(*(swos2_eth_dev.p_dst_mac + i) + 3);
+        swos2_eth_dev.dev[i]->tx_buf.data_u8[4] = *(*(swos2_eth_dev.p_dst_mac + i) + 4);
+        swos2_eth_dev.dev[i]->tx_buf.data_u8[5] = *(*(swos2_eth_dev.p_dst_mac + i) + 5);
 
         //源地址
-        swos2_eth_dev.dev[i]->tx_buf.data_u8[6] = *(*(swos2_eth_dev.p_mac_addr + i) + 6);
-        swos2_eth_dev.dev[i]->tx_buf.data_u8[7] = *(*(swos2_eth_dev.p_mac_addr + i) + 7);
-        swos2_eth_dev.dev[i]->tx_buf.data_u8[8] = *(*(swos2_eth_dev.p_mac_addr + i) + 8);
-        swos2_eth_dev.dev[i]->tx_buf.data_u8[9] = *(*(swos2_eth_dev.p_mac_addr + i) + 9);
-        swos2_eth_dev.dev[i]->tx_buf.data_u8[10] = *(*(swos2_eth_dev.p_mac_addr + i) + 10);
-        swos2_eth_dev.dev[i]->tx_buf.data_u8[11] = *(*(swos2_eth_dev.p_mac_addr + i) + 11);
+        swos2_eth_dev.dev[i]->tx_buf.data_u8[6] = *(*(swos2_eth_dev.p_src_mac + i) + 0);
+        swos2_eth_dev.dev[i]->tx_buf.data_u8[7] = *(*(swos2_eth_dev.p_src_mac + i) + 1);
+        swos2_eth_dev.dev[i]->tx_buf.data_u8[8] = *(*(swos2_eth_dev.p_src_mac + i) + 2);
+        swos2_eth_dev.dev[i]->tx_buf.data_u8[9] = *(*(swos2_eth_dev.p_src_mac + i) + 3);
+        swos2_eth_dev.dev[i]->tx_buf.data_u8[10] = *(*(swos2_eth_dev.p_src_mac + i) + 4);
+        swos2_eth_dev.dev[i]->tx_buf.data_u8[11] = *(*(swos2_eth_dev.p_src_mac + i) + 5);
     }
 
     return TRUE;
