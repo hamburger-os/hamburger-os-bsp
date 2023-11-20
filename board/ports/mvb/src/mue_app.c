@@ -29,11 +29,11 @@
 #include <string.h> /* memset, memcpy */
 
 /*此处 增、删发送端口号 */
-TCN_DECL_LOCAL TCN_DECL_CONST BITSET16 tx_port_adr[TX_PORT_ADR_NUB] = {TX_PORT_ADR1,TX_PORT_ADR2,TX_PORT_ADR3,
-	                                                                    TX_PORT_ADR4,TX_PORT_ADR5,TX_PORT_ADR6};
+TCN_DECL_LOCAL TCN_DECL_CONST BITSET16 tx_port_adr[] = {MVB_TX_PORT_ADR1,MVB_TX_PORT_ADR2,MVB_TX_PORT_ADR3,
+                                                        MVB_TX_PORT_ADR4,MVB_TX_PORT_ADR5,MVB_TX_PORT_ADR6};
 /*此处 增、删接收端口号 */
-TCN_DECL_LOCAL TCN_DECL_CONST BITSET16 rx_port_adr[TX_PORT_ADR_NUB] = {RX_PORT_ADR1,RX_PORT_ADR2,RX_PORT_ADR3,
-                                                                       RX_PORT_ADR4,RX_PORT_ADR5,RX_PORT_ADR6};
+TCN_DECL_LOCAL TCN_DECL_CONST BITSET16 rx_port_adr[] = {MVB_RX_PORT_ADR1,MVB_RX_PORT_ADR2,MVB_RX_PORT_ADR3,
+                                                        MVB_RX_PORT_ADR4,MVB_RX_PORT_ADR5,MVB_RX_PORT_ADR6};
 
  
 /* --------------------------------------------------------------------------
@@ -61,7 +61,7 @@ TCN_DECL_LOCAL  MUE_RESULT  mue_app_init_device(void)
 
     /* ----------------------------------------------------------------------
      *  Soft reset of MVB Controller (e.g. disconnect from MVB bus)
-		 *  Switch off line_A and line_B 'C' = 43
+     *  Switch off line_A and line_B 'C' = 43
      * ----------------------------------------------------------------------
      */
     if (MUE_RESULT_OK == result)
@@ -112,9 +112,9 @@ TCN_DECL_PUBLIC  MUE_RESULT  mue_app_init_port(BITSET16  pd_port_config)
  * --------------------------------------------------------------------------*/
 TCN_DECL_LOCAL MUE_RESULT tx_port_config(void)
 {
-	   MUE_RESULT  result;
-	   BITSET16    pd_port_config;
-	   BITSET16    i = 0; 
+    MUE_RESULT  result;
+    BITSET16    pd_port_config;
+    BITSET16    i = 0;
     /* ----------------------------------------------------------------------
      *  Configure MVB Process Data Port:
      *  - port_address   = 0x550    -> 0x0550
@@ -127,16 +127,16 @@ TCN_DECL_LOCAL MUE_RESULT tx_port_config(void)
      *        e.g. "mue_pd_full_port_config_...".
      * ----------------------------------------------------------------------
      */
-     for	(i = 0 ; i < TX_PORT_ADR_NUB ; i++)
-	   {
+    for (i = 0 ; i < MVB_TX_PORT_ADR_NUB ; i++)
+    {
         pd_port_config = (BITSET16)(0xC000 | tx_port_adr[i]);
         result = mue_app_init_port(pd_port_config);
-			  if (MUE_RESULT_OK != result)
-			  {
+        if (MUE_RESULT_OK != result)
+        {
             break;
-			  } 
-	   } 
-		 return(result);
+        }
+    }
+    return(result);
 }
 
 /* --------------------------------------------------------------------------
@@ -145,10 +145,10 @@ TCN_DECL_LOCAL MUE_RESULT tx_port_config(void)
  * --------------------------------------------------------------------------*/
 TCN_DECL_LOCAL MUE_RESULT rx_port_config(void)
 {
-	   MUE_RESULT  result;
-	   BITSET16    pd_port_config;
-	   BITSET16    i = 0; 
-	    /* ----------------------------------------------------------------------
+    MUE_RESULT result;
+    BITSET16 pd_port_config;
+    BITSET16 i = 0;
+    /* ----------------------------------------------------------------------
      *  Configure MVB Process Data Port:
      *  - port_address   = 0x020    -> 0x0020
      *  - port_size      = 32 bytes -> 0x4000
@@ -160,43 +160,53 @@ TCN_DECL_LOCAL MUE_RESULT rx_port_config(void)
      *        e.g. "mue_pd_full_port_config_...".
      * ----------------------------------------------------------------------
      */
-     for	( i = 0 ; i < RX_PORT_ADR_NUB ; i++)
-	   {
-			  pd_port_config = (BITSET16)(0x4000 | rx_port_adr[i]);
-			  result = mue_app_init_port(pd_port_config);
-			  if (MUE_RESULT_OK != result)
-			  {
+    for ( i = 0 ; i < MVB_RX_PORT_ADR_NUB ; i++)
+    {
+        pd_port_config = (BITSET16)(0x4000 | rx_port_adr[i]);
+        result = mue_app_init_port(pd_port_config);
+        if (MUE_RESULT_OK != result)
+        {
             break;
-			  } 
-	   }
-	   return result;
+        }
+    }
+    return result;
 }
 /* --------------------------------------------------------------------------
  *  Procedure : mue_app_main
 
  * --------------------------------------------------------------------------
  */
-TCN_DECL_PUBLIC  MUE_RESULT  mue_app_main (void)
+TCN_DECL_PUBLIC  MUE_RESULT  mue_app_main (MVB_PORT_INFO *port_info)
 {
     MUE_RESULT  result;
     BITSET16    sv_device_config;
     WORD16      pd_port_address;
     BITSET8     pd_port_status;
     UNSIGNED16  pd_port_freshness;
-	  BITSET16    i = 0; 
+    BITSET16    i = 0;
     WORD8       pd_port_data_get[MUE_PD_FULL_PORT_SIZE_MAX];
     WORD8       pd_port_data_put[MUE_PD_FULL_PORT_SIZE_MAX];
-		/* ----------------------------------------------------------
-		 *  NOTE:
-		 *  "pd_port_data_xxx" is a buffer of 32 bytes, which
-		 *  is the max. size of a MVB Process Data port.
-		 *  For any port communication always use a buffer
-		 *  of this max. size!
-		 * ----------------------------------------------------------
-		 */
-#if     FMC_SRAM_MODE	
-	    MVB_ADR_init();
+    /* ----------------------------------------------------------
+     *  NOTE:
+     *  "pd_port_data_xxx" is a buffer of 32 bytes, which
+     *  is the max. size of a MVB Process Data port.
+     *  For any port communication always use a buffer
+     *  of this max. size!
+     * ----------------------------------------------------------
+     */
+#if FMC_SRAM_MODE
+    MVB_ADR_init();
 #endif
+
+    if(NULL == port_info)
+    {
+        return MUE_RESULT_ERROR;
+    }
+
+    port_info->rx_num = MVB_RX_PORT_ADR_NUB;
+    port_info->tx_num = MVB_TX_PORT_ADR_NUB;
+    memcpy(port_info->rx_port, rx_port_adr, MVB_RX_PORT_ADR_NUB * sizeof(uint16_t));
+    memcpy(port_info->tx_port, tx_port_adr, MVB_TX_PORT_ADR_NUB * sizeof(uint16_t));
     /* ----------------------------------------------------------------------
      *  Initialise MVB Device
      * ----------------------------------------------------------------------
@@ -223,54 +233,54 @@ TCN_DECL_PUBLIC  MUE_RESULT  mue_app_main (void)
         result = mue_sv_put_device_config(sv_device_config);
     }
 
-		sv_device_config = 0x00;
-		mue_sv_get_device_config(&sv_device_config);
-		if((BITSET16)(0xD000 | MVB_DEV_ADR) != sv_device_config)
-		{
-			 sv_device_config = 0xF101;
-		}
-		/********************输入总线管理器配置  41 A0 10  回 无  仅主站设备使用************************/
-		 /*if (MUE_RESULT_OK == result)
-     {
-        sv_device_config = (BITSET16)0xA010;
-			  result = mue_sv_put_ba_config(sv_device_config);//输入总线管理器配置  41 A0 10
-     }
-		 //获取设备状态 44 00 10
-		 mue_sv_get_device_status(0x0010,  (BOOLEAN1)FALSE,&pd_port_status,&pd_port_device_status,&pd_port_freshness);*/ 
+    sv_device_config = 0x00;
+    mue_sv_get_device_config(&sv_device_config);
+    if((BITSET16)(0xD000 | MVB_DEV_ADR) != sv_device_config)
+    {
+        sv_device_config = 0xF101;
+    }
+        /********************输入总线管理器配置  41 A0 10  回 无  仅主站设备使用************************/
+        /*if (MUE_RESULT_OK == result)
+        {
+            sv_device_config = (BITSET16)0xA010;
+            result = mue_sv_put_ba_config(sv_device_config);//输入总线管理器配置  41 A0 10
+        }
+        //获取设备状态 44 00 10
+        mue_sv_get_device_status(0x0010,  (BOOLEAN1)FALSE,&pd_port_status,&pd_port_device_status,&pd_port_freshness);*/
 		/***********************************************************************/
     /* ----------------------------------------------------------------------
      *  NOTE: See also parameter constants located in file "mue_pd_full.h",
      *        e.g. "mue_pd_full_port_config_...".
      * ----------------------------------------------------------------------
      */ 
-		if (MUE_RESULT_OK == result)
-		{
-				 result = rx_port_config();
-		}
+    if (MUE_RESULT_OK == result)
+    {
+        result = rx_port_config();
+    }
     /* ----------------------------------------------------------------------
      *  NOTE: See also parameter constants located in file "mue_pd_full.h",
      *        e.g. "mue_pd_full_port_config_...".
      * ----------------------------------------------------------------------
      */
-			if (MUE_RESULT_OK == result)
-			{
-				 result = tx_port_config();
-			} 
+    if (MUE_RESULT_OK == result)
+    {
+        result = tx_port_config();
+    }
     /* ----------------------------------------------------------------------
      *  Get data from MVB Process Data Port 
      * ----------------------------------------------------------------------
      */
-     for	( i = 0 ; i < RX_PORT_ADR_NUB ; i++)
-	   {
+    for	( i = 0 ; i < MVB_RX_PORT_ADR_NUB ; i++)
+    {
         pd_port_address = (WORD16)rx_port_adr[i];
         result =  mue_pd_full_get_port_data(pd_port_address, (BOOLEAN1)FALSE, mue_pd_full_port_size_max, 
                                             &pd_port_status, &pd_port_data_get[0], &pd_port_freshness);
-			  if (MUE_RESULT_OK != result)
-			  {
-					  result = MUE_RESULT_ERROR;
+        if (MUE_RESULT_OK != result)
+        {
+            result = MUE_RESULT_ERROR;
             break;
-			  } 
-	   }		
+        }
+    }
     /* ----------------------------------------------------------------------
      *  Data processing:
      *  - handle  data received from MVB (i.e. from port )
@@ -290,16 +300,16 @@ TCN_DECL_PUBLIC  MUE_RESULT  mue_app_main (void)
      *  Put data to MVB Process Data Port 
      * ----------------------------------------------------------------------
      */
-		 for	( i = 0 ; i < TX_PORT_ADR_NUB ; i++)
-	   {
-			  pd_port_address = (WORD16)tx_port_adr[i];
+    for ( i = 0 ; i < MVB_TX_PORT_ADR_NUB ; i++)
+    {
+        pd_port_address = (WORD16)tx_port_adr[i];
         result =  mue_pd_full_put_port_data(pd_port_address, mue_pd_full_port_size_max, &pd_port_data_put[0]);
-			  if (MUE_RESULT_OK != result)
-			  {
-					  result = MUE_RESULT_ERROR;
+        if (MUE_RESULT_OK != result)
+        {
+            result = MUE_RESULT_ERROR;
             break;
-			  } 
-	   }
+        }
+    }
 //    /* ----------------------------------------------------------------------
 //     *  Stop MVB communication
 //     * ----------------------------------------------------------------------
@@ -315,123 +325,55 @@ TCN_DECL_PUBLIC  MUE_RESULT  mue_app_main (void)
 /******************************发送 接口************************************/
 MUE_RESULT  MVB_tx_data(unsigned short tx_port,unsigned char *pbuf , unsigned int len)
 {
-	  MUE_RESULT  result;
-	  unsigned int i = 0U,pakgs = 0 , last_tail = 0;
-	  unsigned char  tx_buf[MUE_PD_FULL_PORT_SIZE_MAX];
+    MUE_RESULT  result = MUE_RESULT_ERROR;
+    unsigned int i = 0U,pakgs = 0 , last_tail = 0;
+    unsigned char  tx_buf[MUE_PD_FULL_PORT_SIZE_MAX];
 
-//		clear_MyDCache();
-	
-	  pakgs = len/MUE_PD_FULL_PORT_SIZE_MAX;
-	
-	  for(i = 0 ; i < pakgs; i++)
-	  {
-			 memset(tx_buf , 0x00 , sizeof(tx_buf));
-			 memcpy(tx_buf , &pbuf[i*MUE_PD_FULL_PORT_SIZE_MAX] , MUE_PD_FULL_PORT_SIZE_MAX);
-			 result = mue_pd_full_put_port_data(tx_port , mue_pd_full_port_size_max , tx_buf); 
-			 //如果是多包  此处需要灵活加时间间隔
-       //HAL_Delay(150);
-		}
-		
-		last_tail = len%MUE_PD_FULL_PORT_SIZE_MAX;
-		if(last_tail != 0)
-		{
-			 memset(tx_buf , 0x00 , sizeof(tx_buf));
-			 memcpy(tx_buf , &pbuf[i*MUE_PD_FULL_PORT_SIZE_MAX] , last_tail);
-			 result = mue_pd_full_put_port_data(tx_port , mue_pd_full_port_size_max , tx_buf);
-		}
-		return result;
+//    clear_MyDCache();
+
+    pakgs = len/MUE_PD_FULL_PORT_SIZE_MAX;
+
+    for(i = 0 ; i < pakgs; i++)
+    {
+        memset(tx_buf , 0x00 , sizeof(tx_buf));
+        memcpy(tx_buf , &pbuf[i*MUE_PD_FULL_PORT_SIZE_MAX] , MUE_PD_FULL_PORT_SIZE_MAX);
+        result = mue_pd_full_put_port_data(tx_port , mue_pd_full_port_size_max , tx_buf);
+        //如果是多包  此处需要灵活加时间间隔
+        //HAL_Delay(150);
+    }
+
+    last_tail = len%MUE_PD_FULL_PORT_SIZE_MAX;
+    if(last_tail != 0)
+    {
+        memset(tx_buf , 0x00 , sizeof(tx_buf));
+        memcpy(tx_buf , &pbuf[i*MUE_PD_FULL_PORT_SIZE_MAX] , last_tail);
+        result = mue_pd_full_put_port_data(tx_port , mue_pd_full_port_size_max , tx_buf);
+    }
+    return result;
 }
 
-/*一包32个字节  包与包之间需要时间间隔  ，根据实际需要调整 如果单包不需要*/
-//测试 接收
-void test_Tx(unsigned short port_adr)
-{
-	 unsigned char   pd_port_data_get[32] ,i = 0;
-	 static unsigned char t ;
-	 t++;
-	 for(i = 0 ; i < sizeof(pd_port_data_get) ;i++)
-	    pd_port_data_get[i] = t;
-	
-	 MVB_tx_data(port_adr,pd_port_data_get ,  sizeof(pd_port_data_get));
-}
 /******************************发送 接口  END************************************/
 /******************************接收 接口 ************************************/
 MUE_RESULT MVB_Rx_data(unsigned short port_adr,unsigned char *pbuf)
 {
-  unsigned char   result;
-  unsigned char   pd_port_status = 0;
-  unsigned short  pd_port_freshness = 0xFFFF;
-  unsigned char   pd_port_data_get[MUE_PD_FULL_PORT_SIZE_MAX];
-	
-	memset(pd_port_data_get,0xFF,sizeof(pd_port_data_get));
-	result =  mue_pd_full_get_port_data(port_adr, (BOOLEAN1)FALSE, mue_pd_full_port_size_max, 
-																									&pd_port_status, &pd_port_data_get[0], &pd_port_freshness);  
-		
-  if(result == MUE_RESULT_OK)
-	{
-		memcpy(pbuf ,pd_port_data_get , MUE_PD_FULL_PORT_SIZE_MAX);
-		return MUE_RESULT_OK;
-		
-	} 
-	else
-	{
-		return MUE_RESULT_RECEIVE_TIMEOUT;
-	}
+    unsigned char   result;
+    unsigned char   pd_port_status = 0;
+    unsigned short  pd_port_freshness = 0xFFFF;
+    unsigned char   pd_port_data_get[MUE_PD_FULL_PORT_SIZE_MAX];
 
-}
-//测试 接收
-extern void z85230_send(uint8_t *buf,uint32_t len);
-void test_Rx(unsigned short port_adr)
-{
-	 unsigned char  pd_port_data_get[MUE_PD_FULL_PORT_SIZE_MAX],i;
-	 static unsigned char t = 0;
-	 if(MVB_Rx_data(port_adr,pd_port_data_get) == MUE_RESULT_OK)
-	 {
-     z85230_send(pd_port_data_get,MUE_PD_FULL_PORT_SIZE_MAX);
-	 }
+    memset(pd_port_data_get,0xFF,sizeof(pd_port_data_get));
+    result =  mue_pd_full_get_port_data(port_adr, (BOOLEAN1)FALSE, mue_pd_full_port_size_max,
+                                        &pd_port_status, &pd_port_data_get[0], &pd_port_freshness);
+
+    if(result == MUE_RESULT_OK)
+    {
+        memcpy(pbuf ,pd_port_data_get , MUE_PD_FULL_PORT_SIZE_MAX);
+        return MUE_RESULT_OK;
+    }
+    else
+    {
+        return MUE_RESULT_RECEIVE_TIMEOUT;
+    }
 }
 
 /******************************接收 接口 END************************************/
-
-
-
-/************************调试 测试接口 发送********************************************/
-/*
-unsigned  int circle = 0;
-void MVBManager_TransmitDataTest(void)
-{
-	  unsigned char ucIndex;
-    unsigned char   pd_port_data_get[MUE_PD_FULL_PORT_SIZE_MAX];
-	  memset(pd_port_data_get,0xFF,sizeof(pd_port_data_get));
-	
-    circle++;
-	
-		for(ucIndex=0x00; ucIndex < mue_pd_full_port_size_max; ucIndex++)
-		{
-		 if(circle%2 == 0)
-				 pd_port_data_get[ucIndex] = ucIndex;
-		 else
-				 pd_port_data_get[ucIndex] = ucIndex+10;
-		 }	
-		  
-     mue_pd_full_put_port_data(TX_PORT_ADR1, mue_pd_full_port_size_max, &pd_port_data_get[0]);   		 
-}
-
-void MVBManager_RXDataTest(void)
-{
-  unsigned char   result;
-  unsigned char   pd_port_status = 0;
-  unsigned short  pd_port_freshness = 0xFFFF;
-  unsigned char   pd_port_data_get[MUE_PD_FULL_PORT_SIZE_MAX];
-	
-	memset(pd_port_data_get,0xFF,sizeof(pd_port_data_get));
-	result =  mue_pd_full_get_port_data(RX_PORT_ADR1, (BOOLEAN1)FALSE, mue_pd_full_port_size_max, 
-																									&pd_port_status, &pd_port_data_get[0], &pd_port_freshness);  
-		
-	if(result == MUE_RESULT_OK )
-  {
-			pd_port_status = 0;
-	}
-}
-*/
-/************************测试接口 发送 end*******************************************/

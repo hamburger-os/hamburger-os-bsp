@@ -8,14 +8,13 @@
 #include <rtdbg.h>
 
 #include <string.h>
-
 #include <drv_config.h>
+
+#include "mue_pd_full.h"
 
 typedef struct
 {
     uint32_t ne;                /** NE 片选号 */
-    volatile void *hw_addr;     /** 芯片数据端口地址 */
-    volatile void *hw_addr_cmd; /** 芯片命令端口地址 */
 } MVB_FMC_CFG;
 
 typedef struct
@@ -26,16 +25,13 @@ typedef struct
     rt_base_t rst_pin;          /** 复位引脚 */
     rt_base_t isr_pin;          /** 中断引脚 */
     rt_base_t rdy_pin;          /** 就绪引脚 */
+    MVB_PORT_INFO port_info;
 } MVB_DEV;
-
-//unsigned char  MVB_port_data[MUE_PD_FULL_PORT_SIZE_MAX];    /* MVB接收缓存 */
 
 static MVB_DEV mvb_dev =
 {
     .dev_name = "mvb",
     .fmc_cfg.ne = MVB_NE,
-    .fmc_cfg.hw_addr = (volatile void *)MVB_CMD,
-    .fmc_cfg.hw_addr_cmd = (volatile void *)(MVB_CMD - 2),
 };
 
 static void mvb_gpio_init(MVB_DEV *dev)
@@ -88,6 +84,7 @@ static void mvb_fmc_init(uint32_t NSBank)
     hsram.Init.WriteFifo = FMC_WRITE_FIFO_DISABLE;
     hsram.Init.PageSize = FMC_PAGE_SIZE_NONE;
     /* Timing */
+    /* 地址建立时间6个hclk 1/240M=4.166666ns */
     Timing.AddressSetupTime = BSP_USING_MVB_ADDRESSSETUPTIME;
     Timing.AddressHoldTime = 0;
     Timing.DataSetupTime = BSP_USING_MVB_DATASETUPTIME;
@@ -96,8 +93,7 @@ static void mvb_fmc_init(uint32_t NSBank)
     Timing.DataLatency = 0;
     Timing.AccessMode = FMC_ACCESS_MODE_A;
     /* ExtTiming */
-
-    if (HAL_SRAM_Init(&hsram, &Timing, NULL) != HAL_OK)
+    if (HAL_SRAM_Init(&hsram, &Timing, &Timing) != HAL_OK)
     {
         Error_Handler();
     }
@@ -106,7 +102,7 @@ static void mvb_fmc_init(uint32_t NSBank)
 
 static rt_size_t mvb_read (rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t size)
 {
-    if(MVB_Rx_data(pos, (unsigned char *)buffer, size) != MUE_RESULT_OK)
+    if(MVB_Rx_data(pos, (unsigned char *)buffer) != MUE_RESULT_OK)
     {
         return 0;
     }
@@ -122,23 +118,41 @@ static rt_size_t mvb_write (rt_device_t dev, rt_off_t pos, const void *buffer, r
     return size;
 }
 
+static rt_err_t  mvb_control(rt_device_t dev, int cmd, void *args)
+{
+    if(RT_NULL == dev)
+    {
+        return -RT_EEMPTY;
+    }
+    if(RT_DEVICE_CTRL_BLK_GETGEOME == cmd)
+    {
+        if(RT_NULL == args)
+        {
+            return -RT_EEMPTY;
+        }
+
+        MVB_DEV *mvb_dev = (MVB_DEV *)dev;
+        MVB_PORT_INFO *port_info = (MVB_PORT_INFO *)args;
+
+        rt_memcpy(port_info, &mvb_dev->port_info, sizeof(MVB_PORT_INFO));
+    }
+    return RT_EOK;
+}
+
 static int rt_hw_mvb_init(void)
 {
     MVB_DEV *p_dev = &mvb_dev;
 
-    LOG_I("111111111");
     mvb_gpio_init(p_dev);
-    LOG_I("22222222222222");
+
     mvb_fmc_init(p_dev->fmc_cfg.ne);
 
-    LOG_I("33333333333333");
-    if(mue_app_main() != MUE_RESULT_OK)
+    if(mue_app_main(&p_dev->port_info) != MUE_RESULT_OK)
     {
         LOG_E("mvb cfg error");
         return -RT_ERROR;
     }
 
-    LOG_I("444444444444");
     p_dev->dev.user_data = (void *)p_dev;
     p_dev->dev.type = RT_Device_Class_Char;
 
@@ -147,7 +161,7 @@ static int rt_hw_mvb_init(void)
     p_dev->dev.close = RT_NULL;
     p_dev->dev.read = mvb_read;
     p_dev->dev.write = mvb_write;
-    p_dev->dev.control = RT_NULL;
+    p_dev->dev.control = mvb_control;
 
     /* register mvb device */
     if (rt_device_register(&p_dev->dev, p_dev->dev_name, RT_DEVICE_FLAG_RDWR) == RT_EOK)

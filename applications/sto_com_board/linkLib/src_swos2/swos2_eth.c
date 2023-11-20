@@ -415,7 +415,7 @@ BOOL if_eth_init(void)
         }
         else
         {
-            LOG_E("can not find %s if!", swos2_eth_dev.dev[i]->name);
+            LOG_E("eth not find %s if!", swos2_eth_dev.dev[i]->name);
             return FALSE;
         }
 

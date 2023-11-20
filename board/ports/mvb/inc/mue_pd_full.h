@@ -294,5 +294,17 @@ TCN_DECL_PUBLIC  MUE_RESULT  mue_pd_full_get_port_data
     UNSIGNED16  *p_port_freshness
 );
 
-TCN_DECL_PUBLIC  MUE_RESULT  mue_app_main (void);
+#pragma pack(1)
+typedef struct
+{
+    uint16_t tx_port[10];
+    uint16_t rx_port[10];
+    uint8_t tx_num;
+    uint8_t rx_num;
+} MVB_PORT_INFO;
+#pragma pack()
+
+TCN_DECL_PUBLIC  MUE_RESULT  mue_app_main (MVB_PORT_INFO *port_info);
+MUE_RESULT  MVB_tx_data(unsigned short tx_port,unsigned char *pbuf , unsigned int len);
+MUE_RESULT MVB_Rx_data(unsigned short port_adr,unsigned char *pbuf);
 #endif /* #ifndef MUE_PD_FULL_H */

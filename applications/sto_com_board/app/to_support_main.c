@@ -18,6 +18,7 @@
 #include "support_timer.h"
 #include "support_gpio.h"
 #include "support_rs485.h"
+#include "support_mvb.h"
 
 /*******************************************************************************************
  *        Local definitions
@@ -169,45 +170,85 @@ static void test_task01(void)
 //    }
 //}
 
+/* 485 */
+//static void test_task01(void)
+//{
+//    static S_TIMER_INFO timer = { FALSE, 0U };
+//    S_RS485_FRAME tx_485_frame;
+//    S_RS485_FRAME rx_485_frame;
+//
+//    if ( TRUE == support_timer_timeoutM(&timer, 1000U))
+//    {
+//        tx_485_frame.len = 256;
+////        memset(tx_485_frame.data_u8, 0x55, 64);
+//        for(int i = 0; i < 256; i++)
+//        {
+//            tx_485_frame.data_u8[i] = i;
+//        }
+//        if(support_rs485_sendData(E_RS485_ID_1, &tx_485_frame) != E_RS485_OK)
+//        {
+//            MY_Printf("send 485 error\r\n");
+//        }
+//
+////    if ( TRUE == support_timer_timeoutM(&timer, 500U))
+////    {
+//        if(supprot_rs485_getData(E_RS485_ID_1, &rx_485_frame)!= E_RS485_OK)
+//        {
+//            MY_Printf("recv 485 error\r\n");
+//        }
+//        else
+//        {
+//           if(rx_485_frame.len != 0)
+//           {
+//               MY_Printf("recv len %d\r\n", rx_485_frame.len);
+//              for(int i = 0; i < rx_485_frame.len; i++)
+//              {
+//                  MY_Printf("%x ", rx_485_frame.data_u8[i]);
+//              }
+//              MY_Printf("\r\n");
+//           }
+//        }
+//
+//
+//    }
+//}
+
+
+/* mvb */
+static S_MVB_FRAME rx_mvb = {0};
+static S_MVB_FRAME old_rx_mvb = {0};
 static void test_task01(void)
 {
     static S_TIMER_INFO timer = { FALSE, 0U };
-    S_RS485_FRAME tx_485_frame;
-    S_RS485_FRAME rx_485_frame;
 
-    if ( TRUE == support_timer_timeoutM(&timer, 1000U))
+    if ( TRUE == support_timer_timeoutM(&timer, 100U))
     {
-        tx_485_frame.len = 256;
-//        memset(tx_485_frame.data_u8, 0x55, 64);
-        for(int i = 0; i < 256; i++)
+        if(supprot_mvb_getData(E_MVB_ID_1, &rx_mvb) == E_MVB_OK)
         {
-            tx_485_frame.data_u8[i] = i;
+            if(rx_mvb.len != 0)
+            {
+//                MY_Printf("mvb read len %d\r\n", rx_mvb.len);
+//                for(int i = 0; i < rx_mvb.len; i++)
+//                {
+//                    MY_Printf("%x ", rx_mvb.data_u8[i]);
+//                }
+//                MY_Printf("\r\n");
+                if(memcmp(old_rx_mvb.data_u8, rx_mvb.data_u8, rx_mvb.len)!=0)
+                {
+                    memcpy(&old_rx_mvb, &rx_mvb, sizeof(S_MVB_FRAME));
+//                    MY_Printf("mvb read len %d\r\n", old_rx_mvb.len);
+//                    for(int i = 0; i < old_rx_mvb.len; i++)
+//                    {
+//                        MY_Printf("%x ", old_rx_mvb.data_u8[i]);
+//                    }
+//                    MY_Printf("\r\n");
+                    if(support_mvb_sendData(E_MVB_ID_1, &old_rx_mvb) != E_MVB_OK)
+                    {
+                        MY_Printf("mvb send error\r\n");
+                    }
+                }
+            }
         }
-        if(support_rs485_sendData(E_RS485_ID_1, &tx_485_frame) != E_RS485_OK)
-        {
-            MY_Printf("send 485 error\r\n");
-        }
-
-//    if ( TRUE == support_timer_timeoutM(&timer, 500U))
-//    {
-        if(supprot_rs485_getData(E_RS485_ID_1, &rx_485_frame)!= E_RS485_OK)
-        {
-            MY_Printf("recv 485 error\r\n");
-        }
-        else
-        {
-           if(rx_485_frame.len != 0)
-           {
-               MY_Printf("recv len %d\r\n", rx_485_frame.len);
-              for(int i = 0; i < rx_485_frame.len; i++)
-              {
-                  MY_Printf("%x ", rx_485_frame.data_u8[i]);
-              }
-              MY_Printf("\r\n");
-           }
-        }
-
-
     }
 }
 
