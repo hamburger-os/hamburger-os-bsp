@@ -334,6 +334,9 @@ if GetDepend(['BSP_USING_MVB']):
     src += Glob('ports/mvb/src/mue_app.c')
     src += Glob('ports/mvb/src/mue_acc.c')
     path += [cwd + '/ports/mvb/inc']
+    
+if GetDepend(['BSP_USING_Z8523L16']):
+    src += Glob('ports/drv_z8523l16.c')
 
 group = DefineGroup('Drivers', src, depend = [''], CPPPATH = path, CPPDEFINES = CPPDEFINES)
 

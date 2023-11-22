@@ -3881,7 +3881,60 @@ menu "Onboard Peripheral Drivers"
                 default (0x28)
                 
         endif
-    
+        
+	menuconfig BSP_USING_Z8523L16
+        bool "Enable The z8523l16 is hdlc chip"
+        default n
+        
+        if BSP_USING_Z8523L16
+            config BSP_USING_Z85230_HDLC_MODE
+                bool "Enable Z85230 HDLC MODE, default serial com mode"
+                default n
+                
+            config Z8523L16_NE
+                  hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x2"
+                  default (0x2)
+                  
+            config Z8523L16_CMD
+                hex "Set the cmd address, default: NE3 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE3 - 1)) | (1 << (A0 + 1))))"
+                default (0x64000002)
+                
+            config BSP_USING_Z8523L16_READ_ADDRESSSETUPTIME
+                int "Set the read AddressSetupTime, default: 6"
+                default (6)
+                
+            config BSP_USING_Z8523L16_READ_DATASETUPTIME
+                int "Set the read DataSetupTime, default: 37"
+                default (37)
+                
+            config BSP_USING_Z8523L16_READ_BUSTURNAROUNDDURATION
+                int "Set the read BusTurnAroundDuration, default: 0"
+                default (0)
+                
+            config BSP_USING_Z8523L16_WRITE_ADDRESSSETUPTIME
+                int "Set the write AddressSetupTime, default: 0"
+                default (0)
+                
+            config BSP_USING_Z8523L16_WRITE_DATASETUPTIME
+                int "Set the write DataSetupTime, default: 6"
+                default (6)
+                
+            config BSP_USING_Z8523L16_WRITE_BUSTURNAROUNDDURATION
+                int "Set the write BusTurnAroundDuration, default: 0"
+                default (0)
+                
+            config Z8523L16_HDLC_IEI_PIN
+                string "Set the GPIO of the hdlc iei pin, default: PI.7"
+                default "PI.7"
+            
+            config Z8523L16_HDLC_INT_PIN
+                string "Set the GPIO of the hdlc int pin, default: PI.4"
+                default "PI.4"
+            
+            config Z8523L16_HDLC_TE_PIN
+                string "Set the GPIO of the hdlc te pin, default: PA.4"
+                default "PA.4"
+        endif
         
 endmenu
 

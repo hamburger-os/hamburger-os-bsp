@@ -213,41 +213,77 @@ static void test_task01(void)
 //    }
 //}
 
+//
+///* mvb */
+//static S_MVB_FRAME rx_mvb = {0};
+//static S_MVB_FRAME old_rx_mvb = {0};
+//static void test_task01(void)
+//{
+//    static S_TIMER_INFO timer = { FALSE, 0U };
+//
+//    if ( TRUE == support_timer_timeoutM(&timer, 100U))
+//    {
+//        if(supprot_mvb_getData(E_MVB_ID_1, &rx_mvb) == E_MVB_OK)
+//        {
+//            if(rx_mvb.len != 0)
+//            {
+////                MY_Printf("mvb read len %d\r\n", rx_mvb.len);
+////                for(int i = 0; i < rx_mvb.len; i++)
+////                {
+////                    MY_Printf("%x ", rx_mvb.data_u8[i]);
+////                }
+////                MY_Printf("\r\n");
+//                if(memcmp(old_rx_mvb.data_u8, rx_mvb.data_u8, rx_mvb.len)!=0)
+//                {
+//                    memcpy(&old_rx_mvb, &rx_mvb, sizeof(S_MVB_FRAME));
+////                    MY_Printf("mvb read len %d\r\n", old_rx_mvb.len);
+////                    for(int i = 0; i < old_rx_mvb.len; i++)
+////                    {
+////                        MY_Printf("%x ", old_rx_mvb.data_u8[i]);
+////                    }
+////                    MY_Printf("\r\n");
+//                    if(support_mvb_sendData(E_MVB_ID_1, &old_rx_mvb) != E_MVB_OK)
+//                    {
+//                        MY_Printf("mvb send error\r\n");
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
 
-/* mvb */
-static S_MVB_FRAME rx_mvb = {0};
-static S_MVB_FRAME old_rx_mvb = {0};
+
+/* hdlc */
 static void test_task01(void)
 {
     static S_TIMER_INFO timer = { FALSE, 0U };
+    S_HDLC_FRAME hdlc_frame;
 
-    if ( TRUE == support_timer_timeoutM(&timer, 100U))
+    if ( TRUE == support_timer_timeoutM(&timer, 1000U))
     {
-        if(supprot_mvb_getData(E_MVB_ID_1, &rx_mvb) == E_MVB_OK)
-        {
-            if(rx_mvb.len != 0)
-            {
-//                MY_Printf("mvb read len %d\r\n", rx_mvb.len);
-//                for(int i = 0; i < rx_mvb.len; i++)
+//        if(supprot_hdlc_getData(E_HDLC_ID_1, &hdlc_frame) == E_HDLC_OK)
+//        {
+//            if(hdlc_frame.len != 0)
+//            {
+//                MY_Printf("hdlc read len %d\r\n", hdlc_frame.len);
+//                for(int i = 0; i < hdlc_frame.len; i++)
 //                {
-//                    MY_Printf("%x ", rx_mvb.data_u8[i]);
+//                    MY_Printf("%x ", hdlc_frame.data_u8[i]);
 //                }
 //                MY_Printf("\r\n");
-                if(memcmp(old_rx_mvb.data_u8, rx_mvb.data_u8, rx_mvb.len)!=0)
-                {
-                    memcpy(&old_rx_mvb, &rx_mvb, sizeof(S_MVB_FRAME));
-//                    MY_Printf("mvb read len %d\r\n", old_rx_mvb.len);
-//                    for(int i = 0; i < old_rx_mvb.len; i++)
-//                    {
-//                        MY_Printf("%x ", old_rx_mvb.data_u8[i]);
-//                    }
-//                    MY_Printf("\r\n");
-                    if(support_mvb_sendData(E_MVB_ID_1, &old_rx_mvb) != E_MVB_OK)
-                    {
-                        MY_Printf("mvb send error\r\n");
-                    }
-                }
-            }
+//            }
+//        }
+        hdlc_frame.data_u8[0] = 0xFE;
+        hdlc_frame.data_u8[1] = 0xFE;
+        hdlc_frame.data_u8[2] = 0x68;
+        hdlc_frame.data_u8[3] = 0x3c;
+        memset(&hdlc_frame.data_u8[4], 0xAA, 60);
+        hdlc_frame.data_u8[63] = 0x16;
+        hdlc_frame.len = 64;
+
+        if(support_hdlc_sendData(E_HDLC_ID_1, &hdlc_frame) != E_HDLC_OK)
+        {
+            MY_Printf("hdlc send error\r\n");
         }
     }
 }

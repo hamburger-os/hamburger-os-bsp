@@ -1053,11 +1053,11 @@ static rt_err_t can_spi_transmit_channel_reset(MCP2517_Dev *mcp2517_dev, CAN_FIF
         return -RT_ERROR;
     }
 
-    return DRV_CANFDSPI_ReceiveChannelReset(mcp2517_dev, channel);
+    return can_spi_receive_channel_reset(mcp2517_dev, channel);
 }
 
 //DRV_CANFDSPI_TransmitRequestSet
-static can_spi_transmit_request_set(MCP2517_Dev *mcp2517_dev, CAN_TXREQ_CHANNEL txreq)
+static rt_err_t can_spi_transmit_request_set(MCP2517_Dev *mcp2517_dev, CAN_TXREQ_CHANNEL txreq)
 {
     rt_err_t ret = -RT_ERROR;
 
@@ -1175,7 +1175,6 @@ static rt_err_t can_spi_filter_to_fifo_link(MCP2517_Dev *mcp2517_dev, CAN_FILTER
 //DRV_CANFDSPI_ReceiveChannelConfigure
 static rt_err_t can_spi_receive_channel_configure(MCP2517_Dev *mcp2517_dev, CAN_FIFO_CHANNEL channel, CAN_RX_FIFO_CONFIG* config)
 {
-    int8_t spiTransferError = 0;
     uint16_t a = 0;
     rt_err_t ret = -RT_ERROR;
 

@@ -225,7 +225,6 @@ static rt_err_t swos2_rs_inituart_input(rt_device_t dev, rt_size_t size)
 
     read_size = size;
 
-    LOG_I("read size %d", size);
     result = rt_mq_send(p_rs_dev->rs_mq, &read_size, sizeof(uint32_t));
     if (result != RT_EOK)
     {
@@ -326,7 +325,6 @@ static void swos2_rs_thread_entry(void *parameter)
                 {
                     rt_memset(p_rs_dev->rx_msg.buffer, 0, SWOS2_RS_UART_BUFFER_LEN);
                     p_rs_dev->rx_msg.len = rt_device_read(p_rs_dev->dev, 0, p_rs_dev->rx_msg.buffer, read_size);
-                    LOG_I("recv len %d", p_rs_dev->rx_msg.len);
                     if(p_rs_dev->rx_msg.len == read_size)
                     {
                         result = rt_mq_send(p_rs_dev->msg_mq, &p_rs_dev->rx_msg, sizeof(S_RS_MSG));
@@ -410,6 +408,11 @@ BOOL if_rs485_send(E_RS485_CH ch, uint8 *pdata, uint16 len)
 
 uint16 if_rs485_get(E_RS485_CH ch, uint8 *pdata, uint16 len)
 {
+    if(ch >= E_RS485_CH_MAX)
+    {
+        return FALSE;
+    }
+
     S_RS_DEV *p_rs_dev = &s_rs_dev;
     S_RS_MSG rx_msg;
     rt_err_t ret;

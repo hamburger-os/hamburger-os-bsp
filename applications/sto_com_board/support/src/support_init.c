@@ -15,6 +15,7 @@
 #include "support_eth.h"
 #include "support_rs485.h"
 #include "support_mvb.h"
+#include "support_hdlc.h"
 /*******************************************************************************************
  *        Local definitions
  *******************************************************************************************/
@@ -103,15 +104,26 @@ extern int support_init(void)
 
     if(ID_TX2_Load == board_id)
     {
-        if(support_mvb_init(E_MVB_ID_MAX) != E_MVB_OK)
+//        if(support_mvb_init(E_MVB_ID_MAX) != E_MVB_OK)
+//        {
+//            MY_Printf("support_mvb_init error\r\n");
+//            return -1;
+//        }
+//        else
+//        {
+//            MY_Printf("mvb init ok\r\n");
+//        }
+
+        if(support_hdlc_init(E_HDLC_ID_MAX) != E_HDLC_OK)
         {
-            MY_Printf("support_mvb_init error\r\n");
+            MY_Printf("support_hdlc_init error\r\n");
             return -1;
         }
         else
         {
-            MY_Printf("mvb init ok\r\n");
+            MY_Printf("hdlc init ok\r\n");
         }
+
     }
 
     return 0;
