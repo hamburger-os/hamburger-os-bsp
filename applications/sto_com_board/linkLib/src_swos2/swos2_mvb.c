@@ -68,6 +68,7 @@ BOOL if_mvb_init(void)
         return FALSE;
     }
 
+#ifdef DUMP_MVB_CH_INFO
     for(int i = 0; i < p_mvb_dev->port_info.rx_num; i++)
     {
         LOG_I("rx port: %x", p_mvb_dev->port_info.rx_port[i]);
@@ -77,7 +78,7 @@ BOOL if_mvb_init(void)
     {
         LOG_I("tx port: %x", p_mvb_dev->port_info.tx_port[i]);
     }
-
+#endif
     return TRUE;
 }
 

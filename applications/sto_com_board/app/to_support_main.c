@@ -257,22 +257,13 @@ static void test_task01(void)
 static void test_task01(void)
 {
     static S_TIMER_INFO timer = { FALSE, 0U };
+    static S_TIMER_INFO rx_timer = { FALSE, 0U };
     S_HDLC_FRAME hdlc_frame;
+    S_HDLC_FRAME rx_hdlc_frame;
+
 
     if ( TRUE == support_timer_timeoutM(&timer, 1000U))
     {
-//        if(supprot_hdlc_getData(E_HDLC_ID_1, &hdlc_frame) == E_HDLC_OK)
-//        {
-//            if(hdlc_frame.len != 0)
-//            {
-//                MY_Printf("hdlc read len %d\r\n", hdlc_frame.len);
-//                for(int i = 0; i < hdlc_frame.len; i++)
-//                {
-//                    MY_Printf("%x ", hdlc_frame.data_u8[i]);
-//                }
-//                MY_Printf("\r\n");
-//            }
-//        }
         hdlc_frame.data_u8[0] = 0xFE;
         hdlc_frame.data_u8[1] = 0xFE;
         hdlc_frame.data_u8[2] = 0x68;
@@ -284,6 +275,22 @@ static void test_task01(void)
         if(support_hdlc_sendData(E_HDLC_ID_1, &hdlc_frame) != E_HDLC_OK)
         {
             MY_Printf("hdlc send error\r\n");
+        }
+    }
+
+    if ( TRUE == support_timer_timeoutM(&rx_timer, 10U))
+    {
+        if(supprot_hdlc_getData(E_HDLC_ID_1, &rx_hdlc_frame) == E_HDLC_OK)
+        {
+            if(rx_hdlc_frame.len != 0)
+            {
+                MY_Printf("hdlc read len %d\r\n", rx_hdlc_frame.len);
+                for(int i = 0; i < rx_hdlc_frame.len; i++)
+                {
+                    MY_Printf("%x ", rx_hdlc_frame.data_u8[i]);
+                }
+                MY_Printf("\r\n");
+            }
         }
     }
 }

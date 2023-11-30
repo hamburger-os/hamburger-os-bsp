@@ -18,6 +18,8 @@
 
 #include <string.h>
 
+#define HDLC_RX_THREA
+
 /** z85230 registers */
 #define     R0      (0)
 #define     R1      (1)
@@ -728,6 +730,8 @@ static void z85230_tx_byte(S_Z8523L16_DEV *dev, uint8_t chr)
     hdlc_wrreg(&dev->fmc, R8, chr);
 }
 
+
+uint8_t read_reg;
 static void hdlc_int_pin_hdr(void *args)
 {
     S_Z8523L16_DEV *dev = (S_Z8523L16_DEV *)args;
@@ -831,15 +835,13 @@ static void hdlc_int_pin_hdr(void *args)
 #else
 
 #ifdef HDLC_RX_THREA
-    rt_sem_release(&dev->sem);
-#else
     if(CHARxIP == hdlc_rdreg(&dev->fmc, R3))
     {
         S_Z85230_RX_BUF *p = &g_s_z85230_rbuf;
 
-//        rt_base_t level;
+        rt_base_t level;
 
-//        level = rt_hw_interrupt_disable();
+        level = rt_hw_interrupt_disable();
 
         /* Receive Buffer Not Empty */
         if ((p->in + 1) != p->out)
@@ -851,10 +853,42 @@ static void hdlc_int_pin_hdr(void *args)
             }
         }
 
-//        rt_hw_interrupt_enable(level);
+        rt_hw_interrupt_enable(level);
     }
     /* Reset highest IUS */
     hdlc_wrreg(&dev->fmc, R0, 0x38);
+
+    rt_sem_release(&dev->sem);
+
+#else
+    if(CHARxIP == hdlc_rdreg(&dev->fmc, R3))
+    {
+        S_Z85230_RX_BUF *p = &g_s_z85230_rbuf;
+
+        rt_base_t level;
+
+        level = rt_hw_interrupt_disable();
+
+        /* Receive Buffer Not Empty */
+        if ((p->in + 1) != p->out)
+        {
+            p->buf[p->in++] = hdlc_rdreg(&dev->fmc, R8);
+            if (p->in >= Z85230_RX_BUF_SIZE)
+            {
+                p->in = 0;
+            }
+        }
+
+        rt_hw_interrupt_enable(level);
+    }
+    /* Reset highest IUS */
+    hdlc_wrreg(&dev->fmc, R0, 0x38);
+
+    read_reg = hdlc_rdreg(&dev->fmc, R0);
+//    int count = 0;
+//    for(count = 0 ; count < 350000;count++)
+//     __NOP();
+//    LOG_I("read_reg %x", read_reg);
 
 //    if(dev->dev.rx_indicate != RT_NULL)
 //    {
@@ -923,23 +957,24 @@ static rt_size_t z8523l16_read (rt_device_t dev, rt_off_t pos, void *buffer, rt_
     return 0;
 
 #else
-//    S_Z85230_RX_BUF *p = &g_s_z85230_rbuf;
-//    rt_base_t level;
-//
-//    level = rt_hw_interrupt_disable();
-//
-//    if (p->in == p->out)
-//    {
-//        rt_hw_interrupt_enable(level);
-//        return 0;
-//    }
-//
-//    LOG_I("read %x", p->buf[p->out++]);
-//    if(p->out >= Z85230_RX_BUF_SIZE)
-//    {
-//        p->out = 0;
-//    }
-//    rt_hw_interrupt_enable(level);
+    S_Z85230_RX_BUF *p = &g_s_z85230_rbuf;
+    rt_base_t level;
+
+    level = rt_hw_interrupt_disable();
+
+    if (p->in == p->out)
+    {
+        rt_hw_interrupt_enable(level);
+        return 0;
+    }
+
+    *((uint8_t *)buffer) = p->buf[p->out++];
+    if(p->out >= Z85230_RX_BUF_SIZE)
+    {
+        p->out = 0;
+    }
+    rt_hw_interrupt_enable(level);
+    return size;
 #endif
 }
 
@@ -1001,43 +1036,12 @@ static void z8523l16_rx_thread_entry(void *param)
 
     while(1)
     {
-        uint8_t rr3 = 0;
-
         rt_sem_take(&p_dev->sem, RT_WAITING_FOREVER);
 
-        LOG_I("11111111111");
-        rr3 = hdlc_rdreg(&p_dev->fmc, R3);
-        if(CHARxIP == rr3)
+        if(p_dev->dev.rx_indicate != RT_NULL)
         {
-            S_Z85230_RX_BUF *p = &g_s_z85230_rbuf;
-
-            int count = 0;
-            for(count = 0 ; count < 30000;count++)
-              __NOP();
-
-//            rt_thread_mdelay(2000);
-            /* Receive Buffer Not Empty */
-            if ((p->in + 1) != p->out)
-            {
-                p->buf[p->in++] = hdlc_rdreg(&p_dev->fmc, R8);
-                if (p->in >= Z85230_RX_BUF_SIZE)
-                {
-                    p->in = 0;
-                }
-            }
-
-//            rt_thread_mdelay(2000);
-            for(count = 0 ; count < 30000;count++)
-              __NOP();
-
-
-    //        if(dev->dev.rx_indicate != RT_NULL)
-    //        {
-    //            dev->dev.rx_indicate(&dev->dev, 1);
-    //        }
+            p_dev->dev.rx_indicate(&p_dev->dev, 1);
         }
-//        /* Reset highest IUS */
-        hdlc_wrreg(&p_dev->fmc, R0, 0x38);
         rt_thread_mdelay(5);
     }
 }
@@ -1102,7 +1106,7 @@ static int rt_hw_z8523l16_init(void)
     }
 
 #ifdef HDLC_RX_THREA
-    tid = rt_thread_create("hdlc", z8523l16_rx_thread_entry, p_dev, 1024, 12, 5);
+    tid = rt_thread_create("hdlc", z8523l16_rx_thread_entry, p_dev, (1024 * 2), 12, 5);
     if (tid == RT_NULL)
     {
         LOG_E("hdlc thread create fail!");

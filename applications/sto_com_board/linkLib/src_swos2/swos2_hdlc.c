@@ -21,7 +21,8 @@
 #include "if_gpio.h"
 
 #define SWOS2_HDLC_SIZE_MQ_NUM   (20)
-#define SWOS2_HDLC_MSG_MQ_NUM    (20)
+//#define SWOS2_HDLC_MSG_MQ_NUM    (20)
+#define SWOS2_HDLC_MSG_MQ_NUM    (300)
 #define SWOS2_HDLC_FRAME_BUF_SIZE   (256)
 
 /* 单字节对齐 */
@@ -53,7 +54,6 @@ static rt_err_t swos2_rx_ind(rt_device_t dev, rt_size_t size)
 
     read_size = size;
 
-    LOG_I("read size %d", size);
     result = rt_mq_send(p_dev->size_mq, &read_size, sizeof(uint32_t));
     if (result != RT_EOK)
     {
@@ -83,9 +83,9 @@ static void swos2_hdlc_rx_thread_entry(void *param)
             {
                 rt_memset(hdlc_rx_msg.buf, 0, SWOS2_HDLC_FRAME_BUF_SIZE);
                 hdlc_rx_msg.len = rt_device_read(dev->dev, 0, hdlc_rx_msg.buf, read_size);
-                LOG_I("recv len %d", hdlc_rx_msg.len);
                 if(hdlc_rx_msg.len == read_size)
                 {
+//                    rt_kprintf("read %x, len %d\r\n", hdlc_rx_msg.buf[0], read_size);
                     result = rt_mq_send(dev->msg_mq, &hdlc_rx_msg, sizeof(S_SWOS2_HDLC_FRAME));
                     if (result != RT_EOK)
                     {
