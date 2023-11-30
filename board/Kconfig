@@ -3899,28 +3899,16 @@ menu "Onboard Peripheral Drivers"
                 hex "Set the cmd address, default: NE3 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE3 - 1)) | (1 << (A0 + 1))))"
                 default (0x64000002)
                 
-            config BSP_USING_Z8523L16_READ_ADDRESSSETUPTIME
-                int "Set the read AddressSetupTime, default: 6"
-                default (6)
+            config BSP_USING_Z8523L16_ADDRESSSETUPTIME
+                int "Set the AddressSetupTime, default: 10"
+                default (10)
                 
-            config BSP_USING_Z8523L16_READ_DATASETUPTIME
-                int "Set the read DataSetupTime, default: 37"
+            config BSP_USING_Z8523L16_DATASETUPTIME
+                int "Set the DataSetupTime, default: 37"
                 default (37)
                 
-            config BSP_USING_Z8523L16_READ_BUSTURNAROUNDDURATION
-                int "Set the read BusTurnAroundDuration, default: 0"
-                default (0)
-                
-            config BSP_USING_Z8523L16_WRITE_ADDRESSSETUPTIME
-                int "Set the write AddressSetupTime, default: 0"
-                default (0)
-                
-            config BSP_USING_Z8523L16_WRITE_DATASETUPTIME
-                int "Set the write DataSetupTime, default: 6"
-                default (6)
-                
-            config BSP_USING_Z8523L16_WRITE_BUSTURNAROUNDDURATION
-                int "Set the write BusTurnAroundDuration, default: 0"
+            config BSP_USING_Z8523L16_BUSTURNAROUNDDURATION
+                int "Set the BusTurnAroundDuration, default: 0"
                 default (0)
                 
             config Z8523L16_HDLC_IEI_PIN

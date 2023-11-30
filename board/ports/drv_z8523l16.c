@@ -18,8 +18,6 @@
 
 #include <string.h>
 
-#define HDLC_RX_THREA
-
 /** z85230 registers */
 #define     R0      (0)
 #define     R1      (1)
@@ -280,7 +278,11 @@ typedef struct tagZ85230_RX_BUF /* 接收缓冲区 */
     uint8_t buf[Z85230_RX_BUF_SIZE];
 } S_Z85230_RX_BUF;
 
-S_Z85230_RX_BUF g_s_z85230_rbuf;
+#ifdef BSP_USING_Z85230_HDLC_MODE
+
+#else
+static S_Z85230_RX_BUF g_s_z85230_rbuf;
+#endif
 typedef struct tagZ85230_HDLC_BUF /* 接收缓冲区 */
 {
     rt_list_t list; /* 链表 */
@@ -490,9 +492,7 @@ static rt_err_t z8523l16_fmc_init(S_Z8523L16_FMC_CFG *fmc)
     defined (STM32H735xx) || defined (STM32H733xx)  || defined (STM32H730xx) || defined (STM32H730xxQ)  || defined (STM32H725xx) || defined (STM32H723xx)
 
     SRAM_HandleTypeDef hsram = {0};
-    FMC_NORSRAM_TimingTypeDef FSMC_ReadTim = {0};
-    FMC_NORSRAM_TimingTypeDef FSMC_WriteTim = {0};
-//    FMC_NORSRAM_TimingTypeDef Timing = {0};
+    FMC_NORSRAM_TimingTypeDef Timing = {0};
 
     /**
      * Perform the SRAM memory initialization sequence
@@ -516,65 +516,18 @@ static rt_err_t z8523l16_fmc_init(S_Z8523L16_FMC_CFG *fmc)
     hsram.Init.ContinuousClock = FMC_CONTINUOUS_CLOCK_SYNC_ONLY;
     hsram.Init.WriteFifo = FMC_WRITE_FIFO_DISABLE;
     hsram.Init.PageSize = FMC_PAGE_SIZE_NONE;
+
+    /* 地址建立时间6个hclk  hclk = 1/240M=4.166666ns */
     /* Timing */
-    /* 地址建立时间6个hclk  hclk = 1/240M=4.166666ns */
-//    FSMC_ReadTim.AddressSetupTime = BSP_USING_Z8523L16_READ_ADDRESSSETUPTIME;
-//    FSMC_ReadTim.AddressHoldTime = 6;
-//    FSMC_ReadTim.DataSetupTime = BSP_USING_Z8523L16_READ_DATASETUPTIME;
-//    FSMC_ReadTim.BusTurnAroundDuration = BSP_USING_Z8523L16_READ_BUSTURNAROUNDDURATION;
-//    FSMC_ReadTim.CLKDivision = 0;
-//    FSMC_ReadTim.DataLatency = 0;
-//    FSMC_ReadTim.AccessMode = FMC_ACCESS_MODE_A;
-//
-//    FSMC_WriteTim.AddressSetupTime = BSP_USING_Z8523L16_WRITE_ADDRESSSETUPTIME;
-//    FSMC_WriteTim.AddressHoldTime = 1;
-//    FSMC_WriteTim.DataSetupTime = BSP_USING_Z8523L16_WRITE_DATASETUPTIME;
-//    FSMC_WriteTim.BusTurnAroundDuration = BSP_USING_Z8523L16_WRITE_BUSTURNAROUNDDURATION;
-//    FSMC_WriteTim.CLKDivision = 0;
-//    FSMC_WriteTim.DataLatency = 0;
-//    FSMC_WriteTim.AccessMode = FMC_ACCESS_MODE_A;
+    Timing.AddressSetupTime = BSP_USING_Z8523L16_ADDRESSSETUPTIME;
+    Timing.AddressHoldTime = 0;
+    Timing.DataSetupTime = BSP_USING_Z8523L16_DATASETUPTIME;
+    Timing.BusTurnAroundDuration = BSP_USING_Z8523L16_BUSTURNAROUNDDURATION;
+    Timing.CLKDivision = 0;
+    Timing.DataLatency = 0;
+    Timing.AccessMode = FMC_ACCESS_MODE_A;
 
-//    FSMC_ReadTim.AddressSetupTime = 6;//BSP_USING_Z8523L16_READ_ADDRESSSETUPTIME;
-//    FSMC_ReadTim.AddressHoldTime = 6;
-//    FSMC_ReadTim.DataSetupTime = 37;//BSP_USING_Z8523L16_READ_DATASETUPTIME;
-//    FSMC_ReadTim.BusTurnAroundDuration = 0;//BSP_USING_Z8523L16_READ_BUSTURNAROUNDDURATION;
-//    FSMC_ReadTim.CLKDivision = 0;
-//    FSMC_ReadTim.DataLatency = 0;
-//    FSMC_ReadTim.AccessMode = FMC_ACCESS_MODE_A;
-//
-//    FSMC_WriteTim.AddressSetupTime = 0;//BSP_USING_Z8523L16_WRITE_ADDRESSSETUPTIME;
-//    FSMC_WriteTim.AddressHoldTime = 1;
-//    FSMC_WriteTim.DataSetupTime = 6;//BSP_USING_Z8523L16_WRITE_DATASETUPTIME;
-//    FSMC_WriteTim.BusTurnAroundDuration = 0;//BSP_USING_Z8523L16_WRITE_BUSTURNAROUNDDURATION;
-//    FSMC_WriteTim.CLKDivision = 0;
-//    FSMC_WriteTim.DataLatency = 0;
-//    FSMC_WriteTim.AccessMode = FMC_ACCESS_MODE_A;
-//
-//    if (HAL_SRAM_Init(&hsram, &FSMC_ReadTim, &FSMC_WriteTim) != HAL_OK)
-//    {
-//        Error_Handler();
-//    }
-
-    /* 这个配置不会在启动时候初始化错误，卡死 */
-
-    /* 地址建立时间6个hclk  hclk = 1/240M=4.166666ns */
-    FSMC_ReadTim.AddressSetupTime = 10;//9;//BSP_USING_Z8523L16_READ_ADDRESSSETUPTIME;
-    FSMC_ReadTim.AddressHoldTime = 0;//9;
-    FSMC_ReadTim.DataSetupTime = 37;//BSP_USING_Z8523L16_READ_DATASETUPTIME;
-    FSMC_ReadTim.BusTurnAroundDuration = 8;//BSP_USING_Z8523L16_READ_BUSTURNAROUNDDURATION;
-    FSMC_ReadTim.CLKDivision = 0;
-    FSMC_ReadTim.DataLatency = 0;
-    FSMC_ReadTim.AccessMode = FMC_ACCESS_MODE_A;
-
-    FSMC_WriteTim.AddressSetupTime = 10;//9;//7;//BSP_USING_Z8523L16_WRITE_ADDRESSSETUPTIME;
-    FSMC_WriteTim.AddressHoldTime = 0;//9;
-    FSMC_WriteTim.DataSetupTime = 37;//BSP_USING_Z8523L16_WRITE_DATASETUPTIME;
-    FSMC_WriteTim.BusTurnAroundDuration = 0;//8;//0;//BSP_USING_Z8523L16_WRITE_BUSTURNAROUNDDURATION;
-    FSMC_WriteTim.CLKDivision = 0;
-    FSMC_WriteTim.DataLatency = 0;
-    FSMC_WriteTim.AccessMode = FMC_ACCESS_MODE_A;
-
-    if (HAL_SRAM_Init(&hsram, &FSMC_ReadTim, &FSMC_WriteTim) != HAL_OK)
+    if (HAL_SRAM_Init(&hsram, &Timing, &Timing) != HAL_OK)
     {
         Error_Handler();
     }
@@ -662,40 +615,6 @@ static rt_err_t z85230_hdlc_mode(S_Z8523L16_DEV *dev)
     return RT_EOK;
 }
 
-#else
-
-static rt_err_t z85230_serial_mode(S_Z8523L16_DEV *dev)
-{
-    if(RT_NULL == dev)
-    {
-        return -RT_EEMPTY;
-    }
-
-    /** x 16 clock, ays mode, parity disable */
-    hdlc_wrreg(&dev->fmc, R4, X16CLK|SB1);
-    /** NRZ */
-    hdlc_wrreg(&dev->fmc, R10, NRZ|CRCPS|ABUNDER);
-    /** Tx & Rx = BRG out, TRxC = BRG out */
-    hdlc_wrreg(&dev->fmc, R11, TRxCBR|TCBR|RCBR);
-    /** baud lower 32 9600  19 19200*/
-    hdlc_wrreg(&dev->fmc, R12, 0x28);
-    /** baud upper */
-    hdlc_wrreg(&dev->fmc, R13, 0x00);
-    /**  BRG enable */
-    hdlc_wrreg(&dev->fmc, R14, BRENABL|BRSRC|DISDPLL);
-    /** Tx disable  */
-    hdlc_wrreg(&dev->fmc, R5, Tx8|DTR|TxENAB|TxCRC_ENAB);
-    /** Rx enable */
-    hdlc_wrreg(&dev->fmc, R3, RxENABLE|Rx8);
-    /** Rx Int on First Character or Special Condition  */
-    hdlc_wrreg(&dev->fmc, R1, INT_ALL_Rx);
-    /** Master Interrupt Enable */
-    hdlc_wrreg(&dev->fmc, R9, MIE);
-
-    return RT_EOK;
-}
-#endif
-
 static uint8_t z85230_outtime( uint32_t time, uint32_t ms )
 {
     if( ( rt_tick_get() - time ) > ms )
@@ -730,8 +649,40 @@ static void z85230_tx_byte(S_Z8523L16_DEV *dev, uint8_t chr)
     hdlc_wrreg(&dev->fmc, R8, chr);
 }
 
+#else
 
-uint8_t read_reg;
+static rt_err_t z85230_serial_mode(S_Z8523L16_DEV *dev)
+{
+    if(RT_NULL == dev)
+    {
+        return -RT_EEMPTY;
+    }
+
+    /** x 16 clock, ays mode, parity disable */
+    hdlc_wrreg(&dev->fmc, R4, X16CLK|SB1);
+    /** NRZ */
+    hdlc_wrreg(&dev->fmc, R10, NRZ|CRCPS|ABUNDER);
+    /** Tx & Rx = BRG out, TRxC = BRG out */
+    hdlc_wrreg(&dev->fmc, R11, TRxCBR|TCBR|RCBR);
+    /** baud lower 32 9600  19 19200*/
+    hdlc_wrreg(&dev->fmc, R12, 0x28);
+    /** baud upper */
+    hdlc_wrreg(&dev->fmc, R13, 0x00);
+    /**  BRG enable */
+    hdlc_wrreg(&dev->fmc, R14, BRENABL|BRSRC|DISDPLL);
+    /** Tx disable  */
+    hdlc_wrreg(&dev->fmc, R5, Tx8|DTR|TxENAB|TxCRC_ENAB);
+    /** Rx enable */
+    hdlc_wrreg(&dev->fmc, R3, RxENABLE|Rx8);
+    /** Rx Int on First Character or Special Condition  */
+    hdlc_wrreg(&dev->fmc, R1, INT_ALL_Rx);
+    /** Master Interrupt Enable */
+    hdlc_wrreg(&dev->fmc, R9, MIE);
+
+    return RT_EOK;
+}
+#endif
+
 static void hdlc_int_pin_hdr(void *args)
 {
     S_Z8523L16_DEV *dev = (S_Z8523L16_DEV *)args;
@@ -834,7 +785,6 @@ static void hdlc_int_pin_hdr(void *args)
     hdlc_wrreg(&dev->fmc, R0, 0x38);
 #else
 
-#ifdef HDLC_RX_THREA
     if(CHARxIP == hdlc_rdreg(&dev->fmc, R3))
     {
         S_Z85230_RX_BUF *p = &g_s_z85230_rbuf;
@@ -860,43 +810,30 @@ static void hdlc_int_pin_hdr(void *args)
 
     rt_sem_release(&dev->sem);
 
-#else
-    if(CHARxIP == hdlc_rdreg(&dev->fmc, R3))
+#endif
+}
+
+static void z8523l16_rx_thread_entry(void *param)
+{
+    S_Z8523L16_DEV *p_dev = param;
+
+    if(RT_NULL == p_dev)
     {
-        S_Z85230_RX_BUF *p = &g_s_z85230_rbuf;
-
-        rt_base_t level;
-
-        level = rt_hw_interrupt_disable();
-
-        /* Receive Buffer Not Empty */
-        if ((p->in + 1) != p->out)
-        {
-            p->buf[p->in++] = hdlc_rdreg(&dev->fmc, R8);
-            if (p->in >= Z85230_RX_BUF_SIZE)
-            {
-                p->in = 0;
-            }
-        }
-
-        rt_hw_interrupt_enable(level);
+        return;
     }
-    /* Reset highest IUS */
-    hdlc_wrreg(&dev->fmc, R0, 0x38);
 
-    read_reg = hdlc_rdreg(&dev->fmc, R0);
-//    int count = 0;
-//    for(count = 0 ; count < 350000;count++)
-//     __NOP();
-//    LOG_I("read_reg %x", read_reg);
+    z8523l16_isr_pin_init(p_dev, hdlc_int_pin_hdr);
 
-//    if(dev->dev.rx_indicate != RT_NULL)
-//    {
-//        dev->dev.rx_indicate(&dev->dev, 1);
-//    }
-#endif
+    while(1)
+    {
+        rt_sem_take(&p_dev->sem, RT_WAITING_FOREVER);
 
-#endif
+        if(p_dev->dev.rx_indicate != RT_NULL)
+        {
+            p_dev->dev.rx_indicate(&p_dev->dev, 1);
+        }
+        rt_thread_mdelay(5);
+    }
 }
 
 static rt_size_t z8523l16_read (rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t size)
@@ -1005,6 +942,12 @@ static rt_size_t z8523l16_write (rt_device_t dev, rt_off_t pos, const void *buff
     hdlc_wrreg(&p_dev->fmc, R5, Tx8|TxCRC_ENAB|TxENAB);  //AUTO
     return size;
 #else
+
+    if(RT_NULL == p_dev || RT_NULL == buffer)
+    {
+        return 0;
+    }
+
     uint8_t *data_buf = (uint8_t *)buffer;
 
     hdlc_wrreg(&p_dev->fmc, R5, RTS|Tx8|TxENAB|TxCRC_ENAB);
@@ -1021,31 +964,6 @@ static rt_size_t z8523l16_write (rt_device_t dev, rt_off_t pos, const void *buff
     return size;
 #endif
 }
-
-#ifdef HDLC_RX_THREA
-static void z8523l16_rx_thread_entry(void *param)
-{
-    S_Z8523L16_DEV *p_dev = param;
-
-    if(RT_NULL == p_dev)
-    {
-        return;
-    }
-
-    z8523l16_isr_pin_init(p_dev, hdlc_int_pin_hdr);
-
-    while(1)
-    {
-        rt_sem_take(&p_dev->sem, RT_WAITING_FOREVER);
-
-        if(p_dev->dev.rx_indicate != RT_NULL)
-        {
-            p_dev->dev.rx_indicate(&p_dev->dev, 1);
-        }
-        rt_thread_mdelay(5);
-    }
-}
-#endif
 
 static int rt_hw_z8523l16_init(void)
 {
@@ -1080,10 +998,6 @@ static int rt_hw_z8523l16_init(void)
     z85230_serial_mode(p_dev);
 #endif
 
-#ifndef HDLC_RX_THREA
-    z8523l16_isr_pin_init(p_dev, hdlc_int_pin_hdr);
-#endif
-
     p_dev->dev.user_data = (void *)p_dev;
     p_dev->dev.type = RT_Device_Class_Char;
 
@@ -1105,8 +1019,7 @@ static int rt_hw_z8523l16_init(void)
         return -RT_ERROR;
     }
 
-#ifdef HDLC_RX_THREA
-    tid = rt_thread_create("hdlc", z8523l16_rx_thread_entry, p_dev, (1024 * 2), 12, 5);
+    tid = rt_thread_create("hdlc", z8523l16_rx_thread_entry, (void *)p_dev, 1024, 13, 5);
     if (tid == RT_NULL)
     {
         LOG_E("hdlc thread create fail!");
@@ -1116,7 +1029,6 @@ static int rt_hw_z8523l16_init(void)
     {
         rt_thread_startup(tid);
     }
-#endif
 
     return RT_EOK;
 }

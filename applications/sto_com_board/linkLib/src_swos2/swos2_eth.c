@@ -69,82 +69,146 @@ static S_SWOS2_ETH_DEV swos2_eth_dev;
 
 static S_SWOS2_ETH swos2_eth[] =
 {
-        {
-                .name = "e0",
-                .mq_name = "e0 mq",
-        },
-        {
-                .name = "e1",
-                .mq_name = "e1 mq",
-        },
-        {
-                .name = "e",
-                .mq_name = "e mq",
-        },
+    {
+        .name = "e0",
+        .mq_name = "e0 mq",
+    },
+    {
+        .name = "e1",
+        .mq_name = "e1 mq",
+    },
+    {
+        .name = "e",
+        .mq_name = "e mq",
+    },
 };
 
 /* 通信1底板I系mac配置 */
 static uint8_t com_1_load_1_mac_addr[E_ETH_CH_MAX][6] =
 {
-    {0x4c, 0x53, 0x57, 0x00, 0x10, 0x30},
-    {0x4c, 0x53, 0x57, 0x00, 0x10, 0x40},
-    {0x4c, 0x53, 0x57, 0x00, 0x02, 0x20},
+    {0x4c, 0x53, 0x57, 0x00, 0x10, 0x30},  /* 8851网口 外部 */
+    {0x4c, 0x53, 0x57, 0x00, 0x10, 0x40},  /* 8851网口 外部 */
+    {0x4c, 0x53, 0x57, 0x00, 0x02, 0x20},  /* 原生网口   连接I系主控 */
+};
+
+/* 通信1底板I系目的地址mac配置 */
+static uint8_t com_1_load_1_dst_mac_addr[E_ETH_CH_MAX][6] =
+{
+    {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},  /* 连接外部网口 未设置 */
+    {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},  /* 连接外部网口 未设置 */
+    {0x4c, 0x53, 0x57, 0x00, 0x01, 0x02},  /* I系主控 */
 };
 
 /* 通信1子板I系mac配置 */
 static uint8_t com_1_child_1_mac_addr[E_ETH_CH_MAX][6] =
 {
-    {0x4c, 0x53, 0x57, 0x00, 0x03, 0x11},
-    {0x4c, 0x53, 0x57, 0x00, 0x01, 0x21},
-    {0xf8, 0x09, 0xa4, 0x51, 0x0e, 0x02}, /* 未使用 */
+    {0x4c, 0x53, 0x57, 0x00, 0x03, 0x11},  /* 8851网口 外部 */
+    {0x4c, 0x53, 0x57, 0x00, 0x01, 0x21},  /* 8851网口 外部 */
+    {0x4c, 0x53, 0x57, 0x00, 0x01, 0x21},  /* 原生网口   连接I系主控 */
+};
+
+/* 通信1子板I系目的地址mac配置 */
+static uint8_t com_1_child_1_dst_mac_addr[E_ETH_CH_MAX][6] =
+{
+    {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},  /* 连接外部网口 未设置 */
+    {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},  /* 连接外部网口 未设置 */
+    {0x4c, 0x53, 0x57, 0x00, 0x01, 0x02},  /* I系主控 */
 };
 
 /* 通信1底板II系mac配置 */
 static uint8_t com_1_load_2_mac_addr[E_ETH_CH_MAX][6] =
 {
-    {0x4c, 0x53, 0x57, 0x00, 0x10, 0x31},
-    {0x4c, 0x53, 0x57, 0x00, 0x10, 0x41},
-    {0x4c, 0x53, 0x57, 0x00, 0x02, 0x21},
+    {0x4c, 0x53, 0x57, 0x00, 0x10, 0x31},  /* 8851网口 外部 */
+    {0x4c, 0x53, 0x57, 0x00, 0x10, 0x41},  /* 8851网口 外部 */
+    {0x4c, 0x53, 0x57, 0x00, 0x02, 0x21},  /* 原生网口   连接II系主控 */
+};
+
+/* 通信1底板II系目的地址mac配置 */
+static uint8_t com_1_load_2_dst_mac_addr[E_ETH_CH_MAX][6] =
+{
+    {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},  /* 连接外部网口 未设置 */
+    {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},  /* 连接外部网口 未设置 */
+    {0x4c, 0x53, 0x57, 0x00, 0x01, 0x0A},  /* II系主控 */
 };
 
 /* 通信1子板II系mac配置 */
 static uint8_t com_1_child_2_mac_addr[E_ETH_CH_MAX][6] =
 {
-    {0x4c, 0x53, 0x57, 0x00, 0x03, 0x11},
-    {0x4c, 0x53, 0x57, 0x00, 0x01, 0x22},
-    {0xf8, 0x09, 0xa4, 0x51, 0x0e, 0x02}, /* 未使用 */
+    {0x4c, 0x53, 0x57, 0x00, 0x03, 0x11},  /* 8851网口 外部 */
+    {0x4c, 0x53, 0x57, 0x00, 0x01, 0x22},  /* 8851网口 外部 */
+    {0x4c, 0x53, 0x57, 0x00, 0x01, 0x22},  /* 原生网口   连接II系主控 */
+};
+
+/* 通信1子板II系目的地址mac配置 */
+static uint8_t com_1_child_2_dst_mac_addr[E_ETH_CH_MAX][6] =
+{
+    {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},  /* 连接外部网口 未设置 */
+    {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},  /* 连接外部网口 未设置 */
+    {0x4c, 0x53, 0x57, 0x00, 0x01, 0x0A},  /* II系主控 */
 };
 
 /* 通信2底板I系mac配置 */
 static uint8_t com_2_load_1_mac_addr[E_ETH_CH_MAX][6] =
 {
-    {0x4c, 0x53, 0x57, 0x00, 0x07, 0xA3},
-    {0x4c, 0x53, 0x57, 0x00, 0x01, 0x23},
-    {0xf8, 0x09, 0xa4, 0x51, 0x0e, 0x02}, /* 未使用 */
+    {0x4c, 0x53, 0x57, 0x00, 0x07, 0xA3},  /* 8851网口 外部 */
+    {0x4c, 0x53, 0x57, 0x00, 0x01, 0x23},  /* 原生网口   I系主控 */
+    {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},  /* 未使用 */
+};
+
+/* 通信2底板I系目的地址mac配置 */
+static uint8_t com_2_load_1_dst_mac_addr[E_ETH_CH_MAX][6] =
+{
+    {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},  /* 连接外部网口 未设置 */
+    {0x4c, 0x53, 0x57, 0x00, 0x01, 0x02},  /* I系主控 */
+    {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},  /* 未使用 */
 };
 
 /* 通信2子板I系mac配置 */
 static uint8_t com_2_child_1_mac_addr[E_ETH_CH_MAX][6] =
 {
-    {0x4c, 0x53, 0x57, 0x00, 0x09, 0xD1},
-    {0x4c, 0x53, 0x57, 0x00, 0x09, 0xC1},
-    {0x4c, 0x53, 0x57, 0x00, 0x02, 0x30},
+    {0x4c, 0x53, 0x57, 0x00, 0x09, 0xD1},  /* 8851网口 外部 */
+    {0x4c, 0x53, 0x57, 0x00, 0x09, 0xC1},  /* 8851网口 外部 */
+    {0x4c, 0x53, 0x57, 0x00, 0x02, 0x30},  /* 原生网口   连接I系主控 */
+};
+
+/* 通信2子板I系目的地址mac配置 */
+static uint8_t com_2_child_1_dst_mac_addr[E_ETH_CH_MAX][6] =
+{
+    {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},  /* 连接外部网口 未设置 */
+    {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},  /* 连接外部网口 未设置 */
+    {0x4c, 0x53, 0x57, 0x00, 0x01, 0x02},  /* I系主控 */
 };
 
 /* 通信2底板II系mac配置 */
 static uint8_t com_2_load_2_mac_addr[E_ETH_CH_MAX][6] =
 {
-    {0x4c, 0x53, 0x57, 0x00, 0x17, 0xA4},
-    {0x4c, 0x53, 0x57, 0x00, 0x01, 0x24},
-    {0xf8, 0x09, 0xa4, 0x51, 0x0e, 0x02}, /* 未使用 */
+    {0x4c, 0x53, 0x57, 0x00, 0x17, 0xA4},  /* 8851网口 外部 */
+    {0x4c, 0x53, 0x57, 0x00, 0x01, 0x24},  /* 原生网口   连接II系主控 */
+    {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},  /* 未使用 */
+};
+
+/* 通信2底板II系目的地址mac配置 */
+static uint8_t com_2_load_2_dst_mac_addr[E_ETH_CH_MAX][6] =
+{
+    {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},  /* 连接外部网口 未设置 */
+    {0x4c, 0x53, 0x57, 0x00, 0x01, 0x0A},  /* II系主控 */
+    {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},  /* 未使用 */
 };
 
 /* 通信2子板II系mac配置 */
 static uint8_t com_2_child_2_mac_addr[E_ETH_CH_MAX][6] =
 {
-    {0x4c, 0x53, 0x57, 0x00, 0x09, 0xD2},
-    {0x4c, 0x53, 0x57, 0x00, 0x09, 0xC2},
-    {0x4c, 0x53, 0x57, 0x00, 0x02, 0x31},
+    {0x4c, 0x53, 0x57, 0x00, 0x09, 0xD2},  /* 8851网口 外部 */
+    {0x4c, 0x53, 0x57, 0x00, 0x09, 0xC2},  /* 8851网口 外部 */
+    {0x4c, 0x53, 0x57, 0x00, 0x02, 0x31},  /* 原生网口   连接II系主控 */
+};
+
+/* 通信2子板II系目的地址mac配置 */
+static uint8_t com_2_child_2_dst_mac_addr[E_ETH_CH_MAX][6] =
+{
+    {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},  /* 连接外部网口 未设置 */
+    {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},  /* 连接外部网口 未设置 */
+    {0x4c, 0x53, 0x57, 0x00, 0x01, 0x0A},  /* II系主控 */
 };
 
 static rt_err_t sw_eth1_rx_callback(rt_device_t dev, rt_size_t size)
@@ -213,12 +277,19 @@ static void sw_ethrx_thread_entry(void *param)
 
             if(rt_device_read(swos2_eth_dev.dev[info->channel]->dev, 0, (void *)swos2_eth_dev.dev[info->channel]->rx_buf.data_u8, info->len) == info->len)
             {
-                if(swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[0] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[6] && \
-                   swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[1] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[7] && \
-                   swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[2] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[8] && \
-                   swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[3] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[9] && \
-                   swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[4] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[10] && \
-                   swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[5] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[11])
+                /* 目的地址与广播地址判断 */
+                if((swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[0] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[6] && \
+                    swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[1] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[7] && \
+                    swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[2] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[8] && \
+                    swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[3] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[9] && \
+                    swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[4] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[10] && \
+                    swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[5] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[11]) || \
+                    (swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[0] == 0xff && \
+                    swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[1] == 0xff && \
+                    swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[2] == 0xff && \
+                    swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[3] == 0xff && \
+                    swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[4] == 0xff && \
+                    swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[5] == 0xff))
                 {
                     swos2_eth_dev.dev[info->channel]->rx_buf.len = info->len;
                     ret = rt_mq_send(swos2_eth_dev.dev[info->channel]->eth_rx_mq,
@@ -272,12 +343,12 @@ static BOOL swos2_eth_dev_init(S_SWOS2_ETH_DEV *dev)
 
         if(E_SLOT_ID_1 == dev->id)
         {
-            dev->p_dst_mac = com_1_load_1_mac_addr;
+            dev->p_dst_mac = com_1_load_1_dst_mac_addr;
             dev->p_src_mac = com_1_load_1_mac_addr;
         }
         else
         {
-            dev->p_dst_mac = com_1_load_2_mac_addr;
+            dev->p_dst_mac = com_1_load_2_dst_mac_addr;
             dev->p_src_mac = com_1_load_2_mac_addr;
         }
 
@@ -295,12 +366,12 @@ static BOOL swos2_eth_dev_init(S_SWOS2_ETH_DEV *dev)
 
         if(E_SLOT_ID_3 == dev->id)
         {
-            dev->p_dst_mac = com_2_load_1_mac_addr;
+            dev->p_dst_mac = com_2_load_1_dst_mac_addr;
             dev->p_src_mac = com_2_load_1_mac_addr;
         }
         else
         {
-            dev->p_dst_mac = com_2_load_2_mac_addr;
+            dev->p_dst_mac = com_2_load_2_dst_mac_addr;
             dev->p_src_mac = com_2_load_2_mac_addr;
         }
 
@@ -318,22 +389,22 @@ static BOOL swos2_eth_dev_init(S_SWOS2_ETH_DEV *dev)
 
         if(E_SLOT_ID_2 == dev->id)
         {
-            dev->p_dst_mac = com_1_child_1_mac_addr;
+            dev->p_dst_mac = com_1_child_1_dst_mac_addr;
             dev->p_src_mac = com_1_child_1_mac_addr;
         }
         else if(E_SLOT_ID_4 == dev->id)
         {
-            dev->p_dst_mac = com_2_child_1_mac_addr;
+            dev->p_dst_mac = com_2_child_1_dst_mac_addr;
             dev->p_src_mac = com_2_child_1_mac_addr;
         }
         else if(E_SLOT_ID_6 == dev->id)
         {
-            dev->p_dst_mac = com_1_child_2_mac_addr;
+            dev->p_dst_mac = com_1_child_2_dst_mac_addr;
             dev->p_src_mac = com_1_child_2_mac_addr;
         }
         else
         {
-            dev->p_dst_mac = com_2_child_2_mac_addr;
+            dev->p_dst_mac = com_2_child_2_dst_mac_addr;
             dev->p_src_mac = com_2_child_2_mac_addr;
         }
 
