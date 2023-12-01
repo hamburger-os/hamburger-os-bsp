@@ -44,7 +44,7 @@ void selftest_eth_test(SelftestUserData *puserdata)
         .frame.data = {1,2,3,4,5,6,7,8},
     };
     union LinkLayerPackDef data_rd = {0};
-    uint16_t data_rd_len = 0;
+    int16_t data_rd_len = 0;
 
     for (int i = 0; i<2; i++)
     {

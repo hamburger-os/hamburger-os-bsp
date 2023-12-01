@@ -26,9 +26,13 @@ LR_IROM1 0x08020000 0x00100000  {    ; load region size_region
     RW_RAM1 0x30000000 0x00040000 {
         *(.RAM_D2)
     }
-    ; RW data - 32KB SRAM3(0x30040000)
-    RW_RAM2 0x30040000 0x00008000 {
+    ; RW data - 16KB SRAM3(0x30040000)
+    RW_RAM2 0x30040000 0x00004000 {
         *(.noncacheable)
+    }
+    ; RW data - 16KB SRAM3(0x30044000)
+    RW_RAM2 0x30044000 0x00004000 {
+        *(.bufferable)
     }
     ; RW data - 64KB SRAM4(0x38000000)
     RW_RAM3 0x38000000 0x00010000 {
