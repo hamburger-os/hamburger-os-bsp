@@ -3835,7 +3835,147 @@ menu "Onboard Peripheral Drivers"
                 string "Set the pin of reset, default: PA.15"
                 default "PA.15"
         endif
-endmenu
+    menuconfig BSP_USING_MVB
+        bool "Enable mvb"
+        default n
+                
+        if BSP_USING_MVB
+            config MVB_NE
+                  hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
+                  default (0x4)
+                  
+            config MVB_CMD
+                hex "Set the cmd address, default: NE3 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE3 - 1)) | (1 << (A0 + 1))))"
+                default (0x68000002)
+                
+            config BSP_USING_MVB_ADDRESSSETUPTIME
+                int "Set the AddressSetupTime, default: 7"
+                default (7)
+                
+            config BSP_USING_MVB_DATASETUPTIME
+                int "Set the DataSetupTime, default: 25"
+                default (25)
+                
+            config BSP_USING_MVB_BUSTURNAROUNDDURATION
+                int "Set the BusTurnAroundDuration, default: 8"
+                default (8)
+                
+            config MVB_RST_PIN
+                string "Set the GPIO of the reset pin, default: PE.6"
+                default "PE.6"
+            
+            config MVB_ISR_PIN
+                string "Set the GPIO of the isr pin, default: PE.5"
+                default "PE.5"
+            
+            config MVB_RDY_PIN
+                string "Set the GPIO of the rdy pin, default: PE.4"
+                default "PE.4"
+            
+            config MVB_DEV_ADR
+                hex "Set the mvb dev addr, default: 0x10"
+                default (0x10)
+            
+            config MVB_RX_PORT_ADR_NUB
+                int "Set the mvb rx port num: 6"
+                default (6)
+
+            config MVB_RX_PORT_ADR1
+                hex "Set the mvb rx port addr 1: 0x140"
+                default (0x140)
+            
+            config MVB_RX_PORT_ADR2
+                hex "Set the mvb rx port addr 2: 0x142"
+                default (0x142)
+            
+            config MVB_RX_PORT_ADR3
+                hex "Set the mvb rx port addr 3: 0x22"
+                default (0x22)
+            
+            config MVB_RX_PORT_ADR4
+                hex "Set the mvb rx port addr 4: 0x24"
+                default (0x24)
+            
+            config MVB_RX_PORT_ADR5
+                hex "Set the mvb rx port addr 5: 0x32"
+                default (0x32)
+            
+            config MVB_RX_PORT_ADR6
+                hex "Set the mvb rx port addr 6: 0x33"
+                default (0x33) 
+            
+            config MVB_TX_PORT_ADR_NUB
+                int "Set the mvb tx port num: 6"
+                default (6)
+            
+            config MVB_TX_PORT_ADR1
+                hex "Set the mvb tx port addr 1: 0x141"
+                default (0x141)
+            
+            config MVB_TX_PORT_ADR2
+                hex "Set the mvb tx port addr 2: 0x143"
+                default (0x143)
+            
+            config MVB_TX_PORT_ADR3
+                hex "Set the mvb tx port addr 3: 0x25"
+                default (0x25)
+            
+            config MVB_TX_PORT_ADR4
+                hex "Set the mvb tx port addr 4: 0x26"
+                default (0x26)
+            
+            config MVB_TX_PORT_ADR5
+                hex "Set the mvb tx port addr 5: 0x27"
+                default (0x27)
+            
+            config MVB_TX_PORT_ADR6
+                hex "Set the mvb tx port addr 6: 0x28"
+                default (0x28)
+                
+        endif
+        
+	menuconfig BSP_USING_Z8523L16
+        bool "Enable The z8523l16 is hdlc chip"
+        default n
+        
+        if BSP_USING_Z8523L16
+            config BSP_USING_Z85230_HDLC_MODE
+                bool "Enable Z85230 HDLC MODE, default serial com mode"
+                default n
+                
+            config Z8523L16_NE
+                  hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x2"
+                  default (0x2)
+                  
+            config Z8523L16_CMD
+                hex "Set the cmd address, default: NE3 A0 ---> ((uint32_t)((0x60000000 + 0x4000000*(NE3 - 1)) | (1 << (A0 + 1))))"
+                default (0x64000002)
+                
+            config BSP_USING_Z8523L16_ADDRESSSETUPTIME
+                int "Set the AddressSetupTime, default: 10"
+                default (10)
+                
+            config BSP_USING_Z8523L16_DATASETUPTIME
+                int "Set the DataSetupTime, default: 37"
+                default (37)
+                
+            config BSP_USING_Z8523L16_BUSTURNAROUNDDURATION
+                int "Set the BusTurnAroundDuration, default: 0"
+                default (0)
+                
+            config Z8523L16_HDLC_IEI_PIN
+                string "Set the GPIO of the hdlc iei pin, default: PI.7"
+                default "PI.7"
+            
+            config Z8523L16_HDLC_INT_PIN
+                string "Set the GPIO of the hdlc int pin, default: PI.4"
+                default "PI.4"
+            
+            config Z8523L16_HDLC_TE_PIN
+                string "Set the GPIO of the hdlc te pin, default: PA.4"
+                default "PA.4"
+        endif
+        endmenu
 
 endmenu
 

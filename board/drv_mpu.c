@@ -180,6 +180,32 @@ static MPU_Region_InitTypeDef mpu_cfg[] =
         .IsBufferable = MPU_ACCESS_BUFFERABLE,
     },
 #endif
+
+#ifdef BSP_USING_MVB
+    {
+        .BaseAddress = 0x60000000 + MVB_NE/2*0x4000000,
+        .Size = MPU_REGION_SIZE_512B,
+        .SubRegionDisable = 0x0,
+        .TypeExtField = MPU_TEX_LEVEL0,
+        .AccessPermission = MPU_REGION_FULL_ACCESS,
+        .DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE,
+        .IsCacheable = MPU_ACCESS_NOT_CACHEABLE,
+        .IsBufferable = MPU_ACCESS_BUFFERABLE,
+    },
+#endif
+
+#ifdef BSP_USING_Z8523L16
+    {
+        .BaseAddress = 0x60000000 + Z8523L16_NE/2*0x4000000,
+        .Size = MPU_REGION_SIZE_512B,
+        .SubRegionDisable = 0x0,
+        .TypeExtField = MPU_TEX_LEVEL0,
+        .AccessPermission = MPU_REGION_FULL_ACCESS,
+        .DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE,
+        .IsCacheable = MPU_ACCESS_NOT_CACHEABLE,
+        .IsBufferable = MPU_ACCESS_BUFFERABLE,
+    },
+#endif
 };
 
 int rt_hw_mpu_init(void)

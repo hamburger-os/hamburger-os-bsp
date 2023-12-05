@@ -6,8 +6,8 @@
  **@date  : 2023.09.06
  **@brief : Manage support layer mvb
  ********************************************************************************************/
-#include "if_mvb.h"
 #include "support_mvb.h"
+#include "if_mvb.h"
 /*******************************************************************************************
  *        Local definitions
  *******************************************************************************************/
@@ -45,6 +45,10 @@ static E_MVB_CH get_mvb_channelId(E_MVB_ID id)
  *******************************************************************************************/
 extern E_MVB_STATE support_mvb_init(E_MVB_ID id)
 {
+    if(if_mvb_init() != TRUE)
+    {
+       return E_MVB_ERR;
+    }
     return E_MVB_OK;
 }
 
@@ -87,7 +91,7 @@ extern E_MVB_STATE supprot_mvb_getData(E_MVB_ID id, S_MVB_FRAME *pframe)
     E_MVB_CH ch = E_MVB_CH_MAX;
     uint16 len = 0U;
 
-    ch = get_hdlc_channelId(id);
+    ch = get_mvb_channelId(id);
 
     /* 1.参数合法性检查 */
     if ((E_MVB_CH_MAX == ch) || (NULL == pframe))

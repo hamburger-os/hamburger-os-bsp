@@ -43,8 +43,24 @@ static E_RS485_CH get_rs485_channelId(E_RS485_ID id)
  ** @brief: support_hdlc_init
  ** @param: id
  *******************************************************************************************/
-extern E_RS485_STATE support_rs485_init(E_RS485_ID id)
+extern E_RS485_STATE support_rs485_init(E_RS485_ID id, E_RS_DEV_TYPE type)
 {
+    BOOL ret = FALSE;
+
+    if(E_RS_DEV_485_TYPE == type)
+    {
+        ret = if_rs485_init(id, E_RS_485_TYPE);
+    }
+    else
+    {
+        ret = if_rs485_init(id, E_RS_422_TYPE);
+    }
+
+    if(ret != TRUE)
+    {
+        return E_RS485_ERR;
+    }
+
     return E_RS485_OK;
 }
 
@@ -57,7 +73,7 @@ extern E_RS485_STATE support_rs485_sendData(E_RS485_ID id, S_RS485_FRAME *pframe
     E_RS485_STATE valid_ret = E_RS485_OK;
     E_RS485_CH ch = E_RS485_CH_MAX;
 
-    ch = get_mvb_channelId(id);
+    ch = get_rs485_channelId(id);
 
     /* 1.参数合法性检查 */
     if ((E_RS485_CH_MAX == ch) || (NULL == pframe))
@@ -66,7 +82,7 @@ extern E_RS485_STATE support_rs485_sendData(E_RS485_ID id, S_RS485_FRAME *pframe
     }
 
     /* 2.发送数据 */
-    if ( TRUE == if_mvb_send(ch, pframe->data_u8, pframe->len))
+    if ( TRUE == if_rs485_send(ch, pframe->data_u8, pframe->len))
     {
         valid_ret = E_RS485_OK;
     }
@@ -84,10 +100,10 @@ extern E_RS485_STATE support_rs485_sendData(E_RS485_ID id, S_RS485_FRAME *pframe
  *******************************************************************************************/
 extern E_RS485_STATE supprot_rs485_getData(E_RS485_ID id, S_RS485_FRAME *pframe)
 {
-    E_RS485_STATE ch = E_RS485_CH_MAX;
+    E_RS485_CH ch = E_RS485_CH_MAX;
     uint16 len = 0U;
 
-    ch = get_hdlc_channelId(id);
+    ch = get_rs485_channelId(id);
 
     /* 1.参数合法性检查 */
     if ((E_RS485_CH_MAX == ch) || (NULL == pframe))
@@ -96,7 +112,7 @@ extern E_RS485_STATE supprot_rs485_getData(E_RS485_ID id, S_RS485_FRAME *pframe)
     }
 
     /* 2.获取一帧数据 */
-    len = if_mvb_get(ch, pframe->data_u8, RS485_FRAME_SIZE_MAX);
+    len = if_rs485_get(ch, pframe->data_u8, RS485_FRAME_SIZE_MAX);
     pframe->len = len;
 
     return E_RS485_OK;

@@ -29,6 +29,14 @@ typedef enum
     E_CAN_ERR
 } E_CAN_STATE;
 
+/***************can mode*****************/
+typedef enum
+{
+    E_CAN_NORMAL_MODE = 0U,
+    E_CAN_FD_MODE,
+    E_CAN_MODE_MAX
+} E_CAN_MODE;
+
 /******************can frame******************/
 /* 单字节对齐 */
 #pragma pack(1)
@@ -38,6 +46,7 @@ typedef struct
     /*******************************************
      **  11bit ID=优先级(8bit)+帧号(3bit)
      ********************************************/
+    E_CAN_MODE can_mode;
     uint8 priority_u8;
     uint8 no_u8;
     uint8 length_u8;

@@ -172,36 +172,39 @@ static rt_size_t rt_stm32_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, 
     rt_mutex_take(&eth->eth_mux, RT_WAITING_FOREVER);
 
     /* step1：遍历链表 */
-    rt_list_for_each_safe(list_pos, list_next, &eth->link_layer_buf.rx_head->list)
+    if(eth->link_layer_buf.rx_head != RT_NULL)
     {
-        p_s_LepBuf = rt_list_entry(list_pos, struct tagLEP_BUF, list);
-        if (p_s_LepBuf != RT_NULL)
+        rt_list_for_each_safe(list_pos, list_next, &eth->link_layer_buf.rx_head->list)
         {
-            if ((p_s_LepBuf->flag & LEP_RBF_RV) != 0U)
+            p_s_LepBuf = rt_list_entry(list_pos, struct tagLEP_BUF, list);
+            if (p_s_LepBuf != RT_NULL)
             {
-                /* step2：获取接收包数据长度 */
-                if(p_s_LepBuf->len > LEP_MAC_PKT_MAX_LEN)
+                if ((p_s_LepBuf->flag & LEP_RBF_RV) != 0U)
                 {
-                    read_size = LEP_MAC_PKT_MAX_LEN;
-                }
-                else
-                {
-                    read_size = p_s_LepBuf->len;
-                    if (read_size > size)
+                    /* step2：获取接收包数据长度 */
+                    if(p_s_LepBuf->len > LEP_MAC_PKT_MAX_LEN)
                     {
-                        read_size = size;
+                        read_size = LEP_MAC_PKT_MAX_LEN;
                     }
+                    else
+                    {
+                        read_size = p_s_LepBuf->len;
+                        if (read_size > size)
+                        {
+                            read_size = size;
+                        }
+                    }
+
+                    /* step3：提取包数据 */
+                    rt_memcpy(buffer, p_s_LepBuf->buf, read_size);
+                    rt_list_remove(list_pos);
+                    /* step4：释放接收接收缓冲区 */
+                    rt_free(p_s_LepBuf);
+                    eth->link_layer_buf.rx_lep_buf_num--;
+
+                    rt_mutex_release(&eth->eth_mux);
+                    return read_size;
                 }
-
-                /* step3：提取包数据 */
-                rt_memcpy(buffer, p_s_LepBuf->buf, read_size);
-                rt_list_remove(list_pos);
-                /* step4：释放接收接收缓冲区 */
-                rt_free(p_s_LepBuf);
-                eth->link_layer_buf.rx_lep_buf_num--;
-
-                rt_mutex_release(&eth->eth_mux);
-                return read_size;
             }
         }
     }
@@ -231,6 +234,7 @@ static rt_size_t rt_stm32_eth_write(rt_device_t dev, rt_off_t pos, const void *b
 
     eth->TxConfig.Length = size;
     eth->TxConfig.TxBuffer = &tx_buffer;
+    eth->TxConfig.pData = RT_NULL;
 
 #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
     SCB_CleanInvalidateDCache();
@@ -366,38 +370,42 @@ struct pbuf *rt_stm32_eth_rx(rt_device_t dev)
 
         HAL_ETH_ReadData(&eth->heth, (void **) &p);
 #ifdef BSP_USE_LINK_LAYER_COMMUNICATION
-        if(p != RT_NULL)
+        if(eth->link_layer_buf.rx_head != RT_NULL)
         {
-            if(RT_NULL == p->next && p->tot_len < LEP_MAC_PKT_MAX_LEN)
+            if(p != RT_NULL)
             {
-                for(q = p; q != NULL; q = q->next)
+                if(RT_NULL == p->next && p->tot_len < LEP_MAC_PKT_MAX_LEN)
                 {
-                    if (eth->rx_num >= BSP_LINK_LAYER_RX_BUF_NUM)
+                    for(q = p; q != NULL; q = q->next)
                     {
-                        lep_eth_if_clear(&eth->link_layer_buf, E_ETH_IF_CLER_MODE_ONE);
-                    }
-
-                    S_LEP_BUF *ps_lep_buf = rt_malloc(sizeof(S_LEP_BUF));
-                    if(RT_NULL != ps_lep_buf)
-                    {
-                        eth->rx_num++;
-                        ps_lep_buf->flag = 0;
-                        ps_lep_buf->flag |= LEP_RBF_RV;
-                        ps_lep_buf->len = q->len;
-                        rt_memcpy(ps_lep_buf->buf, q->payload, q->len);
-                        rt_list_insert_before(&eth->link_layer_buf.rx_head->list, &ps_lep_buf->list);
-                        if(dev->rx_indicate != NULL)
+                        if (eth->rx_num >= BSP_LINK_LAYER_RX_BUF_NUM)
                         {
-                            dev->rx_indicate(dev, q->len);
+                            lep_eth_if_clear(&eth->link_layer_buf, E_ETH_IF_CLER_MODE_ONE);
                         }
-                    }
-                    else
-                    {
-                        LOG_E("ps_lep_buf rx null");
+
+                        S_LEP_BUF *ps_lep_buf = rt_malloc(sizeof(S_LEP_BUF));
+                        if(RT_NULL != ps_lep_buf)
+                        {
+                            eth->rx_num++;
+                            ps_lep_buf->flag = 0;
+                            ps_lep_buf->flag |= LEP_RBF_RV;
+                            ps_lep_buf->len = q->len;
+                            rt_memcpy(ps_lep_buf->buf, q->payload, q->len);
+                            rt_list_insert_before(&eth->link_layer_buf.rx_head->list, &ps_lep_buf->list);
+                            if(dev->rx_indicate != NULL)
+                            {
+                                dev->rx_indicate(dev, q->len);
+                            }
+                        }
+                        else
+                        {
+                            LOG_E("ps_lep_buf rx null");
+                        }
                     }
                 }
             }
         }
+
 #endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
     }
 

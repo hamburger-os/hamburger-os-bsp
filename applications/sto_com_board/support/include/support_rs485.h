@@ -25,6 +25,13 @@ typedef enum
     E_RS485_ERR
 } E_RS485_STATE;
 
+/***************rs type*****************/
+typedef enum
+{
+    E_RS_DEV_485_TYPE = 0U,
+    E_RS_DEV_422_TYPE
+} E_RS_DEV_TYPE;
+
 /******************RS485 frame******************/
 #define RS485_FRAME_SIZE_MAX    ( 256U )      /* RS485单帧最大值  */
 
@@ -39,7 +46,7 @@ typedef struct
 
 #pragma pack()
 
-extern E_RS485_STATE support_rs485_init(E_RS485_ID id);
+extern E_RS485_STATE support_rs485_init(E_RS485_ID id, E_RS_DEV_TYPE type);
 extern E_RS485_STATE support_rs485_sendData(E_RS485_ID id, S_RS485_FRAME *pframe);
 extern E_RS485_STATE supprot_rs485_getData(E_RS485_ID id, S_RS485_FRAME *pframe);
 

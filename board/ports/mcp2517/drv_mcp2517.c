@@ -1053,11 +1053,11 @@ static rt_err_t can_spi_transmit_channel_reset(MCP2517_Dev *mcp2517_dev, CAN_FIF
         return -RT_ERROR;
     }
 
-    return DRV_CANFDSPI_ReceiveChannelReset(mcp2517_dev, channel);
+    return can_spi_receive_channel_reset(mcp2517_dev, channel);
 }
 
 //DRV_CANFDSPI_TransmitRequestSet
-static can_spi_transmit_request_set(MCP2517_Dev *mcp2517_dev, CAN_TXREQ_CHANNEL txreq)
+static rt_err_t can_spi_transmit_request_set(MCP2517_Dev *mcp2517_dev, CAN_TXREQ_CHANNEL txreq)
 {
     rt_err_t ret = -RT_ERROR;
 
@@ -1175,7 +1175,6 @@ static rt_err_t can_spi_filter_to_fifo_link(MCP2517_Dev *mcp2517_dev, CAN_FILTER
 //DRV_CANFDSPI_ReceiveChannelConfigure
 static rt_err_t can_spi_receive_channel_configure(MCP2517_Dev *mcp2517_dev, CAN_FIFO_CHANNEL channel, CAN_RX_FIFO_CONFIG* config)
 {
-    int8_t spiTransferError = 0;
     uint16_t a = 0;
     rt_err_t ret = -RT_ERROR;
 
@@ -1819,8 +1818,7 @@ static rt_err_t can_spi_bit_time_configure_nominal_40mhz(MCP2517_Dev *mcp2517_de
         break;
 
     default:
-        return -1;
-        break;
+        return -RT_ERROR;
     }
 
     // Write Bit time registers
@@ -2004,8 +2002,7 @@ static rt_err_t can_spi_bit_time_configure_data_40mhz(MCP2517_Dev *mcp2517_dev, 
         break;
 
     default:
-        return ret;
-        break;
+        return -RT_ERROR;
     }
 
     // Write Bit time registers
@@ -2090,8 +2087,7 @@ static rt_err_t can_spi_bit_time_configure_nominal_20mhz(MCP2517_Dev *mcp2517_de
         break;
 
     default:
-        return -1;
-        break;
+        return -RT_ERROR;
     }
 
     // Write Bit time registers
@@ -2174,8 +2170,7 @@ static rt_err_t can_spi_bit_time_configure_data_20mhz(MCP2517_Dev *mcp2517_dev, 
     case CAN_500K_10M:
     case CAN_1000K_8M:
         //qDebug("Data Bitrate not feasible with this clock!");
-        return ret;
-        break;
+        return -RT_ERROR;
 
     case CAN_250K_500K:
     case CAN_125K_500K:
@@ -2227,8 +2222,7 @@ static rt_err_t can_spi_bit_time_configure_data_20mhz(MCP2517_Dev *mcp2517_dev, 
         break;
     case CAN_250K_3M:
         //qDebug("Data Bitrate not feasible with this clock!");
-        return ret;
-        break;
+        return -RT_ERROR;
     case CAN_250K_4M:
         // Data BR
         ciDbtcfg.bF.BRP = 0;
@@ -2241,8 +2235,7 @@ static rt_err_t can_spi_bit_time_configure_data_20mhz(MCP2517_Dev *mcp2517_dev, 
         break;
 
     default:
-        return ret;
-        break;
+        return -RT_ERROR;
     }
 
     // Write Bit time registers
@@ -2328,8 +2321,7 @@ static rt_err_t can_spi_bit_time_configure_nominal_10mhz(MCP2517_Dev *mcp2517_de
         break;
 
     default:
-        return ret;
-        break;
+        return -RT_ERROR;
     }
 
     // Write Bit time registers
@@ -2391,8 +2383,7 @@ static rt_err_t can_spi_bit_time_configure_data_10mhz(MCP2517_Dev *mcp2517_dev, 
     case CAN_1000K_4M:
     case CAN_1000K_8M:
         //qDebug("Data Bitrate not feasible with this clock!");
-        return ret;
-        break;
+        return -RT_ERROR;
 
     case CAN_250K_500K:
     case CAN_125K_500K:
@@ -2426,8 +2417,7 @@ static rt_err_t can_spi_bit_time_configure_data_10mhz(MCP2517_Dev *mcp2517_dev, 
         break;
     case CAN_250K_1M5:
         //qDebug("Data Bitrate not feasible with this clock!");
-        return ret;
-        break;
+        return -RT_ERROR;
     case CAN_250K_2M:
         ciDbtcfg.bF.BRP = 0;
         ciDbtcfg.bF.TSEG1 = 2;
@@ -2440,12 +2430,9 @@ static rt_err_t can_spi_bit_time_configure_data_10mhz(MCP2517_Dev *mcp2517_dev, 
     case CAN_250K_3M:
     case CAN_250K_4M:
         //qDebug("Data Bitrate not feasible with this clock!");
-        return ret;
-        break;
-
+        return -RT_ERROR;
     default:
-        return ret;
-        break;
+        return -RT_ERROR;
     }
 
     // Write Bit time registers
@@ -2697,6 +2684,7 @@ static rt_err_t mcp2517_can_get_frame(MCP2517_Dev *mcp2517_dev)
             else
             {
                 LOG_E("mcp2517_can_buf malloc null");
+                return -RT_EEMPTY;
             }
         }
         else
@@ -2714,11 +2702,13 @@ static rt_err_t mcp2517_can_get_frame(MCP2517_Dev *mcp2517_dev)
                 else
                 {
                     LOG_E("mcp2517_can_buf clear and malloc null");
+                    return -RT_EEMPTY;
                 }
             }
             else
             {
                 LOG_E("mcp2517_can_list_clear one error");
+                return -RT_EEMPTY;
             }
         }
 
@@ -3127,7 +3117,7 @@ static rt_size_t mcp2517_write(rt_device_t dev, rt_off_t pos, const void *buffer
 
     txObj_tmp.bF.ctrl.BRS = 1; /* 数据区加速 */
     txObj_tmp.bF.ctrl.DLC = can_spi_data_bytes_to_dlc(can_msg->len);
-    txObj_tmp.bF.ctrl.FDF = 1;
+    txObj_tmp.bF.ctrl.FDF = can_msg->fd_frame;  /* 0: CAN2.0模式发送 / 1: FDCAN模式发送 */
     txObj_tmp.bF.ctrl.ESI = 0;
     txObj_tmp.bF.ctrl.SEQ = 2;
 
@@ -3339,8 +3329,8 @@ static int rt_hw_mcp2517_init(void)
 
         /* set irq pin */
         rt_pin_mode(mcp2517_can_port[i].spi_irq_pin_index, PIN_MODE_INPUT_PULLUP);
-        rt_pin_attach_irq(mcp2517_can_port[i].spi_irq_pin_index, PIN_IRQ_MODE_FALLING, mcp2517_spi_irq_callback,
-                (void *) &mcp2517_can_port[i]);
+        rt_pin_attach_irq(mcp2517_can_port[i].spi_irq_pin_index, PIN_IRQ_MODE_FALLING,
+                            mcp2517_spi_irq_callback, (void *) &mcp2517_can_port[i]);
 
         /* set user data */
         mcp2517_can_port[i].dev.user_data = &mcp2517_can_port[i];

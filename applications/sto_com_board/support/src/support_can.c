@@ -91,6 +91,18 @@ extern E_CAN_STATE support_can_sendData(E_CAN_ID id, S_CAN_FRAME *p_can_frame)
     /* 2.组织数据 */
     msg.id_u32 = ((uint32) p_can_frame->priority_u8 << 3U) + p_can_frame->no_u8;
     msg.len_u8 = p_can_frame->length_u8;
+    if(E_CAN_NORMAL_MODE == p_can_frame->can_mode)
+    {
+        msg.can_mode = E_CAN_MSG_NORMAL_MODE;
+    }
+    else if(E_CAN_FD_MODE == p_can_frame->can_mode)
+    {
+        msg.can_mode = E_CAN_MSG_FD_MODE;
+    }
+    else
+    {
+        msg.can_mode = E_CAN_MSG_NORMAL_MODE;
+    }
     support_memcpy(msg.data_u8, p_can_frame->data_u8, p_can_frame->length_u8);
 
     /* 3.发送数据 */
@@ -127,6 +139,7 @@ extern E_CAN_STATE supprot_can_getData(E_CAN_ID id, S_CAN_FRAME *p_can_frame)
     /* 3.发送数据 */
     if ( TRUE == if_can_get(ch, &msg))
     {
+//        MY_Printf("id %x, len %d\r\n", msg.id_u32, msg.len_u8);
         p_can_frame->priority_u8 = (uint8) ((msg.id_u32 >> 3U) & 0xFF);
         p_can_frame->no_u8 = (uint8) ((msg.id_u32 & 0x07) & 0xFF);
         p_can_frame->length_u8 = msg.len_u8;
