@@ -295,41 +295,47 @@ static rt_size_t fmc_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_si
     rt_list_t *list_pos = NULL;
     rt_list_t *list_next = NULL;
 
-    /* step1：遍历链表 */
-    rt_list_for_each_safe(list_pos, list_next, &fmc_eth->link_layer_buf.rx_head->list)
+
+    if(fmc_eth->link_layer_enable)
     {
-        p_s_LepBuf = rt_list_entry(list_pos, struct tagLEP_BUF, list);
-        if (p_s_LepBuf != RT_NULL)
+        if(fmc_eth->link_layer_buf.rx_head != RT_NULL)
         {
-            if ((p_s_LepBuf->flag & LEP_RBF_RV) != 0U)
+            /* step1：遍历链表 */
+            rt_list_for_each_safe(list_pos, list_next, &fmc_eth->link_layer_buf.rx_head->list)
             {
-                /* step2：获取接收包数据长度 */
-                if(p_s_LepBuf->len > LEP_MAC_PKT_MAX_LEN)
+                p_s_LepBuf = rt_list_entry(list_pos, struct tagLEP_BUF, list);
+                if (p_s_LepBuf != RT_NULL)
                 {
-                    read_size = LEP_MAC_PKT_MAX_LEN;
-                }
-                else
-                {
-                    read_size = p_s_LepBuf->len;
-                    if (read_size > size)
+                    if ((p_s_LepBuf->flag & LEP_RBF_RV) != 0U)
                     {
-                        read_size = size;
+                        /* step2：获取接收包数据长度 */
+                        if(p_s_LepBuf->len > LEP_MAC_PKT_MAX_LEN)
+                        {
+                            read_size = LEP_MAC_PKT_MAX_LEN;
+                        }
+                        else
+                        {
+                            read_size = p_s_LepBuf->len;
+                            if (read_size > size)
+                            {
+                                read_size = size;
+                            }
+                        }
+
+                        /* step3：提取包数据 */
+                        rt_memcpy(buffer, p_s_LepBuf->buf, read_size);
+                        rt_list_remove(list_pos);
+                        /* step4：释放接收接收缓冲区 */
+                        rt_free(p_s_LepBuf);
+                        fmc_eth->link_layer_buf.rx_lep_buf_num--;
+
+                        rt_mutex_release(&fmc_eth->eth_mux);
+                        return read_size;
                     }
                 }
-
-                /* step3：提取包数据 */
-                rt_memcpy(buffer, p_s_LepBuf->buf, read_size);
-                rt_list_remove(list_pos);
-                /* step4：释放接收接收缓冲区 */
-                rt_free(p_s_LepBuf);
-                fmc_eth->link_layer_buf.rx_lep_buf_num--;
-
-                rt_mutex_release(&fmc_eth->eth_mux);
-                return read_size;
             }
         }
     }
-
     rt_mutex_release(&fmc_eth->eth_mux);
     return read_size;
 }
@@ -342,22 +348,25 @@ static rt_size_t fmc_eth_write(rt_device_t dev, rt_off_t pos, const void *buffer
 
     rt_uint16_t tx_size = 0;
 
-    rt_memset(&fmc_eth->link_layer_buf.tx_buf, 0, sizeof(S_LEP_BUF));
-    if(size > LEP_MAC_PKT_MAX_LEN)
+    if(fmc_eth->link_layer_enable)
     {
-        tx_size = LEP_MAC_PKT_MAX_LEN;
-    }
-    else
-    {
-        tx_size = size;
-    }
-    rt_memcpy(fmc_eth->link_layer_buf.tx_buf.buf, buffer, tx_size);
-    fmc_eth->link_layer_buf.tx_buf.len = tx_size;
+        rt_memset(&fmc_eth->link_layer_buf.tx_buf, 0, sizeof(S_LEP_BUF));
+        if(size > LEP_MAC_PKT_MAX_LEN)
+        {
+            tx_size = LEP_MAC_PKT_MAX_LEN;
+        }
+        else
+        {
+            tx_size = size;
+        }
+        rt_memcpy(fmc_eth->link_layer_buf.tx_buf.buf, buffer, tx_size);
+        fmc_eth->link_layer_buf.tx_buf.len = tx_size;
 
-    if (ks_start_xmit_link_layer(fmc_eth, &fmc_eth->link_layer_buf.tx_buf) != 0)
-    {
-        LOG_D("link layer write error");
-        tx_size = 0;
+        if (ks_start_xmit_link_layer(fmc_eth, &fmc_eth->link_layer_buf.tx_buf) != 0)
+        {
+            LOG_D("link layer write error");
+            tx_size = 0;
+        }
     }
 
     rt_mutex_release(&fmc_eth->eth_mux);
@@ -432,40 +441,46 @@ struct pbuf *fmc_eth_rx(rt_device_t dev)
 
     p = ks_irq(fmc_eth);
 #ifdef BSP_USE_LINK_LAYER_COMMUNICATION
-    if(p != NULL)
+    if(fmc_eth->link_layer_enable)
     {
-        struct pbuf *q = NULL;
-        if(RT_NULL == p->next && p->tot_len < LEP_MAC_PKT_MAX_LEN)
+        if(fmc_eth->link_layer_buf.rx_head != RT_NULL)
         {
-            for (q = p; q != NULL; q = q->next)
+            if(p != NULL)
             {
-                if (fmc_eth->link_layer_buf.rx_lep_buf_num >= BSP_LINK_LAYER_RX_BUF_NUM)
+                struct pbuf *q = NULL;
+                if(RT_NULL == p->next && p->tot_len < LEP_MAC_PKT_MAX_LEN)
                 {
-                    lep_eth_if_clear(&fmc_eth->link_layer_buf, E_ETH_IF_CLER_MODE_ONE);
-                }
-
-                S_LEP_BUF *ps_lep_buf = rt_malloc(sizeof(S_LEP_BUF));
-                if(RT_NULL != ps_lep_buf)
-                {
-                    fmc_eth->link_layer_buf.rx_lep_buf_num++;
-                    ps_lep_buf->flag = 0;
-                    ps_lep_buf->flag |= LEP_RBF_RV;
-                    ps_lep_buf->len = q->len - 4;  /* CRC 4 bytes */
-                    rt_memcpy(ps_lep_buf->buf, q->payload, ps_lep_buf->len);
-
-                    rt_list_insert_before(&fmc_eth->link_layer_buf.rx_head->list, &ps_lep_buf->list);
-                    if(dev->rx_indicate != NULL)
+                    for (q = p; q != NULL; q = q->next)
                     {
-                        dev->rx_indicate(dev, ps_lep_buf->len);
+                        if (fmc_eth->link_layer_buf.rx_lep_buf_num >= BSP_LINK_LAYER_RX_BUF_NUM)
+                        {
+                            lep_eth_if_clear(&fmc_eth->link_layer_buf, E_ETH_IF_CLER_MODE_ONE);
+                        }
+
+                        S_LEP_BUF *ps_lep_buf = rt_malloc(sizeof(S_LEP_BUF));
+                        if(RT_NULL != ps_lep_buf)
+                        {
+                            fmc_eth->link_layer_buf.rx_lep_buf_num++;
+                            ps_lep_buf->flag = 0;
+                            ps_lep_buf->flag |= LEP_RBF_RV;
+                            ps_lep_buf->len = q->len - 4;  /* CRC 4 bytes */
+                            rt_memcpy(ps_lep_buf->buf, q->payload, ps_lep_buf->len);
+                            rt_list_insert_before(&fmc_eth->link_layer_buf.rx_head->list, &ps_lep_buf->list);
+                            if(dev->rx_indicate != NULL)
+                            {
+                                dev->rx_indicate(dev, ps_lep_buf->len);
+                            }
+                        }
+                        else
+                        {
+                            LOG_E("ps_lep_buf rx null");
+                        }
                     }
-                }
-                else
-                {
-                    LOG_E("ps_lep_buf rx null");
                 }
             }
         }
     }
+
 #endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
 
 #ifdef BSP_USING_KSZ8851_RX_DUMP

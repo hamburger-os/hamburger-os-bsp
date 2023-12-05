@@ -21,7 +21,7 @@
 
 #include "if_gpio.h"
 
-#define CAN_RX_THREAD_PRIORITY         20
+#define CAN_RX_THREAD_PRIORITY         13
 #define CAN_RX_THREAD_STACK_SIZE       (1024 * 4)
 #define CAN_RX_THREAD_TIMESLICE        5
 
@@ -324,8 +324,19 @@ BOOL if_can_send(E_CAN_CH ch, S_CAN_MSG *pMsg)
 {
     struct rt_can_msg rxmsg = { 0 };
 
+    if(NULL == pMsg)
+    {
+        return FALSE;
+    }
+
+    if(ch >= E_CAN_CH_MAX)
+    {
+        return FALSE;
+    }
+
     rxmsg.id = pMsg->id_u32;
     rxmsg.len = pMsg->len_u8;
+    rxmsg.fd_frame = pMsg->can_mode;
     memcpy(rxmsg.data, pMsg->data_u8, sizeof(pMsg->data_u8));
 
     if (rt_device_write(can_dev.info[ch].can_dev, 0, &rxmsg, sizeof(rxmsg)) == sizeof(rxmsg))
@@ -344,6 +355,11 @@ BOOL if_can_get(E_CAN_CH ch, S_CAN_MSG *pMsg)
     struct rt_can_msg rx_msg;
 
     if (NULL == pMsg)
+    {
+        return FALSE;
+    }
+
+    if(ch >= E_CAN_CH_MAX)
     {
         return FALSE;
     }

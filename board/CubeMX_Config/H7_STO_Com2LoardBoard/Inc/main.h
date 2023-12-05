@@ -77,6 +77,9 @@ void Error_Handler(void);
 #define NET2_RST_GPIO_Port GPIOD
 #define NET2_IRQ_Pin GPIO_PIN_7
 #define NET2_IRQ_GPIO_Port GPIOD
+#define B_HDLC_nINT_Pin GPIO_PIN_4
+#define B_HDLC_nINT_GPIO_Port GPIOI
+#define B_HDLC_nINT_EXTI_IRQn EXTI4_IRQn
 #define B_LED_WORK_Pin GPIO_PIN_5
 #define B_LED_WORK_GPIO_Port GPIOI
 #define B_LED_ERR_Pin GPIO_PIN_6
