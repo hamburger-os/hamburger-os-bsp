@@ -1818,8 +1818,7 @@ static rt_err_t can_spi_bit_time_configure_nominal_40mhz(MCP2517_Dev *mcp2517_de
         break;
 
     default:
-        return -1;
-        break;
+        return -RT_ERROR;
     }
 
     // Write Bit time registers
@@ -2003,8 +2002,7 @@ static rt_err_t can_spi_bit_time_configure_data_40mhz(MCP2517_Dev *mcp2517_dev, 
         break;
 
     default:
-        return ret;
-        break;
+        return -RT_ERROR;
     }
 
     // Write Bit time registers
@@ -2089,8 +2087,7 @@ static rt_err_t can_spi_bit_time_configure_nominal_20mhz(MCP2517_Dev *mcp2517_de
         break;
 
     default:
-        return -1;
-        break;
+        return -RT_ERROR;
     }
 
     // Write Bit time registers
@@ -2173,8 +2170,7 @@ static rt_err_t can_spi_bit_time_configure_data_20mhz(MCP2517_Dev *mcp2517_dev, 
     case CAN_500K_10M:
     case CAN_1000K_8M:
         //qDebug("Data Bitrate not feasible with this clock!");
-        return ret;
-        break;
+        return -RT_ERROR;
 
     case CAN_250K_500K:
     case CAN_125K_500K:
@@ -2226,8 +2222,7 @@ static rt_err_t can_spi_bit_time_configure_data_20mhz(MCP2517_Dev *mcp2517_dev, 
         break;
     case CAN_250K_3M:
         //qDebug("Data Bitrate not feasible with this clock!");
-        return ret;
-        break;
+        return -RT_ERROR;
     case CAN_250K_4M:
         // Data BR
         ciDbtcfg.bF.BRP = 0;
@@ -2240,8 +2235,7 @@ static rt_err_t can_spi_bit_time_configure_data_20mhz(MCP2517_Dev *mcp2517_dev, 
         break;
 
     default:
-        return ret;
-        break;
+        return -RT_ERROR;
     }
 
     // Write Bit time registers
@@ -2327,8 +2321,7 @@ static rt_err_t can_spi_bit_time_configure_nominal_10mhz(MCP2517_Dev *mcp2517_de
         break;
 
     default:
-        return ret;
-        break;
+        return -RT_ERROR;
     }
 
     // Write Bit time registers
@@ -2390,8 +2383,7 @@ static rt_err_t can_spi_bit_time_configure_data_10mhz(MCP2517_Dev *mcp2517_dev, 
     case CAN_1000K_4M:
     case CAN_1000K_8M:
         //qDebug("Data Bitrate not feasible with this clock!");
-        return ret;
-        break;
+        return -RT_ERROR;
 
     case CAN_250K_500K:
     case CAN_125K_500K:
@@ -2425,8 +2417,7 @@ static rt_err_t can_spi_bit_time_configure_data_10mhz(MCP2517_Dev *mcp2517_dev, 
         break;
     case CAN_250K_1M5:
         //qDebug("Data Bitrate not feasible with this clock!");
-        return ret;
-        break;
+        return -RT_ERROR;
     case CAN_250K_2M:
         ciDbtcfg.bF.BRP = 0;
         ciDbtcfg.bF.TSEG1 = 2;
@@ -2439,12 +2430,9 @@ static rt_err_t can_spi_bit_time_configure_data_10mhz(MCP2517_Dev *mcp2517_dev, 
     case CAN_250K_3M:
     case CAN_250K_4M:
         //qDebug("Data Bitrate not feasible with this clock!");
-        return ret;
-        break;
-
+        return -RT_ERROR;
     default:
-        return ret;
-        break;
+        return -RT_ERROR;
     }
 
     // Write Bit time registers

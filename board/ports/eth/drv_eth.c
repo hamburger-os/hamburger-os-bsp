@@ -234,6 +234,7 @@ static rt_size_t rt_stm32_eth_write(rt_device_t dev, rt_off_t pos, const void *b
 
     eth->TxConfig.Length = size;
     eth->TxConfig.TxBuffer = &tx_buffer;
+    eth->TxConfig.pData = RT_NULL;
 
 #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
     SCB_CleanInvalidateDCache();
