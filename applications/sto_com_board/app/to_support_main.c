@@ -17,6 +17,8 @@
 #include "support_rs485.h"
 #include "support_timer.h"
 #include "support_gpio.h"
+#include "support_rs485.h"
+#include "support_mvb.h"
 
 /*******************************************************************************************
  *        Local definitions
@@ -35,6 +37,7 @@
  *******************************************************************************************/
 static uint8 eth_txbuf[1500];
 static uint8 eth_rxbuf[1500];
+#if 0
 static void test_task01(void)
 {
     static uint32 cnt = 0U;
@@ -66,6 +69,15 @@ static void test_task01(void)
             {
                 MY_Printf("send error\r\n");
             }
+            else
+            {
+                MY_Printf("ch3 data\r\n");
+                for(int i = 0; i < can_frame.length_u8; i++)
+                {
+                    MY_Printf("%d ", can_frame.data_u8[i]);
+                }
+                MY_Printf("\r\n");
+            }
         }
 
         if (supprot_can_getData(E_CAN_ID_4, &can_frame) == E_CAN_OK)
@@ -74,20 +86,216 @@ static void test_task01(void)
             {
                 MY_Printf("send error\r\n");
             }
-        }
-
-        if (supprot_can_getData(E_CAN_ID_5, &can_frame) == E_CAN_OK)
-        {
-            if (E_CAN_OK != support_can_sendData(E_CAN_ID_5, &can_frame))
+            else
             {
-                MY_Printf("send error\r\n");
+                MY_Printf("ch4 data\r\n");
+                for(int i = 0; i < can_frame.length_u8; i++)
+                {
+                    MY_Printf("%d ", can_frame.data_u8[i]);
+                }
+                MY_Printf("\r\n");
+                MY_Printf("%x, %x %d\r\n", can_frame.no_u8, can_frame.priority_u8, can_frame.length_u8);
             }
         }
+
+//        if (supprot_can_getData(E_CAN_ID_5, &can_frame) == E_CAN_OK)
+//        {
+//            if (E_CAN_OK != support_can_sendData(E_CAN_ID_5, &can_frame))
+//            {
+//                MY_Printf("send error\r\n");
+//            }
+//        }
 
 //        support_gpio_set(LED1_ID, IO_HIGH);
 //        support_gpio_toggle(LED1_ID);
     }
 }
+
+#else
+//static void test_task01(void)
+//{
+//    static uint32 cnt = 0U;
+//    static S_TIMER_INFO timer = { FALSE, 0U };
+//    S_CAN_FRAME tx_can_frame;
+//    S_CAN_FRAME rx_can_frame;
+//
+//
+//    if ( TRUE == support_timer_timeoutM(&timer, 1000U))
+//    {
+////        tx_can_frame.priority_u8 = 0xf8;
+////        tx_can_frame.no_u8 = 0x01;
+//////        tx_can_frame.can_mode = E_CAN_NORMAL_MODE;
+////        tx_can_frame.can_mode = E_CAN_FD_MODE;
+////        for(int i = 0; i < 8; i++)
+////        {
+////            tx_can_frame.data_u8[i] = i;
+////        }
+////        tx_can_frame.length_u8 = 8;
+////
+////        if (E_CAN_OK != support_can_sendData(E_CAN_ID_3, &tx_can_frame))
+////        {
+////            MY_Printf("ch 3 send error\r\n");
+////        }
+////
+////        if (supprot_can_getData(E_CAN_ID_4, &rx_can_frame) == E_CAN_OK)
+////        {
+////            rx_can_frame.can_mode = E_CAN_NORMAL_MODE;
+////            rx_can_frame.data_u8[7] = 0xff;
+//////            rx_can_frame.can_mode = E_CAN_FD_MODE;
+////            if (E_CAN_OK != support_can_sendData(E_CAN_ID_4, &rx_can_frame))
+////            {
+////                MY_Printf("ch 4 send error\r\n");
+////            }
+////            else
+////            {
+////                MY_Printf("ch4 data\r\n");
+////                for(int i = 0; i < rx_can_frame.length_u8; i++)
+////                {
+////                    MY_Printf("%d ", rx_can_frame.data_u8[i]);
+////                }
+////                MY_Printf("\r\n");
+////            }
+////        }
+////
+////        if (supprot_can_getData(E_CAN_ID_3, &rx_can_frame) == E_CAN_OK)
+////        {
+////            MY_Printf("ch3 data, len %d\r\n", rx_can_frame.length_u8);
+////            for(int i = 0; i < rx_can_frame.length_u8; i++)
+////            {
+////                MY_Printf("%d ", rx_can_frame.data_u8[i]);
+////            }
+////            MY_Printf("\r\n");
+////        }
+//
+//    }
+//}
+
+/* 485 */
+//static void test_task01(void)
+//{
+//    static S_TIMER_INFO timer = { FALSE, 0U };
+//    S_RS485_FRAME tx_485_frame;
+//    S_RS485_FRAME rx_485_frame;
+//
+//    if ( TRUE == support_timer_timeoutM(&timer, 1000U))
+//    {
+//        tx_485_frame.len = 256;
+////        memset(tx_485_frame.data_u8, 0x55, 64);
+//        for(int i = 0; i < 256; i++)
+//        {
+//            tx_485_frame.data_u8[i] = i;
+//        }
+//        if(support_rs485_sendData(E_RS485_ID_1, &tx_485_frame) != E_RS485_OK)
+//        {
+//            MY_Printf("send 485 error\r\n");
+//        }
+//
+////    if ( TRUE == support_timer_timeoutM(&timer, 500U))
+////    {
+//        if(supprot_rs485_getData(E_RS485_ID_1, &rx_485_frame)!= E_RS485_OK)
+//        {
+//            MY_Printf("recv 485 error\r\n");
+//        }
+//        else
+//        {
+//           if(rx_485_frame.len != 0)
+//           {
+//               MY_Printf("recv len %d\r\n", rx_485_frame.len);
+//              for(int i = 0; i < rx_485_frame.len; i++)
+//              {
+//                  MY_Printf("%x ", rx_485_frame.data_u8[i]);
+//              }
+//              MY_Printf("\r\n");
+//           }
+//        }
+//
+//
+//    }
+//}
+
+//
+///* mvb */
+//static S_MVB_FRAME rx_mvb = {0};
+//static S_MVB_FRAME old_rx_mvb = {0};
+//static void test_task01(void)
+//{
+//    static S_TIMER_INFO timer = { FALSE, 0U };
+//
+//    if ( TRUE == support_timer_timeoutM(&timer, 100U))
+//    {
+//        if(supprot_mvb_getData(E_MVB_ID_1, &rx_mvb) == E_MVB_OK)
+//        {
+//            if(rx_mvb.len != 0)
+//            {
+////                MY_Printf("mvb read len %d\r\n", rx_mvb.len);
+////                for(int i = 0; i < rx_mvb.len; i++)
+////                {
+////                    MY_Printf("%x ", rx_mvb.data_u8[i]);
+////                }
+////                MY_Printf("\r\n");
+//                if(memcmp(old_rx_mvb.data_u8, rx_mvb.data_u8, rx_mvb.len)!=0)
+//                {
+//                    memcpy(&old_rx_mvb, &rx_mvb, sizeof(S_MVB_FRAME));
+////                    MY_Printf("mvb read len %d\r\n", old_rx_mvb.len);
+////                    for(int i = 0; i < old_rx_mvb.len; i++)
+////                    {
+////                        MY_Printf("%x ", old_rx_mvb.data_u8[i]);
+////                    }
+////                    MY_Printf("\r\n");
+//                    if(support_mvb_sendData(E_MVB_ID_1, &old_rx_mvb) != E_MVB_OK)
+//                    {
+//                        MY_Printf("mvb send error\r\n");
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
+
+
+/* hdlc */
+static void test_task01(void)
+{
+    static S_TIMER_INFO timer = { FALSE, 0U };
+    static S_TIMER_INFO rx_timer = { FALSE, 0U };
+    S_HDLC_FRAME hdlc_frame;
+    S_HDLC_FRAME rx_hdlc_frame;
+
+
+    if ( TRUE == support_timer_timeoutM(&timer, 1000U))
+    {
+        hdlc_frame.data_u8[0] = 0xFE;
+        hdlc_frame.data_u8[1] = 0xFE;
+        hdlc_frame.data_u8[2] = 0x68;
+        hdlc_frame.data_u8[3] = 0x3c;
+        memset(&hdlc_frame.data_u8[4], 0xAA, 60);
+        hdlc_frame.data_u8[63] = 0x16;
+        hdlc_frame.len = 64;
+
+        if(support_hdlc_sendData(E_HDLC_ID_1, &hdlc_frame) != E_HDLC_OK)
+        {
+            MY_Printf("hdlc send error\r\n");
+        }
+    }
+
+    if ( TRUE == support_timer_timeoutM(&rx_timer, 10U))
+    {
+        if(supprot_hdlc_getData(E_HDLC_ID_1, &rx_hdlc_frame) == E_HDLC_OK)
+        {
+            if(rx_hdlc_frame.len != 0)
+            {
+                MY_Printf("hdlc read len %d\r\n", rx_hdlc_frame.len);
+                for(int i = 0; i < rx_hdlc_frame.len; i++)
+                {
+                    MY_Printf("%x ", rx_hdlc_frame.data_u8[i]);
+                }
+                MY_Printf("\r\n");
+            }
+        }
+    }
+}
+
+#endif
 
 /*******************************************************************************************
  ** @brief: test_task02

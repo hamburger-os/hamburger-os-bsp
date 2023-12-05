@@ -57,32 +57,46 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define USB_OC_Pin GPIO_PIN_8
-#define USB_OC_GPIO_Port GPIOI
-#define USB_PEN_Pin GPIO_PIN_13
-#define USB_PEN_GPIO_Port GPIOC
-#define SPI5_CS1_Pin GPIO_PIN_6
-#define SPI5_CS1_GPIO_Port GPIOF
-#define SPI6_INT2_Pin GPIO_PIN_9
-#define SPI6_INT2_GPIO_Port GPIOH
-#define SPI6_INT2_EXTI_IRQn EXTI9_5_IRQn
-#define SPI6_CS2_Pin GPIO_PIN_10
-#define SPI6_CS2_GPIO_Port GPIOH
-#define SPI6_CS1_Pin GPIO_PIN_11
-#define SPI6_CS1_GPIO_Port GPIOH
-#define SPI6_INT1_Pin GPIO_PIN_12
-#define SPI6_INT1_GPIO_Port GPIOH
-#define SPI6_INT1_EXTI_IRQn EXTI15_10_IRQn
-#define SPI2_INT2_Pin GPIO_PIN_13
-#define SPI2_INT2_GPIO_Port GPIOH
-#define SPI2_INT2_EXTI_IRQn EXTI15_10_IRQn
-#define SPI2_CS2_Pin GPIO_PIN_14
-#define SPI2_CS2_GPIO_Port GPIOH
-#define SPI2_CS1_Pin GPIO_PIN_15
-#define SPI2_CS1_GPIO_Port GPIOH
-#define SPI2_INT1_Pin GPIO_PIN_0
-#define SPI2_INT1_GPIO_Port GPIOI
-#define SPI2_INT1_EXTI_IRQn EXTI0_IRQn
+#define B_SW2_IRQ_Pin GPIO_PIN_8
+#define B_SW2_IRQ_GPIO_Port GPIOI
+#define B_SW3_RST_Pin GPIO_PIN_9
+#define B_SW3_RST_GPIO_Port GPIOI
+#define B_ETH3_RST_Pin GPIO_PIN_11
+#define B_ETH3_RST_GPIO_Port GPIOI
+#define B_SPI5_CS1_Pin GPIO_PIN_6
+#define B_SPI5_CS1_GPIO_Port GPIOF
+#define B_SPI6_CS_Pin GPIO_PIN_9
+#define B_SPI6_CS_GPIO_Port GPIOH
+#define B_SPI2_CS_Pin GPIO_PIN_10
+#define B_SPI2_CS_GPIO_Port GPIOH
+#define B_SPI2_INT_Pin GPIO_PIN_11
+#define B_SPI2_INT_GPIO_Port GPIOH
+#define B_SPI6_INT_Pin GPIO_PIN_12
+#define B_SPI6_INT_GPIO_Port GPIOH
+#define B_SPI2_MOSI_Pin GPIO_PIN_14
+#define B_SPI2_MOSI_GPIO_Port GPIOB
+#define B_SPI2_MOSIB15_Pin GPIO_PIN_15
+#define B_SPI2_MOSIB15_GPIO_Port GPIOB
+#define B_ETH1_RST_Pin GPIO_PIN_7
+#define B_ETH1_RST_GPIO_Port GPIOG
+#define B_BAD0IN_Pin GPIO_PIN_2
+#define B_BAD0IN_GPIO_Port GPIOI
+#define B_BAD1IN_Pin GPIO_PIN_3
+#define B_BAD1IN_GPIO_Port GPIOI
+#define B_ETH2_RST_Pin GPIO_PIN_6
+#define B_ETH2_RST_GPIO_Port GPIOD
+#define B_ETH2_IRQ_Pin GPIO_PIN_7
+#define B_ETH2_IRQ_GPIO_Port GPIOD
+#define B_ETH1_IRQ_Pin GPIO_PIN_10
+#define B_ETH1_IRQ_GPIO_Port GPIOG
+#define B_SW1_IRQ_Pin GPIO_PIN_4
+#define B_SW1_IRQ_GPIO_Port GPIOI
+#define B_LED_WORK_Pin GPIO_PIN_5
+#define B_LED_WORK_GPIO_Port GPIOI
+#define B_LED_ERR_Pin GPIO_PIN_6
+#define B_LED_ERR_GPIO_Port GPIOI
+#define B_SW1_RST_Pin GPIO_PIN_7
+#define B_SW1_RST_GPIO_Port GPIOI
 
 /* USER CODE BEGIN Private defines */
 

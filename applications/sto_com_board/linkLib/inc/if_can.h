@@ -21,12 +21,21 @@ typedef enum
     E_CAN_CH_MAX
 } E_CAN_CH;
 
+/***************can mode*****************/
+typedef enum
+{
+    E_CAN_MSG_NORMAL_MODE = 0U,
+    E_CAN_MSG_FD_MODE,
+    E_CAN_MSG_MODE_MAX
+} E_CAN_MSG_MODE;
+
 /****************can msg*********************/
 typedef struct
 {
     uint32 id_u32;
     uint8 len_u8;
     uint8 data_u8[64U];
+    E_CAN_MSG_MODE can_mode;
 } S_CAN_MSG;
 
 /****************can interface**************/

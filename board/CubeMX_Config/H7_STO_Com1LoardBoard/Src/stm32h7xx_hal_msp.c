@@ -376,6 +376,150 @@ void HAL_ETH_MspDeInit(ETH_HandleTypeDef* heth)
 
 }
 
+static uint32_t HAL_RCC_FDCAN_CLK_ENABLED=0;
+
+/**
+* @brief FDCAN MSP Initialization
+* This function configures the hardware resources used in this example
+* @param hfdcan: FDCAN handle pointer
+* @retval None
+*/
+void HAL_FDCAN_MspInit(FDCAN_HandleTypeDef* hfdcan)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
+  if(hfdcan->Instance==FDCAN1)
+  {
+  /* USER CODE BEGIN FDCAN1_MspInit 0 */
+
+  /* USER CODE END FDCAN1_MspInit 0 */
+
+  /** Initializes the peripherals clock
+  */
+    PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_FDCAN;
+    PeriphClkInitStruct.FdcanClockSelection = RCC_FDCANCLKSOURCE_HSE;
+    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    /* Peripheral clock enable */
+    HAL_RCC_FDCAN_CLK_ENABLED++;
+    if(HAL_RCC_FDCAN_CLK_ENABLED==1){
+      __HAL_RCC_FDCAN_CLK_ENABLE();
+    }
+
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    /**FDCAN1 GPIO Configuration
+    PA11     ------> FDCAN1_RX
+    PA12     ------> FDCAN1_TX
+    */
+    GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_12;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF9_FDCAN1;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /* USER CODE BEGIN FDCAN1_MspInit 1 */
+
+  /* USER CODE END FDCAN1_MspInit 1 */
+  }
+  else if(hfdcan->Instance==FDCAN2)
+  {
+  /* USER CODE BEGIN FDCAN2_MspInit 0 */
+
+  /* USER CODE END FDCAN2_MspInit 0 */
+
+  /** Initializes the peripherals clock
+  */
+    PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_FDCAN;
+    PeriphClkInitStruct.FdcanClockSelection = RCC_FDCANCLKSOURCE_HSE;
+    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    /* Peripheral clock enable */
+    HAL_RCC_FDCAN_CLK_ENABLED++;
+    if(HAL_RCC_FDCAN_CLK_ENABLED==1){
+      __HAL_RCC_FDCAN_CLK_ENABLE();
+    }
+
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+    /**FDCAN2 GPIO Configuration
+    PB5     ------> FDCAN2_RX
+    PB6     ------> FDCAN2_TX
+    */
+    GPIO_InitStruct.Pin = GPIO_PIN_5|GPIO_PIN_6;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF9_FDCAN2;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    HAL_I2CEx_EnableFastModePlus(SYSCFG_PMCR_I2C_PB6_FMP);
+
+  /* USER CODE BEGIN FDCAN2_MspInit 1 */
+
+  /* USER CODE END FDCAN2_MspInit 1 */
+  }
+
+}
+
+/**
+* @brief FDCAN MSP De-Initialization
+* This function freeze the hardware resources used in this example
+* @param hfdcan: FDCAN handle pointer
+* @retval None
+*/
+void HAL_FDCAN_MspDeInit(FDCAN_HandleTypeDef* hfdcan)
+{
+  if(hfdcan->Instance==FDCAN1)
+  {
+  /* USER CODE BEGIN FDCAN1_MspDeInit 0 */
+
+  /* USER CODE END FDCAN1_MspDeInit 0 */
+    /* Peripheral clock disable */
+    HAL_RCC_FDCAN_CLK_ENABLED--;
+    if(HAL_RCC_FDCAN_CLK_ENABLED==0){
+      __HAL_RCC_FDCAN_CLK_DISABLE();
+    }
+
+    /**FDCAN1 GPIO Configuration
+    PA11     ------> FDCAN1_RX
+    PA12     ------> FDCAN1_TX
+    */
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_11|GPIO_PIN_12);
+
+  /* USER CODE BEGIN FDCAN1_MspDeInit 1 */
+
+  /* USER CODE END FDCAN1_MspDeInit 1 */
+  }
+  else if(hfdcan->Instance==FDCAN2)
+  {
+  /* USER CODE BEGIN FDCAN2_MspDeInit 0 */
+
+  /* USER CODE END FDCAN2_MspDeInit 0 */
+    /* Peripheral clock disable */
+    HAL_RCC_FDCAN_CLK_ENABLED--;
+    if(HAL_RCC_FDCAN_CLK_ENABLED==0){
+      __HAL_RCC_FDCAN_CLK_DISABLE();
+    }
+
+    /**FDCAN2 GPIO Configuration
+    PB5     ------> FDCAN2_RX
+    PB6     ------> FDCAN2_TX
+    */
+    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_5|GPIO_PIN_6);
+
+  /* USER CODE BEGIN FDCAN2_MspDeInit 1 */
+
+  /* USER CODE END FDCAN2_MspDeInit 1 */
+  }
+
+}
+
 /**
 * @brief I2C MSP Initialization
 * This function configures the hardware resources used in this example
@@ -754,16 +898,24 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
     /* Peripheral clock enable */
     __HAL_RCC_SPI2_CLK_ENABLE();
 
+    __HAL_RCC_GPIOB_CLK_ENABLE();
     __HAL_RCC_GPIOI_CLK_ENABLE();
     /**SPI2 GPIO Configuration
+    PB14     ------> SPI2_MISO
+    PB15     ------> SPI2_MOSI
     PI1     ------> SPI2_SCK
-    PI2     ------> SPI2_MISO
-    PI3     ------> SPI2_MOSI
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3;
+    GPIO_InitStruct.Pin = B_SPI2_MOSI_Pin|B_SPI2_MOSIB15_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Alternate = GPIO_AF5_SPI2;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = GPIO_PIN_1;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF5_SPI2;
     HAL_GPIO_Init(GPIOI, &GPIO_InitStruct);
 
@@ -814,14 +966,14 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
     GPIO_InitStruct.Pin = GPIO_PIN_6;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF8_SPI6;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_14;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF5_SPI6;
     HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 
@@ -849,11 +1001,13 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi)
     __HAL_RCC_SPI2_CLK_DISABLE();
 
     /**SPI2 GPIO Configuration
+    PB14     ------> SPI2_MISO
+    PB15     ------> SPI2_MOSI
     PI1     ------> SPI2_SCK
-    PI2     ------> SPI2_MISO
-    PI3     ------> SPI2_MOSI
     */
-    HAL_GPIO_DeInit(GPIOI, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3);
+    HAL_GPIO_DeInit(GPIOB, B_SPI2_MOSI_Pin|B_SPI2_MOSIB15_Pin);
+
+    HAL_GPIO_DeInit(GPIOI, GPIO_PIN_1);
 
   /* USER CODE BEGIN SPI2_MspDeInit 1 */
 
@@ -946,6 +1100,40 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 
   /* USER CODE END USART1_MspInit 1 */
   }
+  else if(huart->Instance==USART3)
+  {
+  /* USER CODE BEGIN USART3_MspInit 0 */
+
+  /* USER CODE END USART3_MspInit 0 */
+
+  /** Initializes the peripherals clock
+  */
+    PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USART3;
+    PeriphClkInitStruct.Usart234578ClockSelection = RCC_USART234578CLKSOURCE_D2PCLK1;
+    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    /* Peripheral clock enable */
+    __HAL_RCC_USART3_CLK_ENABLE();
+
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+    /**USART3 GPIO Configuration
+    PB10     ------> USART3_TX
+    PB11     ------> USART3_RX
+    */
+    GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_11;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Alternate = GPIO_AF7_USART3;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /* USER CODE BEGIN USART3_MspInit 1 */
+
+  /* USER CODE END USART3_MspInit 1 */
+  }
 
 }
 
@@ -974,6 +1162,24 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
   /* USER CODE BEGIN USART1_MspDeInit 1 */
 
   /* USER CODE END USART1_MspDeInit 1 */
+  }
+  else if(huart->Instance==USART3)
+  {
+  /* USER CODE BEGIN USART3_MspDeInit 0 */
+
+  /* USER CODE END USART3_MspDeInit 0 */
+    /* Peripheral clock disable */
+    __HAL_RCC_USART3_CLK_DISABLE();
+
+    /**USART3 GPIO Configuration
+    PB10     ------> USART3_TX
+    PB11     ------> USART3_RX
+    */
+    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_10|GPIO_PIN_11);
+
+  /* USER CODE BEGIN USART3_MspDeInit 1 */
+
+  /* USER CODE END USART3_MspDeInit 1 */
   }
 
 }

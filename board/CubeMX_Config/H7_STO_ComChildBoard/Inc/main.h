@@ -77,6 +77,8 @@ void Error_Handler(void);
 #define A_SPI1_INT_GPIO_Port GPIOH
 #define A_BAD2IN_Pin GPIO_PIN_11
 #define A_BAD2IN_GPIO_Port GPIOD
+#define A_ETH1_RST_Pin GPIO_PIN_13
+#define A_ETH1_RST_GPIO_Port GPIOD
 #define A_ETH2_RST_Pin GPIO_PIN_7
 #define A_ETH2_RST_GPIO_Port GPIOG
 #define A_SW1_RST_Pin GPIO_PIN_13
