@@ -2,6 +2,9 @@ import os
 import sys
 import rtconfig
 
+sys.path.append(r".\rt-thread\tools")
+from mdklibproject import MDKLibProject
+
 if os.getenv('RTT_ROOT'):
     RTT_ROOT = os.getenv('RTT_ROOT')
 else:
@@ -56,3 +59,6 @@ objs = PrepareBuilding(env, RTT_ROOT, has_libcpu=False)
 
 # make a building
 DoBuilding(TARGET, objs)
+
+if GetOption('target') == 'mdk5-lib':
+    MDKLibProject(objs)

@@ -109,7 +109,17 @@
 
 ### 快速上手
 
-本 BSP 为开发者提供RT-Thread Studio、MDK4、MDK5 和 IAR 工程，并且支持 GCC 开发环境。下面以 RT-Thread Studio 开发环境为例，介绍如何将系统运行起来。
+本 BSP 为开发者提供RT-Thread Studio、MDK4、MDK5 和 IAR 工程，并且支持 GCC 开发环境。
+
+#### mdk5工程
+
+在当前目录打开env工具，执行命令mkproject.bat
+- 源码工程：双击打开project.uvprojx
+- lib库工程：进入swos2_lib文件夹，双击打开project.uvprojx
+  - swos2_lib文件夹内包含了工程所需的所有头文件与lib库
+  - 本工程为swos2最小系统，直接编译即可使用。后续可自行添加应用代码
+
+下面以 RT-Thread Studio 开发环境为例，介绍如何将系统运行起来。
 
 #### 硬件连接
 

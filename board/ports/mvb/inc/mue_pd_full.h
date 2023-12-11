@@ -293,7 +293,7 @@ TCN_DECL_PUBLIC  MUE_RESULT  mue_pd_full_get_port_data
     void        *p_port_data,
     UNSIGNED16  *p_port_freshness
 );
-
+#include <rtdef.h>
 #pragma pack(1)
 typedef struct
 {

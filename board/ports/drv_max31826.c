@@ -104,7 +104,11 @@ const struct fal_flash_dev max31826_flash = {
 
 typedef union __attribute__ ((packed))
 {
+#if defined ( __CC_ARM )  /* MDK ARM Compiler */
+    __packed struct
+#elif defined ( __GNUC__ ) /* GNU Compiler */
     struct
+#endif
     {
         uint8_t FamilyCode;
         uint8_t SerialCode[6];
@@ -115,7 +119,11 @@ typedef union __attribute__ ((packed))
 
 typedef union __attribute__ ((packed))
 {
+#if defined ( __CC_ARM )  /* MDK ARM Compiler */
+    __packed struct
+#elif defined ( __GNUC__ ) /* GNU Compiler */
     struct
+#endif
     {
         uint8_t TempL; /*温度低字节*/
         uint8_t TempH; /*温度的高字节*/
