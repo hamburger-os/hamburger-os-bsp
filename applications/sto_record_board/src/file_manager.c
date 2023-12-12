@@ -375,7 +375,7 @@ sint32_t fm_free_emmc_space(void)
     p_file_list_head = get_org_file_info(DIR_FILE_PATH_NAME);
     if(p_file_list_head != NULL)
     {
-//        p_file_list_head = sort_link(p_file_list_head, SORT_UP); /* 按照文件序号,由小到大排序,先删除序号最小的文件 */
+        p_file_list_head = sort_link(p_file_list_head, SORT_UP); /* 按照文件序号,由小到大排序,先删除序号最小的文件 */
 //        show_link(p_file_list_head);
         p = p_file_list_head;
         while(p != NULL)
@@ -692,5 +692,88 @@ sint32_t FMInit(S_FILE_MANAGER *fm)
 
 
     return (sint32_t)0;
+}
+
+sint32_t FMReadFile(S_FILE_MANAGER *fm,const char *file_path, uint32_t offset, void *data, size_t size)
+{
+
+    sint32_t bytes_read;
+    sint32_t fd = 0;
+
+    rt_mutex_take(fm->file_mutex, RT_WAITING_FOREVER);
+    fd = open(file_path, O_RDONLY);
+    if (fd > 0)
+    {
+        lseek(fd, offset, SEEK_SET);
+        bytes_read = read(fd, data, size);
+        close(fd);
+        if (bytes_read == size)
+        {
+            rt_mutex_release(fm->file_mutex);
+            return 0;
+        }
+        else
+        {
+            rt_mutex_release(fm->file_mutex);
+            LOG_E("read %s size = %d", file_path, bytes_read);
+            return -1;
+        }
+    }
+    else
+    {
+        rt_mutex_release(fm->file_mutex);
+        LOG_E("read open %s error", file_path);
+        return -1;
+    }
+    rt_mutex_release(fm->file_mutex);
+    return (sint32_t)0;
+}
+
+int32_t FMGetIndexFile(S_FILE_MANAGER *fm, const char *path, uint8_t file_id, file_info_t *file_info)
+{
+    file_info_t *p_file_list_head = NULL, *p_file = NULL;
+
+    p_file_list_head = get_org_file_info(DIR_FILE_PATH_NAME);
+    if(p_file_list_head != NULL)
+    {
+        p_file_list_head = sort_link(p_file_list_head, SORT_UP); /* 按照文件序号,由小到大排序 */
+        p_file = p_file_list_head;
+    }
+    else
+    {
+        LOG_W("p_file_list_head = NULL line %d", __LINE__);
+        return -1;
+    }
+
+    /* 无效ID */
+    if ( file_id > fm->latest_dir_file_info.dir_num )
+    {
+        LOG_E("id > dir_num line %d", __LINE__);
+        return -1;
+    } /* end if */
+
+    /* 查找对应的目录 */
+    while (p_file)
+    {
+        if(p_file->file_id == file_id)
+        {
+            break;
+        }
+        p_file = p_file->next;
+    }
+
+    if(p_file != NULL)
+    {
+        memcpy(file_info, p_file, sizeof(file_info_t));
+        free_link(p_file_list_head);
+        return 0;
+    }
+    else
+    {
+        LOG_E("can not find id %d dir file %d", file_id, __LINE__);
+        free_link(p_file_list_head);
+        return -1;
+    }
+    return 0;
 }
 

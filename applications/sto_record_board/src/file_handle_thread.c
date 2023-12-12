@@ -10,6 +10,10 @@
 
 #include "file_handle_thread.h"
 
+#define DBG_TAG "FileThread"
+#define DBG_LVL DBG_LOG
+#include <rtdbg.h>
+
 #include <rtthread.h>
 #include <rtdevice.h>
 
@@ -18,10 +22,8 @@
 #include "sto_record_board.h"
 #include "data_handle.h"
 #include "Record_FileCreate.h"
-
-#define DBG_TAG "FileThread"
-#define DBG_LVL DBG_LOG
-#include <rtdbg.h>
+#include "udp_comm.h"
+#include "Record_FileDown.h"
 
 #define FILE_THREAD_PRIORITY         15
 #define FILE_THREAD_STACK_SIZE       (1024 * 4)
@@ -33,6 +35,8 @@ static void *FileThreadEntry(void *parameter)
     {
         CanDataHandle(&eth0_can_data_handle);
         RecordBoard_FileCreate();
+        UDPServerRcvMQData();
+        ThreadFileDownload();
         rt_thread_mdelay(1);
     }
 }

@@ -25,6 +25,8 @@ src =  Split('''
     src/usb/usb.c
     src/can_common.c
     src/power_msg/power_msg.c
+    src/udp_comm.c
+    src/Record_FileDown.c
     '''
     )
 

@@ -27,6 +27,8 @@ extern uint8_t g_JK_DevCode;
 extern uint8_t g_CEU_DevCode;
 extern uint8_t g_ECU_DevCode;
 
+#define FILE_PAGE_SIZE  (256U)
+
 #define SFILE_DIR_SIZE      (128U)  /* 结构体SFile_Directory的大小 */
 
 /* Bus Data. ============================================================================== */

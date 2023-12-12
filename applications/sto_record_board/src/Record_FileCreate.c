@@ -737,6 +737,23 @@ static rt_err_t record_file_create(S_FILE_MANAGER *p_file_manager, uint8_t is_on
             LOG_E("get on lkj file name error");
             return -RT_ERROR;
         }
+        else
+        {
+            p_file_manager->latest_dir_file_info.dir_num += 1u;
+            LOG_I("create offline file dir num %d", p_file_manager->latest_dir_file_info.dir_num);
+            if (p_file_manager->latest_dir_file_info.dir_num > FILE_MAX_NUM)    //目录个数
+            {
+                if (fm_free_emmc_space() < 0)
+                {
+                    LOG_E("fm_free_emmc_space error");
+                    return -RT_ERROR;
+                }
+            } /* end if */
+
+            p_file_manager->current_info->file_dir->u32_over_flag = 0u;
+            p_file_manager->current_info->file_dir->u32_file_size = sizeof(SFile_Head);
+            p_file_manager->current_info->file_dir->file_id = p_file_manager->latest_dir_file_info.dir_num;
+        }
     }
 
     /* 1.生成新的记录文件 */
@@ -816,6 +833,7 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info, uint8
     char full_path[PATH_NAME_MAX_LEN] = { 0 };
     sint32_t ret = 0;
     struct stat stat_l;
+    uint8_t last_off_line_fie_index = 0;
 
     /* 确认新文件生成标记，置位开始记录文件标志 */
     if(is_creat_new_file)
@@ -885,8 +903,10 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info, uint8
 
             } /* end if */
             /* 初始化write buf */
+            last_off_line_fie_index = s_File_Directory.off_line_fie_index;
             memset(&write_buf, 0u, sizeof(WRITE_BUF));
             memset(&s_File_Directory, 0, sizeof(SFile_Directory));
+            s_File_Directory.off_line_fie_index = last_off_line_fie_index;
 
             Create_Flag = 1u;
             CheCi_Count1 = 0u;
@@ -1551,7 +1571,7 @@ void WriteFileContantPkt(uint8_t num1, uint8_t num2, uint8_t device_code, uint8_
                     LOG_E("write record pos %d", write_buf.pos);
                 }
             }
-            LOG_I("写记录事项位置：%d   剩余空间：%d   内容长度：%d", write_buf.pos, rest_size, contant_size);
+            LOG_I("写记录事项位置：%d 剩余空间：%d 内容长度：%d", write_buf.pos, rest_size, contant_size);
             break;
         }
         else /* 缓存区存满 */

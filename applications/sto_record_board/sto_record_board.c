@@ -9,6 +9,10 @@
  */
 #include "sto_record_board.h"
 
+#define DBG_TAG "STORecordBoard"
+#define DBG_LVL DBG_LOG
+#include <rtdbg.h>
+
 #include <rtthread.h>
 #include <rtdevice.h>
 
@@ -19,10 +23,7 @@
 #include "file_handle_thread.h"
 #include "board_info.h"
 #include "power_msg.h"
-
-#define DBG_TAG "STORecordBoard"
-#define DBG_LVL DBG_LOG
-#include <rtdbg.h>
+#include "udp_comm.h"
 
 #define BOARD_INIT_THREAD_PRIORITY         24
 #define BOARD_INIT_THREAD_STACK_SIZE       (1024 * 3)
@@ -34,14 +35,15 @@ S_FILE_MANAGER file_manager;
 static void *BoardInitThreadEntry(void *parameter)
 {
     DataHandleInit(&eth0_can_data_handle);
-    ETHThreadInit();
     FMInit(&file_manager);
     LedCtrlInit();
 
     /* thread */
     FileThreadInit();
+    ETHThreadInit();
     usb_init();
     PowerMsgThreadInit();
+    UDPServerRcvThreadInit();
     LOG_I("init ok");
 }
 
