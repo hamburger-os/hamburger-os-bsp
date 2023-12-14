@@ -42,7 +42,7 @@
 
 #include <stdarg.h>
 
-static uint32_t debug_mask;
+static uint32_t debug_mask = 0;
 
 void ext4_dmask_set(uint32_t m)
 {

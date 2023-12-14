@@ -152,18 +152,17 @@ uint32_t ext4_dmask_get(void);
 
 #if CONFIG_DEBUG_PRINTF
 #include <stdio.h>
+#include "board.h"
 
 /**@brief   Debug printf.*/
-#define ext4_dbg(m, ...)                                        \
-    do {                                                        \
-        if ((m) & ext4_dmask_get()) {                           \
-            if (!((m) & DEBUG_NOPREFIX)) {                      \
-                rt_kprintf("%s", ext4_dmask_id2str(m));         \
-                rt_kprintf("l: %d   ", __LINE__);               \
-            }                                                   \
-            rt_kprintf(__VA_ARGS__);                            \
-        }                                                       \
-    } while (0)
+#define ext4_dbg(m, ...)                                    \
+    if ((m) & ext4_dmask_get()) {                           \
+        if (!((m) & DEBUG_NOPREFIX)) {                      \
+            rt_kprintf("%s", ext4_dmask_id2str(m));         \
+            rt_kprintf("l: %d   ", __LINE__);               \
+        }                                                   \
+        rt_kprintf(__VA_ARGS__);                            \
+    }
 #else
 #define ext4_dbg(m, ...) do { } while (0)
 #endif
@@ -172,15 +171,14 @@ uint32_t ext4_dmask_get(void);
 /**@brief   Debug assertion.*/
 #if CONFIG_HAVE_OWN_ASSERT
 #include <stdio.h>
+#include "board.h"
 
-#define ext4_assert(_v)                                             \
-    do {                                                            \
-        if (!(_v)) {                                                \
-            rt_kprintf("assertion failed:\nfile: %s\nline: %d\n",   \
-                        __FILE__, __LINE__);                        \
-            while (1);                                              \
-        }                                                           \
-    } while (0)
+#define ext4_assert(_v)                                         \
+    if (!(_v)) {                                                \
+        rt_kprintf("assertion failed:\nfile: %s\nline: %d\n",   \
+                    __FILE__, __LINE__);                        \
+        while (1);                                              \
+    }
 #else
 #define ext4_assert(_v) assert(_v)
 #endif

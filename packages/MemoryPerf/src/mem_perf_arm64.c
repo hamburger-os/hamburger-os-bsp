@@ -45,11 +45,11 @@ static void memory_perf_8bit(void *addr, mp_u32 len)
     }
     stop_time_mp();
 
-    seconds = (unsigned int) get_time_mp() / (NSECS_PER_SEC * 1.0f);
+    seconds = (unsigned int) get_time_mp() / (NSECS_PER_SEC * 1.0);
     speed = data_len / seconds;
 
-    printf("Spend time : %d.%02d s.\n", (int)seconds, (int)((seconds - (int)seconds) * 100));
-    printf("8-bit write speed: %d.%02d M/s.\n", (int)(speed / 1000000), (int)((speed / 1000000 - (int)(speed / 1000000))*100));
+    printf("Spend time : %f s.\n", seconds);
+    printf("8-bit write speed: %f M/s.\n", speed / 1000000);
 
     printf("8-bit read speed test begin.\n");
 
@@ -59,22 +59,22 @@ static void memory_perf_8bit(void *addr, mp_u32 len)
         for(int i = 0; i < len; i+=8)
         {
             read_addr = (mp_u8 *) (addr + i);
-            __asm volatile ("ldrb r0, [%0]\n"
-                          ::"r"(read_addr++): "r0");
-            __asm volatile ("ldrb r0, [%0]\n"
-                          ::"r"(read_addr++): "r0");
-            __asm volatile ("ldrb r0, [%0]\n"
-                          ::"r"(read_addr++): "r0");
-            __asm volatile ("ldrb r0, [%0]\n"
-                          ::"r"(read_addr++): "r0");
-            __asm volatile ("ldrb r0, [%0]\n"
-                          ::"r"(read_addr++): "r0");
-            __asm volatile ("ldrb r0, [%0]\n"
-                          ::"r"(read_addr++): "r0");
-            __asm volatile ("ldrb r0, [%0]\n"
-                          ::"r"(read_addr++): "r0");
-            __asm volatile ("ldrb r0, [%0]\n"
-                          ::"r"(read_addr): "r0");
+            __asm volatile ("ldrb w0, [%0]\n"
+                          ::"r"(read_addr++): "w0");
+            __asm volatile ("ldrb w0, [%0]\n"
+                          ::"r"(read_addr++): "w0");
+            __asm volatile ("ldrb w0, [%0]\n"
+                          ::"r"(read_addr++): "w0");
+            __asm volatile ("ldrb w0, [%0]\n"
+                          ::"r"(read_addr++): "w0");
+            __asm volatile ("ldrb w0, [%0]\n"
+                          ::"r"(read_addr++): "w0");
+            __asm volatile ("ldrb w0, [%0]\n"
+                          ::"r"(read_addr++): "w0");
+            __asm volatile ("ldrb w0, [%0]\n"
+                          ::"r"(read_addr++): "w0");
+            __asm volatile ("ldrb w0, [%0]\n"
+                          ::"r"(read_addr): "w0");
         }
     }
     stop_time_mp();
@@ -82,8 +82,8 @@ static void memory_perf_8bit(void *addr, mp_u32 len)
     seconds = (unsigned int) get_time_mp() / (NSECS_PER_SEC * 1.0);
     speed = data_len / seconds;
 
-    printf("Spend time : %d.%02d s.\n", (int)seconds, (int)((seconds - (int)seconds) * 100));
-    printf("8-bit Read speed: %d.%02d M/s.\n", (int)(speed / 1000000), (int)((speed / 1000000 - (int)(speed / 1000000))*100));
+    printf("Spend time : %f s.\n", seconds);
+    printf("8-bit Read speed: %f M/s.\n", speed / 1000000);
 }
 
 static void memory_perf_16bit(void *addr, mp_u32 len)
@@ -115,8 +115,8 @@ static void memory_perf_16bit(void *addr, mp_u32 len)
     seconds = (unsigned int) get_time_mp() / (NSECS_PER_SEC * 1.0);
     speed = data_len / seconds;
 
-    printf("Spend time : %d.%02d s.\n", (int)seconds, (int)((seconds - (int)seconds) * 100));
-    printf("16-bit write speed: %d.%02d M/s.\n", (int)(speed / 1000000), (int)((speed / 1000000 - (int)(speed / 1000000))*100));
+    printf("Spend time : %f s.\n", seconds);
+    printf("16-bit write speed: %f M/s.\n", speed / 1000000);
 
     printf("16-bit read speed test begin.\n");
 
@@ -126,22 +126,22 @@ static void memory_perf_16bit(void *addr, mp_u32 len)
         for(int i = 0; i < len; i += 16)
         {
             read_addr = (mp_u16 *) (addr + i);
-            __asm volatile ("ldrh r0, [%0]\n"
-                          ::"r"(read_addr++): "r0");
-            __asm volatile ("ldrh r0, [%0]\n"
-                          ::"r"(read_addr++): "r0");
-            __asm volatile ("ldrh r0, [%0]\n"
-                          ::"r"(read_addr++): "r0");
-            __asm volatile ("ldrh r0, [%0]\n"
-                          ::"r"(read_addr++): "r0");
-            __asm volatile ("ldrh r0, [%0]\n"
-                          ::"r"(read_addr++): "r0");
-            __asm volatile ("ldrh r0, [%0]\n"
-                          ::"r"(read_addr++): "r0");
-            __asm volatile ("ldrh r0, [%0]\n"
-                          ::"r"(read_addr++): "r0");
-            __asm volatile ("ldrh r0, [%0]\n"
-                          ::"r"(read_addr): "r0");
+            __asm volatile ("ldrh w0, [%0]\n"
+                          ::"r"(read_addr++): "w0");
+            __asm volatile ("ldrh w0, [%0]\n"
+                          ::"r"(read_addr++): "w0");
+            __asm volatile ("ldrh w0, [%0]\n"
+                          ::"r"(read_addr++): "w0");
+            __asm volatile ("ldrh w0, [%0]\n"
+                          ::"r"(read_addr++): "w0");
+            __asm volatile ("ldrh w0, [%0]\n"
+                          ::"r"(read_addr++): "w0");
+            __asm volatile ("ldrh w0, [%0]\n"
+                          ::"r"(read_addr++): "w0");
+            __asm volatile ("ldrh w0, [%0]\n"
+                          ::"r"(read_addr++): "w0");
+            __asm volatile ("ldrh w0, [%0]\n"
+                          ::"r"(read_addr): "w0");
         }
     }
     stop_time_mp();
@@ -149,8 +149,8 @@ static void memory_perf_16bit(void *addr, mp_u32 len)
     seconds = (unsigned int) get_time_mp() / (NSECS_PER_SEC * 1.0);
     speed = data_len / seconds;
 
-    printf("Spend time : %d.%02d s.\n", (int)seconds, (int)((seconds - (int)seconds) * 100));
-    printf("16-bit Read speed: %d.%02d M/s.\n", (int)(speed / 1000000), (int)((speed / 1000000 - (int)(speed / 1000000))*100));
+    printf("Spend time : %f s.\n", seconds);
+    printf("16-bit Read speed: %f M/s.\n", speed / 1000000);
 }
 
 static void memory_perf_32bit(void *addr, mp_u32 len)
@@ -182,8 +182,8 @@ static void memory_perf_32bit(void *addr, mp_u32 len)
     seconds = (unsigned int) get_time_mp() / (NSECS_PER_SEC * 1.0);
     speed = data_len / seconds;
 
-    printf("Spend time : %d.%02d s.\n", (int)seconds, (int)((seconds - (int)seconds) * 100));
-    printf("32-bit Write speed: %d.%02d M/s.\n", (int)(speed / 1000000), (int)((speed / 1000000 - (int)(speed / 1000000))*100));
+    printf("Spend time : %f s.\n", seconds);
+    printf("32-bit Write speed: %f M/s.\n", speed / 1000000);
 
     printf("32-bit read speed test begin.\n");
 
@@ -193,22 +193,22 @@ static void memory_perf_32bit(void *addr, mp_u32 len)
         for(int i = 0; i < len; i += 32)
         {
             read_addr = (mp_u32 *) (addr + i);
-            __asm volatile ("ldr r0, [%0]\n"
-                          ::"r"(read_addr++): "r0");
-            __asm volatile ("ldr r0, [%0]\n"
-                          ::"r"(read_addr++): "r0");
-            __asm volatile ("ldr r0, [%0]\n"
-                          ::"r"(read_addr++): "r0");
-            __asm volatile ("ldr r0, [%0]\n"
-                          ::"r"(read_addr++): "r0");
-            __asm volatile ("ldr r0, [%0]\n"
-                          ::"r"(read_addr++): "r0");
-            __asm volatile ("ldr r0, [%0]\n"
-                          ::"r"(read_addr++): "r0");
-            __asm volatile ("ldr r0, [%0]\n"
-                          ::"r"(read_addr++): "r0");
-            __asm volatile ("ldr r0, [%0]\n"
-                          ::"r"(read_addr): "r0");
+            __asm volatile ("ldr w0, [%0]\n"
+                          ::"r"(read_addr++): "w0");
+            __asm volatile ("ldr w0, [%0]\n"
+                          ::"r"(read_addr++): "w0");
+            __asm volatile ("ldr w0, [%0]\n"
+                          ::"r"(read_addr++): "w0");
+            __asm volatile ("ldr w0, [%0]\n"
+                          ::"r"(read_addr++): "w0");
+            __asm volatile ("ldr w0, [%0]\n"
+                          ::"r"(read_addr++): "w0");
+            __asm volatile ("ldr w0, [%0]\n"
+                          ::"r"(read_addr++): "w0");
+            __asm volatile ("ldr w0, [%0]\n"
+                          ::"r"(read_addr++): "w0");
+            __asm volatile ("ldr w0, [%0]\n"
+                          ::"r"(read_addr): "w0");
         }
     }
     stop_time_mp();
@@ -216,8 +216,8 @@ static void memory_perf_32bit(void *addr, mp_u32 len)
     seconds = (mp_u32) get_time_mp() / (NSECS_PER_SEC * 1.0);
     speed = data_len / seconds;
 
-    printf("Spend time : %d.%02d s.\n", (int)seconds, (int)((seconds - (int)seconds) * 100));
-    printf("32-bit Read speed: %d.%02d M/s.\n", (int)(speed / 1000000), (int)((speed / 1000000 - (int)(speed / 1000000))*100));
+    printf("Spend time : %f s.\n", seconds);
+    printf("32-bit Read speed: %f M/s.\n", speed / 1000000);
 }
 
 static void memory_perf_64bit(void *addr, mp_u32 len)

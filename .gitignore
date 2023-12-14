@@ -51,9 +51,15 @@ rtconfig.h
 rtconfig_preinc.h
 project.uvoptx
 project.uvprojx
+project_lib.uvoptx
+project_lib.uvprojx
 template.uvoptx
 template.uvprojx
+template_lib.uvoptx
+template_lib.uvprojx
 !/project/*/.cproject
 !/project/*/template.uvoptx
 !/project/*/template.uvprojx
+!/project/*/template_lib.uvoptx
+!/project/*/template_lib.uvprojx
 swos2_lib
