@@ -109,7 +109,7 @@ static void RecordingPowerVoltageCurrentOneSelfCheckMessage(uint8_t record_num2,
         last_value[4] = (uint8_t)(a_new >> 8);
 
         WriteFileContantPkt(0xA6, record_num2, PWOER_MSG_DEV_CODE, last_value, 4u);
-//        LOG_I("power ch %x, v %d, a %d", ch, v_new, a_new);
+        LOG_I("power ch %x, v %d, a %d", ch, v_new, a_new);
     }
 }
 
@@ -155,7 +155,7 @@ static void RecordingPowerVoltageCurrentSelfCheckMessage(void)
         RecordingPowerVoltageCurrentOneSelfCheckMessage(0x69, ch, v_new, a_new, last_value_ch5);
         break;
     default:
-        LOG_E("power ch error");
+//        LOG_E("power ch error");
         break;
     }
 }
@@ -179,7 +179,7 @@ static void RecordingPowerPowerOnCntSelfCheckMessage(void)
         last_value[1] = (uint8_t)(power_on_cnt_new >> 8);
 
         WriteFileContantPkt(0xA6, 0x6a, PWOER_MSG_DEV_CODE, last_value, 4u);
-//        LOG_I("power temp1 %d temp 2 %d", temp1_new, temp2_new);
+        LOG_I("power_on_1 %d power_on_2 %d", power_on_cnt_new, power_on_cnt_old);
     }
 }
 
@@ -207,7 +207,7 @@ static void RecordingPowerTempSelfCheckMessage(void)
         last_value[3] = (uint8_t)(temp2_new >> 8);
 
         WriteFileContantPkt(0xA6, 0x6b, PWOER_MSG_DEV_CODE, last_value, 4u);
-//        LOG_I("power temp1 %d temp 2 %d", temp1_new, temp2_new);
+        LOG_I("power temp1 %d temp 2 %d", temp1_new, temp2_new);
     }
 }
 
@@ -234,7 +234,7 @@ static void RecordingPowerSoftInfoMessage(void)
         last_value[3] = (uint8_t)(soft_new >> 24);
 
         WriteFileContantPkt(0xA5, 0x08, PWOER_MSG_DEV_CODE, last_value, 4u);
-//        LOG_I("soft new %x, old %x", soft_new, soft_old);
+        LOG_I("soft new %x, old %x", soft_new, soft_old);
     }
 }
 

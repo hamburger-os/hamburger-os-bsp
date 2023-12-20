@@ -140,6 +140,12 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
 
     CAN_FRAME  can_tmp;
 
+    if(RT_NULL == p_data_handle->can_data_mq)
+    {
+        LOG_E("can_data_mq is null");
+        return -RT_EEMPTY;
+    }
+
     ret = rt_mq_recv(p_data_handle->can_data_mq, (void *)&can_tmp, sizeof(CAN_FRAME), 0);
     if(ret != RT_EOK)
     {
@@ -182,7 +188,7 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
             } /* end if */
 
 
-            if(read_time_flag == 1)
+            if(read_time_flag == 0)
             {
                 tm_new.tm_year = 2000 + TIME_N;
                 tm_new.tm_mon = TIME_Y;
@@ -191,22 +197,37 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
                 tm_new.tm_hour = TIME_S;
                 tm_new.tm_min = TIME_F;
                 tm_new.tm_sec = TIME_M;
-    //            LOG_I("time %d-%d-%d %d.%d.%d", tm_new.tm_year, tm_new.tm_mon, tm_new.tm_mday, tm_new.tm_hour, tm_new.tm_min, tm_new.tm_sec);
-                set_boart_time(&tm_new);
-                read_time_flag = 2;
+                if(tm_new.tm_year <= 2020)
+                {
+                    read_time_flag = 0;
+                }
+                else
+                {
+//                    LOG_I("time %d-%d-%d %d.%d.%d", tm_new.tm_year, tm_new.tm_mon, tm_new.tm_mday, tm_new.tm_hour, tm_new.tm_min, tm_new.tm_sec);
+                    set_boart_time(&tm_new);
+                    read_time_flag = 1;
+                }
             }
-            else if(2 == read_time_flag)       /* 10分钟更新一次rtc时间 */
+            else if(1 == read_time_flag)       /* 10分钟更新一次rtc时间 */
             {
+                tm_new.tm_year = 2000 + TIME_N;
+                tm_new.tm_mon = TIME_Y;
+                tm_new.tm_mday = TIME_R;
+
+                tm_new.tm_hour = TIME_S;
+                tm_new.tm_min = TIME_F;
+                tm_new.tm_sec = TIME_M;
+
+                if(tm_new.tm_year <= 2020)
+                {
+                    read_time_flag = 0;
+                }
+                else
+                {
+//                    LOG_I("time %d-%d-%d %d.%d.%d", tm_new.tm_year, tm_new.tm_mon, tm_new.tm_mday, tm_new.tm_hour, tm_new.tm_min, tm_new.tm_sec);
+                }
                 if(Common_BeTimeOutMN(&set_rtc_time, SET_RTC_CYCLE_MS))
                 {
-                    tm_new.tm_year = 2000 + TIME_N;
-                    tm_new.tm_mon = TIME_Y;
-                    tm_new.tm_mday = TIME_R;
-
-                    tm_new.tm_hour = TIME_S;
-                    tm_new.tm_min = TIME_F;
-                    tm_new.tm_sec = TIME_M;
-//                    LOG_I("time %d-%d-%d %d.%d.%d", tm_new.tm_year, tm_new.tm_mon, tm_new.tm_mday, tm_new.tm_hour, tm_new.tm_min, tm_new.tm_sec);
                     set_boart_time(&tm_new);
                 }
             }
@@ -230,10 +251,7 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
                 UpdateErrorCodeDate(&can_tmp.data_u8[4]);
             } /* end if */
 
-            if(0 == read_time_flag)
-            {
-                read_time_flag = 1;
-            }
+
             break;
 
         case CANPRI_KONGCHEA:
@@ -443,7 +461,7 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
 
 uint8_t DataHandleLKJIsOnline(void)
 {
-    if(read_time_flag > 0)
+    if(read_time_flag > 0 || file_manager.latest_dir_file_info.dir_num != 0)
     {
         return 1;
     }
