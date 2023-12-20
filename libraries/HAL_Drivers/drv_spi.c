@@ -411,7 +411,7 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
             }
             else
             {
-                state = HAL_SPI_TransmitReceive(spi_handle, (uint8_t *)send_buf, (uint8_t *)recv_buf, send_length, send_length);
+                state = HAL_SPI_TransmitReceive(spi_handle, (uint8_t *)send_buf, (uint8_t *)recv_buf, send_length, send_length * 2);
             }
         }
         else if (message->send_buf)
@@ -425,7 +425,7 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
             }
             else
             {
-                state = HAL_SPI_Transmit(spi_handle, (uint8_t *)send_buf, send_length, send_length);
+                state = HAL_SPI_Transmit(spi_handle, (uint8_t *)send_buf, send_length, send_length * 2);
             }
 
             if (message->cs_release && (device->config.mode & RT_SPI_3WIRE))
@@ -446,7 +446,7 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
             }
             else
             {
-                state = HAL_SPI_Receive(spi_handle, (uint8_t *)recv_buf, send_length, send_length);
+                state = HAL_SPI_Receive(spi_handle, (uint8_t *)recv_buf, send_length, send_length * 2);
             }
         }
         else
