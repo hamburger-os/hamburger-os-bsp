@@ -47,6 +47,9 @@ rt_err_t rx_safe_layer_check(S_DATA_HANDLE * data_handle, uint8_t *pBuf, uint8_t
                 /*校验安全层第一次CRC值*/
                 if (recv_crc_u32 == crc32_create(&pBuf[0], pSafe_layer->lenth - 4 - 4, (uint32_t) 0x5A5A5A5A))
                 {
+//                    LOG_I("dst %x %x %x %x %x %x", eth_buf[0], eth_buf[1], eth_buf[2], eth_buf[3], eth_buf[4], eth_buf[5]);
+//                     LOG_E("src %x %x %x %x %x %x", eth_buf[6], eth_buf[7], eth_buf[8], eth_buf[9], eth_buf[10], eth_buf[11]);
+
                     recv_crc_u32 = *(uint32_t *) ((uint8_t *) &pBuf[0] + pSafe_layer->lenth - 4);
                     /*校验安全层第二次CRC值*/
                     if (recv_crc_u32 == generate_CRC32(&pBuf[0], pSafe_layer->lenth - 4 - 4, (uint32_t) 0x5A5A5A5A))
@@ -58,6 +61,15 @@ rt_err_t rx_safe_layer_check(S_DATA_HANDLE * data_handle, uint8_t *pBuf, uint8_t
 //                        else if(pBuf[0] == 0x48 && pBuf[1] == 3)
 //                        {
 //                            LOG_I("rcv 0x48 ok");
+//                        }
+//                        LOG_I("dst %x %x %x %x %x %x", eth_buf[0], eth_buf[1], eth_buf[2], eth_buf[3], eth_buf[4], eth_buf[5]);
+//                        if( eth_buf[4] == 0x01 && 0x23 == eth_buf[5])
+//                        {
+//                            LOG_HEX("data", 8, pBuf, pSafe_layer->lenth);
+//                        }
+//                        if( eth_buf[4] == 0x02 && 0x20 == eth_buf[5])
+//                        {
+//                            LOG_HEX("atos data", 8, pBuf, pSafe_layer->lenth);
 //                        }
                         /*把来源的通道号暂存到预留 字段*/
                         pSafe_layer->res = from_chl;
@@ -81,6 +93,13 @@ rt_err_t rx_safe_layer_check(S_DATA_HANDLE * data_handle, uint8_t *pBuf, uint8_t
                 {
 //                    rt_kprintf("src %x, id %x, %x, %x, %x\r\n", pBuf[0], pBuf[4], pBuf[5], pBuf[6], pBuf[7]);
 //                    LOG_HEX("data", 8, pBuf, pSafe_layer->lenth);
+
+
+                    //目的地址 源地址 6 6
+//                    LOG_E("dst %x %x %x %x %x %x", eth_buf[0], eth_buf[1], eth_buf[2], eth_buf[3], eth_buf[4], eth_buf[5]);
+//                    LOG_E("src %x %x %x %x %x %x", eth_buf[6], eth_buf[7], eth_buf[8], eth_buf[9], eth_buf[10], eth_buf[11]);
+
+//                    rt_kprintf("safe_layer_check CRC1 err ! src %x, des %x, len %d", pSafe_layer->src_adr, pSafe_layer->des_adr, pSafe_layer->lenth);
                     LOG_E("safe_layer_check CRC1 err ! src %x, des %x, len %d", pSafe_layer->src_adr, pSafe_layer->des_adr, pSafe_layer->lenth);
 //                    LOG_E("safe_layer_check CRC1 err !");
 #if 0   //TODO(mingzhao)

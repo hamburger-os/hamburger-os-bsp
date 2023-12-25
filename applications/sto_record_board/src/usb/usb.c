@@ -22,7 +22,6 @@
 #include <sys/errno.h>
 /* #include <utime.h> */
 #include <rtdef.h>
-#include <ulog.h>
 #include <rtthread.h>
 #include <rtdevice.h>
 #include <type.h>

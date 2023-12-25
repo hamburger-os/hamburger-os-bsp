@@ -275,7 +275,7 @@ static void PowerMsgCanDeal(struct rt_can_msg *can_msg)
     rt_mutex_release(power_msg.mutex);
 }
 
-static void *PowerMsgThreadEntry(void *parameter)
+static void PowerMsgThreadEntry(void *parameter)
 {
     rt_err_t result = RT_EOK;
     struct rt_can_msg rxmsg = {0};

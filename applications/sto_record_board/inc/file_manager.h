@@ -20,26 +20,24 @@
 #define FILE_NAME_MAX_NUM   (24U)
 #define LATEST_DIR_FILE_HEAD_FLAG (0xa5a5a5a5)
 
-#define RECORD_BOARD_EMMC_MAX_SIZE (3600LL * 1024 * 1024) //板子EMMC最大空间 单位KB  实际大小为3656M 预留了56M
-#define RESERVE_SIZE               (1024 * 1024)
-#define FRAM_RESERVE_SIZE          (10)   //单位KB
-#define LATEST_TMP_FILE_SIZE          (1024)
+#define RECORD_BOARD_EMMC_MAX_SIZE (6000LL * 1024) /* 板子EMMC最大空间 单位KB  实际大小为7456M 预留了1456M */
+#define RESERVE_SIZE               (20 * 1024)     /* 单位KB 预留20M */
 
 #if FILE_MANAGER_TEST
-#define FILE_MAX_NUM               (3)            /* 最大文件个数 */
-#define RECORD_FILE_MAN_SIZE      (512)           /* 单个记录文件大小 单位 KB */
+#define FILE_MAX_NUM               (3)             /* 最大文件个数 */
+#define RECORD_FILE_MAX_SIZE       (512)           /* 单个记录文件大小 单位 KB */
 #else
-#define FILE_MAX_NUM               (128)                    /* 最大文件个数 */
-#define RECORD_FILE_MAN_SIZE     (20 * 1024 * 1024)         /* 单个记录文件大小 单位 KB  20M */
+#define FILE_MAX_NUM               (128)           /* 最大文件个数 */
+#define RECORD_FILE_MAX_SIZE       (20 * 1024)     /* 单个记录文件大小 单位 KB  20M */
 #endif
 
 
 #if TMP_FILE_MANAGER_TEST
-#define FRAM_RESERVE_SIZE          (100)   //单位KB
-#define TMP_FILE_MAN_SIZE          (3)   //单位KB
+#define FRAM_RESERVE_SIZE          (100)   /* 单位KB */
+#define TMP_FILE_MAX_SIZE          (3)     /* 单位KB */
 #else
-#define FRAM_RESERVE_SIZE          (10)   //单位KB
-#define TMP_FILE_MAN_SIZE          (50)   //单位KB
+#define FRAM_RESERVE_SIZE          (10)   /* 单位KB */
+#define TMP_FILE_MAX_SIZE          (50)   /* 单位KB */
 #endif
 
 #define FIRST_LATEST_DIR_NAME_NULL "NO_LKJ"

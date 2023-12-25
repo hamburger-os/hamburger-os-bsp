@@ -660,7 +660,7 @@ static uint8_t Record_Condition_Judge(void)
     uint8_t judge_resault = 0u;
 
     /* 文件大小大于20MB */
-    if ( RECORD_FILE_MAN_SIZE <= s_File_Directory.u32_file_size)
+    if ( (s_File_Directory.u32_file_size >> 10) >= RECORD_FILE_MAX_SIZE)
     {
         LOG_W("file > 20MB");
         judge_resault |= 1u << 0u;
