@@ -18,7 +18,7 @@
 #include "xpt2046.h"
 
 #define DBG_TAG "xpt2046"
-#define DBG_LVL DBG_LOG
+#define DBG_LVL DBG_INFO
 #include <rtdbg.h>
 
 rt_err_t touch_Read_toucX(struct rt_touch_device *touch, uint16_t *value)
@@ -26,15 +26,17 @@ rt_err_t touch_Read_toucX(struct rt_touch_device *touch, uint16_t *value)
     rt_err_t ret = RT_EOK;
     struct _rt_drv_touch *config = (struct _rt_drv_touch *)touch->parent.user_data;
 
-    uint8_t cmd[] = {0XD0, 0X00};
-    ret = rt_spi_send_then_recv(config->spidev, &cmd, sizeof(cmd), value, 2);
-    if (ret != RT_EOK)
+    uint8_t cmd[] = {0XD0, 0, 0};
+    uint8_t rx_data[3] = {0};
+    ret = rt_spi_transfer(config->spidev, cmd, rx_data, 3);
+    if (ret != 3)
     {
         LOG_E("read x error %d!", ret);
         ret = -RT_EIO;
     }
-    *value = __SWP16(*value);
-    *value = *value >> 3;
+    LOG_HEX("rd", 16, rx_data, 3);
+    *value = (rx_data[1] << 8 | rx_data[2]) >> 4;
+    LOG_D("read x %d", *value);
 
     return ret;
 }
@@ -44,15 +46,17 @@ rt_err_t touch_Read_toucY(struct rt_touch_device *touch, uint16_t *value)
     rt_err_t ret = RT_EOK;
     struct _rt_drv_touch *config = (struct _rt_drv_touch *)touch->parent.user_data;
 
-    uint8_t cmd[] = {0X90, 0X00};
-    ret = rt_spi_send_then_recv(config->spidev, &cmd, sizeof(cmd), value, 2);
-    if (ret != RT_EOK)
+    uint8_t cmd[] = {0X90, 0, 0};
+    uint8_t rx_data[3] = {0};
+    ret = rt_spi_transfer(config->spidev, cmd, rx_data, 3);
+    if (ret != 3)
     {
         LOG_E("read y error %d!", ret);
         ret = -RT_EIO;
     }
-    *value = __SWP16(*value);
-    *value = *value >> 3;
+    LOG_HEX("rd", 16, rx_data, 3);
+    *value = (rx_data[1] << 8 | rx_data[2]) >> 4;
+    LOG_D("read y %d", *value);
 
     return ret;
 }

@@ -56,7 +56,12 @@
 #ifdef  RT_APP_PART_ADDR
 #define QBOOT_APP_ADDR                  RT_APP_PART_ADDR
 #else
+#ifdef BSP_USING_JUMP_0x20000
 #define QBOOT_APP_ADDR                  0x08020000
+#endif
+#ifdef BSP_USING_JUMP_0x80000
+#define QBOOT_APP_ADDR                  0x08080000
+#endif
 #endif
 
 #ifdef QBOOT_USING_PRODUCT_CODE

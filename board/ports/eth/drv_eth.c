@@ -216,6 +216,7 @@ static rt_size_t rt_stm32_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, 
 
 static rt_size_t rt_stm32_eth_write(rt_device_t dev, rt_off_t pos, const void *buffer, rt_size_t size)
 {
+#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
     struct rt_stm32_eth *eth = dev->user_data;
     ETH_BufferTypeDef tx_buffer;
 
@@ -224,7 +225,7 @@ static rt_size_t rt_stm32_eth_write(rt_device_t dev, rt_off_t pos, const void *b
         LOG_E("size error");
         return 0;
     }
-#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
+
     rt_mutex_take(&eth->eth_mux, RT_WAITING_FOREVER);
 
     rt_memset((void *)&tx_buffer, 0, sizeof(ETH_BufferTypeDef));
@@ -358,7 +359,6 @@ struct pbuf *rt_stm32_eth_rx(rt_device_t dev)
     struct rt_stm32_eth *eth = dev->user_data;
 
     struct pbuf *p = NULL;
-    struct pbuf *q= NULL;
 
     rt_mutex_take(&eth->eth_mux, RT_WAITING_FOREVER);
 
@@ -370,6 +370,8 @@ struct pbuf *rt_stm32_eth_rx(rt_device_t dev)
 
         HAL_ETH_ReadData(&eth->heth, (void **) &p);
 #ifdef BSP_USE_LINK_LAYER_COMMUNICATION
+        struct pbuf *q= NULL;
+
         if(eth->link_layer_buf.rx_head != RT_NULL)
         {
             if(p != RT_NULL)
@@ -637,7 +639,9 @@ static void phy_linkchange(void *parameter)
         HAL_ETH_GetMACConfig(&eth->heth, &MACConf);
         MACConf.DuplexMode = duplex;
         MACConf.Speed = speed;
+#ifdef SOC_SERIES_STM32H7
         MACConf.SourceAddrControl = ETH_SRC_ADDR_REPLACE;
+#endif
         HAL_ETH_SetMACConfig(&eth->heth, &MACConf);  //设置MAC
 
         HAL_ETH_Start_IT(&eth->heth);

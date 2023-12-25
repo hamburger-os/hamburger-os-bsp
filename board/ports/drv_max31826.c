@@ -21,7 +21,8 @@
 
 #define MAX31826_PIN    rt_pin_get(MAX31826_GPIO)
 static rt_base_t max31826_pin = 0;
-static void SET_DQ(void)
+
+inline static void SET_DQ(void)
 {
     if (max31826_pin == 0)
     {
@@ -29,7 +30,7 @@ static void SET_DQ(void)
     }
     rt_pin_write(max31826_pin, PIN_HIGH);
 }
-static void CLR_DQ(void)
+inline static void CLR_DQ(void)
 {
     if (max31826_pin == 0)
     {
@@ -37,7 +38,7 @@ static void CLR_DQ(void)
     }
     rt_pin_write(max31826_pin, PIN_LOW);
 }
-static void OUT_DQ(void)
+inline static void OUT_DQ(void)
 {
     if (max31826_pin == 0)
     {
@@ -45,7 +46,7 @@ static void OUT_DQ(void)
     }
     rt_pin_mode(max31826_pin, PIN_MODE_OUTPUT_OD);
 }
-static void IN_DQ(void)
+inline static void IN_DQ(void)
 {
     if (max31826_pin == 0)
     {
@@ -53,7 +54,7 @@ static void IN_DQ(void)
     }
     rt_pin_mode(max31826_pin, PIN_MODE_INPUT);
 }
-static int GET_DQ(void)
+inline static int GET_DQ(void)
 {
     if (max31826_pin == 0)
     {
@@ -176,8 +177,10 @@ static rt_int32_t DEV_MAX31826_Reset1Wire(void)
     rt_int32_t ret = 0xFF;
 
 #ifdef MAX31826_USING_IO
-    rt_base_t level;
-    level = rt_hw_interrupt_disable();/* 关中断*/
+//    rt_base_t level;
+//    level = rt_hw_interrupt_disable();/* 关中断*/
+    rt_enter_critical();
+
     OUT_DQ();
     CLR_DQ();
     rt_hw_us_delay(750);
@@ -191,8 +194,8 @@ static rt_int32_t DEV_MAX31826_Reset1Wire(void)
     else
         ret = 0;
     rt_hw_us_delay(300);
-    rt_hw_interrupt_enable(level); /* 开中断 */
-
+//    rt_hw_interrupt_enable(level); /* 开中断 */
+    rt_exit_critical();
 #endif  /* MAX31826_USING_IO */
 
 #ifdef MAX31826_USING_I2C_DS2484
@@ -230,8 +233,10 @@ static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
     rt_mutex_take(&max31826_mux, RT_WAITING_FOREVER);
 
 #ifdef MAX31826_USING_IO
-    rt_base_t level;
-    level = rt_hw_interrupt_disable();/* 关中断*/
+//    rt_base_t level;
+//    level = rt_hw_interrupt_disable();/* 关中断*/
+    rt_enter_critical();
+
     OUT_DQ();
     CLR_DQ();
     rt_hw_us_delay(2);
@@ -242,7 +247,8 @@ static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
     rt_hw_us_delay(65);
     SET_DQ();
     rt_hw_us_delay(15);
-    rt_hw_interrupt_enable(level); /* 开中断 */
+//    rt_hw_interrupt_enable(level); /* 开中断 */
+    rt_exit_critical();
 #endif /* MAX31826_USING_IO */
 
 #ifdef MAX31826_USING_I2C_DS2484
@@ -277,8 +283,9 @@ static rt_uint8_t DEV_MAX31826_ReadBit(void)
     rt_uint8_t readbit = 0;
 
 #ifdef MAX31826_USING_IO
-    rt_base_t level;
-    level = rt_hw_interrupt_disable();/* 关中断*/
+//    rt_base_t level;
+//    level = rt_hw_interrupt_disable();/* 关中断*/
+    rt_enter_critical();
 
     OUT_DQ();
     CLR_DQ();
@@ -287,7 +294,8 @@ static rt_uint8_t DEV_MAX31826_ReadBit(void)
     rt_hw_us_delay(2);
     readbit = GET_DQ();
     rt_hw_us_delay(60);
-    rt_hw_interrupt_enable(level); /* 开中断 */
+//    rt_hw_interrupt_enable(level); /* 开中断 */
+    rt_exit_critical();
 #endif /* MAX31826_USING_IO */
 
 #ifdef MAX31826_USING_I2C_DS2484

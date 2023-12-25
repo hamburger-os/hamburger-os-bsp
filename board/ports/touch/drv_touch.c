@@ -251,18 +251,27 @@ rt_err_t touch_calibration(const char *lcd_name,const char *touch_name)
     /* Set the information for the four points used for calibration */
     uint16_t cross_size = (lcd_info.width > lcd_info.height ? lcd_info.height : lcd_info.width) / 32;
 
-_adjust:
     //rand()%(b - a + 1)+ a    生成[a, b]   范围内的随机数
-    srand(UID_BASE * rt_tick_get() + rt_tick_get());
-    uint16_t x0 = rand() % (lcd_info.width - cross_size - cross_size + 1) + cross_size;
-    uint16_t y0 = rand() % (lcd_info.height - cross_size - cross_size + 1) + cross_size;
-    uint16_t x1 = rand() % (lcd_info.width - cross_size - cross_size + 1) + cross_size;
-    uint16_t y1 = rand() % (lcd_info.height - cross_size - cross_size + 1) + cross_size;
-    uint16_t x2 = rand() % (lcd_info.width - cross_size - cross_size + 1) + cross_size;
-    uint16_t y2 = rand() % (lcd_info.height - cross_size - cross_size + 1) + cross_size;
-    uint16_t x3 = rand() % (lcd_info.width - cross_size - cross_size + 1) + cross_size;
-    uint16_t y3 = rand() % (lcd_info.height - cross_size - cross_size + 1) + cross_size;
+//    srand(UID_BASE * rt_tick_get() + rt_tick_get());
+//    uint16_t x0 = rand() % (lcd_info.width - cross_size - cross_size + 1) + cross_size;
+//    uint16_t y0 = rand() % (lcd_info.height - cross_size - cross_size + 1) + cross_size;
+//    uint16_t x1 = rand() % (lcd_info.width - cross_size - cross_size + 1) + cross_size;
+//    uint16_t y1 = rand() % (lcd_info.height - cross_size - cross_size + 1) + cross_size;
+//    uint16_t x2 = rand() % (lcd_info.width - cross_size - cross_size + 1) + cross_size;
+//    uint16_t y2 = rand() % (lcd_info.height - cross_size - cross_size + 1) + cross_size;
+//    uint16_t x3 = rand() % (lcd_info.width - cross_size - cross_size + 1) + cross_size;
+//    uint16_t y3 = rand() % (lcd_info.height - cross_size - cross_size + 1) + cross_size;
 
+    uint16_t x0 = cross_size * 2;
+    uint16_t y0 = cross_size * 2;
+    uint16_t x1 = lcd_info.width - cross_size * 2;
+    uint16_t y1 = cross_size * 2;
+    uint16_t x2 = cross_size * 2;
+    uint16_t y2 = lcd_info.height - cross_size * 2;
+    uint16_t x3 = lcd_info.width - cross_size * 2;
+    uint16_t y3 = lcd_info.height - cross_size * 2;
+
+_adjust:
     rt_graphix_ops(lcd)->draw_hline((const char *) (&black), x0 - cross_size, x0 + cross_size, y0);
     rt_graphix_ops(lcd)->draw_vline((const char *) (&black), x0, y0 - cross_size, y0 + cross_size);
     rt_device_control(lcd, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);

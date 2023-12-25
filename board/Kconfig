@@ -20,7 +20,7 @@ menu "On-chip Peripheral Drivers"
         default y
         
         if SOC_STM32
-    	    choice
+            choice
                 prompt "Select the core board type"
                 default SOC_M4COREBOARD_NOSRAM
                 
@@ -75,7 +75,6 @@ menu "On-chip Peripheral Drivers"
                 config SOC_H7_STO_COM_CHILD_BOARD
                     bool "Select STO H7 com child board"
                     select SOC_SERIES_STM32H7
-
             endchoice
             
             config BSP_USING_GD32
@@ -112,24 +111,36 @@ menu "On-chip Peripheral Drivers"
                 bool "Enable scb d cache"
                 depends on SOC_SERIES_STM32H7
                 default n
-        endif
-
-    choice
-        prompt "Select the boot model"
-        default BSP_USING_NOBOOT
+                
+            choice
+                prompt "Select the boot model"
+                default BSP_USING_NOBOOT
+                
+                config BSP_USING_BOOTAPP
+                    bool "Enable boot app mode"
+                    select BSP_USING_ON_CHIP_FLASH
         
-        config BSP_USING_BOOTAPP
-            bool "Enable boot app mode"
-            select BSP_USING_ON_CHIP_FLASH
-
-        config BSP_USING_BOOTLOADER
-            bool "Enable bootloader mode"
-            select BSP_USING_ON_CHIP_FLASH
-            select PKG_USING_QBOOT
-            
-        config BSP_USING_NOBOOT
-            bool "Disable boot mode"
-    endchoice
+                config BSP_USING_BOOTLOADER
+                    bool "Enable bootloader mode"
+                    select BSP_USING_ON_CHIP_FLASH
+                    select PKG_USING_QBOOT
+                    
+                config BSP_USING_NOBOOT
+                    bool "Disable boot mode"
+            endchoice
+        
+            choice
+                prompt "Select the jump address"
+                default BSP_USING_JUMP_0x20000
+                depends on BSP_USING_BOOTAPP || BSP_USING_BOOTLOADER
+                
+                config BSP_USING_JUMP_0x20000
+                    bool "Enable jump address 0x20000"
+        
+                config BSP_USING_JUMP_0x80000
+                    bool "Enable jump address 0x80000"
+            endchoice
+        endif
         
     config BSP_USING_SYS_LED
         bool "Enable system operation led"
@@ -718,20 +729,12 @@ menu "On-chip Peripheral Drivers"
 
     menuconfig BSP_USING_ON_CHIP_FLASH
         bool "Enable on-chip FLASH"
-        default n
+        default y
         select RT_USING_FAL
         select FAL_PART_HAS_TABLE_CFG
         
         if BSP_USING_ON_CHIP_FLASH
-            config FLASH_SIZE_BOOTLOADER
-	            int "Set the flash size of the bootloader area, default: (128 * 1024)"
-	            default (131072)
-
-            config FLASH_SIZE_APP
-	            int "Set the flash size of the app area, default: (1920 * 1024)"
-	            default (1966080)
-	            
-	        config FLASH_SIZE_DOWNLOAD
+            config FLASH_SIZE_DOWNLOAD
                 int "Set the flash size of the download area, default: (0 * 1024)"
                 default (0)
                 
@@ -2087,6 +2090,7 @@ menu "On-chip Peripheral Drivers"
         bool "Enable CPU temperature"
         default n
         select BSP_USING_ADC
+        select RT_USING_SENSOR
         
         if BSP_USING_CPUTEMP
             config CPUTEMP_ADC_DEV
@@ -2589,8 +2593,8 @@ menu "Onboard Peripheral Drivers"
                         default "PB.12"
                         
                     config TOUCH_SW_SPI_SPEED
-                        int "Set the rate of spi, default: (2 * 1000 *1000)"
-                        default (2000000)
+                        int "Set the rate of spi, default: (150000)"
+                        default (150000)
                 endif
                 
                 if TOUCH_USING_XPT2046
@@ -2912,9 +2916,6 @@ menu "Onboard Peripheral Drivers"
         
     menuconfig BSP_USING_SPI_FLASH
         bool "Enable SPI FLASH (sfud: JEDEC JESD216)"
-        select RT_USING_DFS
-        select RT_USING_DFS_ROMFS
-        select PKG_USING_LITTLEFS
         select RT_USING_SFUD
         select RT_SFUD_USING_SFDP
         default n
@@ -2933,12 +2934,12 @@ menu "Onboard Peripheral Drivers"
                 default (40000000)
             
             config SPI_FLASH_SIZE_GRANULARITY_TOTAL
-                int "Set storage space size, default: (64 * 1024 * 1024)"
-                default (67108864)
+                int "Set storage space size, default: (32 * 1024 * 1024)"
+                default (33554432)
             
             config SPI_FLASH_BLK_SIZE
-                int "Set the memory block size, default: (262144)"
-                default (262144)
+                int "Set the memory block size, default: (4096)"
+                default (4096)
             
             config SPI_FLASH_SIZE_DOWNLOAD
                 int "Set download part size, default: (2048 * 1024)"
@@ -3164,7 +3165,6 @@ menu "Onboard Peripheral Drivers"
                 bool "Enable the file system"
                 select RT_USING_DFS
                 select RT_USING_DFS_ROMFS
-                select PKG_USING_LITTLEFS
                 select RT_USING_DFS_ELMFAT
                 default y
             

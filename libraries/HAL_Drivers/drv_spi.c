@@ -305,9 +305,6 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
     RT_ASSERT(device->bus != RT_NULL);
     RT_ASSERT(message != RT_NULL);
 
-    struct stm32_spi *spi_drv =  rt_container_of(device->bus, struct stm32_spi, spi_bus);
-    SPI_HandleTypeDef *spi_handle = &spi_drv->handle;
-
     rt_base_t *cs = device->parent.user_data;
     if (message->cs_take && !(device->config.mode & RT_SPI_NO_CS))
     {
@@ -316,6 +313,10 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
         else
             rt_pin_write(*cs, PIN_LOW);
     }
+    rt_hw_us_delay(4);//TODO：触摸屏驱动需要用这个延时？加上就好了
+
+    struct stm32_spi *spi_drv =  rt_container_of(device->bus, struct stm32_spi, spi_bus);
+    SPI_HandleTypeDef *spi_handle = &spi_drv->handle;
 
     LOG_D("%s transfer prepare and start", spi_drv->config->bus_name);
     LOG_D("%s sendbuf: %X, recvbuf: %X, length: %d",
@@ -411,7 +412,7 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
             }
             else
             {
-                state = HAL_SPI_TransmitReceive(spi_handle, (uint8_t *)send_buf, (uint8_t *)recv_buf, send_length, send_length * 2);
+                state = HAL_SPI_TransmitReceive(spi_handle, (uint8_t *)send_buf, (uint8_t *)recv_buf, send_length, send_length * 4);
             }
         }
         else if (message->send_buf)
@@ -425,7 +426,7 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
             }
             else
             {
-                state = HAL_SPI_Transmit(spi_handle, (uint8_t *)send_buf, send_length, send_length * 2);
+                state = HAL_SPI_Transmit(spi_handle, (uint8_t *)send_buf, send_length, send_length * 4);
             }
 
             if (message->cs_release && (device->config.mode & RT_SPI_3WIRE))
@@ -446,7 +447,10 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
             }
             else
             {
-                state = HAL_SPI_Receive(spi_handle, (uint8_t *)recv_buf, send_length, send_length * 2);
+                /* clear the old error flag */
+                __HAL_SPI_CLEAR_OVRFLAG(spi_handle);
+
+                state = HAL_SPI_Receive(spi_handle, (uint8_t *)recv_buf, send_length, send_length * 4);
             }
         }
         else
@@ -465,6 +469,7 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
             {
                 LOG_E("SPI transfer error: %d 0x%p 0x%p 0x%p %d", state, send_buf, recv_buf, p_txrx_buffer, send_length);
                 message->length = 0;
+                spi_handle->State = HAL_SPI_STATE_READY;
                 break;
             }
         }
@@ -479,7 +484,7 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
         if ((spi_drv->spi_dma_flag & (SPI_USING_TX_DMA_FLAG | SPI_USING_RX_DMA_FLAG)) && (send_length >= DMA_TRANS_MIN_LEN))
         {
             /* blocking the thread,and the other tasks can run */
-            if (rt_completion_wait(&spi_drv->cpt, send_length) != RT_EOK)
+            if (rt_completion_wait(&spi_drv->cpt, send_length * 4) != RT_EOK)
             {
                 state = HAL_TIMEOUT;
                 LOG_E("wait for DMA interrupt overtime!");

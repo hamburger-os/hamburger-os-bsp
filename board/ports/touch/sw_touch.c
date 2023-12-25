@@ -26,15 +26,17 @@ rt_err_t touch_Read_toucX(struct rt_touch_device *touch, uint16_t *value)
     rt_err_t ret = RT_EOK;
     struct _rt_drv_touch *config = (struct _rt_drv_touch *)touch->parent.user_data;
 
-    uint8_t cmd = 0XD0;
-    ret = rt_spi_send_then_recv(config->spidev, &cmd, 1, value, 2);
+    uint8_t cmd[] = {0XD0};
+    uint8_t rx_data[2] = {0};
+    ret = rt_spi_send_then_recv(config->spidev, cmd, 1, rx_data, 2);
     if (ret != RT_EOK)
     {
         LOG_E("read x error %d!", ret);
         ret = -RT_EIO;
     }
-    *value = __SWP16(*value);
-    *value = *value >> 3;
+    LOG_HEX("rd", 16, rx_data, 2);
+    *value = (rx_data[0] << 8 | rx_data[1]) >> 4;
+    LOG_D("read x %d", *value);
 
     return ret;
 }
@@ -44,15 +46,17 @@ rt_err_t touch_Read_toucY(struct rt_touch_device *touch, uint16_t *value)
     rt_err_t ret = RT_EOK;
     struct _rt_drv_touch *config = (struct _rt_drv_touch *)touch->parent.user_data;
 
-    uint8_t cmd = 0X90;
-    ret = rt_spi_send_then_recv(config->spidev, &cmd, 1, value, 2);
+    uint8_t cmd[] = {0X90};
+    uint8_t rx_data[2] = {0};
+    ret = rt_spi_send_then_recv(config->spidev, cmd, 1, rx_data, 2);
     if (ret != RT_EOK)
     {
         LOG_E("read y error %d!", ret);
         ret = -RT_EIO;
     }
-    *value = __SWP16(*value);
-    *value = *value >> 3;
+    LOG_HEX("rd", 16, rx_data, 2);
+    *value = (rx_data[0] << 8 | rx_data[1]) >> 4;
+    LOG_D("read y %d", *value);
 
     return ret;
 }

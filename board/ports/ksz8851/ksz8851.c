@@ -22,7 +22,7 @@ static void sleepms(uint32_t utick)
  * 读一个字节
  * @param addr: 读出地址指针
  */
-static uint8_t readb(volatile uint8_t *addr)
+inline static uint8_t readb(volatile uint8_t *addr)
 {
     uint8_t ram;           //防止被优化
     ram = *addr;
@@ -33,7 +33,7 @@ static uint8_t readb(volatile uint8_t *addr)
  * 读一个16位字
  * @param addr: 读出地址指针
  */
-static uint16_t readw(volatile uint16_t *addr)
+inline static uint16_t readw(volatile uint16_t *addr)
 {
     uint16_t ram;           //防止被优化
     ram = *addr;
@@ -45,7 +45,7 @@ static uint16_t readw(volatile uint16_t *addr)
  * @param v :写入值
  * @param addr: 写入地址指针
  */
-static void writew(uint16_t data, volatile uint16_t *addr)
+inline static void writew(uint16_t data, volatile uint16_t *addr)
 {
     U16_WRITE(addr, data);
 }
