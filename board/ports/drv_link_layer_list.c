@@ -120,4 +120,27 @@ rt_err_t lep_eth_if_clear(S_ETH_IF *ps_eth_if, E_ETH_IF_CLER_MODE mode)
     return RT_EOK;
 }
 
+/*
+ * 函数功能：判断是否为ip协议包
+ * p_buf：数据缓冲区首地址
+ * len：缓冲区数据长度
+ * 函数返回值：1：ip协议包; 0：非ip协议包
+ * */
+uint8_t is_ip_package(uint8_t *p_buf, uint16_t len)
+{
+    if(len < 14)
+    {
+        return 0;
+    }
+
+    if(p_buf[12] * 0x100 + p_buf[13] > LEP_MAC_PKT_MAX_LEN)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
 #endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
