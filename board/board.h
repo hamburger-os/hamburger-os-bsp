@@ -28,7 +28,6 @@
 
 #include "drv_common.h"
 #include "drv_gpio.h"
-#include <fal_cfg.h>
 
 #ifdef __cplusplus
 extern "C" {

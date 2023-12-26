@@ -46,7 +46,7 @@
 
 #include "stm32h7xx.h"
 #include "board.h"
-#include <math.h>
+#include "fal_cfg.h"
 
 #if !defined  (HSE_VALUE)
 #define HSE_VALUE    ((uint32_t)25000000) /*!< Value of the External oscillator in Hz */
