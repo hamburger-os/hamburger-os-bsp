@@ -228,7 +228,7 @@ rt_err_t UDPServerRcvMQData(void)
 
     if(RT_NULL == dev->rcv_mq)
     {
-        LOG_E("usp rcv mq null");
+        LOG_E("udp rcv mq null");
         return -RT_EEMPTY;
     }
     ret = rt_mq_recv(dev->rcv_mq, (void *)dev->recv_data_by_mq, sizeof(uint8_t) * UDP_RCV_BUFSZ, 0);

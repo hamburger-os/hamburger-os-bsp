@@ -465,7 +465,7 @@ typedef struct __attribute__((packed)) _SFile_Directory /* 按照字节对齐*/ 
     char ch_date[4]; /* 日期 */
     char ch_time[4]; /* 时间 */
     uint32_t u32_over_flag; /* 结束标志 */
-    uint32_t u32_file_size; /* 文件实际大小 */
+    uint32_t u32_file_size; /* 文件实际大小 单位 字节 */
     char ch_file_name[FILE_NAME_MAX_NUM];     /* 记录文件名 */
     char ch_dir_name[FILE_NAME_MAX_NUM];     /* 目录文件名 */
     char ch_benbuzhuangtai[1]; /* 本补状态 */

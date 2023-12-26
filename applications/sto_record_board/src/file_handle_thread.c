@@ -29,7 +29,7 @@
 #define FILE_THREAD_STACK_SIZE       (1024 * 4)
 #define FILE_THREAD_TIMESLICE        5
 
-static void *FileThreadEntry(void *parameter)
+static void FileThreadEntry(void *parameter)
 {
     while(1)
     {

@@ -47,6 +47,8 @@ typedef struct eth_interface /* 接收环形缓冲区，应用程序维护 */
 rt_err_t lep_eth_if_init(S_ETH_IF *ps_eth_if);
 rt_err_t lep_eth_if_clear(S_ETH_IF *ps_eth_if, E_ETH_IF_CLER_MODE mode);
 
+uint8_t is_ip_package(uint8_t *p_buf, uint16_t len);
+
 #endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
 
 #endif /* BOARD_PORTS_KSZ8851_KSZ8851_LEP_H_ */

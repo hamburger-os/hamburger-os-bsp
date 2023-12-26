@@ -46,7 +46,7 @@ sint32_t fm_free_fram_space(S_FILE_MANAGER *fm)
 
     LOG_I("free fram before: %d K", disk_free_space);
 
-    if (disk_free_space >= (TMP_FILE_MAN_SIZE + FRAM_RESERVE_SIZE)) /* 单个文件大小加预留空间的大小 */
+    if (disk_free_space >= (TMP_FILE_MAX_SIZE + FRAM_RESERVE_SIZE)) /* 单个文件大小加预留空间的大小 */
     {
         return 0;
     }
@@ -118,8 +118,9 @@ sint32_t fm_free_fram_space(S_FILE_MANAGER *fm)
 sint32_t FMWriteTmpFile(S_FILE_MANAGER *fm, const char * file_path, const void *data, size_t count)
 {
     sint32_t fd = 0, ret = 0;
+//    fd = open(file_path, O_CREAT | O_RDWR | O_APPEND, S_IRUSR | S_IWUSR);
 
-    fd = open(file_path, O_CREAT | O_RDWR | O_APPEND, S_IRUSR | S_IWUSR);
+    fd = open(file_path, O_RDWR | O_APPEND, S_IRUSR | S_IWUSR);
     if (fd < 0)
     {
         LOG_E("write open %s error", file_path);
@@ -365,7 +366,7 @@ sint32_t fm_free_emmc_space(void)
 
     LOG_I("free emmc before: %d K", disk_free_space);
 #if !FILE_MANAGER_TEST  //TODO(mingzhao)   调试删除文件时，将此段代码屏蔽
-    if (disk_free_space >= RECORD_FILE_MAN_SIZE + RESERVE_SIZE) /* 单个记录文件大小加预留空间的大小 */
+    if (disk_free_space >= RECORD_FILE_MAX_SIZE + RESERVE_SIZE) /* 单个记录文件大小加预留空间的大小 */
     {
         return 0;
     }
@@ -390,7 +391,7 @@ sint32_t fm_free_emmc_space(void)
                 /* sync(); */
                 LOG_I("delete save dir: %s", p->dir_name);
                 LOG_I("delete save record: %s", p->record_name);
-                if (get_disk_free_space(DIR_FILE_PATH_NAME) >= RECORD_FILE_MAN_SIZE + RESERVE_SIZE) //可以不加这个判断，在这里一次把转存过的删除
+                if (get_disk_free_space(DIR_FILE_PATH_NAME) >= RECORD_FILE_MAX_SIZE + RESERVE_SIZE) //可以不加这个判断，在这里一次把转存过的删除
                 {
                     LOG_I("1.free space after: %d K", disk_free_space);
                     free_link(p_file_list_head);
@@ -419,7 +420,7 @@ sint32_t fm_free_emmc_space(void)
             /* sync(); */
             LOG_I("delete not save dir: %s", p->dir_name);
             LOG_I("delete not save record: %s", p->record_name);
-            if (get_disk_free_space(DIR_FILE_PATH_NAME) >= RECORD_FILE_MAN_SIZE + RESERVE_SIZE)
+            if (get_disk_free_space(DIR_FILE_PATH_NAME) >= RECORD_FILE_MAX_SIZE + RESERVE_SIZE)
             {
                 break;
             }

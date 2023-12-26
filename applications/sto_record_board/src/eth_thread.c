@@ -80,7 +80,7 @@ static rt_err_t ETH0RXChannel1Callback(rt_device_t dev, rt_size_t size)
     return ret;
 }
 
-static void *ETH0ThreadEntry(void *parameter)
+static void ETH0ThreadEntry(void *parameter)
 {
     rt_err_t ret = RT_EOK;
 
@@ -102,7 +102,7 @@ static void *ETH0ThreadEntry(void *parameter)
             rt_device_read(eth0_thread.dev, 0, (void *)eth0_thread.rx_buf, eth0_thread.rx_szie);
             rx_safe_layer_check(&eth0_can_data_handle, eth0_thread.rx_buf + 14, IN_ETH_DEV);  //14 = sizeof(eth_frame_t)
         }
-        rt_thread_mdelay(5);
+        rt_thread_mdelay(3);
     }
 }
 
