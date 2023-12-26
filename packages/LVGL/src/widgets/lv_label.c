@@ -35,19 +35,19 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_label_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_label_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_label_event(const lv_obj_class_t * class_p, lv_event_t * e);
-static void draw_main(lv_event_t * e);
+static void lv_label_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_label_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_label_event(const lv_obj_class_t * class_p, lv_event_t * e) LV_SECTION;
+static void draw_main(lv_event_t * e) LV_SECTION;
 
-static void lv_label_refr_text(lv_obj_t * obj);
-static void lv_label_revert_dots(lv_obj_t * label);
+static void lv_label_refr_text(lv_obj_t * obj) LV_SECTION;
+static void lv_label_revert_dots(lv_obj_t * label) LV_SECTION;
 
-static bool lv_label_set_dot_tmp(lv_obj_t * label, char * data, uint32_t len);
-static char * lv_label_get_dot_tmp(lv_obj_t * label);
-static void lv_label_dot_tmp_free(lv_obj_t * label);
-static void set_ofs_x_anim(void * obj, int32_t v);
-static void set_ofs_y_anim(void * obj, int32_t v);
+static bool lv_label_set_dot_tmp(lv_obj_t * label, char * data, uint32_t len) LV_SECTION;
+static char * lv_label_get_dot_tmp(lv_obj_t * label) LV_SECTION;
+static void lv_label_dot_tmp_free(lv_obj_t * label) LV_SECTION;
+static void set_ofs_x_anim(void * obj, int32_t v) LV_SECTION;
+static void set_ofs_y_anim(void * obj, int32_t v) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

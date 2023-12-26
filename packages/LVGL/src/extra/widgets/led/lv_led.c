@@ -23,8 +23,8 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_led_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_led_event(const lv_obj_class_t * class_p, lv_event_t * e);
+static void lv_led_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_led_event(const lv_obj_class_t * class_p, lv_event_t * e) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

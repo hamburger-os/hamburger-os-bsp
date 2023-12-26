@@ -25,8 +25,8 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static bool lv_timer_exec(lv_timer_t * timer);
-static uint32_t lv_timer_time_remaining(lv_timer_t * timer);
+static bool lv_timer_exec(lv_timer_t * timer) LV_SECTION;
+static uint32_t lv_timer_time_remaining(lv_timer_t * timer) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

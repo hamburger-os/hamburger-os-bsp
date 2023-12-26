@@ -44,9 +44,9 @@ typedef struct {
  * @param angle
  * @return sinus of 'angle'. sin(-90) = -32767, sin(90) = 32767
  */
-int16_t /* LV_ATTRIBUTE_FAST_MEM */ lv_trigo_sin(int16_t angle);
+int16_t /* LV_ATTRIBUTE_FAST_MEM */ lv_trigo_sin(int16_t angle) LV_SECTION;
 
-static inline int16_t LV_ATTRIBUTE_FAST_MEM lv_trigo_cos(int16_t angle)
+static LV_SECTION inline int16_t LV_ATTRIBUTE_FAST_MEM lv_trigo_cos(int16_t angle)
 {
     return lv_trigo_sin(angle + 90);
 }
@@ -62,7 +62,7 @@ static inline int16_t LV_ATTRIBUTE_FAST_MEM lv_trigo_cos(int16_t angle)
  * @param u3 end values in range of [0..LV_BEZIER_VAL_MAX]
  * @return the value calculated from the given parameters in range of [0..LV_BEZIER_VAL_MAX]
  */
-uint32_t lv_bezier3(uint32_t t, uint32_t u0, uint32_t u1, uint32_t u2, uint32_t u3);
+uint32_t lv_bezier3(uint32_t t, uint32_t u0, uint32_t u1, uint32_t u2, uint32_t u3) LV_SECTION;
 
 /**
  * Calculate the atan2 of a vector.
@@ -70,7 +70,7 @@ uint32_t lv_bezier3(uint32_t t, uint32_t u0, uint32_t u1, uint32_t u2, uint32_t 
  * @param y
  * @return the angle in degree calculated from the given parameters in range of [0..360]
  */
-uint16_t lv_atan2(int x, int y);
+uint16_t lv_atan2(int x, int y) LV_SECTION;
 
 //! @cond Doxygen_Suppress
 
@@ -84,7 +84,7 @@ uint16_t lv_atan2(int x, int y);
  * If root < 256: mask = 0x800
  * Else: mask = 0x8000
  */
-void /* LV_ATTRIBUTE_FAST_MEM */ lv_sqrt(uint32_t x, lv_sqrt_res_t * q, uint32_t mask);
+void /* LV_ATTRIBUTE_FAST_MEM */ lv_sqrt(uint32_t x, lv_sqrt_res_t * q, uint32_t mask) LV_SECTION;
 
 //! @endcond
 
@@ -94,7 +94,7 @@ void /* LV_ATTRIBUTE_FAST_MEM */ lv_sqrt(uint32_t x, lv_sqrt_res_t * q, uint32_t
  * @param power
  * @return base raised to the power exponent
  */
-int64_t lv_pow(int64_t base, int8_t exp);
+int64_t lv_pow(int64_t base, int8_t exp) LV_SECTION;
 
 /**
  * Get the mapped of a number given an input and output range
@@ -105,7 +105,7 @@ int64_t lv_pow(int64_t base, int8_t exp);
  * @param max_out max output range
  * @return the mapped number
  */
-int32_t lv_map(int32_t x, int32_t min_in, int32_t max_in, int32_t min_out, int32_t max_out);
+int32_t lv_map(int32_t x, int32_t min_in, int32_t max_in, int32_t min_out, int32_t max_out) LV_SECTION;
 
 /**
  * Get a pseudo random number in the given range
@@ -113,7 +113,7 @@ int32_t lv_map(int32_t x, int32_t min_in, int32_t max_in, int32_t min_out, int32
  * @param max   the maximum value
  * @return return the random number. min <= return_value <= max
  */
-uint32_t lv_rand(uint32_t min, uint32_t max);
+uint32_t lv_rand(uint32_t min, uint32_t max) LV_SECTION;
 
 /**********************
  *      MACROS

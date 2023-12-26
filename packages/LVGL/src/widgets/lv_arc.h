@@ -73,7 +73,7 @@ typedef enum {
  * @param parent pointer to an object, it will be the parent of the new arc
  * @return pointer to the created arc
  */
-lv_obj_t * lv_arc_create(lv_obj_t * parent);
+lv_obj_t * lv_arc_create(lv_obj_t * parent) LV_SECTION;
 
 /*======================
  * Add/remove functions
@@ -88,14 +88,14 @@ lv_obj_t * lv_arc_create(lv_obj_t * parent);
  * @param obj   pointer to an arc object
  * @param start the start angle
  */
-void lv_arc_set_start_angle(lv_obj_t * obj, uint16_t start);
+void lv_arc_set_start_angle(lv_obj_t * obj, uint16_t start) LV_SECTION;
 
 /**
  * Set the end angle of an arc. 0 deg: right, 90 bottom, etc.
  * @param obj   pointer to an arc object
  * @param end   the end angle
  */
-void lv_arc_set_end_angle(lv_obj_t * obj, uint16_t end);
+void lv_arc_set_end_angle(lv_obj_t * obj, uint16_t end) LV_SECTION;
 
 /**
  * Set the start and end angles
@@ -103,21 +103,21 @@ void lv_arc_set_end_angle(lv_obj_t * obj, uint16_t end);
  * @param start the start angle
  * @param end   the end angle
  */
-void lv_arc_set_angles(lv_obj_t * obj, uint16_t start, uint16_t end);
+void lv_arc_set_angles(lv_obj_t * obj, uint16_t start, uint16_t end) LV_SECTION;
 
 /**
  * Set the start angle of an arc background. 0 deg: right, 90 bottom, etc.
  * @param obj   pointer to an arc object
  * @param start the start angle
  */
-void lv_arc_set_bg_start_angle(lv_obj_t * obj, uint16_t start);
+void lv_arc_set_bg_start_angle(lv_obj_t * obj, uint16_t start) LV_SECTION;
 
 /**
  * Set the start angle of an arc background. 0 deg: right, 90 bottom etc.
  * @param obj   pointer to an arc object
  * @param end   the end angle
  */
-void lv_arc_set_bg_end_angle(lv_obj_t * obj, uint16_t end);
+void lv_arc_set_bg_end_angle(lv_obj_t * obj, uint16_t end) LV_SECTION;
 
 /**
  * Set the start and end angles of the arc background
@@ -125,28 +125,28 @@ void lv_arc_set_bg_end_angle(lv_obj_t * obj, uint16_t end);
  * @param start the start angle
  * @param end   the end angle
  */
-void lv_arc_set_bg_angles(lv_obj_t * obj, uint16_t start, uint16_t end);
+void lv_arc_set_bg_angles(lv_obj_t * obj, uint16_t start, uint16_t end) LV_SECTION;
 
 /**
  * Set the rotation for the whole arc
  * @param obj       pointer to an arc object
  * @param rotation  rotation angle
  */
-void lv_arc_set_rotation(lv_obj_t * obj, uint16_t rotation);
+void lv_arc_set_rotation(lv_obj_t * obj, uint16_t rotation) LV_SECTION;
 
 /**
  * Set the type of arc.
  * @param obj   pointer to arc object
  * @param mode  arc's mode
  */
-void lv_arc_set_mode(lv_obj_t * obj, lv_arc_mode_t type);
+void lv_arc_set_mode(lv_obj_t * obj, lv_arc_mode_t type) LV_SECTION;
 
 /**
  * Set a new value on the arc
  * @param obj   pointer to an arc object
  * @param value new value
  */
-void lv_arc_set_value(lv_obj_t * obj, int16_t value);
+void lv_arc_set_value(lv_obj_t * obj, int16_t value) LV_SECTION;
 
 /**
  * Set minimum and the maximum values of an arc
@@ -154,14 +154,14 @@ void lv_arc_set_value(lv_obj_t * obj, int16_t value);
  * @param min   minimum value
  * @param max   maximum value
  */
-void lv_arc_set_range(lv_obj_t * obj, int16_t min, int16_t max);
+void lv_arc_set_range(lv_obj_t * obj, int16_t min, int16_t max) LV_SECTION;
 
 /**
  * Set a change rate to limit the speed how fast the arc should reach the pressed point.
  * @param obj       pointer to an arc object
  * @param rate      the change rate
  */
-void lv_arc_set_change_rate(lv_obj_t * obj, uint16_t rate);
+void lv_arc_set_change_rate(lv_obj_t * obj, uint16_t rate) LV_SECTION;
 
 /*=====================
  * Getter functions
@@ -172,56 +172,56 @@ void lv_arc_set_change_rate(lv_obj_t * obj, uint16_t rate);
  * @param obj   pointer to an arc object
  * @return      the start angle [0..360]
  */
-uint16_t lv_arc_get_angle_start(lv_obj_t * obj);
+uint16_t lv_arc_get_angle_start(lv_obj_t * obj) LV_SECTION;
 
 /**
  * Get the end angle of an arc.
  * @param obj   pointer to an arc object
  * @return      the end angle [0..360]
  */
-uint16_t lv_arc_get_angle_end(lv_obj_t * obj);
+uint16_t lv_arc_get_angle_end(lv_obj_t * obj) LV_SECTION;
 
 /**
  * Get the start angle of an arc background.
  * @param obj   pointer to an arc object
  * @return      the  start angle [0..360]
  */
-uint16_t lv_arc_get_bg_angle_start(lv_obj_t * obj);
+uint16_t lv_arc_get_bg_angle_start(lv_obj_t * obj) LV_SECTION;
 
 /**
  * Get the end angle of an arc background.
  * @param obj   pointer to an arc object
  * @return      the end angle [0..360]
  */
-uint16_t lv_arc_get_bg_angle_end(lv_obj_t * obj);
+uint16_t lv_arc_get_bg_angle_end(lv_obj_t * obj) LV_SECTION;
 
 /**
  * Get the value of an arc
  * @param obj       pointer to an arc object
  * @return          the value of the arc
  */
-int16_t lv_arc_get_value(const lv_obj_t * obj);
+int16_t lv_arc_get_value(const lv_obj_t * obj) LV_SECTION;
 
 /**
  * Get the minimum value of an arc
  * @param obj   pointer to an arc object
  * @return      the minimum value of the arc
  */
-int16_t lv_arc_get_min_value(const lv_obj_t * obj);
+int16_t lv_arc_get_min_value(const lv_obj_t * obj) LV_SECTION;
 
 /**
  * Get the maximum value of an arc
  * @param obj   pointer to an arc object
  * @return      the maximum value of the arc
  */
-int16_t lv_arc_get_max_value(const lv_obj_t * obj);
+int16_t lv_arc_get_max_value(const lv_obj_t * obj) LV_SECTION;
 
 /**
  * Get whether the arc is type or not.
  * @param obj       pointer to an arc object
  * @return          arc's mode
  */
-lv_arc_mode_t lv_arc_get_mode(const lv_obj_t * obj);
+lv_arc_mode_t lv_arc_get_mode(const lv_obj_t * obj) LV_SECTION;
 
 /*=====================
  * Other functions
@@ -233,7 +233,7 @@ lv_arc_mode_t lv_arc_get_mode(const lv_obj_t * obj);
  * @param obj_to_align  pointer to an object to align
  * @param r_offset      consider the radius larger with this value (< 0: for smaller radius)
  */
-void lv_arc_align_obj_to_angle(const lv_obj_t * obj, lv_obj_t * obj_to_align, lv_coord_t r_offset);
+void lv_arc_align_obj_to_angle(const lv_obj_t * obj, lv_obj_t * obj_to_align, lv_coord_t r_offset) LV_SECTION;
 
 /**
  * Rotate an object to the current position of the arc (knob)
@@ -241,7 +241,7 @@ void lv_arc_align_obj_to_angle(const lv_obj_t * obj, lv_obj_t * obj_to_align, lv
  * @param obj_to_align  pointer to an object to rotate
  * @param r_offset      consider the radius larger with this value (< 0: for smaller radius)
  */
-void lv_arc_rotate_obj_to_angle(const lv_obj_t * obj, lv_obj_t * obj_to_rotate, lv_coord_t r_offset);
+void lv_arc_rotate_obj_to_angle(const lv_obj_t * obj, lv_obj_t * obj_to_rotate, lv_coord_t r_offset) LV_SECTION;
 
 /**********************
  *      MACROS

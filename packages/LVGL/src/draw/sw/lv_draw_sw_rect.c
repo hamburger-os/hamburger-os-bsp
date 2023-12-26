@@ -28,25 +28,25 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void draw_bg(lv_draw_ctx_t * draw_ctx, const lv_draw_rect_dsc_t * dsc, const lv_area_t * coords);
-static void draw_bg_img(lv_draw_ctx_t * draw_ctx, const lv_draw_rect_dsc_t * dsc, const lv_area_t * coords);
-static void draw_border(lv_draw_ctx_t * draw_ctx, const lv_draw_rect_dsc_t * dsc, const lv_area_t * coords);
+static void draw_bg(lv_draw_ctx_t * draw_ctx, const lv_draw_rect_dsc_t * dsc, const lv_area_t * coords) LV_SECTION;
+static void draw_bg_img(lv_draw_ctx_t * draw_ctx, const lv_draw_rect_dsc_t * dsc, const lv_area_t * coords) LV_SECTION;
+static void draw_border(lv_draw_ctx_t * draw_ctx, const lv_draw_rect_dsc_t * dsc, const lv_area_t * coords) LV_SECTION;
 
-static void draw_outline(lv_draw_ctx_t * draw_ctx, const lv_draw_rect_dsc_t * dsc, const lv_area_t * coords);
+static void draw_outline(lv_draw_ctx_t * draw_ctx, const lv_draw_rect_dsc_t * dsc, const lv_area_t * coords) LV_SECTION;
 
 #if LV_DRAW_COMPLEX
 static void /* LV_ATTRIBUTE_FAST_MEM */ draw_shadow(lv_draw_ctx_t * draw_ctx, const lv_draw_rect_dsc_t * dsc,
-                                                    const lv_area_t * coords);
+                                                    const lv_area_t * coords) LV_SECTION;
 static void /* LV_ATTRIBUTE_FAST_MEM */ shadow_draw_corner_buf(const lv_area_t * coords, uint16_t * sh_buf,
-                                                               lv_coord_t s, lv_coord_t r);
-static void /* LV_ATTRIBUTE_FAST_MEM */ shadow_blur_corner(lv_coord_t size, lv_coord_t sw, uint16_t * sh_ups_buf);
+                                                               lv_coord_t s, lv_coord_t r) LV_SECTION;
+static void /* LV_ATTRIBUTE_FAST_MEM */ shadow_blur_corner(lv_coord_t size, lv_coord_t sw, uint16_t * sh_ups_buf) LV_SECTION;
 #endif
 
 void draw_border_generic(lv_draw_ctx_t * draw_ctx, const lv_area_t * outer_area, const lv_area_t * inner_area,
-                         lv_coord_t rout, lv_coord_t rin, lv_color_t color, lv_opa_t opa, lv_blend_mode_t blend_mode);
+                         lv_coord_t rout, lv_coord_t rin, lv_color_t color, lv_opa_t opa, lv_blend_mode_t blend_mode) LV_SECTION;
 
 static void draw_border_simple(lv_draw_ctx_t * draw_ctx, const lv_area_t * outer_area, const lv_area_t * inner_area,
-                               lv_color_t color, lv_opa_t opa);
+                               lv_color_t color, lv_opa_t opa) LV_SECTION;
 
 
 /**********************

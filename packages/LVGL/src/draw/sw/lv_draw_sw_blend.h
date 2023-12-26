@@ -49,7 +49,7 @@ struct _lv_draw_ctx_t;
  * @param draw_ctx      pointer to a draw context
  * @param dsc           pointer to an initialized blend descriptor
  */
-void lv_draw_sw_blend(struct _lv_draw_ctx_t * draw_ctx, const lv_draw_sw_blend_dsc_t * dsc);
+void lv_draw_sw_blend(struct _lv_draw_ctx_t * draw_ctx, const lv_draw_sw_blend_dsc_t * dsc) LV_SECTION;
 
 /**
  * The basic blend function used with software rendering.
@@ -57,7 +57,7 @@ void lv_draw_sw_blend(struct _lv_draw_ctx_t * draw_ctx, const lv_draw_sw_blend_d
  * @param dsc           pointer to an initialized blend descriptor
  */
 void /* LV_ATTRIBUTE_FAST_MEM */ lv_draw_sw_blend_basic(struct _lv_draw_ctx_t * draw_ctx,
-                                                        const lv_draw_sw_blend_dsc_t * dsc);
+                                                        const lv_draw_sw_blend_dsc_t * dsc) LV_SECTION;
 
 /**********************
  *      MACROS

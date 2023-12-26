@@ -25,11 +25,11 @@
  **********************/
 
 static void lv_style_set_prop_internal(lv_style_t * style, lv_style_prop_t prop_and_meta, lv_style_value_t value,
-                                       void (*value_adjustment_helper)(lv_style_prop_t, lv_style_value_t, uint16_t *, lv_style_value_t *));
+                                       void (*value_adjustment_helper)(lv_style_prop_t, lv_style_value_t, uint16_t *, lv_style_value_t *)) LV_SECTION;
 static void lv_style_set_prop_helper(lv_style_prop_t prop, lv_style_value_t value, uint16_t * prop_storage,
-                                     lv_style_value_t * value_storage);
+                                     lv_style_value_t * value_storage) LV_SECTION;
 static void lv_style_set_prop_meta_helper(lv_style_prop_t prop, lv_style_value_t value, uint16_t * prop_storage,
-                                          lv_style_value_t * value_storage);
+                                          lv_style_value_t * value_storage) LV_SECTION;
 
 /**********************
  *  GLOBAL VARIABLES

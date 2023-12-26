@@ -61,46 +61,46 @@ typedef enum {
  * @param parent pointer to an object, it will be the parent of the new led
  * @return pointer to the created led
  */
-lv_obj_t * lv_led_create(lv_obj_t * parent);
+lv_obj_t * lv_led_create(lv_obj_t * parent) LV_SECTION;
 
 /**
  * Set the color of the LED
  * @param led       pointer to a LED object
  * @param color     the color of the LED
  */
-void lv_led_set_color(lv_obj_t * led, lv_color_t color);
+void lv_led_set_color(lv_obj_t * led, lv_color_t color) LV_SECTION;
 
 /**
  * Set the brightness of a LED object
  * @param led pointer to a LED object
  * @param bright LV_LED_BRIGHT_MIN (max. dark) ... LV_LED_BRIGHT_MAX (max. light)
  */
-void lv_led_set_brightness(lv_obj_t * led, uint8_t bright);
+void lv_led_set_brightness(lv_obj_t * led, uint8_t bright) LV_SECTION;
 
 /**
  * Light on a LED
  * @param led pointer to a LED object
  */
-void lv_led_on(lv_obj_t * led);
+void lv_led_on(lv_obj_t * led) LV_SECTION;
 
 /**
  * Light off a LED
  * @param led pointer to a LED object
  */
-void lv_led_off(lv_obj_t * led);
+void lv_led_off(lv_obj_t * led) LV_SECTION;
 
 /**
  * Toggle the state of a LED
  * @param led pointer to a LED object
  */
-void lv_led_toggle(lv_obj_t * led);
+void lv_led_toggle(lv_obj_t * led) LV_SECTION;
 
 /**
  * Get the brightness of a LEd object
  * @param led pointer to LED object
  * @return bright 0 (max. dark) ... 255 (max. light)
  */
-uint8_t lv_led_get_brightness(const lv_obj_t * obj);
+uint8_t lv_led_get_brightness(const lv_obj_t * obj) LV_SECTION;
 
 /**********************
  *      MACROS

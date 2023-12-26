@@ -28,10 +28,10 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_canvas_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_canvas_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void init_fake_disp(lv_obj_t * canvas, lv_disp_t * disp, lv_disp_drv_t * drv, lv_area_t * clip_area);
-static void deinit_fake_disp(lv_obj_t * canvas, lv_disp_t * disp);
+static void lv_canvas_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_canvas_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void init_fake_disp(lv_obj_t * canvas, lv_disp_t * disp, lv_disp_drv_t * drv, lv_area_t * clip_area) LV_SECTION;
+static void deinit_fake_disp(lv_obj_t * canvas, lv_disp_t * disp) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

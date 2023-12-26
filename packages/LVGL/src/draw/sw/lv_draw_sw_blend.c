@@ -24,49 +24,49 @@
  **********************/
 
 static void fill_set_px(lv_color_t * dest_buf, const lv_area_t * blend_area, lv_coord_t dest_stride,
-                        lv_color_t color, lv_opa_t opa, const lv_opa_t * mask, lv_coord_t mask_stide);
+                        lv_color_t color, lv_opa_t opa, const lv_opa_t * mask, lv_coord_t mask_stide) LV_SECTION;
 
 static void /* LV_ATTRIBUTE_FAST_MEM */ fill_normal(lv_color_t * dest_buf, const lv_area_t * dest_area,
                                                     lv_coord_t dest_stride, lv_color_t color, lv_opa_t opa,
-                                                    const lv_opa_t * mask, lv_coord_t mask_stride);
+                                                    const lv_opa_t * mask, lv_coord_t mask_stride) LV_SECTION;
 
 
 #if LV_COLOR_SCREEN_TRANSP
 static void /* LV_ATTRIBUTE_FAST_MEM */ fill_argb(lv_color_t * dest_buf, const lv_area_t * dest_area,
                                                   lv_coord_t dest_stride, lv_color_t color, lv_opa_t opa,
-                                                  const lv_opa_t * mask, lv_coord_t mask_stride);
+                                                  const lv_opa_t * mask, lv_coord_t mask_stride) LV_SECTION;
 #endif /*LV_COLOR_SCREEN_TRANSP*/
 
 #if LV_DRAW_COMPLEX
 static void fill_blended(lv_color_t * dest_buf, const lv_area_t * dest_area, lv_coord_t dest_stride, lv_color_t color,
-                         lv_opa_t opa, const lv_opa_t * mask, lv_coord_t mask_stride, lv_blend_mode_t blend_mode);
+                         lv_opa_t opa, const lv_opa_t * mask, lv_coord_t mask_stride, lv_blend_mode_t blend_mode) LV_SECTION;
 #endif  /*LV_DRAW_COMPLEX*/
 
 static void map_set_px(lv_color_t * dest_buf, const lv_area_t * dest_area, lv_coord_t dest_stride,
                        const lv_color_t * src_buf, lv_coord_t src_stride, lv_opa_t opa,
-                       const lv_opa_t * mask, lv_coord_t mask_stride);
+                       const lv_opa_t * mask, lv_coord_t mask_stride) LV_SECTION;
 
 static void /* LV_ATTRIBUTE_FAST_MEM */ map_normal(lv_color_t * dest_buf, const lv_area_t * dest_area,
                                                    lv_coord_t dest_stride, const lv_color_t * src_buf,
                                                    lv_coord_t src_stride, lv_opa_t opa, const lv_opa_t * mask,
-                                                   lv_coord_t mask_stride);
+                                                   lv_coord_t mask_stride) LV_SECTION;
 
 #if LV_COLOR_SCREEN_TRANSP
 static void /* LV_ATTRIBUTE_FAST_MEM */ map_argb(lv_color_t * dest_buf, const lv_area_t * dest_area,
                                                  lv_coord_t dest_stride, const lv_color_t * src_buf,
                                                  lv_coord_t src_stride, lv_opa_t opa, const lv_opa_t * mask,
-                                                 lv_coord_t mask_stride, lv_blend_mode_t blend_mode);
+                                                 lv_coord_t mask_stride, lv_blend_mode_t blend_mode) LV_SECTION;
 
 #endif /*LV_COLOR_SCREEN_TRANSP*/
 
 #if LV_DRAW_COMPLEX
 static void map_blended(lv_color_t * dest_buf, const lv_area_t * dest_area, lv_coord_t dest_stride,
                         const lv_color_t * src_buf, lv_coord_t src_stride, lv_opa_t opa,
-                        const lv_opa_t * mask, lv_coord_t mask_stride, lv_blend_mode_t blend_mode);
+                        const lv_opa_t * mask, lv_coord_t mask_stride, lv_blend_mode_t blend_mode) LV_SECTION;
 
-static inline lv_color_t color_blend_true_color_additive(lv_color_t fg, lv_color_t bg, lv_opa_t opa);
-static inline lv_color_t color_blend_true_color_subtractive(lv_color_t fg, lv_color_t bg, lv_opa_t opa);
-static inline lv_color_t color_blend_true_color_multiply(lv_color_t fg, lv_color_t bg, lv_opa_t opa);
+static inline lv_color_t color_blend_true_color_additive(lv_color_t fg, lv_color_t bg, lv_opa_t opa) LV_SECTION;
+static inline lv_color_t color_blend_true_color_subtractive(lv_color_t fg, lv_color_t bg, lv_opa_t opa) LV_SECTION;
+static inline lv_color_t color_blend_true_color_multiply(lv_color_t fg, lv_color_t bg, lv_opa_t opa) LV_SECTION;
 #endif /*LV_DRAW_COMPLEX*/
 
 /**********************

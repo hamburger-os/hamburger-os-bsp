@@ -29,10 +29,11 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_img_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_img_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_img_event(const lv_obj_class_t * class_p, lv_event_t * e);
-static void draw_img(lv_event_t * e);
+static void lv_img_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_img_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_img_event(const lv_obj_class_t * class_p, lv_event_t * e) LV_SECTION;
+static lv_point_t lv_img_get_transformed_size(lv_obj_t * obj) LV_SECTION;
+static void draw_img(lv_event_t * e) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

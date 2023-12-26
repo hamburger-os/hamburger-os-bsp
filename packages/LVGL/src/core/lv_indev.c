@@ -31,16 +31,16 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void indev_pointer_proc(lv_indev_t * i, lv_indev_data_t * data);
-static void indev_keypad_proc(lv_indev_t * i, lv_indev_data_t * data);
-static void indev_encoder_proc(lv_indev_t * i, lv_indev_data_t * data);
-static void indev_button_proc(lv_indev_t * i, lv_indev_data_t * data);
-static void indev_proc_press(_lv_indev_proc_t * proc);
-static void indev_proc_release(_lv_indev_proc_t * proc);
-static void indev_proc_reset_query_handler(lv_indev_t * indev);
-static void indev_click_focus(_lv_indev_proc_t * proc);
-static void indev_gesture(_lv_indev_proc_t * proc);
-static bool indev_reset_check(_lv_indev_proc_t * proc);
+static void indev_pointer_proc(lv_indev_t * i, lv_indev_data_t * data) LV_SECTION;
+static void indev_keypad_proc(lv_indev_t * i, lv_indev_data_t * data) LV_SECTION;
+static void indev_encoder_proc(lv_indev_t * i, lv_indev_data_t * data) LV_SECTION;
+static void indev_button_proc(lv_indev_t * i, lv_indev_data_t * data) LV_SECTION;
+static void indev_proc_press(_lv_indev_proc_t * proc) LV_SECTION;
+static void indev_proc_release(_lv_indev_proc_t * proc) LV_SECTION;
+static void indev_proc_reset_query_handler(lv_indev_t * indev) LV_SECTION;
+static void indev_click_focus(_lv_indev_proc_t * proc) LV_SECTION;
+static void indev_gesture(_lv_indev_proc_t * proc) LV_SECTION;
+static bool indev_reset_check(_lv_indev_proc_t * proc) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

@@ -23,10 +23,10 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_coord_t calc_content_width(lv_obj_t * obj);
-static lv_coord_t calc_content_height(lv_obj_t * obj);
-static void layout_update_core(lv_obj_t * obj);
-static void transform_point(const lv_obj_t * obj, lv_point_t * p, bool inv);
+static lv_coord_t calc_content_width(lv_obj_t * obj) LV_SECTION;
+static lv_coord_t calc_content_height(lv_obj_t * obj) LV_SECTION;
+static void layout_update_core(lv_obj_t * obj) LV_SECTION;
+static void transform_point(const lv_obj_t * obj, lv_point_t * p, bool inv) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

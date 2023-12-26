@@ -38,11 +38,11 @@ typedef struct {
  *  STATIC PROTOTYPES
  **********************/
 #if LV_DRAW_COMPLEX
-    static void draw_quarter_0(quarter_draw_dsc_t * q);
-    static void draw_quarter_1(quarter_draw_dsc_t * q);
-    static void draw_quarter_2(quarter_draw_dsc_t * q);
-    static void draw_quarter_3(quarter_draw_dsc_t * q);
-    static void get_rounded_area(int16_t angle, lv_coord_t radius, uint8_t thickness, lv_area_t * res_area);
+    static void draw_quarter_0(quarter_draw_dsc_t * q) LV_SECTION;
+    static void draw_quarter_1(quarter_draw_dsc_t * q) LV_SECTION;
+    static void draw_quarter_2(quarter_draw_dsc_t * q) LV_SECTION;
+    static void draw_quarter_3(quarter_draw_dsc_t * q) LV_SECTION;
+    static void get_rounded_area(int16_t angle, lv_coord_t radius, uint8_t thickness, lv_area_t * res_area) LV_SECTION;
 #endif /*LV_DRAW_COMPLEX*/
 
 /**********************

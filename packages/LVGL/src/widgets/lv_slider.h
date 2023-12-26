@@ -69,7 +69,7 @@ typedef enum {
  * @param parent    pointer to an object, it will be the parent of the new slider.
  * @return          pointer to the created slider
  */
-lv_obj_t * lv_slider_create(lv_obj_t * parent);
+lv_obj_t * lv_slider_create(lv_obj_t * parent) LV_SECTION;
 
 /*=====================
  * Setter functions
@@ -81,7 +81,7 @@ lv_obj_t * lv_slider_create(lv_obj_t * parent);
  * @param value     the new value
  * @param anim      LV_ANIM_ON: set the value with an animation; LV_ANIM_OFF: change the value immediately
  */
-static inline void lv_slider_set_value(lv_obj_t * obj, int32_t value, lv_anim_enable_t anim)
+static LV_SECTION inline void lv_slider_set_value(lv_obj_t * obj, int32_t value, lv_anim_enable_t anim)
 {
     lv_bar_set_value(obj, value, anim);
 }
@@ -92,7 +92,7 @@ static inline void lv_slider_set_value(lv_obj_t * obj, int32_t value, lv_anim_en
  * @param value     new value
  * @param anim      LV_ANIM_ON: set the value with an animation; LV_ANIM_OFF: change the value immediately
  */
-static inline void lv_slider_set_left_value(lv_obj_t * obj, int32_t value, lv_anim_enable_t anim)
+static LV_SECTION inline void lv_slider_set_left_value(lv_obj_t * obj, int32_t value, lv_anim_enable_t anim)
 {
     lv_bar_set_start_value(obj, value, anim);
 }
@@ -103,7 +103,7 @@ static inline void lv_slider_set_left_value(lv_obj_t * obj, int32_t value, lv_an
  * @param min       minimum value
  * @param max       maximum value
  */
-static inline void lv_slider_set_range(lv_obj_t * obj, int32_t min, int32_t max)
+static LV_SECTION inline void lv_slider_set_range(lv_obj_t * obj, int32_t min, int32_t max)
 {
     lv_bar_set_range(obj, min, max);
 }
@@ -113,7 +113,7 @@ static inline void lv_slider_set_range(lv_obj_t * obj, int32_t min, int32_t max)
  * @param obj       pointer to a slider object
  * @param mode      the mode of the slider. See ::lv_slider_mode_t
  */
-static inline void lv_slider_set_mode(lv_obj_t * obj, lv_slider_mode_t mode)
+static LV_SECTION inline void lv_slider_set_mode(lv_obj_t * obj, lv_slider_mode_t mode)
 {
     lv_bar_set_mode(obj, (lv_bar_mode_t)mode);
 }
@@ -127,7 +127,7 @@ static inline void lv_slider_set_mode(lv_obj_t * obj, lv_slider_mode_t mode)
  * @param obj       pointer to a slider object
  * @return          the value of the main knob of the slider
  */
-static inline int32_t lv_slider_get_value(const lv_obj_t * obj)
+static LV_SECTION inline int32_t lv_slider_get_value(const lv_obj_t * obj)
 {
     return lv_bar_get_value(obj);
 }
@@ -137,7 +137,7 @@ static inline int32_t lv_slider_get_value(const lv_obj_t * obj)
  * @param obj       pointer to a slider object
  * @return          the value of the left knob of the slider
  */
-static inline int32_t lv_slider_get_left_value(const lv_obj_t * obj)
+static LV_SECTION inline int32_t lv_slider_get_left_value(const lv_obj_t * obj)
 {
     return lv_bar_get_start_value(obj);
 }
@@ -147,7 +147,7 @@ static inline int32_t lv_slider_get_left_value(const lv_obj_t * obj)
  * @param obj       pointer to a slider object
  * @return          the minimum value of the slider
  */
-static inline int32_t lv_slider_get_min_value(const lv_obj_t * obj)
+static LV_SECTION inline int32_t lv_slider_get_min_value(const lv_obj_t * obj)
 {
     return lv_bar_get_min_value(obj);
 }
@@ -157,7 +157,7 @@ static inline int32_t lv_slider_get_min_value(const lv_obj_t * obj)
  * @param obj       pointer to a slider object
  * @return          the maximum value of the slider
  */
-static inline int32_t lv_slider_get_max_value(const lv_obj_t * obj)
+static LV_SECTION inline int32_t lv_slider_get_max_value(const lv_obj_t * obj)
 {
     return lv_bar_get_max_value(obj);
 }
@@ -167,14 +167,14 @@ static inline int32_t lv_slider_get_max_value(const lv_obj_t * obj)
  * @param obj       pointer to a slider object
  * @return          true: drag in progress false: not dragged
  */
-bool lv_slider_is_dragged(const lv_obj_t * obj);
+bool lv_slider_is_dragged(const lv_obj_t * obj) LV_SECTION;
 
 /**
  * Get the mode of the slider.
  * @param obj       pointer to a bar object
  * @return          see ::lv_slider_mode_t
  */
-static inline lv_slider_mode_t lv_slider_get_mode(lv_obj_t * slider)
+static LV_SECTION inline lv_slider_mode_t lv_slider_get_mode(lv_obj_t * slider)
 {
     lv_bar_mode_t mode = lv_bar_get_mode(slider);
     if(mode == LV_BAR_MODE_SYMMETRICAL) return LV_SLIDER_MODE_SYMMETRICAL;

@@ -63,12 +63,12 @@ typedef struct cmap_table_bin {
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static bit_iterator_t init_bit_iterator(lv_fs_file_t * fp);
-static bool lvgl_load_font(lv_fs_file_t * fp, lv_font_t * font);
-int32_t load_kern(lv_fs_file_t * fp, lv_font_fmt_txt_dsc_t * font_dsc, uint8_t format, uint32_t start);
+static bit_iterator_t init_bit_iterator(lv_fs_file_t * fp) LV_SECTION;
+static bool lvgl_load_font(lv_fs_file_t * fp, lv_font_t * font) LV_SECTION;
+int32_t load_kern(lv_fs_file_t * fp, lv_font_fmt_txt_dsc_t * font_dsc, uint8_t format, uint32_t start) LV_SECTION;
 
-static int read_bits_signed(bit_iterator_t * it, int n_bits, lv_fs_res_t * res);
-static unsigned int read_bits(bit_iterator_t * it, int n_bits, lv_fs_res_t * res);
+static int read_bits_signed(bit_iterator_t * it, int n_bits, lv_fs_res_t * res) LV_SECTION;
+static unsigned int read_bits(bit_iterator_t * it, int n_bits, lv_fs_res_t * res) LV_SECTION;
 
 /**********************
  *      MACROS

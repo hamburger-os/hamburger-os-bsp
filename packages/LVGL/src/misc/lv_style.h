@@ -346,20 +346,20 @@ typedef struct {
  *       because this function won't free the used memory, just sets a default state for the style.
  *       In other words be sure to initialize styles only once!
  */
-void lv_style_init(lv_style_t * style);
+void lv_style_init(lv_style_t * style) LV_SECTION;
 
 /**
  * Clear all properties from a style and free all allocated memories.
  * @param style pointer to a style
  */
-void lv_style_reset(lv_style_t * style);
+void lv_style_reset(lv_style_t * style) LV_SECTION;
 
 /**
  * Register a new style property for custom usage
  * @return a new property ID, or LV_STYLE_PROP_INV if there are no more available.
  * @example
  * lv_style_prop_t MY_PROP;
- * static inline void lv_style_set_my_prop(lv_style_t * style, lv_color_t value) {
+ * static LV_SECTION inline void lv_style_set_my_prop(lv_style_t * style, lv_color_t value) {
  * lv_style_value_t v = {.color = value}; lv_style_set_prop(style, MY_PROP, v); }
  *
  * ...
@@ -367,12 +367,12 @@ void lv_style_reset(lv_style_t * style);
  * ...
  * lv_style_set_my_prop(&style1, lv_palette_main(LV_PALETTE_RED));
  */
-lv_style_prop_t lv_style_register_prop(uint8_t flag);
+lv_style_prop_t lv_style_register_prop(uint8_t flag) LV_SECTION;
 
 /**
  * Get the number of custom properties that have been registered thus far.
  */
-lv_style_prop_t lv_style_get_num_custom_props(void);
+lv_style_prop_t lv_style_get_num_custom_props(void) LV_SECTION;
 
 /**
  * Remove a property from a style
@@ -380,7 +380,7 @@ lv_style_prop_t lv_style_get_num_custom_props(void);
  * @param prop  a style property ORed with a state.
  * @return true: the property was found and removed; false: the property wasn't found
  */
-bool lv_style_remove_prop(lv_style_t * style, lv_style_prop_t prop);
+bool lv_style_remove_prop(lv_style_t * style, lv_style_prop_t prop) LV_SECTION;
 
 /**
  * Set the value of property in a style.
@@ -390,7 +390,7 @@ bool lv_style_remove_prop(lv_style_t * style, lv_style_prop_t prop);
  * @param prop the ID of a property (e.g. `LV_STYLE_BG_COLOR`)
  * @param value `lv_style_value_t` variable in which a field is set according to the type of `prop`
  */
-void lv_style_set_prop(lv_style_t * style, lv_style_prop_t prop, lv_style_value_t value);
+void lv_style_set_prop(lv_style_t * style, lv_style_prop_t prop, lv_style_value_t value) LV_SECTION;
 
 /**
  * Set a special meta state for a property in a style.
@@ -399,7 +399,7 @@ void lv_style_set_prop(lv_style_t * style, lv_style_prop_t prop, lv_style_value_
  * @param prop the ID of a property (e.g. `LV_STYLE_BG_COLOR`)
  * @param meta the meta value to attach to the property in the style
  */
-void lv_style_set_prop_meta(lv_style_t * style, lv_style_prop_t prop, uint16_t meta);
+void lv_style_set_prop_meta(lv_style_t * style, lv_style_prop_t prop, uint16_t meta) LV_SECTION;
 
 /**
  * Get the value of a property
@@ -410,7 +410,7 @@ void lv_style_set_prop_meta(lv_style_t * style, lv_style_prop_t prop, uint16_t m
  *         LV_RES_OK: the property was fond, and `value` is set accordingly
  * @note For performance reasons there are no sanity check on `style`
  */
-lv_style_res_t lv_style_get_prop(const lv_style_t * style, lv_style_prop_t prop, lv_style_value_t * value);
+lv_style_res_t lv_style_get_prop(const lv_style_t * style, lv_style_prop_t prop, lv_style_value_t * value) LV_SECTION;
 
 /**
  * Initialize a transition descriptor.
@@ -426,14 +426,14 @@ lv_style_res_t lv_style_get_prop(const lv_style_t * style, lv_style_prop_t prop,
  *  lv_style_transition_dsc_init(&trans1, trans_props, NULL, 300, 0, NULL);
  */
 void lv_style_transition_dsc_init(lv_style_transition_dsc_t * tr, const lv_style_prop_t props[],
-                                  lv_anim_path_cb_t path_cb, uint32_t time, uint32_t delay, void * user_data);
+                                  lv_anim_path_cb_t path_cb, uint32_t time, uint32_t delay, void * user_data) LV_SECTION;
 
 /**
  * Get the default value of a property
  * @param prop the ID of a property
  * @return the default value
  */
-lv_style_value_t lv_style_prop_get_default(lv_style_prop_t prop);
+lv_style_value_t lv_style_prop_get_default(lv_style_prop_t prop) LV_SECTION;
 
 /**
  * Get the value of a property
@@ -445,7 +445,7 @@ lv_style_value_t lv_style_prop_get_default(lv_style_prop_t prop);
  * @note For performance reasons there are no sanity check on `style`
  * @note This function is the same as ::lv_style_get_prop but inlined. Use it only on performance critical places
  */
-static inline lv_style_res_t lv_style_get_prop_inlined(const lv_style_t * style, lv_style_prop_t prop,
+static LV_SECTION inline lv_style_res_t lv_style_get_prop_inlined(const lv_style_t * style, lv_style_prop_t prop,
                                                        lv_style_value_t * value)
 {
     if(style->prop1 == LV_STYLE_PROP_ANY) {
@@ -500,7 +500,7 @@ static inline lv_style_res_t lv_style_get_prop_inlined(const lv_style_t * style,
  * @param style pointer to a style
  * @return true if the style is empty
  */
-bool lv_style_is_empty(const lv_style_t * style);
+bool lv_style_is_empty(const lv_style_t * style) LV_SECTION;
 
 /**
  * Tell the group of a property. If the a property from a group is set in a style the (1 << group) bit of style->has_group is set.
@@ -508,7 +508,7 @@ bool lv_style_is_empty(const lv_style_t * style);
  * @param prop a style property
  * @return the group [0..7] 7 means all the custom properties with index > 112
  */
-uint8_t _lv_style_get_prop_group(lv_style_prop_t prop);
+uint8_t _lv_style_get_prop_group(lv_style_prop_t prop) LV_SECTION;
 
 /**
  * Get the flags of a built-in or custom property.
@@ -516,17 +516,17 @@ uint8_t _lv_style_get_prop_group(lv_style_prop_t prop);
  * @param prop a style property
  * @return the flags of the property
  */
-uint8_t _lv_style_prop_lookup_flags(lv_style_prop_t prop);
+uint8_t _lv_style_prop_lookup_flags(lv_style_prop_t prop) LV_SECTION;
 
 #include "lv_style_gen.h"
 
-static inline void lv_style_set_size(lv_style_t * style, lv_coord_t value)
+static LV_SECTION inline void lv_style_set_size(lv_style_t * style, lv_coord_t value)
 {
     lv_style_set_width(style, value);
     lv_style_set_height(style, value);
 }
 
-static inline void lv_style_set_pad_all(lv_style_t * style, lv_coord_t value)
+static LV_SECTION inline void lv_style_set_pad_all(lv_style_t * style, lv_coord_t value)
 {
     lv_style_set_pad_left(style, value);
     lv_style_set_pad_right(style, value);
@@ -534,19 +534,19 @@ static inline void lv_style_set_pad_all(lv_style_t * style, lv_coord_t value)
     lv_style_set_pad_bottom(style, value);
 }
 
-static inline void lv_style_set_pad_hor(lv_style_t * style, lv_coord_t value)
+static LV_SECTION inline void lv_style_set_pad_hor(lv_style_t * style, lv_coord_t value)
 {
     lv_style_set_pad_left(style, value);
     lv_style_set_pad_right(style, value);
 }
 
-static inline void lv_style_set_pad_ver(lv_style_t * style, lv_coord_t value)
+static LV_SECTION inline void lv_style_set_pad_ver(lv_style_t * style, lv_coord_t value)
 {
     lv_style_set_pad_top(style, value);
     lv_style_set_pad_bottom(style, value);
 }
 
-static inline void lv_style_set_pad_gap(lv_style_t * style, lv_coord_t value)
+static LV_SECTION inline void lv_style_set_pad_gap(lv_style_t * style, lv_coord_t value)
 {
     lv_style_set_pad_row(style, value);
     lv_style_set_pad_column(style, value);
@@ -562,7 +562,7 @@ static inline void lv_style_set_pad_gap(lv_style_t * style, lv_coord_t value)
  * @param flag Flag
  * @return true if the flag is set for this property
  */
-static inline bool lv_style_prop_has_flag(lv_style_prop_t prop, uint8_t flag)
+static LV_SECTION inline bool lv_style_prop_has_flag(lv_style_prop_t prop, uint8_t flag)
 {
     return _lv_style_prop_lookup_flags(prop) & flag;
 }

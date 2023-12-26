@@ -38,30 +38,30 @@ struct _snippet_stack {
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_spangroup_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_spangroup_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_spangroup_event(const lv_obj_class_t * class_p, lv_event_t * e);
-static void draw_main(lv_event_t * e);
-static void refresh_self_size(lv_obj_t * obj);
+static void lv_spangroup_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_spangroup_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_spangroup_event(const lv_obj_class_t * class_p, lv_event_t * e) LV_SECTION;
+static void draw_main(lv_event_t * e) LV_SECTION;
+static void refresh_self_size(lv_obj_t * obj) LV_SECTION;
 
-static const lv_font_t * lv_span_get_style_text_font(lv_obj_t * par, lv_span_t * span);
-static lv_coord_t lv_span_get_style_text_letter_space(lv_obj_t * par, lv_span_t * span);
-static lv_color_t lv_span_get_style_text_color(lv_obj_t * par, lv_span_t * span);
-static lv_opa_t lv_span_get_style_text_opa(lv_obj_t * par, lv_span_t * span);
-static lv_opa_t lv_span_get_style_text_blend_mode(lv_obj_t * par, lv_span_t * span);
-static int32_t lv_span_get_style_text_decor(lv_obj_t * par, lv_span_t * span);
+static const lv_font_t * lv_span_get_style_text_font(lv_obj_t * par, lv_span_t * span) LV_SECTION;
+static lv_coord_t lv_span_get_style_text_letter_space(lv_obj_t * par, lv_span_t * span) LV_SECTION;
+static lv_color_t lv_span_get_style_text_color(lv_obj_t * par, lv_span_t * span) LV_SECTION;
+static lv_opa_t lv_span_get_style_text_opa(lv_obj_t * par, lv_span_t * span) LV_SECTION;
+static lv_opa_t lv_span_get_style_text_blend_mode(lv_obj_t * par, lv_span_t * span) LV_SECTION;
+static int32_t lv_span_get_style_text_decor(lv_obj_t * par, lv_span_t * span) LV_SECTION;
 
-static inline void span_text_check(const char ** text);
-static void lv_draw_span(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx);
+static LV_SECTION inline void span_text_check(const char ** text) LV_SECTION;
+static void lv_draw_span(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx) LV_SECTION;
 static bool lv_txt_get_snippet(const char * txt, const lv_font_t * font, lv_coord_t letter_space,
                                lv_coord_t max_width, lv_text_flag_t flag, lv_coord_t * use_width,
-                               uint32_t * end_ofs);
+                               uint32_t * end_ofs) LV_SECTION;
 
-static void lv_snippet_clear(void);
-static uint16_t lv_get_snippet_cnt(void);
-static void lv_snippet_push(lv_snippet_t * item);
-static lv_snippet_t * lv_get_snippet(uint16_t index);
-static lv_coord_t convert_indent_pct(lv_obj_t * spans, lv_coord_t width);
+static void lv_snippet_clear(void) LV_SECTION;
+static uint16_t lv_get_snippet_cnt(void) LV_SECTION;
+static void lv_snippet_push(lv_snippet_t * item) LV_SECTION;
+static lv_snippet_t * lv_get_snippet(uint16_t index) LV_SECTION;
+static lv_coord_t convert_indent_pct(lv_obj_t * spans, lv_coord_t width) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES
@@ -723,7 +723,7 @@ static int32_t lv_span_get_style_text_decor(lv_obj_t * par, lv_span_t * span)
     return decor;
 }
 
-static inline void span_text_check(const char ** text)
+static LV_SECTION inline void span_text_check(const char ** text)
 {
     if(*text == NULL) {
         *text = "";

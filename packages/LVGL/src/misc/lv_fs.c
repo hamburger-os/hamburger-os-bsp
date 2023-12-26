@@ -24,7 +24,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static const char * lv_fs_get_real_path(const char * path);
+static const char * lv_fs_get_real_path(const char * path) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

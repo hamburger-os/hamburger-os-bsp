@@ -30,29 +30,30 @@ typedef enum {
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void profile_create(lv_obj_t * parent);
-static void analytics_create(lv_obj_t * parent);
-static void shop_create(lv_obj_t * parent);
-static void color_changer_create(lv_obj_t * parent);
+static void profile_create(lv_obj_t * parent) LV_SECTION;
+static void analytics_create(lv_obj_t * parent) LV_SECTION;
+static void shop_create(lv_obj_t * parent) LV_SECTION;
+static void color_changer_create(lv_obj_t * parent) LV_SECTION;
+static void color_changer_anim_cb(void * var, int32_t v) LV_SECTION;
 
 static lv_obj_t * create_meter_box(lv_obj_t * parent, const char * title, const char * text1, const char * text2,
-                                   const char * text3);
+                                   const char * text3) LV_SECTION;
 static lv_obj_t * create_shop_item(lv_obj_t * parent, const void * img_src, const char * name, const char * category,
-                                   const char * price);
+                                   const char * price) LV_SECTION;
 
-static void color_changer_event_cb(lv_event_t * e);
-static void color_event_cb(lv_event_t * e);
-static void ta_event_cb(lv_event_t * e);
-static void birthday_event_cb(lv_event_t * e);
-static void calendar_event_cb(lv_event_t * e);
-static void slider_event_cb(lv_event_t * e);
-static void chart_event_cb(lv_event_t * e);
-static void shop_chart_event_cb(lv_event_t * e);
-static void meter1_indic1_anim_cb(void * var, int32_t v);
-static void meter1_indic2_anim_cb(void * var, int32_t v);
-static void meter1_indic3_anim_cb(void * var, int32_t v);
-static void meter2_timer_cb(lv_timer_t * timer);
-static void meter3_anim_cb(void * var, int32_t v);
+static void color_changer_event_cb(lv_event_t * e) LV_SECTION;
+static void color_event_cb(lv_event_t * e) LV_SECTION;
+static void ta_event_cb(lv_event_t * e) LV_SECTION;
+static void birthday_event_cb(lv_event_t * e) LV_SECTION;
+static void calendar_event_cb(lv_event_t * e) LV_SECTION;
+static void slider_event_cb(lv_event_t * e) LV_SECTION;
+static void chart_event_cb(lv_event_t * e) LV_SECTION;
+static void shop_chart_event_cb(lv_event_t * e) LV_SECTION;
+static void meter1_indic1_anim_cb(void * var, int32_t v) LV_SECTION;
+static void meter1_indic2_anim_cb(void * var, int32_t v) LV_SECTION;
+static void meter1_indic3_anim_cb(void * var, int32_t v) LV_SECTION;
+static void meter2_timer_cb(lv_timer_t * timer) LV_SECTION;
+static void meter3_anim_cb(void * var, int32_t v) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

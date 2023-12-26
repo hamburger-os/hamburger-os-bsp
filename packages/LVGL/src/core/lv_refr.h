@@ -45,7 +45,7 @@ extern "C" {
 /**
  * Initialize the screen refresh subsystem
  */
-void _lv_refr_init(void);
+void _lv_refr_init(void) LV_SECTION;
 
 /**
  * Redraw the invalidated areas now.
@@ -54,14 +54,14 @@ void _lv_refr_init(void);
  * (e.g. progress bar) this function can be called when the screen should be updated.
  * @param disp pointer to display to refresh. NULL to refresh all displays.
  */
-void lv_refr_now(lv_disp_t * disp);
+void lv_refr_now(lv_disp_t * disp) LV_SECTION;
 
 /**
  * Redrawn on object an all its children using the passed draw context
  * @param draw  pointer to an initialized draw context
  * @param obj   the start object from the redraw should start
  */
-void lv_obj_redraw(lv_draw_ctx_t * draw_ctx, lv_obj_t * obj);
+void lv_obj_redraw(lv_draw_ctx_t * draw_ctx, lv_obj_t * obj) LV_SECTION;
 
 /**
  * Invalidate an area on display to redraw it
@@ -69,13 +69,13 @@ void lv_obj_redraw(lv_draw_ctx_t * draw_ctx, lv_obj_t * obj);
  * @param disp pointer to display where the area should be invalidated (NULL can be used if there is
  * only one display)
  */
-void _lv_inv_area(lv_disp_t * disp, const lv_area_t * area_p);
+void _lv_inv_area(lv_disp_t * disp, const lv_area_t * area_p) LV_SECTION;
 
 /**
  * Get the display which is being refreshed
  * @return the display being refreshed
  */
-lv_disp_t * _lv_refr_get_disp_refreshing(void);
+lv_disp_t * _lv_refr_get_disp_refreshing(void) LV_SECTION;
 
 /**
  * Set the display which is being refreshed.
@@ -83,26 +83,26 @@ lv_disp_t * _lv_refr_get_disp_refreshing(void);
  * It can be used to trick the drawing functions about there is an active display.
  * @param the display being refreshed
  */
-void _lv_refr_set_disp_refreshing(lv_disp_t * disp);
+void _lv_refr_set_disp_refreshing(lv_disp_t * disp) LV_SECTION;
 
 #if LV_USE_PERF_MONITOR
 /**
  * Reset FPS counter
  */
-void lv_refr_reset_fps_counter(void);
+void lv_refr_reset_fps_counter(void) LV_SECTION;
 
 /**
  * Get the average FPS
  * @return the average FPS
  */
-uint32_t lv_refr_get_fps_avg(void);
+uint32_t lv_refr_get_fps_avg(void) LV_SECTION;
 #endif
 
 /**
  * Called periodically to handle the refreshing
  * @param timer pointer to the timer itself
  */
-void _lv_disp_refr_timer(lv_timer_t * timer);
+void _lv_disp_refr_timer(lv_timer_t * timer) LV_SECTION;
 
 /**********************
  *   STATIC FUNCTIONS

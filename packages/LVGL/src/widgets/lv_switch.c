@@ -40,14 +40,14 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_switch_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_switch_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_switch_event(const lv_obj_class_t * class_p, lv_event_t * e);
-static void draw_main(lv_event_t * e);
+static void lv_switch_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_switch_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_switch_event(const lv_obj_class_t * class_p, lv_event_t * e) LV_SECTION;
+static void draw_main(lv_event_t * e) LV_SECTION;
 
-static void lv_switch_anim_exec_cb(void * sw, int32_t value);
-static void lv_switch_trigger_anim(lv_obj_t * obj);
-static void lv_switch_anim_ready(lv_anim_t * a);
+static void lv_switch_anim_exec_cb(void * sw, int32_t value) LV_SECTION;
+static void lv_switch_trigger_anim(lv_obj_t * obj) LV_SECTION;
+static void lv_switch_anim_ready(lv_anim_t * a) LV_SECTION;
 /**********************
  *  STATIC VARIABLES
  **********************/

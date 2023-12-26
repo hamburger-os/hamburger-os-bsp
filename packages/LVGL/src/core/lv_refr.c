@@ -51,22 +51,22 @@ typedef struct {
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_refr_join_area(void);
-static void refr_invalid_areas(void);
-static void refr_area(const lv_area_t * area_p);
-static void refr_area_part(lv_draw_ctx_t * draw_ctx);
-static lv_obj_t * lv_refr_get_top_obj(const lv_area_t * area_p, lv_obj_t * obj);
-static void refr_obj_and_children(lv_draw_ctx_t * draw_ctx, lv_obj_t * top_obj);
-static void refr_obj(lv_draw_ctx_t * draw_ctx, lv_obj_t * obj);
-static uint32_t get_max_row(lv_disp_t * disp, lv_coord_t area_w, lv_coord_t area_h);
-static void draw_buf_flush(lv_disp_t * disp);
-static void call_flush_cb(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p);
+static void lv_refr_join_area(void) LV_SECTION;
+static void refr_invalid_areas(void) LV_SECTION;
+static void refr_area(const lv_area_t * area_p) LV_SECTION;
+static void refr_area_part(lv_draw_ctx_t * draw_ctx) LV_SECTION;
+static lv_obj_t * lv_refr_get_top_obj(const lv_area_t * area_p, lv_obj_t * obj) LV_SECTION;
+static void refr_obj_and_children(lv_draw_ctx_t * draw_ctx, lv_obj_t * top_obj) LV_SECTION;
+static void refr_obj(lv_draw_ctx_t * draw_ctx, lv_obj_t * obj) LV_SECTION;
+static uint32_t get_max_row(lv_disp_t * disp, lv_coord_t area_w, lv_coord_t area_h) LV_SECTION;
+static void draw_buf_flush(lv_disp_t * disp) LV_SECTION;
+static void call_flush_cb(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p) LV_SECTION;
 
 #if LV_USE_PERF_MONITOR
-    static void perf_monitor_init(perf_monitor_t * perf_monitor);
+    static void perf_monitor_init(perf_monitor_t * perf_monitor) LV_SECTION;
 #endif
 #if LV_USE_MEM_MONITOR
-    static void mem_monitor_init(mem_monitor_t * mem_monitor);
+    static void mem_monitor_init(mem_monitor_t * mem_monitor) LV_SECTION;
 #endif
 
 /**********************
@@ -1050,7 +1050,7 @@ static void LV_ATTRIBUTE_FAST_MEM draw_buf_rotate_90(bool invert_i, lv_coord_t a
 /**
  * Helper function for draw_buf_rotate_90_sqr. Given a list of four numbers, rotate the entire list to the left.
  */
-static inline void draw_buf_rotate4(lv_color_t * a, lv_color_t * b, lv_color_t * c, lv_color_t * d)
+static LV_SECTION inline void draw_buf_rotate4(lv_color_t * a, lv_color_t * b, lv_color_t * c, lv_color_t * d)
 {
     lv_color_t tmp;
     tmp = *a;

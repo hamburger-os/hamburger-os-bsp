@@ -28,9 +28,9 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void anim_timer(lv_timer_t * param);
-static void anim_mark_list_change(void);
-static void anim_ready_handler(lv_anim_t * a);
+static void anim_timer(lv_timer_t * param) LV_SECTION;
+static void anim_mark_list_change(void) LV_SECTION;
+static void anim_ready_handler(lv_anim_t * a) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

@@ -35,17 +35,17 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_grad_t * next_in_cache(lv_grad_t * item);
+static lv_grad_t * next_in_cache(lv_grad_t * item) LV_SECTION;
 
 typedef lv_res_t (*op_cache_t)(lv_grad_t * c, void * ctx);
-static lv_res_t iterate_cache(op_cache_t func, void * ctx, lv_grad_t ** out);
-static size_t get_cache_item_size(lv_grad_t * c);
-static lv_grad_t * allocate_item(const lv_grad_dsc_t * g, lv_coord_t w, lv_coord_t h);
-static lv_res_t find_oldest_item_life(lv_grad_t * c, void * ctx);
-static lv_res_t kill_oldest_item(lv_grad_t * c, void * ctx);
-static lv_res_t find_item(lv_grad_t * c, void * ctx);
-static void free_item(lv_grad_t * c);
-static  uint32_t compute_key(const lv_grad_dsc_t * g, lv_coord_t w, lv_coord_t h);
+static lv_res_t iterate_cache(op_cache_t func, void * ctx, lv_grad_t ** out) LV_SECTION;
+static size_t get_cache_item_size(lv_grad_t * c) LV_SECTION;
+static lv_grad_t * allocate_item(const lv_grad_dsc_t * g, lv_coord_t w, lv_coord_t h) LV_SECTION;
+static lv_res_t find_oldest_item_life(lv_grad_t * c, void * ctx) LV_SECTION;
+static lv_res_t kill_oldest_item(lv_grad_t * c, void * ctx) LV_SECTION;
+static lv_res_t find_item(lv_grad_t * c, void * ctx) LV_SECTION;
+static void free_item(lv_grad_t * c) LV_SECTION;
+static  uint32_t compute_key(const lv_grad_dsc_t * g, lv_coord_t w, lv_coord_t h) LV_SECTION;
 
 
 /**********************

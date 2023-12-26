@@ -13,7 +13,7 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-
+#include "../lv_conf_internal.h"
 #include "lv_types.h"
 
 /*********************
@@ -41,14 +41,14 @@ typedef void (*lv_async_cb_t)(void *);
  *                  the `func_name(object, callback, ...)` convention)
  * @param user_data custom parameter
  */
-lv_res_t lv_async_call(lv_async_cb_t async_xcb, void * user_data);
+lv_res_t lv_async_call(lv_async_cb_t async_xcb, void * user_data) LV_SECTION;
 
 /**
  * Cancel an asynchronous function call
  * @param async_xcb a callback which is the task itself.
  * @param user_data custom parameter
  */
-lv_res_t lv_async_call_cancel(lv_async_cb_t async_xcb, void * user_data);
+lv_res_t lv_async_call_cancel(lv_async_cb_t async_xcb, void * user_data) LV_SECTION;
 
 /**********************
  *      MACROS

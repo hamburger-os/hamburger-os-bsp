@@ -28,23 +28,23 @@
  **********************/
 
 #if LV_TXT_ENC == LV_TXT_ENC_UTF8
-    static uint8_t lv_txt_utf8_size(const char * str);
-    static uint32_t lv_txt_unicode_to_utf8(uint32_t letter_uni);
-    static uint32_t lv_txt_utf8_conv_wc(uint32_t c);
-    static uint32_t lv_txt_utf8_next(const char * txt, uint32_t * i);
-    static uint32_t lv_txt_utf8_prev(const char * txt, uint32_t * i_start);
-    static uint32_t lv_txt_utf8_get_byte_id(const char * txt, uint32_t utf8_id);
-    static uint32_t lv_txt_utf8_get_char_id(const char * txt, uint32_t byte_id);
-    static uint32_t lv_txt_utf8_get_length(const char * txt);
+    static uint8_t lv_txt_utf8_size(const char * str) LV_SECTION;
+    static uint32_t lv_txt_unicode_to_utf8(uint32_t letter_uni) LV_SECTION;
+    static uint32_t lv_txt_utf8_conv_wc(uint32_t c) LV_SECTION;
+    static uint32_t lv_txt_utf8_next(const char * txt, uint32_t * i) LV_SECTION;
+    static uint32_t lv_txt_utf8_prev(const char * txt, uint32_t * i_start) LV_SECTION;
+    static uint32_t lv_txt_utf8_get_byte_id(const char * txt, uint32_t utf8_id) LV_SECTION;
+    static uint32_t lv_txt_utf8_get_char_id(const char * txt, uint32_t byte_id) LV_SECTION;
+    static uint32_t lv_txt_utf8_get_length(const char * txt) LV_SECTION;
 #elif LV_TXT_ENC == LV_TXT_ENC_ASCII
-    static uint8_t lv_txt_iso8859_1_size(const char * str);
-    static uint32_t lv_txt_unicode_to_iso8859_1(uint32_t letter_uni);
-    static uint32_t lv_txt_iso8859_1_conv_wc(uint32_t c);
-    static uint32_t lv_txt_iso8859_1_next(const char * txt, uint32_t * i);
-    static uint32_t lv_txt_iso8859_1_prev(const char * txt, uint32_t * i_start);
-    static uint32_t lv_txt_iso8859_1_get_byte_id(const char * txt, uint32_t utf8_id);
-    static uint32_t lv_txt_iso8859_1_get_char_id(const char * txt, uint32_t byte_id);
-    static uint32_t lv_txt_iso8859_1_get_length(const char * txt);
+    static uint8_t lv_txt_iso8859_1_size(const char * str) LV_SECTION;
+    static uint32_t lv_txt_unicode_to_iso8859_1(uint32_t letter_uni) LV_SECTION;
+    static uint32_t lv_txt_iso8859_1_conv_wc(uint32_t c) LV_SECTION;
+    static uint32_t lv_txt_iso8859_1_next(const char * txt, uint32_t * i) LV_SECTION;
+    static uint32_t lv_txt_iso8859_1_prev(const char * txt, uint32_t * i_start) LV_SECTION;
+    static uint32_t lv_txt_iso8859_1_get_byte_id(const char * txt, uint32_t utf8_id) LV_SECTION;
+    static uint32_t lv_txt_iso8859_1_get_char_id(const char * txt, uint32_t byte_id) LV_SECTION;
+    static uint32_t lv_txt_iso8859_1_get_length(const char * txt) LV_SECTION;
 #endif
 /**********************
  *  STATIC VARIABLES

@@ -28,9 +28,8 @@ extern "C" {
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
-void lv_demo_stress(void);
-
-void lv_demo_stress_close(void);
+void lv_demo_stress(void) LV_SECTION;
+void lv_demo_stress_close(void) LV_SECTION;
 
 /**********************
  *      MACROS

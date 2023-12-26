@@ -57,7 +57,7 @@ typedef uint8_t lv_animimg_part_t;
  * @param parent pointer to an object, it will be the parent of the new button
  * @return pointer to the created animation image object
  */
-lv_obj_t * lv_animimg_create(lv_obj_t * parent);
+lv_obj_t * lv_animimg_create(lv_obj_t * parent) LV_SECTION;
 
 /*=====================
  * Setter functions
@@ -69,26 +69,26 @@ lv_obj_t * lv_animimg_create(lv_obj_t * parent);
  * @param dsc pointer to a series images
  * @param num images' number
  */
-void lv_animimg_set_src(lv_obj_t * img, const void * dsc[], uint8_t num);
+void lv_animimg_set_src(lv_obj_t * img, const void * dsc[], uint8_t num) LV_SECTION;
 
 /**
  * Startup the image animation.
  * @param obj pointer to an animation image object
  */
-void lv_animimg_start(lv_obj_t * obj);
+void lv_animimg_start(lv_obj_t * obj) LV_SECTION;
 
 /**
  * Set the image animation duration time. unit:ms
  * @param img pointer to an animation image object
  */
-void lv_animimg_set_duration(lv_obj_t * img, uint32_t duration);
+void lv_animimg_set_duration(lv_obj_t * img, uint32_t duration) LV_SECTION;
 
 /**
  * Set the image animation reapeatly play times.
  * @param img pointer to an animation image object
  * @param count the number of times to repeat the animation
  */
-void lv_animimg_set_repeat_count(lv_obj_t * img, uint16_t count);
+void lv_animimg_set_repeat_count(lv_obj_t * img, uint16_t count) LV_SECTION;
 
 /*=====================
  * Getter functions

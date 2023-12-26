@@ -71,21 +71,21 @@ extern const lv_obj_class_t lv_spangroup_class;
  * @param par pointer to an object, it will be the parent of the new spangroup
  * @return pointer to the created spangroup
  */
-lv_obj_t * lv_spangroup_create(lv_obj_t * par);
+lv_obj_t * lv_spangroup_create(lv_obj_t * par) LV_SECTION;
 
 /**
  * Create a span string descriptor and add to spangroup.
  * @param obj pointer to a spangroup object.
  * @return pointer to the created span.
  */
-lv_span_t * lv_spangroup_new_span(lv_obj_t * obj);
+lv_span_t * lv_spangroup_new_span(lv_obj_t * obj) LV_SECTION;
 
 /**
  * Remove the span from the spangroup and free memory.
  * @param obj pointer to a spangroup object.
  * @param span pointer to a span.
  */
-void lv_spangroup_del_span(lv_obj_t * obj, lv_span_t * span);
+void lv_spangroup_del_span(lv_obj_t * obj, lv_span_t * span) LV_SECTION;
 
 /*=====================
  * Setter functions
@@ -96,7 +96,7 @@ void lv_spangroup_del_span(lv_obj_t * obj, lv_span_t * span);
  * @param span pointer to a span.
  * @param text pointer to a text.
  */
-void lv_span_set_text(lv_span_t * span, const char * text);
+void lv_span_set_text(lv_span_t * span, const char * text) LV_SECTION;
 
 /**
  * Set a static text. It will not be saved by the span so the 'text' variable
@@ -104,42 +104,42 @@ void lv_span_set_text(lv_span_t * span, const char * text);
  * @param span pointer to a span.
  * @param text pointer to a text.
  */
-void lv_span_set_text_static(lv_span_t * span, const char * text);
+void lv_span_set_text_static(lv_span_t * span, const char * text) LV_SECTION;
 
 /**
  * Set the align of the spangroup.
  * @param obj pointer to a spangroup object.
  * @param align see lv_text_align_t for details.
  */
-void lv_spangroup_set_align(lv_obj_t * obj, lv_text_align_t align);
+void lv_spangroup_set_align(lv_obj_t * obj, lv_text_align_t align) LV_SECTION;
 
 /**
  * Set the overflow of the spangroup.
  * @param obj pointer to a spangroup object.
  * @param overflow see lv_span_overflow_t for details.
  */
-void lv_spangroup_set_overflow(lv_obj_t * obj, lv_span_overflow_t overflow);
+void lv_spangroup_set_overflow(lv_obj_t * obj, lv_span_overflow_t overflow) LV_SECTION;
 
 /**
  * Set the indent of the spangroup.
  * @param obj pointer to a spangroup object.
  * @param indent The first line indentation
  */
-void lv_spangroup_set_indent(lv_obj_t * obj, lv_coord_t indent);
+void lv_spangroup_set_indent(lv_obj_t * obj, lv_coord_t indent) LV_SECTION;
 
 /**
  * Set the mode of the spangroup.
  * @param obj pointer to a spangroup object.
  * @param mode see lv_span_mode_t for details.
  */
-void lv_spangroup_set_mode(lv_obj_t * obj, lv_span_mode_t mode);
+void lv_spangroup_set_mode(lv_obj_t * obj, lv_span_mode_t mode) LV_SECTION;
 
 /**
  * Set lines of the spangroup.
  * @param obj pointer to a spangroup object.
  * @param lines max lines that can be displayed in LV_SPAN_MODE_BREAK mode. < 0 means no limit.
  */
-void lv_spangroup_set_lines(lv_obj_t * obj, int32_t lines);
+void lv_spangroup_set_lines(lv_obj_t * obj, int32_t lines) LV_SECTION;
 
 /*=====================
  * Getter functions
@@ -157,54 +157,54 @@ void lv_spangroup_set_lines(lv_obj_t * obj, int32_t lines);
  *              -2: the second youngest
  * @return      The child span at index `id`, or NULL if the ID does not exist
  */
-lv_span_t * lv_spangroup_get_child(const lv_obj_t * obj, int32_t id);
+lv_span_t * lv_spangroup_get_child(const lv_obj_t * obj, int32_t id) LV_SECTION;
 
 /**
  *
  * @param obj   The spangroup object to get the child count of.
  * @return      The span count of the spangroup.
  */
-uint32_t lv_spangroup_get_child_cnt(const lv_obj_t * obj);
+uint32_t lv_spangroup_get_child_cnt(const lv_obj_t * obj) LV_SECTION;
 
 /**
  * get the align of the spangroup.
  * @param obj pointer to a spangroup object.
  * @return the align value.
  */
-lv_text_align_t lv_spangroup_get_align(lv_obj_t * obj);
+lv_text_align_t lv_spangroup_get_align(lv_obj_t * obj) LV_SECTION;
 
 /**
  * get the overflow of the spangroup.
  * @param obj pointer to a spangroup object.
  * @return the overflow value.
  */
-lv_span_overflow_t lv_spangroup_get_overflow(lv_obj_t * obj);
+lv_span_overflow_t lv_spangroup_get_overflow(lv_obj_t * obj) LV_SECTION;
 
 /**
  * get the indent of the spangroup.
  * @param obj pointer to a spangroup object.
  * @return the indent value.
  */
-lv_coord_t lv_spangroup_get_indent(lv_obj_t * obj);
+lv_coord_t lv_spangroup_get_indent(lv_obj_t * obj) LV_SECTION;
 
 /**
  * get the mode of the spangroup.
  * @param obj pointer to a spangroup object.
  */
-lv_span_mode_t lv_spangroup_get_mode(lv_obj_t * obj);
+lv_span_mode_t lv_spangroup_get_mode(lv_obj_t * obj) LV_SECTION;
 
 /**
  * get lines of the spangroup.
  * @param obj pointer to a spangroup object.
  * @return the lines value.
  */
-int32_t lv_spangroup_get_lines(lv_obj_t * obj);
+int32_t lv_spangroup_get_lines(lv_obj_t * obj) LV_SECTION;
 
 /**
  * get max line height of all span in the spangroup.
  * @param obj pointer to a spangroup object.
  */
-lv_coord_t lv_spangroup_get_max_line_h(lv_obj_t * obj);
+lv_coord_t lv_spangroup_get_max_line_h(lv_obj_t * obj) LV_SECTION;
 
 /**
  * get the text content width when all span of spangroup on a line.
@@ -213,13 +213,13 @@ lv_coord_t lv_spangroup_get_max_line_h(lv_obj_t * obj);
  * to reduce computation, if max_width == 0, returns the text content width.
  * @return text content width or max_width.
  */
-uint32_t lv_spangroup_get_expand_width(lv_obj_t * obj, uint32_t max_width);
+uint32_t lv_spangroup_get_expand_width(lv_obj_t * obj, uint32_t max_width) LV_SECTION;
 
 /**
  * get the text content height with width fixed.
  * @param obj pointer to a spangroup object.
  */
-lv_coord_t lv_spangroup_get_expand_height(lv_obj_t * obj, lv_coord_t width);
+lv_coord_t lv_spangroup_get_expand_height(lv_obj_t * obj, lv_coord_t width) LV_SECTION;
 
 
 /*=====================
@@ -230,7 +230,7 @@ lv_coord_t lv_spangroup_get_expand_height(lv_obj_t * obj, lv_coord_t width);
  * update the mode of the spangroup.
  * @param obj pointer to a spangroup object.
  */
-void lv_spangroup_refr_mode(lv_obj_t * obj);
+void lv_spangroup_refr_mode(lv_obj_t * obj) LV_SECTION;
 
 /**********************
  *      MACROS

@@ -32,11 +32,11 @@ typedef struct {
  *  STATIC PROTOTYPES
  **********************/
 static lv_res_t lv_img_decoder_built_in_line_true_color(lv_img_decoder_dsc_t * dsc, lv_coord_t x, lv_coord_t y,
-                                                        lv_coord_t len, uint8_t * buf);
+                                                        lv_coord_t len, uint8_t * buf) LV_SECTION;
 static lv_res_t lv_img_decoder_built_in_line_alpha(lv_img_decoder_dsc_t * dsc, lv_coord_t x, lv_coord_t y,
-                                                   lv_coord_t len, uint8_t * buf);
+                                                   lv_coord_t len, uint8_t * buf) LV_SECTION;
 static lv_res_t lv_img_decoder_built_in_line_indexed(lv_img_decoder_dsc_t * dsc, lv_coord_t x, lv_coord_t y,
-                                                     lv_coord_t len, uint8_t * buf);
+                                                     lv_coord_t len, uint8_t * buf) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

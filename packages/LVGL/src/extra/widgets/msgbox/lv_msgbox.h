@@ -61,30 +61,30 @@ extern const lv_obj_class_t lv_msgbox_backdrop_class;
  * @return              pointer to the message box object
  */
 lv_obj_t * lv_msgbox_create(lv_obj_t * parent, const char * title, const char * txt, const char * btn_txts[],
-                            bool add_close_btn);
+                            bool add_close_btn) LV_SECTION;
 
-lv_obj_t * lv_msgbox_get_title(lv_obj_t * obj);
+lv_obj_t * lv_msgbox_get_title(lv_obj_t * obj) LV_SECTION;
 
-lv_obj_t * lv_msgbox_get_close_btn(lv_obj_t * obj);
+lv_obj_t * lv_msgbox_get_close_btn(lv_obj_t * obj) LV_SECTION;
 
-lv_obj_t * lv_msgbox_get_text(lv_obj_t * obj);
+lv_obj_t * lv_msgbox_get_text(lv_obj_t * obj) LV_SECTION;
 
-lv_obj_t * lv_msgbox_get_content(lv_obj_t * obj);
+lv_obj_t * lv_msgbox_get_content(lv_obj_t * obj) LV_SECTION;
 
-lv_obj_t * lv_msgbox_get_btns(lv_obj_t * obj);
+lv_obj_t * lv_msgbox_get_btns(lv_obj_t * obj) LV_SECTION;
 
 /**
  * Get the index of the selected button
  * @param mbox message box object
  * @return     index of the button (LV_BTNMATRIX_BTN_NONE: if unset)
  */
-uint16_t lv_msgbox_get_active_btn(lv_obj_t * mbox);
+uint16_t lv_msgbox_get_active_btn(lv_obj_t * mbox) LV_SECTION;
 
-const char * lv_msgbox_get_active_btn_text(lv_obj_t * mbox);
+const char * lv_msgbox_get_active_btn_text(lv_obj_t * mbox) LV_SECTION;
 
-void lv_msgbox_close(lv_obj_t * mbox);
+void lv_msgbox_close(lv_obj_t * mbox) LV_SECTION;
 
-void lv_msgbox_close_async(lv_obj_t * mbox);
+void lv_msgbox_close_async(lv_obj_t * mbox) LV_SECTION;
 
 /**********************
  *      MACROS

@@ -61,22 +61,22 @@ typedef struct lv_lru_t {
  **********************/
 
 lv_lru_t * lv_lru_create(size_t cache_size, size_t average_length, lv_lru_free_t * value_free,
-                         lv_lru_free_t * key_free);
+                         lv_lru_free_t * key_free) LV_SECTION;
 
-void lv_lru_del(lv_lru_t * cache);
+void lv_lru_del(lv_lru_t * cache) LV_SECTION;
 
-lv_lru_res_t lv_lru_set(lv_lru_t * cache, const void * key, size_t key_length, void * value, size_t value_length);
+lv_lru_res_t lv_lru_set(lv_lru_t * cache, const void * key, size_t key_length, void * value, size_t value_length) LV_SECTION;
 
-lv_lru_res_t lv_lru_get(lv_lru_t * cache, const void * key, size_t key_size, void ** value);
+lv_lru_res_t lv_lru_get(lv_lru_t * cache, const void * key, size_t key_size, void ** value) LV_SECTION;
 
-lv_lru_res_t lv_lru_remove(lv_lru_t * cache, const void * key, size_t key_size);
+lv_lru_res_t lv_lru_remove(lv_lru_t * cache, const void * key, size_t key_size) LV_SECTION;
 
 /**
  * remove the least recently used item
  *
  * @todo we can optimise this by finding the n lru items, where n = required_space / average_length
  */
-void lv_lru_remove_lru_item(lv_lru_t * cache);
+void lv_lru_remove_lru_item(lv_lru_t * cache) LV_SECTION;
 /**********************
  *      MACROS
  **********************/

@@ -52,12 +52,12 @@ typedef _lv_draw_mask_saved_t _lv_draw_mask_saved_arr_t[_LV_MASK_MAX_NUM];
 
 
 #if LV_DRAW_COMPLEX == 0
-static inline  uint8_t lv_draw_mask_get_cnt(void)
+static LV_SECTION inline  uint8_t lv_draw_mask_get_cnt(void)
 {
     return 0;
 }
 
-static inline bool lv_draw_mask_is_any(const lv_area_t * a)
+static LV_SECTION inline bool lv_draw_mask_is_any(const lv_area_t * a)
 {
     LV_UNUSED(a);
     return false;
@@ -226,7 +226,7 @@ typedef struct {
  * @param custom_id a custom pointer to identify the mask. Used in `lv_draw_mask_remove_custom`.
  * @return the an integer, the ID of the mask. Can be used in `lv_draw_mask_remove_id`.
  */
-int16_t lv_draw_mask_add(void * param, void * custom_id);
+int16_t lv_draw_mask_add(void * param, void * custom_id) LV_SECTION;
 
 //! @cond Doxygen_Suppress
 
@@ -242,7 +242,7 @@ int16_t lv_draw_mask_add(void * param, void * custom_id);
  * - `LV_DRAW_MASK_RES_CHANGED`: `mask_buf` has changed, it shows the desired opacity of each pixel in the given line
  */
 lv_draw_mask_res_t /* LV_ATTRIBUTE_FAST_MEM */ lv_draw_mask_apply(lv_opa_t * mask_buf, lv_coord_t abs_x,
-                                                                  lv_coord_t abs_y, lv_coord_t len);
+                                                                  lv_coord_t abs_y, lv_coord_t len) LV_SECTION;
 
 /**
  * Apply the specified buffers on a line. Used internally by the library's drawing routines.
@@ -259,7 +259,7 @@ lv_draw_mask_res_t /* LV_ATTRIBUTE_FAST_MEM */ lv_draw_mask_apply(lv_opa_t * mas
  */
 lv_draw_mask_res_t /* LV_ATTRIBUTE_FAST_MEM */ lv_draw_mask_apply_ids(lv_opa_t * mask_buf, lv_coord_t abs_x,
                                                                       lv_coord_t abs_y, lv_coord_t len,
-                                                                      const int16_t * ids, int16_t ids_count);
+                                                                      const int16_t * ids, int16_t ids_count) LV_SECTION;
 
 //! @endcond
 
@@ -269,7 +269,7 @@ lv_draw_mask_res_t /* LV_ATTRIBUTE_FAST_MEM */ lv_draw_mask_apply_ids(lv_opa_t *
  * @return the parameter of the removed mask.
  * If more masks have `custom_id` ID then the last mask's parameter will be returned
  */
-void * lv_draw_mask_remove_id(int16_t id);
+void * lv_draw_mask_remove_id(int16_t id) LV_SECTION;
 
 /**
  * Remove all mask with a given custom ID
@@ -277,7 +277,7 @@ void * lv_draw_mask_remove_id(int16_t id);
  * @return return the parameter of the removed mask.
  * If more masks have `custom_id` ID then the last mask's parameter will be returned
  */
-void * lv_draw_mask_remove_custom(void * custom_id);
+void * lv_draw_mask_remove_custom(void * custom_id) LV_SECTION;
 
 /**
  * Free the data from the parameter.
@@ -286,13 +286,13 @@ void * lv_draw_mask_remove_custom(void * custom_id);
  * and not removed by `lv_draw_mask_remove_id` or `lv_draw_mask_remove_custom`
  * @param p pointer to a mask parameter
  */
-void lv_draw_mask_free_param(void * p);
+void lv_draw_mask_free_param(void * p) LV_SECTION;
 
 /**
  * Called by LVGL the rendering of a screen is ready to clean up
  * the temporal (cache) data of the masks
  */
-void _lv_draw_mask_cleanup(void);
+void _lv_draw_mask_cleanup(void) LV_SECTION;
 
 //! @cond Doxygen_Suppress
 
@@ -300,7 +300,7 @@ void _lv_draw_mask_cleanup(void);
  * Count the currently added masks
  * @return number of active masks
  */
-uint8_t /* LV_ATTRIBUTE_FAST_MEM */ lv_draw_mask_get_cnt(void);
+uint8_t /* LV_ATTRIBUTE_FAST_MEM */ lv_draw_mask_get_cnt(void) LV_SECTION;
 
 
 /**
@@ -308,7 +308,7 @@ uint8_t /* LV_ATTRIBUTE_FAST_MEM */ lv_draw_mask_get_cnt(void);
  * @param a     an area to test for affecting masks.
  * @return true: there is t least 1 draw mask; false: there are no draw masks
  */
-bool lv_draw_mask_is_any(const lv_area_t * a);
+bool lv_draw_mask_is_any(const lv_area_t * a) LV_SECTION;
 
 //! @endcond
 
@@ -324,7 +324,7 @@ bool lv_draw_mask_is_any(const lv_area_t * a);
  * With `LV_DRAW_MASK_LINE_SIDE_TOP/BOTTOM` and vertical line all pixels are kept
  */
 void lv_draw_mask_line_points_init(lv_draw_mask_line_param_t * param, lv_coord_t p1x, lv_coord_t p1y, lv_coord_t p2x,
-                                   lv_coord_t p2y, lv_draw_mask_line_side_t side);
+                                   lv_coord_t p2y, lv_draw_mask_line_side_t side) LV_SECTION;
 
 /**
  *Initialize a line mask from a point and an angle.
@@ -337,7 +337,7 @@ void lv_draw_mask_line_points_init(lv_draw_mask_line_param_t * param, lv_coord_t
  * With `LV_DRAW_MASK_LINE_SIDE_TOP/BOTTOM` and vertical line all pixels are kept
  */
 void lv_draw_mask_line_angle_init(lv_draw_mask_line_param_t * param, lv_coord_t p1x, lv_coord_t py, int16_t angle,
-                                  lv_draw_mask_line_side_t side);
+                                  lv_draw_mask_line_side_t side) LV_SECTION;
 
 /**
  * Initialize an angle mask.
@@ -348,7 +348,7 @@ void lv_draw_mask_line_angle_init(lv_draw_mask_line_param_t * param, lv_coord_t 
  * @param end_angle end angle
  */
 void lv_draw_mask_angle_init(lv_draw_mask_angle_param_t * param, lv_coord_t vertex_x, lv_coord_t vertex_y,
-                             lv_coord_t start_angle, lv_coord_t end_angle);
+                             lv_coord_t start_angle, lv_coord_t end_angle) LV_SECTION;
 
 /**
  * Initialize a fade mask.
@@ -357,7 +357,7 @@ void lv_draw_mask_angle_init(lv_draw_mask_angle_param_t * param, lv_coord_t vert
  * @param radius radius of the rectangle
  * @param inv true: keep the pixels inside the rectangle; keep the pixels outside of the rectangle
  */
-void lv_draw_mask_radius_init(lv_draw_mask_radius_param_t * param, const lv_area_t * rect, lv_coord_t radius, bool inv);
+void lv_draw_mask_radius_init(lv_draw_mask_radius_param_t * param, const lv_area_t * rect, lv_coord_t radius, bool inv) LV_SECTION;
 
 /**
  * Initialize a fade mask.
@@ -370,7 +370,7 @@ void lv_draw_mask_radius_init(lv_draw_mask_radius_param_t * param, const lv_area
  */
 void lv_draw_mask_fade_init(lv_draw_mask_fade_param_t * param, const lv_area_t * coords, lv_opa_t opa_top,
                             lv_coord_t y_top,
-                            lv_opa_t opa_bottom, lv_coord_t y_bottom);
+                            lv_opa_t opa_bottom, lv_coord_t y_bottom) LV_SECTION;
 
 /**
  * Initialize a map mask.
@@ -378,9 +378,9 @@ void lv_draw_mask_fade_init(lv_draw_mask_fade_param_t * param, const lv_area_t *
  * @param coords coordinates of the map (absolute coordinates)
  * @param map array of bytes with the mask values
  */
-void lv_draw_mask_map_init(lv_draw_mask_map_param_t * param, const lv_area_t * coords, const lv_opa_t * map);
+void lv_draw_mask_map_init(lv_draw_mask_map_param_t * param, const lv_area_t * coords, const lv_opa_t * map) LV_SECTION;
 
-void lv_draw_mask_polygon_init(lv_draw_mask_polygon_param_t * param, const lv_point_t * points, uint16_t point_cnt);
+void lv_draw_mask_polygon_init(lv_draw_mask_polygon_param_t * param, const lv_point_t * points, uint16_t point_cnt) LV_SECTION;
 
 #endif /*LV_DRAW_COMPLEX*/
 

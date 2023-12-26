@@ -27,13 +27,13 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_calendar_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void draw_part_begin_event_cb(lv_event_t * e);
+static void lv_calendar_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void draw_part_begin_event_cb(lv_event_t * e) LV_SECTION;
 
-static uint8_t get_day_of_week(uint32_t year, uint32_t month, uint32_t day);
-static uint8_t get_month_length(int32_t year, int32_t month);
-static uint8_t is_leap_year(uint32_t year);
-static void highlight_update(lv_obj_t * calendar);
+static uint8_t get_day_of_week(uint32_t year, uint32_t month, uint32_t day) LV_SECTION;
+static uint8_t get_month_length(int32_t year, int32_t month) LV_SECTION;
+static uint8_t is_leap_year(uint32_t year) LV_SECTION;
+static void highlight_update(lv_obj_t * calendar) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

@@ -31,19 +31,19 @@ typedef enum {
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static uint32_t get_glyph_dsc_id(const lv_font_t * font, uint32_t letter);
-static int8_t get_kern_value(const lv_font_t * font, uint32_t gid_left, uint32_t gid_right);
-static int32_t unicode_list_compare(const void * ref, const void * element);
-static int32_t kern_pair_8_compare(const void * ref, const void * element);
-static int32_t kern_pair_16_compare(const void * ref, const void * element);
+static uint32_t get_glyph_dsc_id(const lv_font_t * font, uint32_t letter) LV_SECTION;
+static int8_t get_kern_value(const lv_font_t * font, uint32_t gid_left, uint32_t gid_right) LV_SECTION;
+static int32_t unicode_list_compare(const void * ref, const void * element) LV_SECTION;
+static int32_t kern_pair_8_compare(const void * ref, const void * element) LV_SECTION;
+static int32_t kern_pair_16_compare(const void * ref, const void * element) LV_SECTION;
 
 #if LV_USE_FONT_COMPRESSED
-    static void decompress(const uint8_t * in, uint8_t * out, lv_coord_t w, lv_coord_t h, uint8_t bpp, bool prefilter);
-    static inline void decompress_line(uint8_t * out, lv_coord_t w);
-    static inline uint8_t get_bits(const uint8_t * in, uint32_t bit_pos, uint8_t len);
-    static inline void bits_write(uint8_t * out, uint32_t bit_pos, uint8_t val, uint8_t len);
-    static inline void rle_init(const uint8_t * in,  uint8_t bpp);
-    static inline uint8_t rle_next(void);
+    static void decompress(const uint8_t * in, uint8_t * out, lv_coord_t w, lv_coord_t h, uint8_t bpp, bool prefilter) LV_SECTION;
+    static LV_SECTION inline void decompress_line(uint8_t * out, lv_coord_t w) LV_SECTION;
+    static LV_SECTION inline uint8_t get_bits(const uint8_t * in, uint32_t bit_pos, uint8_t len) LV_SECTION;
+    static LV_SECTION inline void bits_write(uint8_t * out, uint32_t bit_pos, uint8_t val, uint8_t len) LV_SECTION;
+    static LV_SECTION inline void rle_init(const uint8_t * in,  uint8_t bpp) LV_SECTION;
+    static LV_SECTION inline uint8_t rle_next(void) LV_SECTION;
 #endif /*LV_USE_FONT_COMPRESSED*/
 
 /**********************
@@ -408,7 +408,7 @@ static void decompress(const uint8_t * in, uint8_t * out, lv_coord_t w, lv_coord
  * @param out output buffer
  * @param w width of the line in pixel count
  */
-static inline void decompress_line(uint8_t * out, lv_coord_t w)
+static LV_SECTION inline void decompress_line(uint8_t * out, lv_coord_t w)
 {
     lv_coord_t i;
     for(i = 0; i < w; i++) {
@@ -423,7 +423,7 @@ static inline void decompress_line(uint8_t * out, lv_coord_t w)
  * @param len number of bits to read (must be <= 8).
  * @return the read bits
  */
-static inline uint8_t get_bits(const uint8_t * in, uint32_t bit_pos, uint8_t len)
+static LV_SECTION inline uint8_t get_bits(const uint8_t * in, uint32_t bit_pos, uint8_t len)
 {
     uint8_t bit_mask;
     switch(len) {
@@ -466,7 +466,7 @@ static inline uint8_t get_bits(const uint8_t * in, uint32_t bit_pos, uint8_t len
  * @param len length of bits to write from `val`. (Counted from the LSB).
  * @note `len == 3` will be converted to `len = 4` and `val` will be upscaled too
  */
-static inline void bits_write(uint8_t * out, uint32_t bit_pos, uint8_t val, uint8_t len)
+static LV_SECTION inline void bits_write(uint8_t * out, uint32_t bit_pos, uint8_t val, uint8_t len)
 {
     if(len == 3) {
         len = 4;
@@ -507,7 +507,7 @@ static inline void bits_write(uint8_t * out, uint32_t bit_pos, uint8_t val, uint
     out[byte_pos] |= (val << bit_pos);
 }
 
-static inline void rle_init(const uint8_t * in,  uint8_t bpp)
+static LV_SECTION inline void rle_init(const uint8_t * in,  uint8_t bpp)
 {
     rle_in = in;
     rle_bpp = bpp;
@@ -517,7 +517,7 @@ static inline void rle_init(const uint8_t * in,  uint8_t bpp)
     rle_cnt = 0;
 }
 
-static inline uint8_t rle_next(void)
+static LV_SECTION inline uint8_t rle_next(void)
 {
     uint8_t v = 0;
     uint8_t ret = 0;

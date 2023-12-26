@@ -35,21 +35,21 @@ typedef struct {
  *  STATIC PROTOTYPES
  **********************/
 
-static uint32_t lv_bidi_get_next_paragraph(const char * txt);
-static lv_base_dir_t lv_bidi_get_letter_dir(uint32_t letter);
-static bool lv_bidi_letter_is_weak(uint32_t letter);
-static bool lv_bidi_letter_is_rtl(uint32_t letter);
-static bool lv_bidi_letter_is_neutral(uint32_t letter);
+static uint32_t lv_bidi_get_next_paragraph(const char * txt) LV_SECTION;
+static lv_base_dir_t lv_bidi_get_letter_dir(uint32_t letter) LV_SECTION;
+static bool lv_bidi_letter_is_weak(uint32_t letter) LV_SECTION;
+static bool lv_bidi_letter_is_rtl(uint32_t letter) LV_SECTION;
+static bool lv_bidi_letter_is_neutral(uint32_t letter) LV_SECTION;
 
 static lv_base_dir_t get_next_run(const char * txt, lv_base_dir_t base_dir, uint32_t max_len, uint32_t * len,
-                                  uint16_t  * pos_conv_len);
+                                  uint16_t  * pos_conv_len) LV_SECTION;
 static void rtl_reverse(char * dest, const char * src, uint32_t len, uint16_t * pos_conv_out, uint16_t pos_conv_rd_base,
-                        uint16_t pos_conv_len);
-static uint32_t char_change_to_pair(uint32_t letter);
+                        uint16_t pos_conv_len) LV_SECTION;
+static uint32_t char_change_to_pair(uint32_t letter) LV_SECTION;
 static lv_base_dir_t bracket_process(const char * txt, uint32_t next_pos, uint32_t len, uint32_t letter,
-                                     lv_base_dir_t base_dir);
-static void fill_pos_conv(uint16_t * out, uint16_t len, uint16_t index);
-static uint32_t get_txt_len(const char * txt, uint32_t max_len);
+                                     lv_base_dir_t base_dir) LV_SECTION;
+static void fill_pos_conv(uint16_t * out, uint16_t len, uint16_t index) LV_SECTION;
+static uint32_t get_txt_len(const char * txt, uint32_t max_len) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

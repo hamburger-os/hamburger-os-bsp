@@ -20,9 +20,9 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_spinner_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void arc_anim_start_angle(void * obj, int32_t v);
-static void arc_anim_end_angle(void * obj, int32_t v);
+static void lv_spinner_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void arc_anim_start_angle(void * obj, int32_t v) LV_SECTION;
+static void arc_anim_end_angle(void * obj, int32_t v) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

@@ -155,7 +155,7 @@ typedef struct {
  * @param cf a color format (`LV_IMG_CF_...`)
  * @return an allocated image, or NULL on failure
  */
-lv_img_dsc_t * lv_img_buf_alloc(lv_coord_t w, lv_coord_t h, lv_img_cf_t cf);
+lv_img_dsc_t * lv_img_buf_alloc(lv_coord_t w, lv_coord_t h, lv_img_cf_t cf) LV_SECTION;
 
 /**
  * Get the color of an image's pixel
@@ -167,7 +167,7 @@ lv_img_dsc_t * lv_img_buf_alloc(lv_coord_t w, lv_coord_t h, lv_img_cf_t cf);
  * @param safe true: check out of bounds
  * @return color of the point
  */
-lv_color_t lv_img_buf_get_px_color(const lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t y, lv_color_t color);
+lv_color_t lv_img_buf_get_px_color(const lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t y, lv_color_t color) LV_SECTION;
 
 /**
  * Get the alpha value of an image's pixel
@@ -177,7 +177,7 @@ lv_color_t lv_img_buf_get_px_color(const lv_img_dsc_t * dsc, lv_coord_t x, lv_co
  * @param safe true: check out of bounds
  * @return alpha value of the point
  */
-lv_opa_t lv_img_buf_get_px_alpha(const lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t y);
+lv_opa_t lv_img_buf_get_px_alpha(const lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t y) LV_SECTION;
 
 /**
  * Set the color of a pixel of an image. The alpha channel won't be affected.
@@ -187,7 +187,7 @@ lv_opa_t lv_img_buf_get_px_alpha(const lv_img_dsc_t * dsc, lv_coord_t x, lv_coor
  * @param c color of the point
  * @param safe true: check out of bounds
  */
-void lv_img_buf_set_px_color(const lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t y, lv_color_t c);
+void lv_img_buf_set_px_color(const lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t y, lv_color_t c) LV_SECTION;
 
 /**
  * Set the alpha value of a pixel of an image. The color won't be affected
@@ -197,7 +197,7 @@ void lv_img_buf_set_px_color(const lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t 
  * @param opa the desired opacity
  * @param safe true: check out of bounds
  */
-void lv_img_buf_set_px_alpha(const lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t y, lv_opa_t opa);
+void lv_img_buf_set_px_alpha(const lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t y, lv_opa_t opa) LV_SECTION;
 
 /**
  * Set the palette color of an indexed image. Valid only for `LV_IMG_CF_INDEXED1/2/4/8`
@@ -209,13 +209,13 @@ void lv_img_buf_set_px_alpha(const lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t 
  *   - for `LV_IMG_CF_INDEXED8`: 0..255
  * @param c the color to set
  */
-void lv_img_buf_set_palette(const lv_img_dsc_t * dsc, uint8_t id, lv_color_t c);
+void lv_img_buf_set_palette(const lv_img_dsc_t * dsc, uint8_t id, lv_color_t c) LV_SECTION;
 
 /**
  * Free an allocated image buffer
  * @param dsc image buffer to free
  */
-void lv_img_buf_free(lv_img_dsc_t * dsc);
+void lv_img_buf_free(lv_img_dsc_t * dsc) LV_SECTION;
 
 /**
  * Get the memory consumption of a raw bitmap, given color format and dimensions.
@@ -224,7 +224,7 @@ void lv_img_buf_free(lv_img_dsc_t * dsc);
  * @param cf color format
  * @return size in bytes
  */
-uint32_t lv_img_buf_get_img_size(lv_coord_t w, lv_coord_t h, lv_img_cf_t cf);
+uint32_t lv_img_buf_get_img_size(lv_coord_t w, lv_coord_t h, lv_img_cf_t cf) LV_SECTION;
 
 /**
  * Get the area of a rectangle if its rotated and scaled
@@ -236,7 +236,7 @@ uint32_t lv_img_buf_get_img_size(lv_coord_t w, lv_coord_t h, lv_img_cf_t cf);
  * @param pivot x,y pivot coordinates of rotation
  */
 void _lv_img_buf_get_transformed_area(lv_area_t * res, lv_coord_t w, lv_coord_t h, int16_t angle, uint16_t zoom,
-                                      const lv_point_t * pivot);
+                                      const lv_point_t * pivot) LV_SECTION;
 
 /**********************
  *      MACROS

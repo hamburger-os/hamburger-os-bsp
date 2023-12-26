@@ -34,7 +34,7 @@ typedef uint8_t cmd_state_t;
  *  STATIC PROTOTYPES
  **********************/
 
-static uint8_t hex_char_to_num(char hex);
+static uint8_t hex_char_to_num(char hex) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

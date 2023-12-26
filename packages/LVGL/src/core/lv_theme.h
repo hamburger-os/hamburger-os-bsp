@@ -50,13 +50,13 @@ typedef struct _lv_theme_t {
  * @param obj       pointer to a theme object
  * @return          the theme of the object's display (can be NULL)
  */
-lv_theme_t  * lv_theme_get_from_obj(lv_obj_t * obj);
+lv_theme_t  * lv_theme_get_from_obj(lv_obj_t * obj) LV_SECTION;
 
 /**
  * Apply the active theme on an object
  * @param obj pointer to an object
  */
-void lv_theme_apply(lv_obj_t * obj);
+void lv_theme_apply(lv_obj_t * obj) LV_SECTION;
 
 /**
  * Set a base theme for a theme.
@@ -65,7 +65,7 @@ void lv_theme_apply(lv_obj_t * obj);
  * @param new_theme pointer to theme which base should be set
  * @param parent pointer to the base theme
  */
-void lv_theme_set_parent(lv_theme_t * new_theme, lv_theme_t * parent);
+void lv_theme_set_parent(lv_theme_t * new_theme, lv_theme_t * parent) LV_SECTION;
 
 /**
  * Set an apply callback for a theme.
@@ -73,41 +73,41 @@ void lv_theme_set_parent(lv_theme_t * new_theme, lv_theme_t * parent);
  * @param theme pointer to theme which callback should be set
  * @param apply_cb pointer to the callback
  */
-void lv_theme_set_apply_cb(lv_theme_t * theme, lv_theme_apply_cb_t apply_cb);
+void lv_theme_set_apply_cb(lv_theme_t * theme, lv_theme_apply_cb_t apply_cb) LV_SECTION;
 
 /**
  * Get the small font of the theme
  * @param obj pointer to an object
  * @return pointer to the font
  */
-const lv_font_t * lv_theme_get_font_small(lv_obj_t * obj);
+const lv_font_t * lv_theme_get_font_small(lv_obj_t * obj) LV_SECTION;
 /**
  * Get the normal font of the theme
  * @param obj pointer to an object
  * @return pointer to the font
  */
-const lv_font_t * lv_theme_get_font_normal(lv_obj_t * obj);
+const lv_font_t * lv_theme_get_font_normal(lv_obj_t * obj) LV_SECTION;
 
 /**
  * Get the subtitle font of the theme
  * @param obj pointer to an object
  * @return pointer to the font
  */
-const lv_font_t * lv_theme_get_font_large(lv_obj_t * obj);
+const lv_font_t * lv_theme_get_font_large(lv_obj_t * obj) LV_SECTION;
 
 /**
  * Get the primary color of the theme
  * @param obj pointer to an object
  * @return the color
  */
-lv_color_t lv_theme_get_color_primary(lv_obj_t * obj);
+lv_color_t lv_theme_get_color_primary(lv_obj_t * obj) LV_SECTION;
 
 /**
  * Get the secondary color of the theme
  * @param obj pointer to an object
  * @return the color
  */
-lv_color_t lv_theme_get_color_secondary(lv_obj_t * obj);
+lv_color_t lv_theme_get_color_secondary(lv_obj_t * obj) LV_SECTION;
 
 /**********************
  *    MACROS

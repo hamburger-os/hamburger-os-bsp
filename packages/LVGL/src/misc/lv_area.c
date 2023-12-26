@@ -23,7 +23,7 @@
  *  STATIC PROTOTYPES
  **********************/
 
-static bool lv_point_within_circle(const lv_area_t * area, const lv_point_t * p);
+static bool lv_point_within_circle(const lv_area_t * area, const lv_point_t * p) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

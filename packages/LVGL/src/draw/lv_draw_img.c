@@ -27,10 +27,10 @@
  **********************/
 static lv_res_t /* LV_ATTRIBUTE_FAST_MEM */ decode_and_draw(lv_draw_ctx_t * draw_ctx,
                                                             const lv_draw_img_dsc_t * draw_dsc,
-                                                            const lv_area_t * coords, const void * src);
+                                                            const lv_area_t * coords, const void * src) LV_SECTION;
 
-static void show_error(lv_draw_ctx_t * draw_ctx, const lv_area_t * coords, const char * msg);
-static void draw_cleanup(_lv_img_cache_entry_t * cache);
+static void show_error(lv_draw_ctx_t * draw_ctx, const lv_area_t * coords, const char * msg) LV_SECTION;
+static void draw_cleanup(_lv_img_cache_entry_t * cache) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

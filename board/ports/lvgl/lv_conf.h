@@ -14,7 +14,8 @@
 #include <rtconfig.h>
 
 #define LV_COLOR_DEPTH          16
-#define LV_USE_PERF_MONITOR     1
+#define LV_USE_PERF_MONITOR     BSP_USING_PERF_MONITOR  //帧率监测
+#define LV_USE_MEM_MONITOR      BSP_USING_MEM_MONITOR   //内存监测
 #define LV_HOR_RES_MAX          LCD_WIDTH
 #define LV_VER_RES_MAX          LCD_HEIGHT
 

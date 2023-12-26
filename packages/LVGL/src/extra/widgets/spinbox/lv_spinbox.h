@@ -56,7 +56,7 @@ extern const lv_obj_class_t lv_spinbox_class;
  * @param parent pointer to an object, it will be the parent of the new spinbox
  * @return pointer to the created spinbox
  */
-lv_obj_t * lv_spinbox_create(lv_obj_t * parent);
+lv_obj_t * lv_spinbox_create(lv_obj_t * parent) LV_SECTION;
 
 /*=====================
  * Setter functions
@@ -67,14 +67,14 @@ lv_obj_t * lv_spinbox_create(lv_obj_t * parent);
  * @param obj pointer to spinbox
  * @param i value to be set
  */
-void lv_spinbox_set_value(lv_obj_t * obj, int32_t i);
+void lv_spinbox_set_value(lv_obj_t * obj, int32_t i) LV_SECTION;
 
 /**
  * Set spinbox rollover function
  * @param obj pointer to spinbox
  * @param b true or false to enable or disable (default)
  */
-void lv_spinbox_set_rollover(lv_obj_t * obj, bool b);
+void lv_spinbox_set_rollover(lv_obj_t * obj, bool b) LV_SECTION;
 
 /**
  * Set spinbox digit format (digit count and decimal format)
@@ -83,14 +83,14 @@ void lv_spinbox_set_rollover(lv_obj_t * obj, bool b);
  * @param separator_position number of digit before the decimal point. If 0, decimal point is not
  * shown
  */
-void lv_spinbox_set_digit_format(lv_obj_t * obj, uint8_t digit_count, uint8_t separator_position);
+void lv_spinbox_set_digit_format(lv_obj_t * obj, uint8_t digit_count, uint8_t separator_position) LV_SECTION;
 
 /**
  * Set spinbox step
  * @param obj pointer to spinbox
  * @param step steps on increment/decrement. Can be 1, 10, 100, 1000, etc the digit that will change.
  */
-void lv_spinbox_set_step(lv_obj_t * obj, uint32_t step);
+void lv_spinbox_set_step(lv_obj_t * obj, uint32_t step) LV_SECTION;
 
 /**
  * Set spinbox value range
@@ -98,21 +98,21 @@ void lv_spinbox_set_step(lv_obj_t * obj, uint32_t step);
  * @param range_min maximum value, inclusive
  * @param range_max minimum value, inclusive
  */
-void lv_spinbox_set_range(lv_obj_t * obj, int32_t range_min, int32_t range_max);
+void lv_spinbox_set_range(lv_obj_t * obj, int32_t range_min, int32_t range_max) LV_SECTION;
 
 /**
  * Set cursor position to a specific digit for edition
  * @param obj pointer to spinbox
  * @param pos selected position in spinbox
  */
-void lv_spinbox_set_cursor_pos(lv_obj_t * obj, uint8_t pos);
+void lv_spinbox_set_cursor_pos(lv_obj_t * obj, uint8_t pos) LV_SECTION;
 
 /**
  * Set direction of digit step when clicking an encoder button while in editing mode
  * @param obj pointer to spinbox
  * @param direction the direction (LV_DIR_RIGHT or LV_DIR_LEFT)
  */
-void lv_spinbox_set_digit_step_direction(lv_obj_t * obj, lv_dir_t direction);
+void lv_spinbox_set_digit_step_direction(lv_obj_t * obj, lv_dir_t direction) LV_SECTION;
 
 /*=====================
  * Getter functions
@@ -122,21 +122,21 @@ void lv_spinbox_set_digit_step_direction(lv_obj_t * obj, lv_dir_t direction);
  * Get spinbox rollover function status
  * @param obj pointer to spinbox
  */
-bool lv_spinbox_get_rollover(lv_obj_t * obj);
+bool lv_spinbox_get_rollover(lv_obj_t * obj) LV_SECTION;
 
 /**
  * Get the spinbox numeral value (user has to convert to float according to its digit format)
  * @param obj pointer to spinbox
  * @return value integer value of the spinbox
  */
-int32_t lv_spinbox_get_value(lv_obj_t * obj);
+int32_t lv_spinbox_get_value(lv_obj_t * obj) LV_SECTION;
 
 /**
  * Get the spinbox step value (user has to convert to float according to its digit format)
  * @param obj pointer to spinbox
  * @return value integer step value of the spinbox
  */
-int32_t lv_spinbox_get_step(lv_obj_t * obj);
+int32_t lv_spinbox_get_step(lv_obj_t * obj) LV_SECTION;
 
 /*=====================
  * Other functions
@@ -146,25 +146,25 @@ int32_t lv_spinbox_get_step(lv_obj_t * obj);
  * Select next lower digit for edition by dividing the step by 10
  * @param obj pointer to spinbox
  */
-void lv_spinbox_step_next(lv_obj_t * obj);
+void lv_spinbox_step_next(lv_obj_t * obj) LV_SECTION;
 
 /**
  * Select next higher digit for edition by multiplying the step by 10
  * @param obj pointer to spinbox
  */
-void lv_spinbox_step_prev(lv_obj_t * obj);
+void lv_spinbox_step_prev(lv_obj_t * obj) LV_SECTION;
 
 /**
  * Increment spinbox value by one step
  * @param obj pointer to spinbox
  */
-void lv_spinbox_increment(lv_obj_t * obj);
+void lv_spinbox_increment(lv_obj_t * obj) LV_SECTION;
 
 /**
  * Decrement spinbox value by one step
  * @param obj pointer to spinbox
  */
-void lv_spinbox_decrement(lv_obj_t * obj);
+void lv_spinbox_decrement(lv_obj_t * obj) LV_SECTION;
 
 /**********************
  *      MACROS

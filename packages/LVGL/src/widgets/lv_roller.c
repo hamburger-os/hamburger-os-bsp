@@ -28,19 +28,19 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_roller_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_roller_event(const lv_obj_class_t * class_p, lv_event_t * e);
-static void lv_roller_label_event(const lv_obj_class_t * class_p, lv_event_t * e);
-static void draw_main(lv_event_t * e);
-static void draw_label(lv_event_t * e);
-static void get_sel_area(lv_obj_t * obj, lv_area_t * sel_area);
-static void refr_position(lv_obj_t * obj, lv_anim_enable_t animen);
-static lv_res_t release_handler(lv_obj_t * obj);
-static void inf_normalize(lv_obj_t * obj_scrl);
-static lv_obj_t * get_label(const lv_obj_t * obj);
-static lv_coord_t get_selected_label_width(const lv_obj_t * obj);
-static void scroll_anim_ready_cb(lv_anim_t * a);
-static void set_y_anim(void * obj, int32_t v);
+static void lv_roller_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_roller_event(const lv_obj_class_t * class_p, lv_event_t * e) LV_SECTION;
+static void lv_roller_label_event(const lv_obj_class_t * class_p, lv_event_t * e) LV_SECTION;
+static void draw_main(lv_event_t * e) LV_SECTION;
+static void draw_label(lv_event_t * e) LV_SECTION;
+static void get_sel_area(lv_obj_t * obj, lv_area_t * sel_area) LV_SECTION;
+static void refr_position(lv_obj_t * obj, lv_anim_enable_t animen) LV_SECTION;
+static lv_res_t release_handler(lv_obj_t * obj) LV_SECTION;
+static void inf_normalize(lv_obj_t * obj_scrl) LV_SECTION;
+static lv_obj_t * get_label(const lv_obj_t * obj) LV_SECTION;
+static lv_coord_t get_selected_label_width(const lv_obj_t * obj) LV_SECTION;
+static void scroll_anim_ready_cb(lv_anim_t * a) LV_SECTION;
+static void set_y_anim(void * obj, int32_t v) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

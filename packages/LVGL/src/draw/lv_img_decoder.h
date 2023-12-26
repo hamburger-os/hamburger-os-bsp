@@ -138,7 +138,7 @@ typedef struct _lv_img_decoder_dsc_t {
 /**
  * Initialize the image decoder module
  */
-void _lv_img_decoder_init(void);
+void _lv_img_decoder_init(void) LV_SECTION;
 
 /**
  * Get information about an image.
@@ -150,7 +150,7 @@ void _lv_img_decoder_init(void);
  * @param header the image info will be stored here
  * @return LV_RES_OK: success; LV_RES_INV: wasn't able to get info about the image
  */
-lv_res_t lv_img_decoder_get_info(const void * src, lv_img_header_t * header);
+lv_res_t lv_img_decoder_get_info(const void * src, lv_img_header_t * header) LV_SECTION;
 
 /**
  * Open an image.
@@ -165,7 +165,7 @@ lv_res_t lv_img_decoder_get_info(const void * src, lv_img_header_t * header);
  * @return LV_RES_OK: opened the image. `dsc->img_data` and `dsc->header` are set.
  *         LV_RES_INV: none of the registered image decoders were able to open the image.
  */
-lv_res_t lv_img_decoder_open(lv_img_decoder_dsc_t * dsc, const void * src, lv_color_t color, int32_t frame_id);
+lv_res_t lv_img_decoder_open(lv_img_decoder_dsc_t * dsc, const void * src, lv_color_t color, int32_t frame_id) LV_SECTION;
 
 /**
  * Read a line from an opened image
@@ -177,53 +177,53 @@ lv_res_t lv_img_decoder_open(lv_img_decoder_dsc_t * dsc, const void * src, lv_co
  * @return LV_RES_OK: success; LV_RES_INV: an error occurred
  */
 lv_res_t lv_img_decoder_read_line(lv_img_decoder_dsc_t * dsc, lv_coord_t x, lv_coord_t y, lv_coord_t len,
-                                  uint8_t * buf);
+                                  uint8_t * buf) LV_SECTION;
 
 /**
  * Close a decoding session
  * @param dsc pointer to `lv_img_decoder_dsc_t` used in `lv_img_decoder_open`
  */
-void lv_img_decoder_close(lv_img_decoder_dsc_t * dsc);
+void lv_img_decoder_close(lv_img_decoder_dsc_t * dsc) LV_SECTION;
 
 /**
  * Create a new image decoder
  * @return pointer to the new image decoder
  */
-lv_img_decoder_t * lv_img_decoder_create(void);
+lv_img_decoder_t * lv_img_decoder_create(void) LV_SECTION;
 
 /**
  * Delete an image decoder
  * @param decoder pointer to an image decoder
  */
-void lv_img_decoder_delete(lv_img_decoder_t * decoder);
+void lv_img_decoder_delete(lv_img_decoder_t * decoder) LV_SECTION;
 
 /**
  * Set a callback to get information about the image
  * @param decoder pointer to an image decoder
  * @param info_cb a function to collect info about an image (fill an `lv_img_header_t` struct)
  */
-void lv_img_decoder_set_info_cb(lv_img_decoder_t * decoder, lv_img_decoder_info_f_t info_cb);
+void lv_img_decoder_set_info_cb(lv_img_decoder_t * decoder, lv_img_decoder_info_f_t info_cb) LV_SECTION;
 
 /**
  * Set a callback to open an image
  * @param decoder pointer to an image decoder
  * @param open_cb a function to open an image
  */
-void lv_img_decoder_set_open_cb(lv_img_decoder_t * decoder, lv_img_decoder_open_f_t open_cb);
+void lv_img_decoder_set_open_cb(lv_img_decoder_t * decoder, lv_img_decoder_open_f_t open_cb) LV_SECTION;
 
 /**
  * Set a callback to a decoded line of an image
  * @param decoder pointer to an image decoder
  * @param read_line_cb a function to read a line of an image
  */
-void lv_img_decoder_set_read_line_cb(lv_img_decoder_t * decoder, lv_img_decoder_read_line_f_t read_line_cb);
+void lv_img_decoder_set_read_line_cb(lv_img_decoder_t * decoder, lv_img_decoder_read_line_f_t read_line_cb) LV_SECTION;
 
 /**
  * Set a callback to close a decoding session. E.g. close files and free other resources.
  * @param decoder pointer to an image decoder
  * @param close_cb a function to close a decoding session
  */
-void lv_img_decoder_set_close_cb(lv_img_decoder_t * decoder, lv_img_decoder_close_f_t close_cb);
+void lv_img_decoder_set_close_cb(lv_img_decoder_t * decoder, lv_img_decoder_close_f_t close_cb) LV_SECTION;
 
 /**
  * Get info about a built-in image
@@ -232,7 +232,7 @@ void lv_img_decoder_set_close_cb(lv_img_decoder_t * decoder, lv_img_decoder_clos
  * @param header store the image data here
  * @return LV_RES_OK: the info is successfully stored in `header`; LV_RES_INV: unknown format or other error.
  */
-lv_res_t lv_img_decoder_built_in_info(lv_img_decoder_t * decoder, const void * src, lv_img_header_t * header);
+lv_res_t lv_img_decoder_built_in_info(lv_img_decoder_t * decoder, const void * src, lv_img_header_t * header) LV_SECTION;
 
 /**
  * Open a built in image
@@ -240,7 +240,7 @@ lv_res_t lv_img_decoder_built_in_info(lv_img_decoder_t * decoder, const void * s
  * @param dsc pointer to decoder descriptor. `src`, `style` are already initialized in it.
  * @return LV_RES_OK: the info is successfully stored in `header`; LV_RES_INV: unknown format or other error.
  */
-lv_res_t lv_img_decoder_built_in_open(lv_img_decoder_t * decoder, lv_img_decoder_dsc_t * dsc);
+lv_res_t lv_img_decoder_built_in_open(lv_img_decoder_t * decoder, lv_img_decoder_dsc_t * dsc) LV_SECTION;
 
 /**
  * Decode `len` pixels starting from the given `x`, `y` coordinates and store them in `buf`.
@@ -254,14 +254,14 @@ lv_res_t lv_img_decoder_built_in_open(lv_img_decoder_t * decoder, lv_img_decoder
  * @return LV_RES_OK: ok; LV_RES_INV: failed
  */
 lv_res_t lv_img_decoder_built_in_read_line(lv_img_decoder_t * decoder, lv_img_decoder_dsc_t * dsc, lv_coord_t x,
-                                           lv_coord_t y, lv_coord_t len, uint8_t * buf);
+                                           lv_coord_t y, lv_coord_t len, uint8_t * buf) LV_SECTION;
 
 /**
  * Close the pending decoding. Free resources etc.
  * @param decoder pointer to the decoder the function associated with
  * @param dsc pointer to decoder descriptor
  */
-void lv_img_decoder_built_in_close(lv_img_decoder_t * decoder, lv_img_decoder_dsc_t * dsc);
+void lv_img_decoder_built_in_close(lv_img_decoder_t * decoder, lv_img_decoder_dsc_t * dsc) LV_SECTION;
 
 /**********************
  *      MACROS

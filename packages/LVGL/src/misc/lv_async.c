@@ -28,7 +28,7 @@ typedef struct _lv_async_info_t {
  *  STATIC PROTOTYPES
  **********************/
 
-static void lv_async_timer_cb(lv_timer_t * timer);
+static void lv_async_timer_cb(lv_timer_t * timer) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

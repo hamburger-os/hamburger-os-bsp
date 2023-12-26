@@ -40,16 +40,16 @@ struct _lv_lru_item_t {
  * @author Austin Appleby
  * @see http://sites.google.com/site/murmurhash/
  */
-static uint32_t lv_lru_hash(lv_lru_t * cache, const void * key, uint32_t key_length);
+static uint32_t lv_lru_hash(lv_lru_t * cache, const void * key, uint32_t key_length) LV_SECTION;
 
 /** compare a key against an existing item's key */
-static int lv_lru_cmp_keys(lv_lru_item_t * item, const void * key, uint32_t key_length);
+static int lv_lru_cmp_keys(lv_lru_item_t * item, const void * key, uint32_t key_length) LV_SECTION;
 
 /** remove an item and push it to the free items queue */
-static void lv_lru_remove_item(lv_lru_t * cache, lv_lru_item_t * prev, lv_lru_item_t * item, uint32_t hash_index);
+static void lv_lru_remove_item(lv_lru_t * cache, lv_lru_item_t * prev, lv_lru_item_t * item, uint32_t hash_index) LV_SECTION;
 
 /** pop an existing item off the free queue, or create a new one */
-static lv_lru_item_t * lv_lru_pop_or_create_item(lv_lru_t * cache);
+static lv_lru_item_t * lv_lru_pop_or_create_item(lv_lru_t * cache) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

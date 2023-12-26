@@ -25,8 +25,8 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_obj_construct(lv_obj_t * obj);
-static uint32_t get_instance_size(const lv_obj_class_t * class_p);
+static void lv_obj_construct(lv_obj_t * obj) LV_SECTION;
+static uint32_t get_instance_size(const lv_obj_class_t * class_p) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

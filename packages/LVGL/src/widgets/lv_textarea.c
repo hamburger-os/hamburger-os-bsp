@@ -43,23 +43,23 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_textarea_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_textarea_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_textarea_event(const lv_obj_class_t * class_p, lv_event_t * e);
-static void label_event_cb(lv_event_t * e);
-static void cursor_blink_anim_cb(void * obj, int32_t show);
-static void pwd_char_hider_anim(void * obj, int32_t x);
-static void pwd_char_hider_anim_ready(lv_anim_t * a);
-static void pwd_char_hider(lv_obj_t * obj);
-static bool char_is_accepted(lv_obj_t * obj, uint32_t c);
-static void start_cursor_blink(lv_obj_t * obj);
-static void refr_cursor_area(lv_obj_t * obj);
-static void update_cursor_position_on_click(lv_event_t * e);
-static lv_res_t insert_handler(lv_obj_t * obj, const char * txt);
-static void draw_placeholder(lv_event_t * e);
-static void draw_cursor(lv_event_t * e);
-static void auto_hide_characters(lv_obj_t * obj);
-static inline bool is_valid_but_non_printable_char(const uint32_t letter);
+static void lv_textarea_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_textarea_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_textarea_event(const lv_obj_class_t * class_p, lv_event_t * e) LV_SECTION;
+static void label_event_cb(lv_event_t * e) LV_SECTION;
+static void cursor_blink_anim_cb(void * obj, int32_t show) LV_SECTION;
+static void pwd_char_hider_anim(void * obj, int32_t x) LV_SECTION;
+static void pwd_char_hider_anim_ready(lv_anim_t * a) LV_SECTION;
+static void pwd_char_hider(lv_obj_t * obj) LV_SECTION;
+static bool char_is_accepted(lv_obj_t * obj, uint32_t c) LV_SECTION;
+static void start_cursor_blink(lv_obj_t * obj) LV_SECTION;
+static void refr_cursor_area(lv_obj_t * obj) LV_SECTION;
+static void update_cursor_position_on_click(lv_event_t * e) LV_SECTION;
+static lv_res_t insert_handler(lv_obj_t * obj, const char * txt) LV_SECTION;
+static void draw_placeholder(lv_event_t * e) LV_SECTION;
+static void draw_cursor(lv_event_t * e) LV_SECTION;
+static void auto_hide_characters(lv_obj_t * obj) LV_SECTION;
+static LV_SECTION inline bool is_valid_but_non_printable_char(const uint32_t letter) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES
@@ -1358,7 +1358,7 @@ static void auto_hide_characters(lv_obj_t * obj)
     }
 }
 
-static inline bool is_valid_but_non_printable_char(const uint32_t letter)
+static LV_SECTION inline bool is_valid_but_non_printable_char(const uint32_t letter)
 {
     if(letter == '\0' || letter == '\n' || letter == '\r') {
         return true;

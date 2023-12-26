@@ -26,9 +26,9 @@ typedef struct _lv_event_dsc_t {
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_event_dsc_t * lv_obj_get_event_dsc(const lv_obj_t * obj, uint32_t id);
-static lv_res_t event_send_core(lv_event_t * e);
-static bool event_is_bubbled(lv_event_t * e);
+static lv_event_dsc_t * lv_obj_get_event_dsc(const lv_obj_t * obj, uint32_t id) LV_SECTION;
+static lv_res_t event_send_core(lv_event_t * e) LV_SECTION;
+static bool event_is_bubbled(lv_event_t * e) LV_SECTION;
 
 
 /**********************

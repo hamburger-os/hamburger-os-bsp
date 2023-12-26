@@ -34,7 +34,7 @@ struct _lv_anim_timeline_t {
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_anim_timeline_virtual_exec_cb(void * var, int32_t v);
+static void lv_anim_timeline_virtual_exec_cb(void * var, int32_t v) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

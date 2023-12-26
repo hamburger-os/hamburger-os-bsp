@@ -57,7 +57,7 @@ typedef struct _lv_timer_t {
 /**
  * Init the lv_timer module
  */
-void _lv_timer_core_init(void);
+void _lv_timer_core_init(void) LV_SECTION;
 
 //! @cond Doxygen_Suppress
 
@@ -65,7 +65,7 @@ void _lv_timer_core_init(void);
  * Call it periodically to handle lv_timers.
  * @return time till it needs to be run next (in ms)
  */
-uint32_t /* LV_ATTRIBUTE_TIMER_HANDLER */ lv_timer_handler(void);
+uint32_t /* LV_ATTRIBUTE_TIMER_HANDLER */ lv_timer_handler(void) LV_SECTION;
 
 //! @endcond
 
@@ -75,7 +75,7 @@ uint32_t /* LV_ATTRIBUTE_TIMER_HANDLER */ lv_timer_handler(void);
  * This function is used to simplify the porting.
  * @param __ms the period for running lv_timer_handler()
  */
-static inline uint32_t LV_ATTRIBUTE_TIMER_HANDLER lv_timer_handler_run_in_period(uint32_t ms)
+static LV_SECTION inline uint32_t LV_ATTRIBUTE_TIMER_HANDLER lv_timer_handler_run_in_period(uint32_t ms)
 {
     static uint32_t last_tick = 0;
     uint32_t curr_tick = lv_tick_get();
@@ -92,7 +92,7 @@ static inline uint32_t LV_ATTRIBUTE_TIMER_HANDLER lv_timer_handler_run_in_period
  * `lv_timer_set_cb` and `lv_timer_set_period`
  * @return pointer to the created timer
  */
-lv_timer_t * lv_timer_create_basic(void);
+lv_timer_t * lv_timer_create_basic(void) LV_SECTION;
 
 /**
  * Create a new lv_timer
@@ -103,74 +103,74 @@ lv_timer_t * lv_timer_create_basic(void);
  * @param user_data custom parameter
  * @return pointer to the new timer
  */
-lv_timer_t * lv_timer_create(lv_timer_cb_t timer_xcb, uint32_t period, void * user_data);
+lv_timer_t * lv_timer_create(lv_timer_cb_t timer_xcb, uint32_t period, void * user_data) LV_SECTION;
 
 /**
  * Delete a lv_timer
  * @param timer pointer to an lv_timer
  */
-void lv_timer_del(lv_timer_t * timer);
+void lv_timer_del(lv_timer_t * timer) LV_SECTION;
 
 /**
  * Pause/resume a timer.
  * @param timer pointer to an lv_timer
  */
-void lv_timer_pause(lv_timer_t * timer);
+void lv_timer_pause(lv_timer_t * timer) LV_SECTION;
 
-void lv_timer_resume(lv_timer_t * timer);
+void lv_timer_resume(lv_timer_t * timer) LV_SECTION;
 
 /**
  * Set the callback the timer (the function to call periodically)
  * @param timer pointer to a timer
  * @param timer_cb the function to call periodically
  */
-void lv_timer_set_cb(lv_timer_t * timer, lv_timer_cb_t timer_cb);
+void lv_timer_set_cb(lv_timer_t * timer, lv_timer_cb_t timer_cb) LV_SECTION;
 
 /**
  * Set new period for a lv_timer
  * @param timer pointer to a lv_timer
  * @param period the new period
  */
-void lv_timer_set_period(lv_timer_t * timer, uint32_t period);
+void lv_timer_set_period(lv_timer_t * timer, uint32_t period) LV_SECTION;
 
 /**
  * Make a lv_timer ready. It will not wait its period.
  * @param timer pointer to a lv_timer.
  */
-void lv_timer_ready(lv_timer_t * timer);
+void lv_timer_ready(lv_timer_t * timer) LV_SECTION;
 
 /**
  * Set the number of times a timer will repeat.
  * @param timer pointer to a lv_timer.
  * @param repeat_count -1 : infinity;  0 : stop ;  n>0: residual times
  */
-void lv_timer_set_repeat_count(lv_timer_t * timer, int32_t repeat_count);
+void lv_timer_set_repeat_count(lv_timer_t * timer, int32_t repeat_count) LV_SECTION;
 
 /**
  * Reset a lv_timer.
  * It will be called the previously set period milliseconds later.
  * @param timer pointer to a lv_timer.
  */
-void lv_timer_reset(lv_timer_t * timer);
+void lv_timer_reset(lv_timer_t * timer) LV_SECTION;
 
 /**
  * Enable or disable the whole lv_timer handling
  * @param en true: lv_timer handling is running, false: lv_timer handling is suspended
  */
-void lv_timer_enable(bool en);
+void lv_timer_enable(bool en) LV_SECTION;
 
 /**
  * Get idle percentage
  * @return the lv_timer idle in percentage
  */
-uint8_t lv_timer_get_idle(void);
+uint8_t lv_timer_get_idle(void) LV_SECTION;
 
 /**
  * Iterate through the timers
  * @param timer NULL to start iteration or the previous return value to get the next timer
  * @return the next timer or NULL if there is no more timer
  */
-lv_timer_t * lv_timer_get_next(lv_timer_t * timer);
+lv_timer_t * lv_timer_get_next(lv_timer_t * timer) LV_SECTION;
 
 /**********************
  *      MACROS

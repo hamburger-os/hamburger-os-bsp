@@ -195,10 +195,10 @@ typedef struct _lv_draw_ctx_t  {
  * GLOBAL PROTOTYPES
  **********************/
 
-void lv_draw_init(void);
+void lv_draw_init(void) LV_SECTION;
 
 
-void lv_draw_wait_for_finish(lv_draw_ctx_t * draw_ctx);
+void lv_draw_wait_for_finish(lv_draw_ctx_t * draw_ctx) LV_SECTION;
 
 /**********************
  *  GLOBAL VARIABLES

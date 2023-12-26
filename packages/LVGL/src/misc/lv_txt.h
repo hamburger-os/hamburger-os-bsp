@@ -81,7 +81,7 @@ typedef uint8_t lv_text_align_t;
  * line breaks
  */
 void lv_txt_get_size(lv_point_t * size_res, const char * text, const lv_font_t * font, lv_coord_t letter_space,
-                     lv_coord_t line_space, lv_coord_t max_width, lv_text_flag_t flag);
+                     lv_coord_t line_space, lv_coord_t max_width, lv_text_flag_t flag) LV_SECTION;
 
 /**
  * Get the next line of text. Check line length and break chars too.
@@ -97,7 +97,7 @@ void lv_txt_get_size(lv_point_t * size_res, const char * text, const lv_font_t *
  * they are different)
  */
 uint32_t _lv_txt_get_next_line(const char * txt, const lv_font_t * font, lv_coord_t letter_space,
-                               lv_coord_t max_width, lv_coord_t * used_width, lv_text_flag_t flag);
+                               lv_coord_t max_width, lv_coord_t * used_width, lv_text_flag_t flag) LV_SECTION;
 
 /**
  * Give the length of a text with a given font
@@ -110,7 +110,7 @@ uint32_t _lv_txt_get_next_line(const char * txt, const lv_font_t * font, lv_coor
  * @return length of a char_num long text
  */
 lv_coord_t lv_txt_get_width(const char * txt, uint32_t length, const lv_font_t * font, lv_coord_t letter_space,
-                            lv_text_flag_t flag);
+                            lv_text_flag_t flag) LV_SECTION;
 
 /**
  * Check next character in a string and decide if the character is part of the command or not
@@ -120,7 +120,7 @@ lv_coord_t lv_txt_get_width(const char * txt, uint32_t length, const lv_font_t *
  * @return true: the character is part of a command and should not be written,
  *         false: the character should be written
  */
-bool _lv_txt_is_cmd(lv_text_cmd_state_t * state, uint32_t c);
+bool _lv_txt_is_cmd(lv_text_cmd_state_t * state, uint32_t c) LV_SECTION;
 
 /**
  * Insert a string into an other
@@ -128,7 +128,7 @@ bool _lv_txt_is_cmd(lv_text_cmd_state_t * state, uint32_t c);
  * @param pos position to insert (0: before the original text, 1: after the first char etc.)
  * @param ins_txt text to insert, must be '\0' terminated
  */
-void _lv_txt_ins(char * txt_buf, uint32_t pos, const char * ins_txt);
+void _lv_txt_ins(char * txt_buf, uint32_t pos, const char * ins_txt) LV_SECTION;
 
 /**
  * Delete a part of a string
@@ -137,14 +137,14 @@ void _lv_txt_ins(char * txt_buf, uint32_t pos, const char * ins_txt);
  * char etc.)
  * @param len number of characters to delete
  */
-void _lv_txt_cut(char * txt, uint32_t pos, uint32_t len);
+void _lv_txt_cut(char * txt, uint32_t pos, uint32_t len) LV_SECTION;
 
 /**
  * return a new formatted text. Memory will be allocated to store the text.
  * @param fmt `printf`-like format
  * @return pointer to the allocated text string.
  */
-char * _lv_txt_set_text_vfmt(const char * fmt, va_list ap) LV_FORMAT_ATTRIBUTE(1, 0);
+char * _lv_txt_set_text_vfmt(const char * fmt, va_list ap) LV_FORMAT_ATTRIBUTE(1, 0) LV_SECTION;
 
 /**
  * Decode two encoded character from a string.
@@ -155,14 +155,14 @@ char * _lv_txt_set_text_vfmt(const char * fmt, va_list ap) LV_FORMAT_ATTRIBUTE(1
  *                After the call it will point to the next encoded char in 'txt'.
  *                NULL to use txt[0] as index
  */
-void _lv_txt_encoded_letter_next_2(const char * txt, uint32_t * letter, uint32_t * letter_next, uint32_t * ofs);
+void _lv_txt_encoded_letter_next_2(const char * txt, uint32_t * letter, uint32_t * letter_next, uint32_t * ofs) LV_SECTION;
 
 /**
  * Test if char is break char or not (a text can broken here or not)
  * @param letter a letter
  * @return false: 'letter' is not break char
  */
-static inline bool _lv_txt_is_break_char(uint32_t letter)
+static LV_SECTION inline bool _lv_txt_is_break_char(uint32_t letter)
 {
     uint8_t i;
     bool ret = false;

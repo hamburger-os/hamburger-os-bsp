@@ -143,20 +143,20 @@ typedef enum {
  * @param parent    pointer to an object, it will be the parent of the new chart
  * @return          pointer to the created chart
  */
-lv_obj_t * lv_chart_create(lv_obj_t * parent);
+lv_obj_t * lv_chart_create(lv_obj_t * parent) LV_SECTION;
 
 /**
  * Set a new type for a chart
  * @param obj       pointer to a chart object
  * @param type      new type of the chart (from 'lv_chart_type_t' enum)
  */
-void lv_chart_set_type(lv_obj_t * obj, lv_chart_type_t type);
+void lv_chart_set_type(lv_obj_t * obj, lv_chart_type_t type) LV_SECTION;
 /**
  * Set the number of points on a data line on a chart
  * @param obj       pointer to a chart object
  * @param cnt       new number of points on the data lines
  */
-void lv_chart_set_point_count(lv_obj_t * obj, uint16_t cnt);
+void lv_chart_set_point_count(lv_obj_t * obj, uint16_t cnt) LV_SECTION;
 
 /**
  * Set the minimal and maximal y values on an axis
@@ -165,14 +165,14 @@ void lv_chart_set_point_count(lv_obj_t * obj, uint16_t cnt);
  * @param min       minimum value of the y axis
  * @param max       maximum value of the y axis
  */
-void lv_chart_set_range(lv_obj_t * obj, lv_chart_axis_t axis, lv_coord_t min, lv_coord_t max);
+void lv_chart_set_range(lv_obj_t * obj, lv_chart_axis_t axis, lv_coord_t min, lv_coord_t max) LV_SECTION;
 
 /**
  * Set update mode of the chart object. Affects
  * @param obj       pointer to a chart object
  * @param mode      the update mode
  */
-void lv_chart_set_update_mode(lv_obj_t * obj, lv_chart_update_mode_t update_mode);
+void lv_chart_set_update_mode(lv_obj_t * obj, lv_chart_update_mode_t update_mode) LV_SECTION;
 
 /**
  * Set the number of horizontal and vertical division lines
@@ -180,35 +180,35 @@ void lv_chart_set_update_mode(lv_obj_t * obj, lv_chart_update_mode_t update_mode
  * @param hdiv      number of horizontal division lines
  * @param vdiv      number of vertical division lines
  */
-void lv_chart_set_div_line_count(lv_obj_t * obj, uint8_t hdiv, uint8_t vdiv);
+void lv_chart_set_div_line_count(lv_obj_t * obj, uint8_t hdiv, uint8_t vdiv) LV_SECTION;
 
 /**
  * Zoom into the chart in X direction
  * @param obj       pointer to a chart object
  * @param zoom_x    zoom in x direction. LV_ZOOM_NONE or 256 for no zoom, 512 double zoom
  */
-void lv_chart_set_zoom_x(lv_obj_t * obj, uint16_t zoom_x);
+void lv_chart_set_zoom_x(lv_obj_t * obj, uint16_t zoom_x) LV_SECTION;
 
 /**
  * Zoom into the chart in Y direction
  * @param obj       pointer to a chart object
  * @param zoom_y    zoom in y direction. LV_ZOOM_NONE or 256 for no zoom, 512 double zoom
  */
-void lv_chart_set_zoom_y(lv_obj_t * obj, uint16_t zoom_y);
+void lv_chart_set_zoom_y(lv_obj_t * obj, uint16_t zoom_y) LV_SECTION;
 
 /**
  * Get X zoom of a chart
  * @param obj       pointer to a chart object
  * @return          the X zoom value
  */
-uint16_t lv_chart_get_zoom_x(const lv_obj_t * obj);
+uint16_t lv_chart_get_zoom_x(const lv_obj_t * obj) LV_SECTION;
 
 /**
  * Get Y zoom of a chart
  * @param obj       pointer to a chart object
  * @return          the Y zoom value
  */
-uint16_t lv_chart_get_zoom_y(const lv_obj_t * obj);
+uint16_t lv_chart_get_zoom_y(const lv_obj_t * obj) LV_SECTION;
 
 /**
  * Set the number of tick lines on an axis
@@ -223,21 +223,21 @@ uint16_t lv_chart_get_zoom_y(const lv_obj_t * obj);
  *                      (start with 20 px and increase if the ticks/labels are clipped)
  */
 void lv_chart_set_axis_tick(lv_obj_t * obj, lv_chart_axis_t axis, lv_coord_t major_len, lv_coord_t minor_len,
-                            lv_coord_t major_cnt, lv_coord_t minor_cnt, bool label_en, lv_coord_t draw_size);
+                            lv_coord_t major_cnt, lv_coord_t minor_cnt, bool label_en, lv_coord_t draw_size) LV_SECTION;
 
 /**
  * Get the type of a chart
  * @param obj       pointer to chart object
  * @return          type of the chart (from 'lv_chart_t' enum)
  */
-lv_chart_type_t lv_chart_get_type(const lv_obj_t * obj);
+lv_chart_type_t lv_chart_get_type(const lv_obj_t * obj) LV_SECTION;
 
 /**
  * Get the data point number per data line on chart
  * @param chart     pointer to chart object
  * @return          point number on each data line
  */
-uint16_t lv_chart_get_point_count(const lv_obj_t * obj);
+uint16_t lv_chart_get_point_count(const lv_obj_t * obj) LV_SECTION;
 
 /**
  * Get the current index of the x-axis start point in the data array
@@ -245,7 +245,7 @@ uint16_t lv_chart_get_point_count(const lv_obj_t * obj);
  * @param ser       pointer to a data series on 'chart'
  * @return          the index of the current x start point in the data array
  */
-uint16_t lv_chart_get_x_start_point(const lv_obj_t * obj, lv_chart_series_t * ser);
+uint16_t lv_chart_get_x_start_point(const lv_obj_t * obj, lv_chart_series_t * ser) LV_SECTION;
 
 /**
  * Get the position of a point to the chart.
@@ -254,13 +254,13 @@ uint16_t lv_chart_get_x_start_point(const lv_obj_t * obj, lv_chart_series_t * se
  * @param id        the index.
  * @param p_out     store the result position here
  */
-void lv_chart_get_point_pos_by_id(lv_obj_t * obj, lv_chart_series_t * ser, uint16_t id, lv_point_t * p_out);
+void lv_chart_get_point_pos_by_id(lv_obj_t * obj, lv_chart_series_t * ser, uint16_t id, lv_point_t * p_out) LV_SECTION;
 
 /**
  * Refresh a chart if its data line has changed
  * @param   chart pointer to chart object
  */
-void lv_chart_refresh(lv_obj_t * obj);
+void lv_chart_refresh(lv_obj_t * obj) LV_SECTION;
 
 /*======================
  * Series
@@ -273,14 +273,14 @@ void lv_chart_refresh(lv_obj_t * obj);
  * @param axis      the y axis to which the series should be attached (::LV_CHART_AXIS_PRIMARY_Y or ::LV_CHART_AXIS_SECONDARY_Y)
  * @return          pointer to the allocated data series
  */
-lv_chart_series_t * lv_chart_add_series(lv_obj_t * obj, lv_color_t color, lv_chart_axis_t axis);
+lv_chart_series_t * lv_chart_add_series(lv_obj_t * obj, lv_color_t color, lv_chart_axis_t axis) LV_SECTION;
 
 /**
  * Deallocate and remove a data series from a chart
  * @param chart     pointer to a chart object
  * @param series    pointer to a data series on 'chart'
  */
-void lv_chart_remove_series(lv_obj_t * obj, lv_chart_series_t * series);
+void lv_chart_remove_series(lv_obj_t * obj, lv_chart_series_t * series) LV_SECTION;
 
 /**
  * Hide/Unhide a single series of a chart.
@@ -288,7 +288,7 @@ void lv_chart_remove_series(lv_obj_t * obj, lv_chart_series_t * series);
  * @param series    pointer to a series object
  * @param hide      true: hide the series
  */
-void lv_chart_hide_series(lv_obj_t * chart, lv_chart_series_t * series, bool hide);
+void lv_chart_hide_series(lv_obj_t * chart, lv_chart_series_t * series, bool hide) LV_SECTION;
 
 /**
  * Change the color of a series
@@ -296,7 +296,7 @@ void lv_chart_hide_series(lv_obj_t * chart, lv_chart_series_t * series, bool hid
  * @param series    pointer to a series object
  * @param color     the new color of the series
  */
-void lv_chart_set_series_color(lv_obj_t * chart, lv_chart_series_t * series, lv_color_t color);
+void lv_chart_set_series_color(lv_obj_t * chart, lv_chart_series_t * series, lv_color_t color) LV_SECTION;
 
 /**
  * Set the index of the x-axis start point in the data array.
@@ -305,7 +305,7 @@ void lv_chart_set_series_color(lv_obj_t * chart, lv_chart_series_t * series, lv_
  * @param ser       pointer to a data series on 'chart'
  * @param id        the index of the x point in the data array
  */
-void lv_chart_set_x_start_point(lv_obj_t * obj, lv_chart_series_t * ser, uint16_t id);
+void lv_chart_set_x_start_point(lv_obj_t * obj, lv_chart_series_t * ser, uint16_t id) LV_SECTION;
 
 /**
  * Get the next series.
@@ -313,7 +313,7 @@ void lv_chart_set_x_start_point(lv_obj_t * obj, lv_chart_series_t * ser, uint16_
  * @param ser      the previous series or NULL to get the first
  * @return          the next series or NULL if there is no more.
  */
-lv_chart_series_t * lv_chart_get_series_next(const lv_obj_t * chart, const lv_chart_series_t * ser);
+lv_chart_series_t * lv_chart_get_series_next(const lv_obj_t * chart, const lv_chart_series_t * ser) LV_SECTION;
 
 
 
@@ -328,7 +328,7 @@ lv_chart_series_t * lv_chart_get_series_next(const lv_obj_t * chart, const lv_ch
  * @param dir       direction of the cursor. `LV_DIR_RIGHT/LEFT/TOP/DOWN/HOR/VER/ALL`. OR-ed values are possible
  * @return          pointer to the created cursor
  */
-lv_chart_cursor_t  * lv_chart_add_cursor(lv_obj_t * obj, lv_color_t color, lv_dir_t dir);
+lv_chart_cursor_t  * lv_chart_add_cursor(lv_obj_t * obj, lv_color_t color, lv_dir_t dir) LV_SECTION;
 
 /**
  * Set the coordinate of the cursor with respect to the paddings
@@ -336,7 +336,7 @@ lv_chart_cursor_t  * lv_chart_add_cursor(lv_obj_t * obj, lv_color_t color, lv_di
  * @param cursor    pointer to the cursor
  * @param pos       the new coordinate of cursor relative to the chart
  */
-void lv_chart_set_cursor_pos(lv_obj_t * chart, lv_chart_cursor_t * cursor, lv_point_t * pos);
+void lv_chart_set_cursor_pos(lv_obj_t * chart, lv_chart_cursor_t * cursor, lv_point_t * pos) LV_SECTION;
 
 /**
  * Stick the cursor to a point
@@ -346,7 +346,7 @@ void lv_chart_set_cursor_pos(lv_obj_t * chart, lv_chart_cursor_t * cursor, lv_po
  * @param point_id  the point's index or `LV_CHART_POINT_NONE` to not assign to any points.
  */
 void lv_chart_set_cursor_point(lv_obj_t * chart, lv_chart_cursor_t * cursor, lv_chart_series_t * ser,
-                               uint16_t point_id);
+                               uint16_t point_id) LV_SECTION;
 
 /**
  * Get the coordinate of the cursor with respect to the paddings
@@ -354,7 +354,7 @@ void lv_chart_set_cursor_point(lv_obj_t * chart, lv_chart_cursor_t * cursor, lv_
  * @param cursor    pointer to cursor
  * @return          coordinate of the cursor as lv_point_t
  */
-lv_point_t lv_chart_get_cursor_point(lv_obj_t * chart, lv_chart_cursor_t * cursor);
+lv_point_t lv_chart_get_cursor_point(lv_obj_t * chart, lv_chart_cursor_t * cursor) LV_SECTION;
 
 /*=====================
  * Set/Get value(s)
@@ -366,7 +366,7 @@ lv_point_t lv_chart_get_cursor_point(lv_obj_t * chart, lv_chart_cursor_t * curso
  * @param ser       pointer to a data series on 'chart'
  * @param value     the new value for all points. `LV_CHART_POINT_NONE` can be used to hide the points.
  */
-void lv_chart_set_all_value(lv_obj_t * obj, lv_chart_series_t * ser, lv_coord_t value);
+void lv_chart_set_all_value(lv_obj_t * obj, lv_chart_series_t * ser, lv_coord_t value) LV_SECTION;
 
 /**
  * Set the next point's Y value according to the update mode policy.
@@ -374,7 +374,7 @@ void lv_chart_set_all_value(lv_obj_t * obj, lv_chart_series_t * ser, lv_coord_t 
  * @param ser       pointer to a data series on 'chart'
  * @param value     the new value of the next data
  */
-void lv_chart_set_next_value(lv_obj_t * obj, lv_chart_series_t * ser, lv_coord_t value);
+void lv_chart_set_next_value(lv_obj_t * obj, lv_chart_series_t * ser, lv_coord_t value) LV_SECTION;
 
 /**
  * Set the next point's X and Y value according to the update mode policy.
@@ -383,7 +383,7 @@ void lv_chart_set_next_value(lv_obj_t * obj, lv_chart_series_t * ser, lv_coord_t
  * @param x_value   the new X value of the next data
  * @param y_value   the new Y value of the next data
  */
-void lv_chart_set_next_value2(lv_obj_t * obj, lv_chart_series_t * ser, lv_coord_t x_value, lv_coord_t y_value);
+void lv_chart_set_next_value2(lv_obj_t * obj, lv_chart_series_t * ser, lv_coord_t x_value, lv_coord_t y_value) LV_SECTION;
 
 /**
  * Set an individual point's y value of a chart's series directly based on its index
@@ -392,7 +392,7 @@ void lv_chart_set_next_value2(lv_obj_t * obj, lv_chart_series_t * ser, lv_coord_
  * @param id      the index of the x point in the array
  * @param value   value to assign to array point
  */
-void lv_chart_set_value_by_id(lv_obj_t * obj, lv_chart_series_t * ser, uint16_t id, lv_coord_t value);
+void lv_chart_set_value_by_id(lv_obj_t * obj, lv_chart_series_t * ser, uint16_t id, lv_coord_t value) LV_SECTION;
 
 /**
  * Set an individual point's x and y value of a chart's series directly based on its index
@@ -404,7 +404,7 @@ void lv_chart_set_value_by_id(lv_obj_t * obj, lv_chart_series_t * ser, uint16_t 
  * @param y_value   the new Y value of the next data
  */
 void lv_chart_set_value_by_id2(lv_obj_t * obj, lv_chart_series_t * ser, uint16_t id, lv_coord_t x_value,
-                               lv_coord_t y_value);
+                               lv_coord_t y_value) LV_SECTION;
 
 /**
  * Set an external array for the y data points to use for the chart
@@ -413,7 +413,7 @@ void lv_chart_set_value_by_id2(lv_obj_t * obj, lv_chart_series_t * ser, uint16_t
  * @param ser       pointer to a data series on 'chart'
  * @param array     external array of points for chart
  */
-void lv_chart_set_ext_y_array(lv_obj_t * obj, lv_chart_series_t * ser, lv_coord_t array[]);
+void lv_chart_set_ext_y_array(lv_obj_t * obj, lv_chart_series_t * ser, lv_coord_t array[]) LV_SECTION;
 
 /**
  * Set an external array for the x data points to use for the chart
@@ -422,7 +422,7 @@ void lv_chart_set_ext_y_array(lv_obj_t * obj, lv_chart_series_t * ser, lv_coord_
  * @param ser       pointer to a data series on 'chart'
  * @param array     external array of points for chart
  */
-void lv_chart_set_ext_x_array(lv_obj_t * obj, lv_chart_series_t * ser, lv_coord_t array[]);
+void lv_chart_set_ext_x_array(lv_obj_t * obj, lv_chart_series_t * ser, lv_coord_t array[]) LV_SECTION;
 
 /**
  * Get the array of y values of a series
@@ -430,7 +430,7 @@ void lv_chart_set_ext_x_array(lv_obj_t * obj, lv_chart_series_t * ser, lv_coord_
  * @param ser   pointer to a data series on 'chart'
  * @return      the array of values with 'point_count' elements
  */
-lv_coord_t * lv_chart_get_y_array(const lv_obj_t * obj, lv_chart_series_t * ser);
+lv_coord_t * lv_chart_get_y_array(const lv_obj_t * obj, lv_chart_series_t * ser) LV_SECTION;
 
 /**
  * Get the array of x values of a series
@@ -438,14 +438,14 @@ lv_coord_t * lv_chart_get_y_array(const lv_obj_t * obj, lv_chart_series_t * ser)
  * @param ser   pointer to a data series on 'chart'
  * @return      the array of values with 'point_count' elements
  */
-lv_coord_t * lv_chart_get_x_array(const lv_obj_t * obj, lv_chart_series_t * ser);
+lv_coord_t * lv_chart_get_x_array(const lv_obj_t * obj, lv_chart_series_t * ser) LV_SECTION;
 
 /**
  * Get the index of the currently pressed point. It's the same for every series.
  * @param obj       pointer to a chart object
  * @return          the index of the point [0 .. point count] or LV_CHART_POINT_ID_NONE if no point is being pressed
  */
-uint32_t lv_chart_get_pressed_point(const lv_obj_t * obj);
+uint32_t lv_chart_get_pressed_point(const lv_obj_t * obj) LV_SECTION;
 
 /**********************
  *      MACROS

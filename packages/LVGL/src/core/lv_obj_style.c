@@ -42,18 +42,18 @@ typedef enum {
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_style_t * get_local_style(lv_obj_t * obj, lv_style_selector_t selector);
-static _lv_obj_style_t * get_trans_style(lv_obj_t * obj, uint32_t part);
-static lv_style_res_t get_prop_core(const lv_obj_t * obj, lv_part_t part, lv_style_prop_t prop, lv_style_value_t * v);
-static void report_style_change_core(void * style, lv_obj_t * obj);
-static void refresh_children_style(lv_obj_t * obj);
-static bool trans_del(lv_obj_t * obj, lv_part_t part, lv_style_prop_t prop, trans_t * tr_limit);
-static void trans_anim_cb(void * _tr, int32_t v);
-static void trans_anim_start_cb(lv_anim_t * a);
-static void trans_anim_ready_cb(lv_anim_t * a);
-static lv_layer_type_t calculate_layer_type(lv_obj_t * obj);
-static void fade_anim_cb(void * obj, int32_t v);
-static void fade_in_anim_ready(lv_anim_t * a);
+static lv_style_t * get_local_style(lv_obj_t * obj, lv_style_selector_t selector) LV_SECTION;
+static _lv_obj_style_t * get_trans_style(lv_obj_t * obj, uint32_t part) LV_SECTION;
+static lv_style_res_t get_prop_core(const lv_obj_t * obj, lv_part_t part, lv_style_prop_t prop, lv_style_value_t * v) LV_SECTION;
+static void report_style_change_core(void * style, lv_obj_t * obj) LV_SECTION;
+static void refresh_children_style(lv_obj_t * obj) LV_SECTION;
+static bool trans_del(lv_obj_t * obj, lv_part_t part, lv_style_prop_t prop, trans_t * tr_limit) LV_SECTION;
+static void trans_anim_cb(void * _tr, int32_t v) LV_SECTION;
+static void trans_anim_start_cb(lv_anim_t * a) LV_SECTION;
+static void trans_anim_ready_cb(lv_anim_t * a) LV_SECTION;
+static lv_layer_type_t calculate_layer_type(lv_obj_t * obj) LV_SECTION;
+static void fade_anim_cb(void * obj, int32_t v) LV_SECTION;
+static void fade_in_anim_ready(lv_anim_t * a) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

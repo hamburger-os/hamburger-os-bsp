@@ -21,13 +21,13 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void scr_load_internal(lv_obj_t * scr);
-static void scr_load_anim_start(lv_anim_t * a);
-static void opa_scale_anim(void * obj, int32_t v);
-static void set_x_anim(void * obj, int32_t v);
-static void set_y_anim(void * obj, int32_t v);
-static void scr_anim_ready(lv_anim_t * a);
-static bool is_out_anim(lv_scr_load_anim_t a);
+static void scr_load_internal(lv_obj_t * scr) LV_SECTION;
+static void scr_load_anim_start(lv_anim_t * a) LV_SECTION;
+static void opa_scale_anim(void * obj, int32_t v) LV_SECTION;
+static void set_x_anim(void * obj, int32_t v) LV_SECTION;
+static void set_y_anim(void * obj, int32_t v) LV_SECTION;
+static void scr_anim_ready(lv_anim_t * a) LV_SECTION;
+static bool is_out_anim(lv_scr_load_anim_t a) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

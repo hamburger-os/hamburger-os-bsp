@@ -37,19 +37,19 @@ extern "C" {
  * @return a pointer to reference this theme later
  */
 lv_theme_t * lv_theme_default_init(lv_disp_t * disp, lv_color_t color_primary, lv_color_t color_secondary, bool dark,
-                                   const lv_font_t * font);
+                                   const lv_font_t * font) LV_SECTION;
 
 /**
  * Get default theme
  * @return a pointer to default theme, or NULL if this is not initialized
  */
-lv_theme_t * lv_theme_default_get(void);
+lv_theme_t * lv_theme_default_get(void) LV_SECTION;
 
 /**
  * Check if default theme is initialized
  * @return true if default theme is initialized, false otherwise
  */
-bool lv_theme_default_is_inited(void);
+bool lv_theme_default_is_inited(void) LV_SECTION;
 
 /**********************
  *      MACROS

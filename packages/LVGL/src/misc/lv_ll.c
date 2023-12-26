@@ -24,8 +24,8 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void node_set_prev(lv_ll_t * ll_p, lv_ll_node_t * act, lv_ll_node_t * prev);
-static void node_set_next(lv_ll_t * ll_p, lv_ll_node_t * act, lv_ll_node_t * next);
+static void node_set_prev(lv_ll_t * ll_p, lv_ll_node_t * act, lv_ll_node_t * prev) LV_SECTION;
+static void node_set_next(lv_ll_t * ll_p, lv_ll_node_t * act, lv_ll_node_t * next) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

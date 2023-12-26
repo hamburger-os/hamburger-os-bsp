@@ -26,8 +26,8 @@ extern "C" {
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
-void lv_demo_keypad_encoder(void);
-void lv_demo_keypad_encoder_close(void);
+void lv_demo_keypad_encoder(void) LV_SECTION;
+void lv_demo_keypad_encoder_close(void) LV_SECTION;
 
 /**********************
  *      MACROS

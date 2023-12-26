@@ -91,82 +91,82 @@ typedef enum {
  * Init. the group module
  * @remarks Internal function, do not call directly.
  */
-void _lv_group_init(void);
+void _lv_group_init(void) LV_SECTION;
 
 /**
  * Create a new object group
  * @return          pointer to the new object group
  */
-lv_group_t * lv_group_create(void);
+lv_group_t * lv_group_create(void) LV_SECTION;
 
 /**
  * Delete a group object
  * @param group     pointer to a group
  */
-void lv_group_del(lv_group_t * group);
+void lv_group_del(lv_group_t * group) LV_SECTION;
 
 /**
  * Set a default group. New object are added to this group if it's enabled in their class with `add_to_def_group = true`
  * @param group     pointer to a group (can be `NULL`)
  */
-void lv_group_set_default(lv_group_t * group);
+void lv_group_set_default(lv_group_t * group) LV_SECTION;
 
 /**
  * Get the default group
  * @return          pointer to the default group
  */
-lv_group_t * lv_group_get_default(void);
+lv_group_t * lv_group_get_default(void) LV_SECTION;
 
 /**
  * Add an object to a group
  * @param group     pointer to a group
  * @param obj       pointer to an object to add
  */
-void lv_group_add_obj(lv_group_t * group, struct _lv_obj_t * obj);
+void lv_group_add_obj(lv_group_t * group, struct _lv_obj_t * obj) LV_SECTION;
 
 /**
  * Swap 2 object in a group. The object must be in the same group
  * @param obj1  pointer to an object
  * @param obj2  pointer to an other object
  */
-void lv_group_swap_obj(struct _lv_obj_t * obj1, struct _lv_obj_t * obj2);
+void lv_group_swap_obj(struct _lv_obj_t * obj1, struct _lv_obj_t * obj2) LV_SECTION;
 
 /**
  * Remove an object from its group
  * @param obj       pointer to an object to remove
  */
-void lv_group_remove_obj(struct _lv_obj_t * obj);
+void lv_group_remove_obj(struct _lv_obj_t * obj) LV_SECTION;
 
 /**
  * Remove all objects from a group
  * @param group     pointer to a group
  */
-void lv_group_remove_all_objs(lv_group_t * group);
+void lv_group_remove_all_objs(lv_group_t * group) LV_SECTION;
 
 /**
  * Focus on an object (defocus the current)
  * @param obj       pointer to an object to focus on
  */
-void lv_group_focus_obj(struct _lv_obj_t * obj);
+void lv_group_focus_obj(struct _lv_obj_t * obj) LV_SECTION;
 
 /**
  * Focus the next object in a group (defocus the current)
  * @param group     pointer to a group
  */
-void lv_group_focus_next(lv_group_t * group);
+void lv_group_focus_next(lv_group_t * group) LV_SECTION;
 
 /**
  * Focus the previous object in a group (defocus the current)
  * @param group     pointer to a group
  */
-void lv_group_focus_prev(lv_group_t * group);
+void lv_group_focus_prev(lv_group_t * group) LV_SECTION;
 
 /**
  * Do not let to change the focus from the current object
  * @param group     pointer to a group
  * @param en        true: freeze, false: release freezing (normal mode)
  */
-void lv_group_focus_freeze(lv_group_t * group, bool en);
+void lv_group_focus_freeze(lv_group_t * group, bool en) LV_SECTION;
 
 /**
  * Send a control character to the focuses object of a group
@@ -174,21 +174,21 @@ void lv_group_focus_freeze(lv_group_t * group, bool en);
  * @param c         a character (use LV_KEY_.. to navigate)
  * @return          result of focused object in group.
  */
-lv_res_t lv_group_send_data(lv_group_t * group, uint32_t c);
+lv_res_t lv_group_send_data(lv_group_t * group, uint32_t c) LV_SECTION;
 
 /**
  * Set a function for a group which will be called when a new object is focused
  * @param group         pointer to a group
  * @param focus_cb      the call back function or NULL if unused
  */
-void lv_group_set_focus_cb(lv_group_t * group, lv_group_focus_cb_t focus_cb);
+void lv_group_set_focus_cb(lv_group_t * group, lv_group_focus_cb_t focus_cb) LV_SECTION;
 
 /**
  * Set a function for a group which will be called when a focus edge is reached
  * @param group         pointer to a group
  * @param edge_cb      the call back function or NULL if unused
  */
-void lv_group_set_edge_cb(lv_group_t * group, lv_group_edge_cb_t edge_cb);
+void lv_group_set_edge_cb(lv_group_t * group, lv_group_edge_cb_t edge_cb) LV_SECTION;
 
 
 /**
@@ -197,63 +197,63 @@ void lv_group_set_edge_cb(lv_group_t * group, lv_group_edge_cb_t edge_cb);
  * @param group         pointer to a group
  * @param policy        new refocus policy enum
  */
-void lv_group_set_refocus_policy(lv_group_t * group, lv_group_refocus_policy_t policy);
+void lv_group_set_refocus_policy(lv_group_t * group, lv_group_refocus_policy_t policy) LV_SECTION;
 
 /**
  * Manually set the current mode (edit or navigate).
  * @param group         pointer to group
  * @param edit          true: edit mode; false: navigate mode
  */
-void lv_group_set_editing(lv_group_t * group, bool edit);
+void lv_group_set_editing(lv_group_t * group, bool edit) LV_SECTION;
 
 /**
  * Set whether focus next/prev will allow wrapping from first->last or last->first object.
  * @param group         pointer to group
  * @param               en true: wrapping enabled; false: wrapping disabled
  */
-void lv_group_set_wrap(lv_group_t * group, bool en);
+void lv_group_set_wrap(lv_group_t * group, bool en) LV_SECTION;
 
 /**
  * Get the focused object or NULL if there isn't one
  * @param group         pointer to a group
  * @return              pointer to the focused object
  */
-struct _lv_obj_t * lv_group_get_focused(const lv_group_t * group);
+struct _lv_obj_t * lv_group_get_focused(const lv_group_t * group) LV_SECTION;
 
 /**
  * Get the focus callback function of a group
  * @param group pointer to a group
  * @return the call back function or NULL if not set
  */
-lv_group_focus_cb_t lv_group_get_focus_cb(const lv_group_t * group);
+lv_group_focus_cb_t lv_group_get_focus_cb(const lv_group_t * group) LV_SECTION;
 
 /**
  * Get the edge callback function of a group
  * @param group pointer to a group
  * @return the call back function or NULL if not set
  */
-lv_group_edge_cb_t lv_group_get_edge_cb(const lv_group_t * group);
+lv_group_edge_cb_t lv_group_get_edge_cb(const lv_group_t * group) LV_SECTION;
 
 /**
  * Get the current mode (edit or navigate).
  * @param group         pointer to group
  * @return              true: edit mode; false: navigate mode
  */
-bool lv_group_get_editing(const lv_group_t * group);
+bool lv_group_get_editing(const lv_group_t * group) LV_SECTION;
 
 /**
  * Get whether focus next/prev will allow wrapping from first->last or last->first object.
  * @param group         pointer to group
  * @param               en true: wrapping enabled; false: wrapping disabled
  */
-bool lv_group_get_wrap(lv_group_t * group);
+bool lv_group_get_wrap(lv_group_t * group) LV_SECTION;
 
 /**
  * Get the number of object in the group
  * @param group         pointer to a group
  * @return              number of objects in the group
  */
-uint32_t lv_group_get_obj_count(lv_group_t * group);
+uint32_t lv_group_get_obj_count(lv_group_t * group) LV_SECTION;
 
 /**********************
  *      MACROS

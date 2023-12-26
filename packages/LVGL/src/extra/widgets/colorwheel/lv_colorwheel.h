@@ -60,7 +60,7 @@ extern const lv_obj_class_t lv_colorwheel_class;
  * @param knob_recolor true: set the knob's color to the current color
  * @return pointer to the created color picker
  */
-lv_obj_t * lv_colorwheel_create(lv_obj_t * parent, bool knob_recolor);
+lv_obj_t * lv_colorwheel_create(lv_obj_t * parent, bool knob_recolor) LV_SECTION;
 
 /*=====================
  * Setter functions
@@ -72,7 +72,7 @@ lv_obj_t * lv_colorwheel_create(lv_obj_t * parent, bool knob_recolor);
  * @param color current selected hsv
  * @return true if changed, otherwise false
  */
-bool lv_colorwheel_set_hsv(lv_obj_t * obj, lv_color_hsv_t hsv);
+bool lv_colorwheel_set_hsv(lv_obj_t * obj, lv_color_hsv_t hsv) LV_SECTION;
 
 /**
  * Set the current color of a color wheel.
@@ -80,21 +80,21 @@ bool lv_colorwheel_set_hsv(lv_obj_t * obj, lv_color_hsv_t hsv);
  * @param color current selected color
  * @return true if changed, otherwise false
  */
-bool lv_colorwheel_set_rgb(lv_obj_t * obj, lv_color_t color);
+bool lv_colorwheel_set_rgb(lv_obj_t * obj, lv_color_t color) LV_SECTION;
 
 /**
  * Set the current color mode.
  * @param colorwheel pointer to color wheel object
  * @param mode color mode (hue/sat/val)
  */
-void lv_colorwheel_set_mode(lv_obj_t * obj, lv_colorwheel_mode_t mode);
+void lv_colorwheel_set_mode(lv_obj_t * obj, lv_colorwheel_mode_t mode) LV_SECTION;
 
 /**
  * Set if the color mode is changed on long press on center
  * @param colorwheel pointer to color wheel object
  * @param fixed color mode cannot be changed on long press
  */
-void lv_colorwheel_set_mode_fixed(lv_obj_t * obj, bool fixed);
+void lv_colorwheel_set_mode_fixed(lv_obj_t * obj, bool fixed) LV_SECTION;
 
 /*=====================
  * Getter functions
@@ -105,28 +105,28 @@ void lv_colorwheel_set_mode_fixed(lv_obj_t * obj, bool fixed);
  * @param colorwheel pointer to color wheel object
  * @return current selected hsv
  */
-lv_color_hsv_t lv_colorwheel_get_hsv(lv_obj_t * obj);
+lv_color_hsv_t lv_colorwheel_get_hsv(lv_obj_t * obj) LV_SECTION;
 
 /**
  * Get the current selected color of a color wheel.
  * @param colorwheel pointer to color wheel object
  * @return color current selected color
  */
-lv_color_t lv_colorwheel_get_rgb(lv_obj_t * obj);
+lv_color_t lv_colorwheel_get_rgb(lv_obj_t * obj) LV_SECTION;
 
 /**
  * Get the current color mode.
  * @param colorwheel pointer to color wheel object
  * @return color mode (hue/sat/val)
  */
-lv_colorwheel_mode_t lv_colorwheel_get_color_mode(lv_obj_t * obj);
+lv_colorwheel_mode_t lv_colorwheel_get_color_mode(lv_obj_t * obj) LV_SECTION;
 
 /**
  * Get if the color mode is changed on long press on center
  * @param colorwheel pointer to color wheel object
  * @return mode cannot be changed on long press
  */
-bool lv_colorwheel_get_color_mode_fixed(lv_obj_t * obj);
+bool lv_colorwheel_get_color_mode_fixed(lv_obj_t * obj) LV_SECTION;
 
 /**********************
  *      MACROS

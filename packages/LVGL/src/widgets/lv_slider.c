@@ -31,11 +31,11 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_slider_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_slider_event(const lv_obj_class_t * class_p, lv_event_t * e);
-static void position_knob(lv_obj_t * obj, lv_area_t * knob_area, const lv_coord_t knob_size, const bool hor);
-static void draw_knob(lv_event_t * e);
-static bool is_slider_horizontal(lv_obj_t * obj);
+static void lv_slider_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_slider_event(const lv_obj_class_t * class_p, lv_event_t * e) LV_SECTION;
+static void position_knob(lv_obj_t * obj, lv_area_t * knob_area, const lv_coord_t knob_size, const bool hor) LV_SECTION;
+static void draw_knob(lv_event_t * e) LV_SECTION;
+static bool is_slider_horizontal(lv_obj_t * obj) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

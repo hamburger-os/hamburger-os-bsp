@@ -70,25 +70,25 @@ typedef struct _lv_gradient_cache_t {
  * @param frac      The current part used in the range. frac is in [0; range]
  */
 lv_grad_color_t /* LV_ATTRIBUTE_FAST_MEM */ lv_gradient_calculate(const lv_grad_dsc_t * dsc, lv_coord_t range,
-                                                                  lv_coord_t frac);
+                                                                  lv_coord_t frac) LV_SECTION;
 
 /**
  * Set the gradient cache size
  * @param max_bytes Max cahce size
  */
-void lv_gradient_set_cache_size(size_t max_bytes);
+void lv_gradient_set_cache_size(size_t max_bytes) LV_SECTION;
 
 /** Free the gradient cache */
-void lv_gradient_free_cache(void);
+void lv_gradient_free_cache(void) LV_SECTION;
 
 /** Get a gradient cache from the given parameters */
-lv_grad_t * lv_gradient_get(const lv_grad_dsc_t * gradient, lv_coord_t w, lv_coord_t h);
+lv_grad_t * lv_gradient_get(const lv_grad_dsc_t * gradient, lv_coord_t w, lv_coord_t h) LV_SECTION;
 
 /**
  * Clean up the gradient item after it was get with `lv_grad_get_from_cache`.
  * @param grad      pointer to a gradient
  */
-void lv_gradient_cleanup(lv_grad_t * grad);
+void lv_gradient_cleanup(lv_grad_t * grad) LV_SECTION;
 
 #ifdef __cplusplus
 } /*extern "C"*/

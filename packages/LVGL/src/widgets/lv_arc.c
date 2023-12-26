@@ -30,16 +30,16 @@
  *  STATIC PROTOTYPES
  **********************/
 
-static void lv_arc_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_arc_draw(lv_event_t * e);
-static void lv_arc_event(const lv_obj_class_t * class_p, lv_event_t * e);
-static void inv_arc_area(lv_obj_t * arc, uint16_t start_angle, uint16_t end_angle, lv_part_t part);
-static void inv_knob_area(lv_obj_t * obj);
-static void get_center(const lv_obj_t * obj, lv_point_t * center, lv_coord_t * arc_r);
-static lv_coord_t get_angle(const lv_obj_t * obj);
-static void get_knob_area(lv_obj_t * arc, const lv_point_t * center, lv_coord_t r, lv_area_t * knob_area);
-static void value_update(lv_obj_t * arc);
-static lv_coord_t knob_get_extra_size(lv_obj_t * obj);
+static void lv_arc_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_arc_draw(lv_event_t * e) LV_SECTION;
+static void lv_arc_event(const lv_obj_class_t * class_p, lv_event_t * e) LV_SECTION;
+static void inv_arc_area(lv_obj_t * arc, uint16_t start_angle, uint16_t end_angle, lv_part_t part) LV_SECTION;
+static void inv_knob_area(lv_obj_t * obj) LV_SECTION;
+static void get_center(const lv_obj_t * obj, lv_point_t * center, lv_coord_t * arc_r) LV_SECTION;
+static lv_coord_t get_angle(const lv_obj_t * obj) LV_SECTION;
+static void get_knob_area(lv_obj_t * arc, const lv_point_t * center, lv_coord_t r, lv_area_t * knob_area) LV_SECTION;
+static void value_update(lv_obj_t * arc) LV_SECTION;
+static lv_coord_t knob_get_extra_size(lv_obj_t * obj) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

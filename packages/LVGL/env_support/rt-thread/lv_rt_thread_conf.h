@@ -16,6 +16,13 @@
 #define LV_RTTHREAD_INCLUDE <rtthread.h>
 #include LV_RTTHREAD_INCLUDE
 
+#ifdef SOC_SERIES_STM32F4
+#define LV_SECTION __attribute__((section(".lvgl")))
+#endif
+#ifdef SOC_SERIES_STM32H7
+#define LV_SECTION
+#endif
+
 /*=========================
    MEMORY SETTINGS
  *=========================*/

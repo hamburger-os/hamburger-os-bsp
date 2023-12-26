@@ -207,7 +207,7 @@ typedef struct {
  * @param unicode_letter a unicode letter which bitmap should be get
  * @return pointer to the bitmap or NULL if not found
  */
-const uint8_t * lv_font_get_bitmap_fmt_txt(const lv_font_t * font, uint32_t letter);
+const uint8_t * lv_font_get_bitmap_fmt_txt(const lv_font_t * font, uint32_t letter) LV_SECTION;
 
 /**
  * Used as `get_glyph_dsc` callback in LittelvGL's native font format if the font is uncompressed.
@@ -218,12 +218,12 @@ const uint8_t * lv_font_get_bitmap_fmt_txt(const lv_font_t * font, uint32_t lett
  *         false: the letter was not found, no data is loaded to `dsc_out`
  */
 bool lv_font_get_glyph_dsc_fmt_txt(const lv_font_t * font, lv_font_glyph_dsc_t * dsc_out, uint32_t unicode_letter,
-                                   uint32_t unicode_letter_next);
+                                   uint32_t unicode_letter_next) LV_SECTION;
 
 /**
  * Free the allocated memories.
  */
-void _lv_font_clean_up_fmt_txt(void);
+void _lv_font_clean_up_fmt_txt(void) LV_SECTION;
 
 /**********************
  *      MACROS

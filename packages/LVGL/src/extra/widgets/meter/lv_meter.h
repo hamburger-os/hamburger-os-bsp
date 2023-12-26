@@ -119,7 +119,7 @@ typedef enum {
  * @param parent pointer to an object, it will be the parent of the new bar.
  * @return pointer to the created meter
  */
-lv_obj_t * lv_meter_create(lv_obj_t * parent);
+lv_obj_t * lv_meter_create(lv_obj_t * parent) LV_SECTION;
 
 /*=====================
  * Add scale
@@ -131,7 +131,7 @@ lv_obj_t * lv_meter_create(lv_obj_t * parent);
  * @return      the new scale
  * @note        Indicators can be attached to scales.
  */
-lv_meter_scale_t * lv_meter_add_scale(lv_obj_t * obj);
+lv_meter_scale_t * lv_meter_add_scale(lv_obj_t * obj) LV_SECTION;
 
 /**
  * Set the properties of the ticks of a scale
@@ -143,7 +143,7 @@ lv_meter_scale_t * lv_meter_add_scale(lv_obj_t * obj);
  * @param color     color of tick lines
  */
 void lv_meter_set_scale_ticks(lv_obj_t * obj, lv_meter_scale_t * scale, uint16_t cnt, uint16_t width, uint16_t len,
-                              lv_color_t color);
+                              lv_color_t color) LV_SECTION;
 
 /**
  * Make some "normal" ticks major ticks and set their attributes.
@@ -157,7 +157,7 @@ void lv_meter_set_scale_ticks(lv_obj_t * obj, lv_meter_scale_t * scale, uint16_t
  * @param label_gap     gap between the major ticks and the labels
  */
 void lv_meter_set_scale_major_ticks(lv_obj_t * obj, lv_meter_scale_t * scale, uint16_t nth, uint16_t width,
-                                    uint16_t len, lv_color_t color, int16_t label_gap);
+                                    uint16_t len, lv_color_t color, int16_t label_gap) LV_SECTION;
 
 /**
  * Set the value and angular range of a scale.
@@ -169,7 +169,7 @@ void lv_meter_set_scale_major_ticks(lv_obj_t * obj, lv_meter_scale_t * scale, ui
  * @param rotation      the angular offset from the 3 o'clock position (clock-wise)
  */
 void lv_meter_set_scale_range(lv_obj_t * obj, lv_meter_scale_t * scale, int32_t min, int32_t max, uint32_t angle_range,
-                              uint32_t rotation);
+                              uint32_t rotation) LV_SECTION;
 
 /*=====================
  * Add indicator
@@ -185,7 +185,7 @@ void lv_meter_set_scale_range(lv_obj_t * obj, lv_meter_scale_t * scale, int32_t 
  * @return              the new indicator
  */
 lv_meter_indicator_t * lv_meter_add_needle_line(lv_obj_t * obj, lv_meter_scale_t * scale, uint16_t width,
-                                                lv_color_t color, int16_t r_mod);
+                                                lv_color_t color, int16_t r_mod) LV_SECTION;
 
 /**
  * Add a needle image indicator the scale
@@ -198,7 +198,7 @@ lv_meter_indicator_t * lv_meter_add_needle_line(lv_obj_t * obj, lv_meter_scale_t
  * @note                the needle image should point to the right, like -O----->
  */
 lv_meter_indicator_t * lv_meter_add_needle_img(lv_obj_t * obj, lv_meter_scale_t * scale, const void * src,
-                                               lv_coord_t pivot_x, lv_coord_t pivot_y);
+                                               lv_coord_t pivot_x, lv_coord_t pivot_y) LV_SECTION;
 
 /**
  * Add an arc indicator the scale
@@ -210,7 +210,7 @@ lv_meter_indicator_t * lv_meter_add_needle_img(lv_obj_t * obj, lv_meter_scale_t 
  * @return              the new indicator
  */
 lv_meter_indicator_t * lv_meter_add_arc(lv_obj_t * obj, lv_meter_scale_t * scale, uint16_t width, lv_color_t color,
-                                        int16_t r_mod);
+                                        int16_t r_mod) LV_SECTION;
 
 
 /**
@@ -224,7 +224,7 @@ lv_meter_indicator_t * lv_meter_add_arc(lv_obj_t * obj, lv_meter_scale_t * scale
  * @return              the new indicator
  */
 lv_meter_indicator_t * lv_meter_add_scale_lines(lv_obj_t * obj, lv_meter_scale_t * scale, lv_color_t color_start,
-                                                lv_color_t color_end, bool local, int16_t width_mod);
+                                                lv_color_t color_end, bool local, int16_t width_mod) LV_SECTION;
 
 /*=====================
  * Set indicator value
@@ -236,7 +236,7 @@ lv_meter_indicator_t * lv_meter_add_scale_lines(lv_obj_t * obj, lv_meter_scale_t
  * @param indic         pointer to an indicator
  * @param value         the new value
  */
-void lv_meter_set_indicator_value(lv_obj_t * obj, lv_meter_indicator_t * indic, int32_t value);
+void lv_meter_set_indicator_value(lv_obj_t * obj, lv_meter_indicator_t * indic, int32_t value) LV_SECTION;
 
 /**
  * Set the start value of the indicator.
@@ -244,7 +244,7 @@ void lv_meter_set_indicator_value(lv_obj_t * obj, lv_meter_indicator_t * indic, 
  * @param indic         pointer to an indicator
  * @param value         the new value
  */
-void lv_meter_set_indicator_start_value(lv_obj_t * obj, lv_meter_indicator_t * indic, int32_t value);
+void lv_meter_set_indicator_start_value(lv_obj_t * obj, lv_meter_indicator_t * indic, int32_t value) LV_SECTION;
 
 /**
  * Set the start value of the indicator.
@@ -252,7 +252,7 @@ void lv_meter_set_indicator_start_value(lv_obj_t * obj, lv_meter_indicator_t * i
  * @param indic         pointer to an indicator
  * @param value         the new value
  */
-void lv_meter_set_indicator_end_value(lv_obj_t * obj, lv_meter_indicator_t * indic, int32_t value);
+void lv_meter_set_indicator_end_value(lv_obj_t * obj, lv_meter_indicator_t * indic, int32_t value) LV_SECTION;
 
 /**********************
  *      MACROS

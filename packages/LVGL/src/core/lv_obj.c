@@ -57,14 +57,14 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_obj_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_obj_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_obj_draw(lv_event_t * e);
-static void lv_obj_event(const lv_obj_class_t * class_p, lv_event_t * e);
-static void draw_scrollbar(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx);
-static lv_res_t scrollbar_init_draw_dsc(lv_obj_t * obj, lv_draw_rect_dsc_t * dsc);
-static bool obj_valid_child(const lv_obj_t * parent, const lv_obj_t * obj_to_find);
-static void lv_obj_set_state(lv_obj_t * obj, lv_state_t new_state);
+static void lv_obj_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_obj_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_obj_draw(lv_event_t * e) LV_SECTION;
+static void lv_obj_event(const lv_obj_class_t * class_p, lv_event_t * e) LV_SECTION;
+static void draw_scrollbar(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx) LV_SECTION;
+static lv_res_t scrollbar_init_draw_dsc(lv_obj_t * obj, lv_draw_rect_dsc_t * dsc) LV_SECTION;
+static bool obj_valid_child(const lv_obj_t * parent, const lv_obj_t * obj_to_find) LV_SECTION;
+static void lv_obj_set_state(lv_obj_t * obj, lv_state_t new_state) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

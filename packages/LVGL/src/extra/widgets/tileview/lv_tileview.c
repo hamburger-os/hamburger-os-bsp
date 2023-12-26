@@ -21,9 +21,9 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_tileview_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_tileview_tile_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void tileview_event_cb(lv_event_t * e);
+static void lv_tileview_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_tileview_tile_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void tileview_event_cb(lv_event_t * e) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

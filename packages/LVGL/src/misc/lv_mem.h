@@ -58,26 +58,26 @@ typedef lv_mem_buf_t lv_mem_buf_arr_t[LV_MEM_BUF_MAX_NUM];
 /**
  * Initialize the dyn_mem module (work memory and other variables)
  */
-void lv_mem_init(void);
+void lv_mem_init(void) LV_SECTION;
 
 /**
  * Clean up the memory buffer which frees all the allocated memories.
  * @note It work only if `LV_MEM_CUSTOM == 0`
  */
-void lv_mem_deinit(void);
+void lv_mem_deinit(void) LV_SECTION;
 
 /**
  * Allocate a memory dynamically
  * @param size size of the memory to allocate in bytes
  * @return pointer to the allocated memory
  */
-void * lv_mem_alloc(size_t size);
+void * lv_mem_alloc(size_t size) LV_SECTION;
 
 /**
  * Free an allocated data
  * @param data pointer to an allocated memory
  */
-void lv_mem_free(void * data);
+void lv_mem_free(void * data) LV_SECTION;
 
 /**
  * Reallocate a memory with a new size. The old content will be kept.
@@ -86,38 +86,38 @@ void lv_mem_free(void * data);
  * @param new_size the desired new size in byte
  * @return pointer to the new memory, NULL on failure
  */
-void * lv_mem_realloc(void * data_p, size_t new_size);
+void * lv_mem_realloc(void * data_p, size_t new_size) LV_SECTION;
 
 /**
  *
  * @return
  */
-lv_res_t lv_mem_test(void);
+lv_res_t lv_mem_test(void) LV_SECTION;
 
 /**
  * Give information about the work memory of dynamic allocation
  * @param mon_p pointer to a lv_mem_monitor_t variable,
  *              the result of the analysis will be stored here
  */
-void lv_mem_monitor(lv_mem_monitor_t * mon_p);
+void lv_mem_monitor(lv_mem_monitor_t * mon_p) LV_SECTION;
 
 
 /**
  * Get a temporal buffer with the given size.
  * @param size the required size
  */
-void * lv_mem_buf_get(uint32_t size);
+void * lv_mem_buf_get(uint32_t size) LV_SECTION;
 
 /**
  * Release a memory buffer
  * @param p buffer to release
  */
-void lv_mem_buf_release(void * p);
+void lv_mem_buf_release(void * p) LV_SECTION;
 
 /**
  * Free all memory buffers
  */
-void lv_mem_buf_free_all(void);
+void lv_mem_buf_free_all(void) LV_SECTION;
 
 //! @cond Doxygen_Suppress
 
@@ -129,7 +129,7 @@ void lv_mem_buf_free_all(void);
  * @param src pointer to the source buffer
  * @param len number of byte to copy
  */
-static inline void * lv_memcpy(void * dst, const void * src, size_t len)
+static LV_SECTION inline void * lv_memcpy(void * dst, const void * src, size_t len)
 {
     return memcpy(dst, src, len);
 }
@@ -140,7 +140,7 @@ static inline void * lv_memcpy(void * dst, const void * src, size_t len)
  * @param src pointer to the source buffer
  * @param len number of byte to copy
  */
-static inline void * lv_memcpy_small(void * dst, const void * src, size_t len)
+static LV_SECTION inline void * lv_memcpy_small(void * dst, const void * src, size_t len)
 {
     return memcpy(dst, src, len);
 }
@@ -151,7 +151,7 @@ static inline void * lv_memcpy_small(void * dst, const void * src, size_t len)
  * @param v value to set [0..255]
  * @param len number of byte to set
  */
-static inline void lv_memset(void * dst, uint8_t v, size_t len)
+static LV_SECTION inline void lv_memset(void * dst, uint8_t v, size_t len)
 {
     memset(dst, v, len);
 }
@@ -161,7 +161,7 @@ static inline void lv_memset(void * dst, uint8_t v, size_t len)
  * @param dst pointer to the destination buffer
  * @param len number of byte to set
  */
-static inline void lv_memset_00(void * dst, size_t len)
+static LV_SECTION inline void lv_memset_00(void * dst, size_t len)
 {
     memset(dst, 0x00, len);
 }
@@ -171,7 +171,7 @@ static inline void lv_memset_00(void * dst, size_t len)
  * @param dst pointer to the destination buffer
  * @param len number of byte to set
  */
-static inline void lv_memset_ff(void * dst, size_t len)
+static LV_SECTION inline void lv_memset_ff(void * dst, size_t len)
 {
     memset(dst, 0xFF, len);
 }
@@ -183,7 +183,7 @@ static inline void lv_memset_ff(void * dst, size_t len)
  * @param src pointer to the source buffer
  * @param len number of byte to copy
  */
-void * /* LV_ATTRIBUTE_FAST_MEM */ lv_memcpy(void * dst, const void * src, size_t len);
+void * /* LV_ATTRIBUTE_FAST_MEM */ lv_memcpy(void * dst, const void * src, size_t len) LV_SECTION;
 
 /**
  * Same as `memcpy` but optimized to copy only a few bytes.
@@ -191,7 +191,7 @@ void * /* LV_ATTRIBUTE_FAST_MEM */ lv_memcpy(void * dst, const void * src, size_
  * @param src pointer to the source buffer
  * @param len number of byte to copy
  */
-static inline void * LV_ATTRIBUTE_FAST_MEM lv_memcpy_small(void * dst, const void * src, size_t len)
+static LV_SECTION inline void * LV_ATTRIBUTE_FAST_MEM lv_memcpy_small(void * dst, const void * src, size_t len)
 {
     uint8_t * d8 = (uint8_t *)dst;
     const uint8_t * s8 = (const uint8_t *)src;
@@ -212,21 +212,21 @@ static inline void * LV_ATTRIBUTE_FAST_MEM lv_memcpy_small(void * dst, const voi
  * @param v value to set [0..255]
  * @param len number of byte to set
  */
-void /* LV_ATTRIBUTE_FAST_MEM */ lv_memset(void * dst, uint8_t v, size_t len);
+void /* LV_ATTRIBUTE_FAST_MEM */ lv_memset(void * dst, uint8_t v, size_t len) LV_SECTION;
 
 /**
  * Same as `memset(dst, 0x00, len)` but optimized for 4 byte operation.
  * @param dst pointer to the destination buffer
  * @param len number of byte to set
  */
-void /* LV_ATTRIBUTE_FAST_MEM */ lv_memset_00(void * dst, size_t len);
+void /* LV_ATTRIBUTE_FAST_MEM */ lv_memset_00(void * dst, size_t len) LV_SECTION;
 
 /**
  * Same as `memset(dst, 0xFF, len)` but optimized for 4 byte operation.
  * @param dst pointer to the destination buffer
  * @param len number of byte to set
  */
-void /* LV_ATTRIBUTE_FAST_MEM */ lv_memset_ff(void * dst, size_t len);
+void /* LV_ATTRIBUTE_FAST_MEM */ lv_memset_ff(void * dst, size_t len) LV_SECTION;
 
 //! @endcond
 

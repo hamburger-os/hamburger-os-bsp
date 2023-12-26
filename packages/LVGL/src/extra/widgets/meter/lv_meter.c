@@ -23,14 +23,14 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_meter_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_meter_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_meter_event(const lv_obj_class_t * class_p, lv_event_t * e);
-static void draw_arcs(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx, const lv_area_t * scale_area);
-static void draw_ticks_and_labels(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx, const lv_area_t * scale_area);
-static void draw_needles(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx, const lv_area_t * scale_area);
-static void inv_arc(lv_obj_t * obj, lv_meter_indicator_t * indic, int32_t old_value, int32_t new_value);
-static void inv_line(lv_obj_t * obj, lv_meter_indicator_t * indic, int32_t value);
+static void lv_meter_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_meter_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_meter_event(const lv_obj_class_t * class_p, lv_event_t * e) LV_SECTION;
+static void draw_arcs(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx, const lv_area_t * scale_area) LV_SECTION;
+static void draw_ticks_and_labels(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx, const lv_area_t * scale_area) LV_SECTION;
+static void draw_needles(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx, const lv_area_t * scale_area) LV_SECTION;
+static void inv_arc(lv_obj_t * obj, lv_meter_indicator_t * indic, int32_t old_value, int32_t new_value) LV_SECTION;
+static void inv_line(lv_obj_t * obj, lv_meter_indicator_t * indic, int32_t value) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

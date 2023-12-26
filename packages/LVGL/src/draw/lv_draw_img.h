@@ -51,7 +51,7 @@ struct _lv_draw_ctx_t;
  * GLOBAL PROTOTYPES
  **********************/
 
-void lv_draw_img_dsc_init(lv_draw_img_dsc_t * dsc);
+void lv_draw_img_dsc_init(lv_draw_img_dsc_t * dsc) LV_SECTION;
 /**
  * Draw an image
  * @param coords the coordinates of the image
@@ -60,11 +60,11 @@ void lv_draw_img_dsc_init(lv_draw_img_dsc_t * dsc);
  * @param dsc pointer to an initialized `lv_draw_img_dsc_t` variable
  */
 void lv_draw_img(struct _lv_draw_ctx_t * draw_ctx, const lv_draw_img_dsc_t * dsc, const lv_area_t * coords,
-                 const void * src);
+                 const void * src) LV_SECTION;
 
 
 void lv_draw_img_decoded(struct _lv_draw_ctx_t * draw_ctx, const lv_draw_img_dsc_t * dsc,
-                         const lv_area_t * coords, const uint8_t * map_p, lv_img_cf_t color_format);
+                         const lv_area_t * coords, const uint8_t * map_p, lv_img_cf_t color_format) LV_SECTION;
 
 /**
  * Get the type of an image source
@@ -74,28 +74,28 @@ void lv_draw_img_decoded(struct _lv_draw_ctx_t * draw_ctx, const lv_draw_img_dsc
  *  - or a symbol (e.g. LV_SYMBOL_CLOSE)
  * @return type of the image source LV_IMG_SRC_VARIABLE/FILE/SYMBOL/UNKNOWN
  */
-lv_img_src_t lv_img_src_get_type(const void * src);
+lv_img_src_t lv_img_src_get_type(const void * src) LV_SECTION;
 
 /**
  * Get the pixel size of a color format in bits
  * @param cf a color format (`LV_IMG_CF_...`)
  * @return the pixel size in bits
  */
-uint8_t lv_img_cf_get_px_size(lv_img_cf_t cf);
+uint8_t lv_img_cf_get_px_size(lv_img_cf_t cf) LV_SECTION;
 
 /**
  * Check if a color format is chroma keyed or not
  * @param cf a color format (`LV_IMG_CF_...`)
  * @return true: chroma keyed; false: not chroma keyed
  */
-bool lv_img_cf_is_chroma_keyed(lv_img_cf_t cf);
+bool lv_img_cf_is_chroma_keyed(lv_img_cf_t cf) LV_SECTION;
 
 /**
  * Check if a color format has alpha channel or not
  * @param cf a color format (`LV_IMG_CF_...`)
  * @return true: has alpha channel; false: doesn't have alpha channel
  */
-bool lv_img_cf_has_alpha(lv_img_cf_t cf);
+bool lv_img_cf_has_alpha(lv_img_cf_t cf) LV_SECTION;
 
 #ifdef __cplusplus
 } /*extern "C"*/

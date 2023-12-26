@@ -21,7 +21,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_win_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
+static void lv_win_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

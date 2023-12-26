@@ -36,25 +36,25 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_obj_t * lv_dropdown_list_create(lv_obj_t * parent);
-static void lv_dropdown_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_dropdown_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_dropdown_event(const lv_obj_class_t * class_p, lv_event_t * e);
-static void draw_main(lv_event_t * e);
+static lv_obj_t * lv_dropdown_list_create(lv_obj_t * parent) LV_SECTION;
+static void lv_dropdown_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_dropdown_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_dropdown_event(const lv_obj_class_t * class_p, lv_event_t * e) LV_SECTION;
+static void draw_main(lv_event_t * e) LV_SECTION;
 
-static void lv_dropdownlist_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_dropdownlist_destructor(const lv_obj_class_t * class_p, lv_obj_t * list_obj);
-static void lv_dropdown_list_event(const lv_obj_class_t * class_p, lv_event_t * e);
-static void draw_list(lv_event_t * e);
+static void lv_dropdownlist_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_dropdownlist_destructor(const lv_obj_class_t * class_p, lv_obj_t * list_obj) LV_SECTION;
+static void lv_dropdown_list_event(const lv_obj_class_t * class_p, lv_event_t * e) LV_SECTION;
+static void draw_list(lv_event_t * e) LV_SECTION;
 
-static void draw_box(lv_obj_t * dropdown_obj, lv_draw_ctx_t * draw_ctx, uint16_t id, lv_state_t state);
-static void draw_box_label(lv_obj_t * dropdown_obj, lv_draw_ctx_t * draw_ctx, uint16_t id, lv_state_t state);
-static lv_res_t btn_release_handler(lv_obj_t * obj);
-static lv_res_t list_release_handler(lv_obj_t * list_obj);
-static void list_press_handler(lv_obj_t * page);
-static uint16_t get_id_on_point(lv_obj_t * dropdown_obj, lv_coord_t y);
-static void position_to_selected(lv_obj_t * obj);
-static lv_obj_t * get_label(const lv_obj_t * obj);
+static void draw_box(lv_obj_t * dropdown_obj, lv_draw_ctx_t * draw_ctx, uint16_t id, lv_state_t state) LV_SECTION;
+static void draw_box_label(lv_obj_t * dropdown_obj, lv_draw_ctx_t * draw_ctx, uint16_t id, lv_state_t state) LV_SECTION;
+static lv_res_t btn_release_handler(lv_obj_t * obj) LV_SECTION;
+static lv_res_t list_release_handler(lv_obj_t * list_obj) LV_SECTION;
+static void list_press_handler(lv_obj_t * page) LV_SECTION;
+static uint16_t get_id_on_point(lv_obj_t * dropdown_obj, lv_coord_t y) LV_SECTION;
+static void position_to_selected(lv_obj_t * obj) LV_SECTION;
+static lv_obj_t * get_label(const lv_obj_t * obj) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

@@ -27,7 +27,7 @@ extern "C" {
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
-void lv_bmp_init(void);
+void lv_bmp_init(void) LV_SECTION;
 
 /**********************
  *      MACROS

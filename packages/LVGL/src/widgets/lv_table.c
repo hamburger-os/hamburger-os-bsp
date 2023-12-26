@@ -29,22 +29,22 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_table_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_table_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_table_event(const lv_obj_class_t * class_p, lv_event_t * e);
-static void draw_main(lv_event_t * e);
+static void lv_table_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_table_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_table_event(const lv_obj_class_t * class_p, lv_event_t * e) LV_SECTION;
+static void draw_main(lv_event_t * e) LV_SECTION;
 static lv_coord_t get_row_height(lv_obj_t * obj, uint16_t row_id, const lv_font_t * font,
                                  lv_coord_t letter_space, lv_coord_t line_space,
-                                 lv_coord_t cell_left, lv_coord_t cell_right, lv_coord_t cell_top, lv_coord_t cell_bottom);
-static void refr_size_form_row(lv_obj_t * obj, uint32_t start_row);
-static void refr_cell_size(lv_obj_t * obj, uint32_t row, uint32_t col);
-static lv_res_t get_pressed_cell(lv_obj_t * obj, uint16_t * row, uint16_t * col);
-static size_t get_cell_txt_len(const char * txt);
-static void copy_cell_txt(char * dst, const char * txt);
-static void get_cell_area(lv_obj_t * obj, uint16_t row, uint16_t col, lv_area_t * area);
-static void scroll_to_selected_cell(lv_obj_t * obj);
+                                 lv_coord_t cell_left, lv_coord_t cell_right, lv_coord_t cell_top, lv_coord_t cell_bottom) LV_SECTION;
+static void refr_size_form_row(lv_obj_t * obj, uint32_t start_row) LV_SECTION;
+static void refr_cell_size(lv_obj_t * obj, uint32_t row, uint32_t col) LV_SECTION;
+static lv_res_t get_pressed_cell(lv_obj_t * obj, uint16_t * row, uint16_t * col) LV_SECTION;
+static size_t get_cell_txt_len(const char * txt) LV_SECTION;
+static void copy_cell_txt(char * dst, const char * txt) LV_SECTION;
+static void get_cell_area(lv_obj_t * obj, uint16_t row, uint16_t col, lv_area_t * area) LV_SECTION;
+static void scroll_to_selected_cell(lv_obj_t * obj) LV_SECTION;
 
-static inline bool is_cell_empty(void * cell)
+static LV_SECTION inline bool is_cell_empty(void * cell)
 {
     return cell == NULL;
 }

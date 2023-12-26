@@ -296,7 +296,7 @@ typedef enum {
  *        ----------------------
  *         Shift right with 5 - 3 = 2
  */
-static inline uint8_t lv_color_to1(lv_color_t color)
+static LV_SECTION inline uint8_t lv_color_to1(lv_color_t color)
 {
 #if LV_COLOR_DEPTH == 1
     return color.full;
@@ -324,7 +324,7 @@ static inline uint8_t lv_color_to1(lv_color_t color)
 #endif
 }
 
-static inline uint8_t lv_color_to8(lv_color_t color)
+static LV_SECTION inline uint8_t lv_color_to8(lv_color_t color)
 {
 #if LV_COLOR_DEPTH == 1
     if(color.full == 0)
@@ -348,7 +348,7 @@ static inline uint8_t lv_color_to8(lv_color_t color)
 #endif
 }
 
-static inline uint16_t lv_color_to16(lv_color_t color)
+static LV_SECTION inline uint16_t lv_color_to16(lv_color_t color)
 {
 #if LV_COLOR_DEPTH == 1
     if(color.full == 0)
@@ -372,7 +372,7 @@ static inline uint16_t lv_color_to16(lv_color_t color)
 #endif
 }
 
-static inline uint32_t lv_color_to32(lv_color_t color)
+static LV_SECTION inline uint32_t lv_color_to32(lv_color_t color)
 {
 #if LV_COLOR_DEPTH == 1
     if(color.full == 0)
@@ -436,7 +436,7 @@ static inline uint32_t lv_color_to32(lv_color_t color)
  * @param mix The ratio of the colors. 0: full `c2`, 255: full `c1`, 127: half `c1` and half`c2`
  * @return the mixed color
  */
-static inline lv_color_t LV_ATTRIBUTE_FAST_MEM lv_color_mix(lv_color_t c1, lv_color_t c2, uint8_t mix)
+static LV_SECTION inline lv_color_t LV_ATTRIBUTE_FAST_MEM lv_color_mix(lv_color_t c1, lv_color_t c2, uint8_t mix)
 {
     lv_color_t ret;
 
@@ -472,7 +472,7 @@ static inline lv_color_t LV_ATTRIBUTE_FAST_MEM lv_color_mix(lv_color_t c1, lv_co
     return ret;
 }
 
-static inline void LV_ATTRIBUTE_FAST_MEM lv_color_premult(lv_color_t c, uint8_t mix, uint16_t * out)
+static LV_SECTION inline void LV_ATTRIBUTE_FAST_MEM lv_color_premult(lv_color_t c, uint8_t mix, uint16_t * out)
 {
 #if LV_COLOR_DEPTH != 1
     out[0] = (uint16_t)LV_COLOR_GET_R(c) * mix;
@@ -497,7 +497,7 @@ static inline void LV_ATTRIBUTE_FAST_MEM lv_color_premult(lv_color_t c, uint8_t 
  * @return the mixed color
  * @note 255 won't give clearly `c1`.
  */
-static inline lv_color_t LV_ATTRIBUTE_FAST_MEM lv_color_mix_premult(uint16_t * premult_c1, lv_color_t c2, uint8_t mix)
+static LV_SECTION inline lv_color_t LV_ATTRIBUTE_FAST_MEM lv_color_mix_premult(uint16_t * premult_c1, lv_color_t c2, uint8_t mix)
 {
     lv_color_t ret;
 #if LV_COLOR_DEPTH != 1
@@ -528,7 +528,7 @@ static inline lv_color_t LV_ATTRIBUTE_FAST_MEM lv_color_mix_premult(uint16_t * p
  * @param res_color the result color
  * @param res_opa the result opacity
  */
-static inline void LV_ATTRIBUTE_FAST_MEM lv_color_mix_with_alpha(lv_color_t bg_color, lv_opa_t bg_opa,
+static LV_SECTION inline void LV_ATTRIBUTE_FAST_MEM lv_color_mix_with_alpha(lv_color_t bg_color, lv_opa_t bg_opa,
                                                                  lv_color_t fg_color, lv_opa_t fg_opa,
                                                                  lv_color_t * res_color, lv_opa_t * res_opa)
 {
@@ -584,7 +584,7 @@ static inline void LV_ATTRIBUTE_FAST_MEM lv_color_mix_with_alpha(lv_color_t bg_c
  * @param color a color
  * @return the brightness [0..255]
  */
-static inline uint8_t lv_color_brightness(lv_color_t color)
+static LV_SECTION inline uint8_t lv_color_brightness(lv_color_t color)
 {
     lv_color32_t c32;
     c32.full        = lv_color_to32(color);
@@ -592,12 +592,12 @@ static inline uint8_t lv_color_brightness(lv_color_t color)
     return (uint8_t)(bright >> 3);
 }
 
-static inline lv_color_t lv_color_make(uint8_t r, uint8_t g, uint8_t b)
+static LV_SECTION inline lv_color_t lv_color_make(uint8_t r, uint8_t g, uint8_t b)
 {
     return _LV_COLOR_MAKE_TYPE_HELPER LV_COLOR_MAKE(r, g, b);
 }
 
-static inline lv_color_t lv_color_hex(uint32_t c)
+static LV_SECTION inline lv_color_t lv_color_hex(uint32_t c)
 {
 #if LV_COLOR_DEPTH == 16
     lv_color_t r;
@@ -631,27 +631,27 @@ static inline lv_color_t lv_color_hex(uint32_t c)
 #endif
 }
 
-static inline lv_color_t lv_color_hex3(uint32_t c)
+static LV_SECTION inline lv_color_t lv_color_hex3(uint32_t c)
 {
     return lv_color_make((uint8_t)(((c >> 4) & 0xF0) | ((c >> 8) & 0xF)), (uint8_t)((c & 0xF0) | ((c & 0xF0) >> 4)),
                          (uint8_t)((c & 0xF) | ((c & 0xF) << 4)));
 }
 
-static inline void lv_color_filter_dsc_init(lv_color_filter_dsc_t * dsc, lv_color_filter_cb_t cb)
+static LV_SECTION inline void lv_color_filter_dsc_init(lv_color_filter_dsc_t * dsc, lv_color_filter_cb_t cb)
 {
     dsc->filter_cb = cb;
 }
 
 //! @cond Doxygen_Suppress
 //!
-void /* LV_ATTRIBUTE_FAST_MEM */ lv_color_fill(lv_color_t * buf, lv_color_t color, uint32_t px_num);
+void /* LV_ATTRIBUTE_FAST_MEM */ lv_color_fill(lv_color_t * buf, lv_color_t color, uint32_t px_num) LV_SECTION;
 
 //! @endcond
-lv_color_t lv_color_lighten(lv_color_t c, lv_opa_t lvl);
+lv_color_t lv_color_lighten(lv_color_t c, lv_opa_t lvl) LV_SECTION;
 
-lv_color_t lv_color_darken(lv_color_t c, lv_opa_t lvl);
+lv_color_t lv_color_darken(lv_color_t c, lv_opa_t lvl) LV_SECTION;
 
-lv_color_t lv_color_change_lightness(lv_color_t c, lv_opa_t lvl);
+lv_color_t lv_color_change_lightness(lv_color_t c, lv_opa_t lvl) LV_SECTION;
 
 /**
  * Convert a HSV color to RGB
@@ -660,7 +660,7 @@ lv_color_t lv_color_change_lightness(lv_color_t c, lv_opa_t lvl);
  * @param v value [0..100]
  * @return the given RGB color in RGB (with LV_COLOR_DEPTH depth)
  */
-lv_color_t lv_color_hsv_to_rgb(uint16_t h, uint8_t s, uint8_t v);
+lv_color_t lv_color_hsv_to_rgb(uint16_t h, uint8_t s, uint8_t v) LV_SECTION;
 
 /**
  * Convert a 32-bit RGB color to HSV
@@ -669,20 +669,20 @@ lv_color_t lv_color_hsv_to_rgb(uint16_t h, uint8_t s, uint8_t v);
  * @param b8 8-bit blue
  * @return the given RGB color in HSV
  */
-lv_color_hsv_t lv_color_rgb_to_hsv(uint8_t r8, uint8_t g8, uint8_t b8);
+lv_color_hsv_t lv_color_rgb_to_hsv(uint8_t r8, uint8_t g8, uint8_t b8) LV_SECTION;
 
 /**
  * Convert a color to HSV
  * @param color color
  * @return the given color in HSV
  */
-lv_color_hsv_t lv_color_to_hsv(lv_color_t color);
+lv_color_hsv_t lv_color_to_hsv(lv_color_t color) LV_SECTION;
 
 /**
  * Just a wrapper around LV_COLOR_CHROMA_KEY because it might be more convenient to use a function in some cases
  * @return LV_COLOR_CHROMA_KEY
  */
-static inline lv_color_t lv_color_chroma_key(void)
+static LV_SECTION inline lv_color_t lv_color_chroma_key(void)
 {
     return LV_COLOR_CHROMA_KEY;
 }
@@ -692,17 +692,17 @@ static inline lv_color_t lv_color_chroma_key(void)
  **********************/
 /*Source: https://vuetifyjs.com/en/styles/colors/#material-colors*/
 
-lv_color_t lv_palette_main(lv_palette_t p);
-static inline lv_color_t lv_color_white(void)
+lv_color_t lv_palette_main(lv_palette_t p) LV_SECTION;
+static LV_SECTION inline lv_color_t lv_color_white(void)
 {
     return lv_color_make(0xff, 0xff, 0xff);
 }
-static inline lv_color_t lv_color_black(void)
+static LV_SECTION inline lv_color_t lv_color_black(void)
 {
     return lv_color_make(0x00, 0x0, 0x00);
 }
-lv_color_t lv_palette_lighten(lv_palette_t p, uint8_t lvl);
-lv_color_t lv_palette_darken(lv_palette_t p, uint8_t lvl);
+lv_color_t lv_palette_lighten(lv_palette_t p, uint8_t lvl) LV_SECTION;
+lv_color_t lv_palette_darken(lv_palette_t p, uint8_t lvl) LV_SECTION;
 
 /**********************
  *      MACROS

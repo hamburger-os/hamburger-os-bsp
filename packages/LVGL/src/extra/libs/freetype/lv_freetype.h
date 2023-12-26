@@ -49,12 +49,12 @@ typedef struct {
  *                  Note that this value does not account for managed FT_Face and FT_Size objects.
  * @return true on success, otherwise false.
  */
-bool lv_freetype_init(uint16_t max_faces, uint16_t max_sizes, uint32_t max_bytes);
+bool lv_freetype_init(uint16_t max_faces, uint16_t max_sizes, uint32_t max_bytes) LV_SECTION;
 
 /**
  * Destroy freetype library
  */
-void lv_freetype_destroy(void);
+void lv_freetype_destroy(void) LV_SECTION;
 
 /**
  * Creates a font with info parameter specified.
@@ -62,13 +62,13 @@ void lv_freetype_destroy(void);
  *             when success, lv_ft_info_t->font point to the font you created.
  * @return true on success, otherwise false.
  */
-bool lv_ft_font_init(lv_ft_info_t * info);
+bool lv_ft_font_init(lv_ft_info_t * info) LV_SECTION;
 
 /**
  * Destroy a font that has been created.
  * @param font pointer to font.
  */
-void lv_ft_font_destroy(lv_font_t * font);
+void lv_ft_font_destroy(lv_font_t * font) LV_SECTION;
 
 /**********************
  *      MACROS

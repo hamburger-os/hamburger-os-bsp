@@ -28,20 +28,22 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_chart_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_chart_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_chart_event(const lv_obj_class_t * class_p, lv_event_t * e);
+static void lv_chart_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_chart_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_chart_event(const lv_obj_class_t * class_p, lv_event_t * e) LV_SECTION;
 
-static void draw_div_lines(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx);
-static void draw_series_line(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx);
-static void draw_series_bar(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx);
-static void draw_series_scatter(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx);
-static void draw_cursors(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx);
-static void draw_axes(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx);
-static uint32_t get_index_from_x(lv_obj_t * obj, lv_coord_t x);
-static void invalidate_point(lv_obj_t * obj, uint16_t i);
-static void new_points_alloc(lv_obj_t * obj, lv_chart_series_t * ser, uint32_t cnt, lv_coord_t ** a);
-lv_chart_tick_dsc_t * get_tick_gsc(lv_obj_t * obj, lv_chart_axis_t axis);
+static void draw_div_lines(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx) LV_SECTION;
+static void draw_series_line(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx) LV_SECTION;
+static void draw_series_bar(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx) LV_SECTION;
+static void draw_series_scatter(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx) LV_SECTION;
+static void draw_cursors(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx) LV_SECTION;
+static void draw_y_ticks(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx, lv_chart_axis_t axis) LV_SECTION;
+static void draw_x_ticks(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx, lv_chart_axis_t axis) LV_SECTION;
+static void draw_axes(lv_obj_t * obj, lv_draw_ctx_t * draw_ctx) LV_SECTION;
+static uint32_t get_index_from_x(lv_obj_t * obj, lv_coord_t x) LV_SECTION;
+static void invalidate_point(lv_obj_t * obj, uint16_t i) LV_SECTION;
+static void new_points_alloc(lv_obj_t * obj, lv_chart_series_t * ser, uint32_t cnt, lv_coord_t ** a) LV_SECTION;
+lv_chart_tick_dsc_t * get_tick_gsc(lv_obj_t * obj, lv_chart_axis_t axis) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

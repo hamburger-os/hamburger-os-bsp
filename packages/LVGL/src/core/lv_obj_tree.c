@@ -26,9 +26,9 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_obj_del_async_cb(void * obj);
-static void obj_del_core(lv_obj_t * obj);
-static lv_obj_tree_walk_res_t walk_core(lv_obj_t * obj, lv_obj_tree_walk_cb_t cb, void * user_data);
+static void lv_obj_del_async_cb(void * obj) LV_SECTION;
+static void obj_del_core(lv_obj_t * obj) LV_SECTION;
+static lv_obj_tree_walk_res_t walk_core(lv_obj_t * obj, lv_obj_tree_walk_cb_t cb, void * user_data) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

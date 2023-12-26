@@ -24,11 +24,11 @@
  **********************/
 
 static void /* LV_ATTRIBUTE_FAST_MEM */ draw_line_skew(struct _lv_draw_ctx_t * draw_ctx, const lv_draw_line_dsc_t * dsc,
-                                                       const lv_point_t * point1, const lv_point_t * point2);
+                                                       const lv_point_t * point1, const lv_point_t * point2) LV_SECTION;
 static void /* LV_ATTRIBUTE_FAST_MEM */ draw_line_hor(struct _lv_draw_ctx_t * draw_ctx, const lv_draw_line_dsc_t * dsc,
-                                                      const lv_point_t * point1, const lv_point_t * point2);
+                                                      const lv_point_t * point1, const lv_point_t * point2) LV_SECTION;
 static void /* LV_ATTRIBUTE_FAST_MEM */ draw_line_ver(struct _lv_draw_ctx_t * draw_ctx, const lv_draw_line_dsc_t * dsc,
-                                                      const lv_point_t * point1, const lv_point_t * point2);
+                                                      const lv_point_t * point1, const lv_point_t * point2) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

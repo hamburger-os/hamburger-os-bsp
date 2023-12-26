@@ -32,26 +32,26 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_btnmatrix_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_btnmatrix_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_btnmatrix_event(const lv_obj_class_t * class_p, lv_event_t * e);
-static void draw_main(lv_event_t * e);
+static void lv_btnmatrix_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_btnmatrix_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_btnmatrix_event(const lv_obj_class_t * class_p, lv_event_t * e) LV_SECTION;
+static void draw_main(lv_event_t * e) LV_SECTION;
 
-static uint8_t get_button_width(lv_btnmatrix_ctrl_t ctrl_bits);
-static bool button_is_hidden(lv_btnmatrix_ctrl_t ctrl_bits);
-static bool button_is_checked(lv_btnmatrix_ctrl_t ctrl_bits);
-static bool button_is_repeat_disabled(lv_btnmatrix_ctrl_t ctrl_bits);
-static bool button_is_inactive(lv_btnmatrix_ctrl_t ctrl_bits);
-static bool button_is_click_trig(lv_btnmatrix_ctrl_t ctrl_bits);
-static bool button_is_popover(lv_btnmatrix_ctrl_t ctrl_bits);
-static bool button_is_checkable(lv_btnmatrix_ctrl_t ctrl_bits);
-static bool button_is_recolor(lv_btnmatrix_ctrl_t ctrl_bits);
-static bool button_get_checked(lv_btnmatrix_ctrl_t ctrl_bits);
-static uint16_t get_button_from_point(lv_obj_t * obj, lv_point_t * p);
-static void allocate_btn_areas_and_controls(const lv_obj_t * obj, const char ** map);
-static void invalidate_button_area(const lv_obj_t * obj, uint16_t btn_idx);
-static void make_one_button_checked(lv_obj_t * obj, uint16_t btn_idx);
-static bool has_popovers_in_top_row(lv_obj_t * obj);
+static uint8_t get_button_width(lv_btnmatrix_ctrl_t ctrl_bits) LV_SECTION;
+static bool button_is_hidden(lv_btnmatrix_ctrl_t ctrl_bits) LV_SECTION;
+static bool button_is_checked(lv_btnmatrix_ctrl_t ctrl_bits) LV_SECTION;
+static bool button_is_repeat_disabled(lv_btnmatrix_ctrl_t ctrl_bits) LV_SECTION;
+static bool button_is_inactive(lv_btnmatrix_ctrl_t ctrl_bits) LV_SECTION;
+static bool button_is_click_trig(lv_btnmatrix_ctrl_t ctrl_bits) LV_SECTION;
+static bool button_is_popover(lv_btnmatrix_ctrl_t ctrl_bits) LV_SECTION;
+static bool button_is_checkable(lv_btnmatrix_ctrl_t ctrl_bits) LV_SECTION;
+static bool button_is_recolor(lv_btnmatrix_ctrl_t ctrl_bits) LV_SECTION;
+static bool button_get_checked(lv_btnmatrix_ctrl_t ctrl_bits) LV_SECTION;
+static uint16_t get_button_from_point(lv_obj_t * obj, lv_point_t * p) LV_SECTION;
+static void allocate_btn_areas_and_controls(const lv_obj_t * obj, const char ** map) LV_SECTION;
+static void invalidate_button_area(const lv_obj_t * obj, uint16_t btn_idx) LV_SECTION;
+static void make_one_button_checked(lv_obj_t * obj, uint16_t btn_idx) LV_SECTION;
+static bool has_popovers_in_top_row(lv_obj_t * obj) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

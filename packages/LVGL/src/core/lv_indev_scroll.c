@@ -21,15 +21,15 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_obj_t * find_scroll_obj(_lv_indev_proc_t * proc);
-static void init_scroll_limits(_lv_indev_proc_t * proc);
-static lv_coord_t find_snap_point_x(const lv_obj_t * obj, lv_coord_t min, lv_coord_t max, lv_coord_t ofs);
-static lv_coord_t find_snap_point_y(const lv_obj_t * obj, lv_coord_t min, lv_coord_t max, lv_coord_t ofs);
-static void scroll_limit_diff(_lv_indev_proc_t * proc, lv_coord_t * diff_x, lv_coord_t * diff_y);
-static lv_coord_t scroll_throw_predict_y(_lv_indev_proc_t * proc);
-static lv_coord_t scroll_throw_predict_x(_lv_indev_proc_t * proc);
+static lv_obj_t * find_scroll_obj(_lv_indev_proc_t * proc) LV_SECTION;
+static void init_scroll_limits(_lv_indev_proc_t * proc) LV_SECTION;
+static lv_coord_t find_snap_point_x(const lv_obj_t * obj, lv_coord_t min, lv_coord_t max, lv_coord_t ofs) LV_SECTION;
+static lv_coord_t find_snap_point_y(const lv_obj_t * obj, lv_coord_t min, lv_coord_t max, lv_coord_t ofs) LV_SECTION;
+static void scroll_limit_diff(_lv_indev_proc_t * proc, lv_coord_t * diff_x, lv_coord_t * diff_y) LV_SECTION;
+static lv_coord_t scroll_throw_predict_y(_lv_indev_proc_t * proc) LV_SECTION;
+static lv_coord_t scroll_throw_predict_x(_lv_indev_proc_t * proc) LV_SECTION;
 static lv_coord_t elastic_diff(lv_obj_t * scroll_obj, lv_coord_t diff, lv_coord_t scroll_start, lv_coord_t scroll_end,
-                               lv_dir_t dir);
+                               lv_dir_t dir) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

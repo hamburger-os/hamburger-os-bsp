@@ -54,7 +54,7 @@ extern const lv_obj_class_t lv_calendar_class;
  * GLOBAL PROTOTYPES
  **********************/
 
-lv_obj_t * lv_calendar_create(lv_obj_t * parent);
+lv_obj_t * lv_calendar_create(lv_obj_t * parent) LV_SECTION;
 
 /*======================
  * Add/remove functions
@@ -71,7 +71,7 @@ lv_obj_t * lv_calendar_create(lv_obj_t * parent);
  * @param month     today's month [1..12]
  * @param day       today's day [1..31]
  */
-void lv_calendar_set_today_date(lv_obj_t * obj, uint32_t year, uint32_t month, uint32_t day);
+void lv_calendar_set_today_date(lv_obj_t * obj, uint32_t year, uint32_t month, uint32_t day) LV_SECTION;
 
 /**
  * Set the currently showed
@@ -79,7 +79,7 @@ void lv_calendar_set_today_date(lv_obj_t * obj, uint32_t year, uint32_t month, u
  * @param year          today's year
  * @param month         today's month [1..12]
  */
-void lv_calendar_set_showed_date(lv_obj_t * obj, uint32_t year, uint32_t month);
+void lv_calendar_set_showed_date(lv_obj_t * obj, uint32_t year, uint32_t month) LV_SECTION;
 
 /**
  * Set the highlighted dates
@@ -88,7 +88,7 @@ void lv_calendar_set_showed_date(lv_obj_t * obj, uint32_t year, uint32_t month);
  *                      Only the pointer will be saved so this variable can't be local which will be destroyed later.
  * @param date_num number of dates in the array
  */
-void lv_calendar_set_highlighted_dates(lv_obj_t * obj, lv_calendar_date_t highlighted[], uint16_t date_num);
+void lv_calendar_set_highlighted_dates(lv_obj_t * obj, lv_calendar_date_t highlighted[], uint16_t date_num) LV_SECTION;
 
 /**
  * Set the name of the days
@@ -97,7 +97,7 @@ void lv_calendar_set_highlighted_dates(lv_obj_t * obj, lv_calendar_date_t highli
  *                      E.g. `const char * days[7] = {"Sun", "Mon", ...}`
  *                      Only the pointer will be saved so this variable can't be local which will be destroyed later.
  */
-void lv_calendar_set_day_names(lv_obj_t * obj, const char ** day_names);
+void lv_calendar_set_day_names(lv_obj_t * obj, const char ** day_names) LV_SECTION;
 
 /*=====================
  * Getter functions
@@ -109,35 +109,35 @@ void lv_calendar_set_day_names(lv_obj_t * obj, const char ** day_names);
  * @param obj   pointer to a calendar object
  * @return      pointer to a the button matrix
  */
-lv_obj_t * lv_calendar_get_btnmatrix(const lv_obj_t * obj);
+lv_obj_t * lv_calendar_get_btnmatrix(const lv_obj_t * obj) LV_SECTION;
 
 /**
  * Get the today's date
  * @param calendar pointer to a calendar object
  * @return return pointer to an `lv_calendar_date_t` variable containing the date of today.
  */
-const lv_calendar_date_t * lv_calendar_get_today_date(const lv_obj_t * calendar);
+const lv_calendar_date_t * lv_calendar_get_today_date(const lv_obj_t * calendar) LV_SECTION;
 
 /**
  * Get the currently showed
  * @param calendar pointer to a calendar object
  * @return pointer to an `lv_calendar_date_t` variable containing the date is being shown.
  */
-const lv_calendar_date_t * lv_calendar_get_showed_date(const lv_obj_t * calendar);
+const lv_calendar_date_t * lv_calendar_get_showed_date(const lv_obj_t * calendar) LV_SECTION;
 
 /**
  * Get the highlighted dates
  * @param calendar pointer to a calendar object
  * @return pointer to an `lv_calendar_date_t` array containing the dates.
  */
-lv_calendar_date_t * lv_calendar_get_highlighted_dates(const lv_obj_t * calendar);
+lv_calendar_date_t * lv_calendar_get_highlighted_dates(const lv_obj_t * calendar) LV_SECTION;
 
 /**
  * Get the number of the highlighted dates
  * @param calendar pointer to a calendar object
  * @return number of highlighted days
  */
-uint16_t lv_calendar_get_highlighted_dates_num(const lv_obj_t * calendar);
+uint16_t lv_calendar_get_highlighted_dates_num(const lv_obj_t * calendar) LV_SECTION;
 
 /**
  * Get the currently pressed day
@@ -145,7 +145,7 @@ uint16_t lv_calendar_get_highlighted_dates_num(const lv_obj_t * calendar);
  * @param date store the pressed date here
  * @return LV_RES_OK: there is a valid pressed date; LV_RES_INV: there is no pressed data
  */
-lv_res_t lv_calendar_get_pressed_date(const lv_obj_t * calendar, lv_calendar_date_t * date);
+lv_res_t lv_calendar_get_pressed_date(const lv_obj_t * calendar, lv_calendar_date_t * date) LV_SECTION;
 
 /*=====================
  * Other functions

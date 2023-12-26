@@ -7,12 +7,12 @@
 /* Program Entry, set to mark it as "used" and avoid gc */
 MEMORY
 {
-ROM  (rx) : ORIGIN =0x08000000,LENGTH =1920k
+ROM  (rx) : ORIGIN =0x08000000,LENGTH =512k
 RAM  (rw) : ORIGIN =0x20000000,LENGTH =192k
 RAM1 (rw) : ORIGIN =0x10000000,LENGTH =64k
 }
 ENTRY(Reset_Handler)
-_system_stack_size = 0x400;
+_system_stack_size = 0x200;
 
 SECTIONS
 {
@@ -24,60 +24,21 @@ SECTIONS
 
         . = ALIGN(4);
         *(.text)                        /* remaining code */
-        *(.text.*)                      /* remaining code */
+        *(.text.*)
+        
+        . = ALIGN(4);
+        /* section information for lvgl */
+        *(.lvgl)
+        *(.lvgl*)
+
+        . = ALIGN(4);
         *(.rodata)                      /* read-only data (constants) */
         *(.rodata*)
-        *(.glue_7)
-        *(.glue_7t)
-        *(.gnu.linkonce.t*)
-
-        /* section information for utest */
-        . = ALIGN(4);
-        __rt_utest_tc_tab_start = .;
-        KEEP(*(UtestTcTab))
-        __rt_utest_tc_tab_end = .;
-        
-        /* section information for usbh class */
-		. = ALIGN(4);
-		__usbh_class_info_start__ = .;
-		KEEP(*(.usbh_class_info))
-		__usbh_class_info_end__ = .;
-
-        /* section information for finsh shell */
-        . = ALIGN(4);
-        __fsymtab_start = .;
-        KEEP(*(FSymTab))
-        __fsymtab_end = .;
 
         . = ALIGN(4);
-        __vsymtab_start = .;
-        KEEP(*(VSymTab))
-        __vsymtab_end = .;
-
-        /* section information for initial. */
-        . = ALIGN(4);
-        __rt_init_start = .;
-        KEEP(*(SORT(.rti_fn*)))
-        __rt_init_end = .;
-        
-        /* section information for modules */
-        . = ALIGN(4);
-        __rtmsymtab_start = .;
-        KEEP(*(RTMSymTab))
-        __rtmsymtab_end = .;
-
-        . = ALIGN(4);
-
-        PROVIDE(__ctors_start__ = .);
-        KEEP (*(SORT(.init_array.*)))
-        KEEP (*(.init_array))
-        PROVIDE(__ctors_end__ = .);
-
-        . = ALIGN(4);
-
         _etext = .;
     } > ROM = 0
-
+    
     /* .ARM.exidx is sorted, so has to go in its own output section.  */
     __exidx_start = .;
     .ARM.exidx :
@@ -90,22 +51,67 @@ SECTIONS
     __exidx_end = .;
 
     /* .data section which is used for initialized data */
-
     .data : AT (_sidata)
     {
         . = ALIGN(4);
         /* This is used by the startup in order to initialize the .data secion */
         _sdata = . ;
 
+        . = ALIGN(4);
         *(.data)
         *(.data.*)
         *(.gnu.linkonce.d*)
+        *(.glue_7)
+        *(.glue_7t)
+        *(.gnu.linkonce.t*)
 
+        . = ALIGN(4);
         PROVIDE(__dtors_start__ = .);
         KEEP(*(SORT(.dtors.*)))
         KEEP(*(.dtors))
         PROVIDE(__dtors_end__ = .);
+
+        . = ALIGN(4);
+        PROVIDE(__ctors_start__ = .);
+        KEEP (*(SORT(.init_array.*)))
+        KEEP (*(.init_array))
+        PROVIDE(__ctors_end__ = .);
         
+        . = ALIGN(4);
+        __vsymtab_start = .;
+        KEEP(*(VSymTab))
+        __vsymtab_end = .;
+        
+        /* section information for initial. */
+        . = ALIGN(4);
+        __rt_init_start = .;
+        KEEP(*(SORT(.rti_fn*)))
+        __rt_init_end = .;
+        
+        /* section information for finsh shell */
+        . = ALIGN(4);
+        __fsymtab_start = .;
+        KEEP(*(FSymTab))
+        __fsymtab_end = .;
+        
+        /* section information for modules */
+        . = ALIGN(4);
+        __rtmsymtab_start = .;
+        KEEP(*(RTMSymTab))
+        __rtmsymtab_end = .;
+
+        /* section information for usbh class */
+        . = ALIGN(4);
+        __usbh_class_info_start__ = .;
+        KEEP(*(.usbh_class_info))
+        __usbh_class_info_end__ = .;
+        
+        /* section information for utest */
+        . = ALIGN(4);
+        __rt_utest_tc_tab_start = .;
+        KEEP(*(UtestTcTab))
+        __rt_utest_tc_tab_end = .;
+
         . = ALIGN(4);
         /* This is used by the startup in order to initialize the .data secion */
         _edata = . ;
@@ -115,7 +121,9 @@ SECTIONS
     {
         . = ALIGN(4);
         _sstack = .;
+        
         . = . + _system_stack_size;
+        
         . = ALIGN(4);
         _estack = .;
     } >RAM

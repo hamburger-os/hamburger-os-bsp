@@ -24,7 +24,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void msgbox_close_click_event_cb(lv_event_t * e);
+static void msgbox_close_click_event_cb(lv_event_t * e) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

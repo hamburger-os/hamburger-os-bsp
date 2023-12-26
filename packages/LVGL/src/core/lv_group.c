@@ -25,9 +25,9 @@
  *  STATIC PROTOTYPES
  **********************/
 static bool focus_next_core(lv_group_t * group, void * (*begin)(const lv_ll_t *),
-                            void * (*move)(const lv_ll_t *, const void *));
-static void lv_group_refocus(lv_group_t * g);
-static lv_indev_t * get_indev(const lv_group_t * g);
+                            void * (*move)(const lv_ll_t *, const void *)) LV_SECTION;
+static void lv_group_refocus(lv_group_t * g) LV_SECTION;
+static lv_indev_t * get_indev(const lv_group_t * g) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

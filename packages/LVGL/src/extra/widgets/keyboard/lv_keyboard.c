@@ -28,11 +28,11 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_keyboard_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
+static void lv_keyboard_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
 
-static void lv_keyboard_update_map(lv_obj_t * obj);
+static void lv_keyboard_update_map(lv_obj_t * obj) LV_SECTION;
 
-static void lv_keyboard_update_ctrl_map(lv_obj_t * obj);
+static void lv_keyboard_update_ctrl_map(lv_obj_t * obj) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

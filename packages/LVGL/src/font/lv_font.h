@@ -93,7 +93,7 @@ typedef struct _lv_font_t {
  * @param letter a UNICODE character code
  * @return pointer to the bitmap of the letter
  */
-const uint8_t * lv_font_get_glyph_bitmap(const lv_font_t * font_p, uint32_t letter);
+const uint8_t * lv_font_get_glyph_bitmap(const lv_font_t * font_p, uint32_t letter) LV_SECTION;
 
 /**
  * Get the descriptor of a glyph
@@ -105,7 +105,7 @@ const uint8_t * lv_font_get_glyph_bitmap(const lv_font_t * font_p, uint32_t lett
  *         false: the letter was not found, no data is loaded to `dsc_out`
  */
 bool lv_font_get_glyph_dsc(const lv_font_t * font_p, lv_font_glyph_dsc_t * dsc_out, uint32_t letter,
-                           uint32_t letter_next);
+                           uint32_t letter_next) LV_SECTION;
 
 /**
  * Get the width of a glyph with kerning
@@ -114,14 +114,14 @@ bool lv_font_get_glyph_dsc(const lv_font_t * font_p, lv_font_glyph_dsc_t * dsc_o
  * @param letter_next the next letter after `letter`. Used for kerning
  * @return the width of the glyph
  */
-uint16_t lv_font_get_glyph_width(const lv_font_t * font, uint32_t letter, uint32_t letter_next);
+uint16_t lv_font_get_glyph_width(const lv_font_t * font, uint32_t letter, uint32_t letter_next) LV_SECTION;
 
 /**
  * Get the line height of a font. All characters fit into this height
  * @param font_p pointer to a font
  * @return the height of a font
  */
-static inline lv_coord_t lv_font_get_line_height(const lv_font_t * font_p)
+static LV_SECTION inline lv_coord_t lv_font_get_line_height(const lv_font_t * font_p)
 {
     return font_p->line_height;
 }
@@ -249,7 +249,7 @@ LV_FONT_CUSTOM_DECLARE
  * Just a wrapper around LV_FONT_DEFAULT because it might be more convenient to use a function in some cases
  * @return  pointer to LV_FONT_DEFAULT
  */
-static inline const lv_font_t * lv_font_default(void)
+static LV_SECTION inline const lv_font_t * lv_font_default(void)
 {
     return LV_FONT_DEFAULT;
 }

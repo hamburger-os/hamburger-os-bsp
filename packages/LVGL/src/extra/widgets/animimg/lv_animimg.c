@@ -36,8 +36,8 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void index_change(lv_obj_t * obj, int32_t index);
-static void lv_animimg_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
+static void index_change(lv_obj_t * obj, int32_t index) LV_SECTION;
+static void lv_animimg_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

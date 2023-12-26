@@ -34,19 +34,20 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_colorwheel_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_colorwheel_event(const lv_obj_class_t * class_p, lv_event_t * e);
+static void lv_colorwheel_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_colorwheel_event(const lv_obj_class_t * class_p, lv_event_t * e) LV_SECTION;
 
-static void draw_disc_grad(lv_event_t * e);
-static void draw_knob(lv_event_t * e);
-static void invalidate_knob(lv_obj_t * obj);
-static lv_area_t get_knob_area(lv_obj_t * obj);
+static void draw_disc_grad(lv_event_t * e) LV_SECTION;
+static void draw_knob(lv_event_t * e) LV_SECTION;
+static void invalidate_knob(lv_obj_t * obj) LV_SECTION;
+static lv_area_t get_knob_area(lv_obj_t * obj) LV_SECTION;
 
-static void next_color_mode(lv_obj_t * obj);
-static lv_res_t double_click_reset(lv_obj_t * obj);
-static void refr_knob_pos(lv_obj_t * obj);
-static lv_color_t angle_to_mode_color_fast(lv_obj_t * obj, uint16_t angle);
-static uint16_t get_angle(lv_obj_t * obj);
+static void next_color_mode(lv_obj_t * obj) LV_SECTION;
+static lv_res_t double_click_reset(lv_obj_t * obj) LV_SECTION;
+static void fast_hsv2rgb(uint16_t h, uint8_t s, uint8_t v, uint8_t * r, uint8_t * g, uint8_t * b) LV_SECTION;
+static void refr_knob_pos(lv_obj_t * obj) LV_SECTION;
+static lv_color_t angle_to_mode_color_fast(lv_obj_t * obj, uint16_t angle) LV_SECTION;
+static uint16_t get_angle(lv_obj_t * obj) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

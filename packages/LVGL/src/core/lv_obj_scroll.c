@@ -31,11 +31,11 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void scroll_x_anim(void * obj, int32_t v);
-static void scroll_y_anim(void * obj, int32_t v);
-static void scroll_anim_ready_cb(lv_anim_t * a);
+static void scroll_x_anim(void * obj, int32_t v) LV_SECTION;
+static void scroll_y_anim(void * obj, int32_t v) LV_SECTION;
+static void scroll_anim_ready_cb(lv_anim_t * a) LV_SECTION;
 static void scroll_area_into_view(const lv_area_t * area, lv_obj_t * child, lv_point_t * scroll_value,
-                                  lv_anim_enable_t anim_en);
+                                  lv_anim_enable_t anim_en) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

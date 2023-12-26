@@ -19,7 +19,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void apply_theme(lv_theme_t * th, lv_obj_t * obj);
+static void apply_theme(lv_theme_t * th, lv_obj_t * obj) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

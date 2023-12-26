@@ -24,10 +24,10 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void my_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void year_event_cb(lv_event_t * e);
-static void month_event_cb(lv_event_t * e);
-static void value_changed_event_cb(lv_event_t * e);
+static void my_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void year_event_cb(lv_event_t * e) LV_SECTION;
+static void month_event_cb(lv_event_t * e) LV_SECTION;
+static void value_changed_event_cb(lv_event_t * e) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

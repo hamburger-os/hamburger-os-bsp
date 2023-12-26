@@ -44,15 +44,15 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_bar_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_bar_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void lv_bar_event(const lv_obj_class_t * class_p, lv_event_t * e);
-static void draw_indic(lv_event_t * e);
+static void lv_bar_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_bar_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj) LV_SECTION;
+static void lv_bar_event(const lv_obj_class_t * class_p, lv_event_t * e) LV_SECTION;
+static void draw_indic(lv_event_t * e) LV_SECTION;
 static void lv_bar_set_value_with_anim(lv_obj_t * obj, int32_t new_value, int32_t * value_ptr,
-                                       _lv_bar_anim_t * anim_info, lv_anim_enable_t en);
-static void lv_bar_init_anim(lv_obj_t * bar, _lv_bar_anim_t * bar_anim);
-static void lv_bar_anim(void * bar, int32_t value);
-static void lv_bar_anim_ready(lv_anim_t * a);
+                                       _lv_bar_anim_t * anim_info, lv_anim_enable_t en) LV_SECTION;
+static void lv_bar_init_anim(lv_obj_t * bar, _lv_bar_anim_t * bar_anim) LV_SECTION;
+static void lv_bar_anim(void * bar, int32_t value) LV_SECTION;
+static void lv_bar_anim_ready(lv_anim_t * a) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

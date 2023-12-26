@@ -2208,14 +2208,19 @@ menu "Onboard Peripheral Drivers"
         select RT_USING_DFS
         select RT_USING_DFS_ROMFS
         select RT_USING_DFS_TMPFS
-        select RT_USING_MODULE
         select PKG_USING_LITTLEFS
         default n
         if BSP_USING_ROOTFS
             comment "Please ensure that there is an mtd mor device with the names bin, etc, lib, usr present."
             
+            config ROOTFS_USING_MODULE
+                bool "Enable module"
+                select RT_USING_MODULE
+                default y
+            
             config ROOTFS_USING_SELF_START
                 bool "Enable self start scripts"
+                depends on ROOTFS_USING_MODULE
                 default y
                 
             config ROOTFS_SELF_START_PATH
@@ -2457,6 +2462,16 @@ menu "Onboard Peripheral Drivers"
                 int "Set GPU STM32 DMA2D enable, default: 1"
                 depends on PKG_USING_LVGL
                 default (1)
+                
+            config BSP_USING_PERF_MONITOR
+                int "Set perf monitor enable, default: 0"
+                depends on PKG_USING_LVGL
+                default (0)
+                
+            config BSP_USING_MEM_MONITOR
+                int "Set perf monitor enable, default: 0"
+                depends on PKG_USING_LVGL
+                default (0)
             
             choice
                 prompt "Select lcd driver"
@@ -2502,7 +2517,7 @@ menu "Onboard Peripheral Drivers"
                     
                 config LCD_USING_RGB2BGR
                     bool "Enable LCD RGB to BGR mode"
-                    default y
+                    default n
                     
                 choice
                     prompt "Select lcd backlight"
