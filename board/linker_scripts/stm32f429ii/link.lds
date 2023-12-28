@@ -25,15 +25,6 @@ SECTIONS
         . = ALIGN(4);
         *(.text)                        /* remaining code */
         *(.text.*)
-        
-        . = ALIGN(4);
-        /* section information for lvgl */
-        *(.lvgl)
-        *(.lvgl*)
-
-        . = ALIGN(4);
-        *(.rodata)                      /* read-only data (constants) */
-        *(.rodata*)
         *(.glue_7)
         *(.glue_7t)
         *(.gnu.linkonce.t*)
@@ -81,6 +72,24 @@ SECTIONS
 
         . = ALIGN(4);
         _etext = .;
+    } > ROM = 0
+    
+    .low :
+    {
+        . = ALIGN(4);
+        _slow = .;
+        
+        . = ALIGN(4);
+        /* section information for lvgl */
+        *(.lvgl)
+        *(.lvgl*)
+
+        . = ALIGN(4);
+        *(.rodata)                      /* read-only data (constants) */
+        *(.rodata*)
+        
+        . = ALIGN(4);
+        _elow = .;
     } > ROM = 0
     
     /* .ARM.exidx is sorted, so has to go in its own output section.  */

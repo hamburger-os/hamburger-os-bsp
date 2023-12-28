@@ -26,7 +26,6 @@
 #include <sys/time.h>
 #include <sys/select.h>
 #include <sys/stat.h>
-#include <termios.h>
 #include <errno.h>
 #include <ctype.h>
 #include <stdarg.h>

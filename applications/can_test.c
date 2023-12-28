@@ -8,6 +8,7 @@
  * 2023-05-22     lvhan       the first version
  */
 
+#include <stdlib.h>
 #include "board.h"
 #include <rtthread.h>
 

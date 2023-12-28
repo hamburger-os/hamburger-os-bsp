@@ -74,17 +74,6 @@ SECTIONS
         _etext = .;
     } > ROM = 0
     
-    /* .ARM.exidx is sorted, so has to go in its own output section.  */
-    __exidx_start = .;
-    .ARM.exidx :
-    {
-        *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-
-        /* This is used by the startup in order to initialize the .data secion */
-        _sidata = .;
-    } > ROM
-    __exidx_end = .;
-    
     .low :
     {
         . = ALIGN(4);
@@ -102,6 +91,17 @@ SECTIONS
         . = ALIGN(4);
         _elow = .;
     } > ROM = 0
+    
+    /* .ARM.exidx is sorted, so has to go in its own output section.  */
+    __exidx_start = .;
+    .ARM.exidx :
+    {
+        *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+
+        /* This is used by the startup in order to initialize the .data secion */
+        _sidata = .;
+    } > ROM
+    __exidx_end = .;
 
     /* .data section which is used for initialized data */
     .data : AT (_sidata)

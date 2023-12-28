@@ -63,3 +63,4 @@ template_lib.uvprojx
 !/project/*/template_lib.uvoptx
 !/project/*/template_lib.uvprojx
 swos2_lib
+*.rbl
