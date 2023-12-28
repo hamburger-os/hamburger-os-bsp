@@ -2469,7 +2469,7 @@ menu "Onboard Peripheral Drivers"
                 default (0)
                 
             config BSP_USING_MEM_MONITOR
-                int "Set perf monitor enable, default: 0"
+                int "Set memory monitor enable, default: 0"
                 depends on PKG_USING_LVGL
                 default (0)
             
@@ -2633,6 +2633,10 @@ menu "Onboard Peripheral Drivers"
                 
                 config BSP_USING_NO_LVGL_DEMO
                     bool "Disable demo"
+                    select PKG_USING_LVGL
+                    
+                config BSP_USING_TOUCH_TEST
+                    bool "Enable touch test"
 
                 config BSP_USING_LVGL_WIDGETS_DEMO
                     bool "Enable demo widgets"

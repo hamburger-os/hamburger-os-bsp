@@ -24,10 +24,10 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_res_t decoder_info(struct _lv_img_decoder_t * decoder, const void * src, lv_img_header_t * header);
-static lv_res_t decoder_open(lv_img_decoder_t * dec, lv_img_decoder_dsc_t * dsc);
-static void decoder_close(lv_img_decoder_t * dec, lv_img_decoder_dsc_t * dsc);
-static void convert_color_depth(uint8_t * img, uint32_t px_cnt);
+static lv_res_t decoder_info(struct _lv_img_decoder_t * decoder, const void * src, lv_img_header_t * header) LV_SECTION;
+static lv_res_t decoder_open(lv_img_decoder_t * dec, lv_img_decoder_dsc_t * dsc) LV_SECTION;
+static void decoder_close(lv_img_decoder_t * dec, lv_img_decoder_dsc_t * dsc) LV_SECTION;
+static void convert_color_depth(uint8_t * img, uint32_t px_cnt) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES

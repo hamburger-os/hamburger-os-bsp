@@ -7,7 +7,7 @@
 ENTRY(Reset_Handler)
 
 /* Highest address of the user mode stack */
-_system_stack_size = 0x200;
+_system_stack_size = 0x0;
 
 /* Program Entry, set to mark it as "used" and avoid gc */
 MEMORY
@@ -32,12 +32,31 @@ SECTIONS
 
         . = ALIGN(4);
         *(.text)                        /* remaining code */
-        *(.text.*)                      /* remaining code */
+        *(.text.*)
+
+        . = ALIGN(4);
         *(.rodata)                      /* read-only data (constants) */
         *(.rodata*)
         *(.glue_7)
         *(.glue_7t)
         *(.gnu.linkonce.t*)
+        
+        . = ALIGN(4);
+        PROVIDE(__ctors_start__ = .);
+        KEEP (*(SORT(.init_array.*)))
+        KEEP (*(.init_array))
+        PROVIDE(__ctors_end__ = .);
+        
+        . = ALIGN(4);
+        __vsymtab_start = .;
+        KEEP(*(VSymTab))
+        __vsymtab_end = .;
+        
+        /* section information for initial. */
+        . = ALIGN(4);
+        __rt_init_start = .;
+        KEEP(*(SORT(.rti_fn*)))
+        __rt_init_end = .;
         
         /* section information for finsh shell */
         . = ALIGN(4);
@@ -45,40 +64,23 @@ SECTIONS
         KEEP(*(FSymTab))
         __fsymtab_end = .;
         
-        /* section information for usbh class */
-        . = ALIGN(4);
-        __usbh_class_info_start__ = .;
-        KEEP(*(.usbh_class_info))
-        __usbh_class_info_end__ = .;
-        
-        . = ALIGN(4);
-        __vsymtab_start = .;
-        KEEP(*(VSymTab))
-        __vsymtab_end = .;
-        
-        /* section information for utest */
-        . = ALIGN(4);
-        __rt_utest_tc_tab_start = .;
-        KEEP(*(UtestTcTab))
-        __rt_utest_tc_tab_end = .;
-
-        /* section information for initial. */
-        . = ALIGN(4);
-        __rt_init_start = .;
-        KEEP(*(SORT(.rti_fn*)))
-        __rt_init_end = .;
-        
         /* section information for modules */
         . = ALIGN(4);
         __rtmsymtab_start = .;
         KEEP(*(RTMSymTab))
         __rtmsymtab_end = .;
 
+        /* section information for usbh class */
         . = ALIGN(4);
-        PROVIDE(__ctors_start__ = .);
-        KEEP (*(SORT(.init_array.*)))
-        KEEP (*(.init_array))
-        PROVIDE(__ctors_end__ = .);
+        __usbh_class_info_start__ = .;
+        KEEP(*(.usbh_class_info))
+        __usbh_class_info_end__ = .;
+        
+        /* section information for utest */
+        . = ALIGN(4);
+        __rt_utest_tc_tab_start = .;
+        KEEP(*(UtestTcTab))
+        __rt_utest_tc_tab_end = .;
 
         . = ALIGN(4);
         _etext = .;
@@ -102,10 +104,12 @@ SECTIONS
         /* This is used by the startup in order to initialize the .data secion */
         _sdata = . ;
 
+        . = ALIGN(4);
         *(.data)
         *(.data.*)
         *(.gnu.linkonce.d*)
 
+        . = ALIGN(4);
         PROVIDE(__dtors_start__ = .);
         KEEP(*(SORT(.dtors.*)))
         KEEP(*(.dtors))
@@ -121,6 +125,7 @@ SECTIONS
         . = ALIGN(4);
         _susb = .;
 
+        . = ALIGN(4);
         /* section information for noncacheable */
         *(.noncacheable)     /* .data sections */
         *(.noncacheable.*)    /* .data* sections */
@@ -136,6 +141,7 @@ SECTIONS
         . = ALIGN(4);
         _seth = .;
 
+        . = ALIGN(4);
         /* section information for bufferable */
         *(.bufferable)     /* .data sections */
         *(.bufferable.*)    /* .data* sections */
@@ -150,7 +156,9 @@ SECTIONS
     {
         . = ALIGN(4);
         _sstack = .;
+        
         . = . + _system_stack_size;
+        
         . = ALIGN(4);
         _estack = .;
     } >RAM

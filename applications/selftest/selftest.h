@@ -73,4 +73,6 @@ void selftest_uart_test(SelftestUserData *puserdata);
 void selftest_can_test(SelftestUserData *puserdata);
 void selftest_eth_test(SelftestUserData *puserdata);
 
+void gui_display_result(SelftestResult *presult, uint16_t num);
+
 #endif /* APPLICATIONS_SELFTEST_SELFTEST_H_ */

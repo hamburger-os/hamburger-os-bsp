@@ -61,23 +61,6 @@ static SelftestUserData selftest_userdata = {
     },
 };
 
-#if 0 //运行Gui-Guider创建的app
-
-#include <lvgl.h>
-#include "gui_guider.h"
-#include "custom.h"
-#include "widgets_init.h"
-
-lv_ui guider_ui;
-
-void lv_user_gui_init(void)
-{
-    /*Create a GUI-Guider app */
-    setup_ui(&guider_ui);
-    custom_init(&guider_ui);
-}
-#endif
-
 /** \brief change sys led delay
  * \return void
  *
@@ -162,6 +145,8 @@ static void selftest_start(int argc, char *argv[])
 
     rt_thread_delay_until(&tick, 6000);
 
+    gui_display_result(puserdata->result, sizeof(puserdata->result)/sizeof(puserdata->result[0]));
+
 #ifdef PKG_USING_WAVPLAYER
     wavplayer_volume_set(50);
 #endif
@@ -196,6 +181,8 @@ static int selftest_init(void)
             rt_kprintf(";");
         }
     }
+
+    gui_display_result(puserdata->result, sizeof(puserdata->result)/sizeof(puserdata->result[0]));
 
     return RT_EOK;
 }

@@ -286,9 +286,7 @@ static void DMA2D_Copy(void * pSrc, void * pDst, uint32_t xSize, uint32_t ySize,
     /* 启动传输 */
     DMA2D->CR |= DMA2D_CR_START;
     /* 等待 DMA2D 传输完成 */
-    while (DMA2D->CR & DMA2D_CR_START)
-    {
-    }
+    while (DMA2D->CR & DMA2D_CR_START);
 }
 
 void lcd_fill_array(rt_uint16_t x_start, rt_uint16_t y_start, rt_uint16_t x_end, rt_uint16_t y_end, void *pcolor)

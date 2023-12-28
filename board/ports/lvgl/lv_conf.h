@@ -79,4 +79,7 @@ e.g. "stm32f769xx.h" or "stm32f429xx.h" */
 #define LV_GPU_DMA2D_CMSIS_INCLUDE  "stm32h743xx.h"
 #endif
 
+void lv_mutex_take(void);
+void lv_mutex_release(void);
+
 #endif

@@ -30,6 +30,7 @@ extern void lv_port_disp_init(void);
 extern void lv_port_indev_init(void);
 extern void lv_user_gui_init(void);
 
+static struct rt_mutex lvgl_mutex;
 static rt_thread_t lvgl_thread;
 
 #ifdef rt_align
@@ -45,6 +46,16 @@ static void lv_rt_log(const char *buf)
 }
 #endif /* LV_USE_LOG */
 
+void lv_mutex_take(void)
+{
+    rt_mutex_take(&lvgl_mutex, RT_WAITING_FOREVER);
+}
+
+void lv_mutex_release(void)
+{
+    rt_mutex_release(&lvgl_mutex);
+}
+
 static void lvgl_thread_entry(void *parameter)
 {
 #if LV_USE_LOG
@@ -58,14 +69,20 @@ static void lvgl_thread_entry(void *parameter)
     /* handle the tasks of LVGL */
     while(1)
     {
+        lv_mutex_take();
         lv_task_handler();
+        lv_mutex_release();
+
         rt_thread_mdelay(10);
     }
 }
 
 static int lvgl_thread_init(void)
 {
-    lvgl_thread = rt_thread_create( "LVGL",
+    /* 初始化互斥 */
+    rt_mutex_init(&lvgl_mutex, "lvgl", RT_IPC_FLAG_PRIO);
+
+    lvgl_thread = rt_thread_create( "lvgl",
                                     lvgl_thread_entry,
                                     NULL,
                                     PKG_LVGL_THREAD_STACK_SIZE,

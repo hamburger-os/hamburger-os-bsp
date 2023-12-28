@@ -68,6 +68,7 @@ static bool lvgl_load_font(lv_fs_file_t * fp, lv_font_t * font) LV_SECTION;
 int32_t load_kern(lv_fs_file_t * fp, lv_font_fmt_txt_dsc_t * font_dsc, uint8_t format, uint32_t start) LV_SECTION;
 
 static int read_bits_signed(bit_iterator_t * it, int n_bits, lv_fs_res_t * res) LV_SECTION;
+static int read_label(lv_fs_file_t * fp, int start, const char * label) LV_SECTION;
 static unsigned int read_bits(bit_iterator_t * it, int n_bits, lv_fs_res_t * res) LV_SECTION;
 
 /**********************

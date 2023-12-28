@@ -380,7 +380,7 @@ int drv_touch_calibration(void)
 INIT_ENV_EXPORT(drv_touch_calibration);
 #endif
 
-#ifdef BSP_USING_NO_LVGL_DEMO
+#ifdef BSP_USING_TOUCH_TEST
 static void touch_show_thread_entry(void* parameter)
 {
     uint16_t black = 0b1111100000000000;

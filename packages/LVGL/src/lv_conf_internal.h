@@ -1983,7 +1983,7 @@
     #ifdef CONFIG_LV_USE_FS_STDIO
         #define LV_USE_FS_STDIO CONFIG_LV_USE_FS_STDIO
     #else
-        #define LV_USE_FS_STDIO 0
+        #define LV_USE_FS_STDIO 1
     #endif
 #endif
 #if LV_USE_FS_STDIO
@@ -1991,14 +1991,14 @@
         #ifdef CONFIG_LV_FS_STDIO_LETTER
             #define LV_FS_STDIO_LETTER CONFIG_LV_FS_STDIO_LETTER
         #else
-            #define LV_FS_STDIO_LETTER '\0'     /*Set an upper cased letter on which the drive will accessible (e.g. 'A')*/
+            #define LV_FS_STDIO_LETTER 'S'     /*Set an upper cased letter on which the drive will accessible (e.g. 'A')*/
         #endif
     #endif
     #ifndef LV_FS_STDIO_PATH
         #ifdef CONFIG_LV_FS_STDIO_PATH
             #define LV_FS_STDIO_PATH CONFIG_LV_FS_STDIO_PATH
         #else
-            #define LV_FS_STDIO_PATH ""         /*Set the working directory. File/directory paths will be appended to it.*/
+            #define LV_FS_STDIO_PATH "/"         /*Set the working directory. File/directory paths will be appended to it.*/
         #endif
     #endif
     #ifndef LV_FS_STDIO_CACHE_SIZE

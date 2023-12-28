@@ -44,7 +44,30 @@ __WEAK void lv_user_gui_init(void)
     extern void lv_demo_calendar(void);
     lv_demo_calendar();
 #else
+    lv_obj_t * label_logo = lv_label_create(lv_scr_act());
+    lv_label_set_long_mode(label_logo, LV_LABEL_LONG_WRAP);
+    lv_label_set_recolor(label_logo, true);
+    lv_label_set_text_fmt(label_logo,
+            "SWOS2 %s\n"
+            "Thread Operating System\n"
+            "%d.%d.%d build %s %s\n"
+            "Powered by RT-Thread\n"
+            "2006 - 2023 Copyright\n"
+            "by hnthinker team\n"
+            , SYS_VERSION
+            , RT_VERSION, RT_SUBVERSION, RT_REVISION, __DATE__, __TIME__);
+    lv_obj_set_width(label_logo, LV_HOR_RES_MAX*3/4);
+    lv_obj_set_style_text_align(label_logo, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_align(label_logo, LV_ALIGN_CENTER, 0, 0);
 
+    lv_obj_t * btn_enter = lv_btn_create(lv_scr_act());
+    lv_obj_set_size(btn_enter, LV_HOR_RES_MAX/8, LV_HOR_RES_MAX/8);
+    lv_obj_align(btn_enter, LV_ALIGN_CENTER, 0, LV_VER_RES_MAX/4);
+
+    lv_obj_t * btn_label = lv_label_create(btn_enter);
+    lv_obj_set_style_text_align(btn_label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_align(btn_label, LV_ALIGN_CENTER, 0, 0);
+    lv_label_set_text(btn_label, LV_SYMBOL_PLAY);
 #endif
 }
 #endif

@@ -12,7 +12,7 @@ RAM  (rw) : ORIGIN =0x20000000,LENGTH =192k
 RAM1 (rw) : ORIGIN =0x10000000,LENGTH =64k
 }
 ENTRY(Reset_Handler)
-_system_stack_size = 0x200;
+_system_stack_size = 0x0;
 
 SECTIONS
 {
@@ -34,43 +34,10 @@ SECTIONS
         . = ALIGN(4);
         *(.rodata)                      /* read-only data (constants) */
         *(.rodata*)
-
-        . = ALIGN(4);
-        _etext = .;
-    } > ROM = 0
-    
-    /* .ARM.exidx is sorted, so has to go in its own output section.  */
-    __exidx_start = .;
-    .ARM.exidx :
-    {
-        *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-
-        /* This is used by the startup in order to initialize the .data secion */
-        _sidata = .;
-    } > ROM
-    __exidx_end = .;
-
-    /* .data section which is used for initialized data */
-    .data : AT (_sidata)
-    {
-        . = ALIGN(4);
-        /* This is used by the startup in order to initialize the .data secion */
-        _sdata = . ;
-
-        . = ALIGN(4);
-        *(.data)
-        *(.data.*)
-        *(.gnu.linkonce.d*)
         *(.glue_7)
         *(.glue_7t)
         *(.gnu.linkonce.t*)
-
-        . = ALIGN(4);
-        PROVIDE(__dtors_start__ = .);
-        KEEP(*(SORT(.dtors.*)))
-        KEEP(*(.dtors))
-        PROVIDE(__dtors_end__ = .);
-
+        
         . = ALIGN(4);
         PROVIDE(__ctors_start__ = .);
         KEEP (*(SORT(.init_array.*)))
@@ -111,6 +78,39 @@ SECTIONS
         __rt_utest_tc_tab_start = .;
         KEEP(*(UtestTcTab))
         __rt_utest_tc_tab_end = .;
+
+        . = ALIGN(4);
+        _etext = .;
+    } > ROM = 0
+    
+    /* .ARM.exidx is sorted, so has to go in its own output section.  */
+    __exidx_start = .;
+    .ARM.exidx :
+    {
+        *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+
+        /* This is used by the startup in order to initialize the .data secion */
+        _sidata = .;
+    } > ROM
+    __exidx_end = .;
+
+    /* .data section which is used for initialized data */
+    .data : AT (_sidata)
+    {
+        . = ALIGN(4);
+        /* This is used by the startup in order to initialize the .data secion */
+        _sdata = . ;
+
+        . = ALIGN(4);
+        *(.data)
+        *(.data.*)
+        *(.gnu.linkonce.d*)
+
+        . = ALIGN(4);
+        PROVIDE(__dtors_start__ = .);
+        KEEP(*(SORT(.dtors.*)))
+        KEEP(*(.dtors))
+        PROVIDE(__dtors_end__ = .);
 
         . = ALIGN(4);
         /* This is used by the startup in order to initialize the .data secion */

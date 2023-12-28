@@ -31,7 +31,7 @@ extern "C" {
 /**
  * Register the PNG decoder functions in LVGL
  */
-void lv_png_init(void);
+void lv_png_init(void) LV_SECTION;
 
 /**********************
  *      MACROS

@@ -89,6 +89,7 @@ static void rootfs_thread_entry(void* parameter)
                         copydir(path_dir, rootfs_dir[i]);
                     }
                 }
+                LOG_D("finish.");
 
                 ops->updatesta = FileIsSame;
             }

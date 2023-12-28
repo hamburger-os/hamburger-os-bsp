@@ -31,14 +31,14 @@ typedef struct {
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_res_t decoder_info(lv_img_decoder_t * decoder, const void * src, lv_img_header_t * header);
-static lv_res_t decoder_open(lv_img_decoder_t * dec, lv_img_decoder_dsc_t * dsc);
+static lv_res_t decoder_info(lv_img_decoder_t * decoder, const void * src, lv_img_header_t * header) LV_SECTION;
+static lv_res_t decoder_open(lv_img_decoder_t * dec, lv_img_decoder_dsc_t * dsc) LV_SECTION;
 
 
 static lv_res_t decoder_read_line(lv_img_decoder_t * decoder, lv_img_decoder_dsc_t * dsc,
-                                  lv_coord_t x, lv_coord_t y, lv_coord_t len, uint8_t * buf);
+                                  lv_coord_t x, lv_coord_t y, lv_coord_t len, uint8_t * buf) LV_SECTION;
 
-static void decoder_close(lv_img_decoder_t * dec, lv_img_decoder_dsc_t * dsc);
+static void decoder_close(lv_img_decoder_t * dec, lv_img_decoder_dsc_t * dsc) LV_SECTION;
 
 /**********************
  *  STATIC VARIABLES
