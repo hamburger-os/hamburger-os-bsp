@@ -3133,7 +3133,7 @@ static rt_size_t mcp2517_write(rt_device_t dev, rt_off_t pos, const void *buffer
         can_spi_transmit_channel_event_get(mcp2517_dev, APP_TX_FIFO, &txFlags_tmp);
         if (attempts == 0)
         {
-            rt_thread_mdelay(100);
+            rt_thread_mdelay(1);
             can_spi_error_count_state_get(mcp2517_dev, &tec_tmp, &rec_tmp, &errorFlags_tmp);
             return 0;
         }
