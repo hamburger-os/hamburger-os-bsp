@@ -40,6 +40,8 @@ struct ui_object
     lv_obj_t * table_result;
     lv_obj_t * btn_enter;
     lv_obj_t * btn_label;
+
+    lv_obj_t * file_explorer;
 };
 static struct ui_object ui = {0};
 
@@ -173,5 +175,21 @@ void lv_user_gui_init(void)
     lv_obj_set_style_text_align(ui.btn_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_align(ui.btn_label, LV_ALIGN_CENTER, 0, 0);
     lv_label_set_text(ui.btn_label, LV_SYMBOL_PLAY);
+
+    //添加文件浏览器
+    ui.file_explorer = lv_file_explorer_create(ui.tile_file);
+    lv_file_explorer_set_sort(ui.file_explorer, LV_EXPLORER_SORT_KIND);
+
+    /* linux */
+    lv_file_explorer_open_dir(ui.file_explorer, "A:/");
+
+#if LV_FILE_EXPLORER_QUICK_ACCESS
+    lv_file_explorer_set_quick_access_path(ui.file_explorer, LV_EXPLORER_HOME_DIR, "A:/");
+    lv_file_explorer_set_quick_access_path(ui.file_explorer, LV_EXPLORER_VIDEO_DIR, "A:/usr");
+    lv_file_explorer_set_quick_access_path(ui.file_explorer, LV_EXPLORER_PICTURES_DIR, "A:/usr");
+    lv_file_explorer_set_quick_access_path(ui.file_explorer, LV_EXPLORER_MUSIC_DIR, "A:/usr");
+    lv_file_explorer_set_quick_access_path(ui.file_explorer, LV_EXPLORER_DOCS_DIR, "A:/etc");
+    lv_file_explorer_set_quick_access_path(ui.file_explorer, LV_EXPLORER_FS_DIR, "A:/");
+#endif
 }
 #endif

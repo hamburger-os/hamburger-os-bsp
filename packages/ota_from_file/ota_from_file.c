@@ -524,7 +524,7 @@ static int ota_from_file_init(void)
         LOG_E("cmprs_buf malloc error!");
     }
     /* 创建线程 */
-    rt_thread_t thread = rt_thread_create("ota_file", ota_thread_entry, &ota_from_file, 4096, 28, 10);
+    rt_thread_t thread = rt_thread_create("ota_file", ota_thread_entry, &ota_from_file, 3072, 28, 10);
     /* 创建成功则启动线程 */
     if (thread != RT_NULL)
     {

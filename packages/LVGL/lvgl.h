@@ -68,6 +68,11 @@ extern "C" {
  *----------------*/
 #include "src/extra/lv_extra.h"
 
+/*-----------------
+ * OTHERS
+ *----------------*/
+#include "src/others/file_explorer/lv_file_explorer.h"
+
 /*********************
  *      DEFINES
  *********************/

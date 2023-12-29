@@ -1991,7 +1991,7 @@
         #ifdef CONFIG_LV_FS_STDIO_LETTER
             #define LV_FS_STDIO_LETTER CONFIG_LV_FS_STDIO_LETTER
         #else
-            #define LV_FS_STDIO_LETTER 'S'     /*Set an upper cased letter on which the drive will accessible (e.g. 'A')*/
+            #define LV_FS_STDIO_LETTER 'A'     /*Set an upper cased letter on which the drive will accessible (e.g. 'A')*/
         #endif
     #endif
     #ifndef LV_FS_STDIO_PATH
@@ -2333,6 +2333,39 @@
             #endif
         #endif
     #endif // LV_IME_PINYIN_USE_K9_MODE
+#endif
+
+/*1: Enable file explorer*/
+/*Requires: lv_table*/
+#ifndef LV_USE_FILE_EXPLORER
+    #ifdef CONFIG_LV_USE_FILE_EXPLORER
+        #define LV_USE_FILE_EXPLORER CONFIG_LV_USE_FILE_EXPLORER
+    #else
+        #define LV_USE_FILE_EXPLORER                     1
+    #endif
+#endif
+#if LV_USE_FILE_EXPLORER
+    /*Maximum length of path*/
+    #ifndef LV_FILE_EXPLORER_PATH_MAX_LEN
+        #ifdef CONFIG_LV_FILE_EXPLORER_PATH_MAX_LEN
+            #define LV_FILE_EXPLORER_PATH_MAX_LEN CONFIG_LV_FILE_EXPLORER_PATH_MAX_LEN
+        #else
+            #define LV_FILE_EXPLORER_PATH_MAX_LEN        (256)
+        #endif
+    #endif
+    /*Quick access bar, 1:use, 0:not use*/
+    /*Requires: lv_list*/
+    #ifndef LV_FILE_EXPLORER_QUICK_ACCESS
+        #ifdef _LV_KCONFIG_PRESENT
+            #ifdef CONFIG_LV_FILE_EXPLORER_QUICK_ACCESS
+                #define LV_FILE_EXPLORER_QUICK_ACCESS CONFIG_LV_FILE_EXPLORER_QUICK_ACCESS
+            #else
+                #define LV_FILE_EXPLORER_QUICK_ACCESS 0
+            #endif
+        #else
+            #define LV_FILE_EXPLORER_QUICK_ACCESS        1
+        #endif
+    #endif
 #endif
 
 /*==================

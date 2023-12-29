@@ -1921,6 +1921,7 @@ CONFIG_APP_SELFTEST=y
 # CONFIG_APP_CABLE_TEST_BENCH is not set
 # CONFIG_APP_COUPLER_CONTROLLER is not set
 # CONFIG_APP_LY_05C is not set
+# CONFIG_APP_LY_05C1_TEST is not set
 # CONFIG_APP_STO_RECORD_BOART is not set
 # CONFIG_APP_STO_COM_BOARD is not set
 # end of Product Application and Function
