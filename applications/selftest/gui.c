@@ -55,6 +55,8 @@ struct ui_object
 
     lv_obj_t * btn_refresh;
     lv_obj_t * btn_refresh_label;
+
+    rt_thread_t thread_selftest;
 };
 static struct ui_object ui = {0};
 
@@ -110,6 +112,8 @@ void gui_display_result(SelftestResult *presult, uint16_t num)
 static void selftest_thread_entry(void *parameter)
 {
     system("selftest_start");
+
+    ui.thread_selftest = NULL;
 }
 
 static void gesture_event_cb(lv_event_t *event)
@@ -375,16 +379,19 @@ static void btn_pressed_event_cb(lv_event_t *event)
 
     if (rt_strcmp(lv_label_get_text(label), LV_SYMBOL_PLAY) == 0)
     {
-        /* 创建 自测 线程 */
-        rt_thread_t thread = rt_thread_create("selftest", selftest_thread_entry, NULL, 4096, 22, 10);
-        /* 创建成功则启动线程 */
-        if (thread != RT_NULL)
+        if (ui.thread_selftest == NULL)
         {
-            rt_thread_startup(thread);
-        }
-        else
-        {
-            LOG_E("thread startup error!");
+            /* 创建 自测 线程 */
+            ui.thread_selftest = rt_thread_create("selftest", selftest_thread_entry, NULL, 4096, 22, 10);
+            /* 创建成功则启动线程 */
+            if (ui.thread_selftest != RT_NULL)
+            {
+                rt_thread_startup(ui.thread_selftest);
+            }
+            else
+            {
+                LOG_E("thread startup error!");
+            }
         }
     }
     else if (rt_strcmp(lv_label_get_text(label), LV_SYMBOL_REFRESH) == 0)
