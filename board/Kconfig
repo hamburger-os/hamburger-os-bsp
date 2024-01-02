@@ -23,18 +23,6 @@ menu "On-chip Peripheral Drivers"
             choice
                 prompt "Select the core board type"
                 default SOC_M4COREBOARD_NOSRAM
-                
-                config SOC_MINILINK_V2
-                    bool "Select mini link v2"
-                    select SOC_SERIES_STM32F1
-    
-                config SOC_ATK_EXPLORER_V24
-                    bool "Select stm32f407 atk explorer v2.4"
-                    select SOC_SERIES_STM32F4
-                    
-                config SOC_STM32F427ZGT6
-                    bool "Select MCU stm32f427zgt6"
-                    select SOC_SERIES_STM32F4
                     
                 config SOC_M4COREBOARD_NOSRAM
                     bool "Select M4 core board with no sram"
@@ -47,10 +35,6 @@ menu "On-chip Peripheral Drivers"
                 config SOC_M4COREBOARD_SDRAM
                     bool "Select M4 core board with sdram"
                     select SOC_SERIES_STM32F4
-                    
-                config SOC_STM32F437IIT6
-                    bool "Select MCU stm32f437iit6"
-                    select SOC_SERIES_STM32F4
     
                 config SOC_H7COREBOARD_NOSRAM
                     bool "Select H7 core board with no sram"
@@ -60,21 +44,29 @@ menu "On-chip Peripheral Drivers"
                     bool "Select H7 core board with sdram"
                     select SOC_SERIES_STM32H7
     
-                config SOC_H7_STO_RECORD_BOARD
-                    bool "Select STO H7 record board"
-                    select SOC_SERIES_STM32H7
-    
-                config SOC_H7_STO_COM_2_LOARD_BOARD
-                    bool "Select STO H7 com 2 loard board"
-                    select SOC_SERIES_STM32H7
-    
                 config SOC_H7_STO_COM_1_LOARD_BOARD
                     bool "Select STO H7 com 1 loard board"
+                    select SOC_SERIES_STM32H7
+                    
+                config SOC_H7_STO_COM_2_LOARD_BOARD
+                    bool "Select STO H7 com 2 loard board"
                     select SOC_SERIES_STM32H7
     
                 config SOC_H7_STO_COM_CHILD_BOARD
                     bool "Select STO H7 com child board"
                     select SOC_SERIES_STM32H7
+                    
+                config SOC_H7_STO_RECORD_BOARD
+                    bool "Select STO H7 record board"
+                    select SOC_SERIES_STM32H7
+                    
+                config SOC_MINILINK_V2
+                    bool "Select mini link v2"
+                    select SOC_SERIES_STM32F1
+    
+                config SOC_ATK_EXPLORER_V24
+                    bool "Select stm32f407 atk explorer v2.4"
+                    select SOC_SERIES_STM32F4
             endchoice
             
             config BSP_USING_GD32

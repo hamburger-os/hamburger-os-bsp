@@ -22,8 +22,13 @@
 #define HDLC_RX_MAX_LEN 512
 
 CouplerCtrlUserData coupler_controller_userdata = {
+#ifdef COUPLER_CONTROLLER_OLD
+    .station_devname = BSP_DEV_TABLE_UART1,
+    .module_devname = BSP_DEV_TABLE_UART4,
+#else
     .station_devname = BSP_DEV_TABLE_UART2,
     .module_devname = BSP_DEV_TABLE_UART4,
+#endif
     .adc_devname = "ltc186x",
     .led_devname = {BSP_GPIO_TABLE_GPIO5, BSP_GPIO_TABLE_SPI1_CS2, BSP_GPIO_TABLE_SPI1_CS1, BSP_GPIO_TABLE_SPI1_CS0, BSP_GPIO_TABLE_GPIO4},
     .ctrl_devname = {BSP_GPIO_TABLE_I2S1_SDO, BSP_GPIO_TABLE_I2S1_CK, BSP_GPIO_TABLE_PWM3, BSP_GPIO_TABLE_PWM4},

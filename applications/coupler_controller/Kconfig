@@ -1,3 +1,9 @@
 config APP_COUPLER_CONTROLLER
     bool "Enable coupler controller application"
     default n
+    
+if APP_COUPLER_CONTROLLER
+    config COUPLER_CONTROLLER_OLD
+        bool "Enable old version compatibility"
+        default n
+endif
