@@ -1,4 +1,3 @@
 config APP_STO_RECORD_BOART
     bool "Enable STO-RECORD-BOARD application"
     default n
-	

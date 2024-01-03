@@ -152,7 +152,7 @@ menu "On-chip Peripheral Drivers"
     menuconfig BSP_USING_GPIO_TABLE
         bool "Enable core board gpio table"
         select BSP_USING_GPIO
-        default y
+        default n
         
         if BSP_USING_GPIO_TABLE
             config BSP_GPIO_TABLE_GPIO1
@@ -273,7 +273,7 @@ menu "On-chip Peripheral Drivers"
         endif
     menuconfig BSP_USING_DEV_TABLE
         bool "Enable core board dev table"
-        default y
+        default n
         
         if BSP_USING_DEV_TABLE
             config BSP_DEV_TABLE_UART1
@@ -1004,7 +1004,7 @@ menu "On-chip Peripheral Drivers"
         if BSP_USING_USB
             config BSP_USING_USB_CAN
                 bool
-                depends on SOC_SERIES_STM32F4
+                depends on SOC_SERIES_STM32F4 && BSP_USING_CAN
                 select BSP_USING_CAN168M
                 default y
        	
