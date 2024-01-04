@@ -448,8 +448,7 @@ static int write_sblocks(struct ext4_blockdev *bd, struct fs_aux_info *aux_info,
                 + i * info->blocks_per_group);
 
             aux_info->sb->block_group_index = to_le16(i);
-            r = ext4_block_writebytes(bd, offset, aux_info->sb,
-                          EXT4_SUPERBLOCK_SIZE);
+            r = ext4_block_writebytes(bd, offset, aux_info->sb, EXT4_SUPERBLOCK_SIZE);
             if (r != EOK)
                 return r;
         }
@@ -457,8 +456,8 @@ static int write_sblocks(struct ext4_blockdev *bd, struct fs_aux_info *aux_info,
 
     /* write out the primary superblock */
     aux_info->sb->block_group_index = to_le16(0);
-    return ext4_block_writebytes(bd, 1024, aux_info->sb,
-            EXT4_SUPERBLOCK_SIZE);
+    r = ext4_block_writebytes(bd, 1024, aux_info->sb, EXT4_SUPERBLOCK_SIZE);
+    return r;
 }
 
 
@@ -508,7 +507,7 @@ static int mkfs_init(struct ext4_blockdev *bd, struct ext4_mkfs_info *info)
     if (r != EOK)
         goto Finish;
 
-    Finish:
+Finish:
     release_fs_aux_info(&aux_info);
     return r;
 }
@@ -704,8 +703,9 @@ int ext4_mkfs(struct ext4_fs *fs, struct ext4_blockdev *bd,
     int r;
 
     r = ext4_block_init(bd);
-    if (r != EOK)
+    if (r != EOK) {
         return r;
+    }
 
     bd->fs = fs;
 
@@ -811,50 +811,59 @@ int ext4_mkfs(struct ext4_fs *fs, struct ext4_blockdev *bd,
 
     r = ext4_bcache_init_dynamic(&bc, CONFIG_BLOCK_DEV_CACHE_SIZE,
                       info->block_size);
-    if (r != EOK)
+    if (r != EOK) {
         goto block_fini;
+    }
 
     /*Bind block cache to block device*/
     r = ext4_block_bind_bcache(bd, &bc);
-    if (r != EOK)
+    if (r != EOK) {
         goto cache_fini;
+    }
 
     r = ext4_block_cache_write_back(bd, 1);
-    if (r != EOK)
+    if (r != EOK) {
         goto cache_fini;
+    }
 
     r = mkfs_init(bd, info);
-    if (r != EOK)
+    if (r != EOK) {
         goto cache_fini;
+    }
 
     r = ext4_fs_init(fs, bd, false);
-    if (r != EOK)
+    if (r != EOK) {
         goto cache_fini;
+    }
 
     r = init_bgs(fs);
-    if (r != EOK)
+    if (r != EOK) {
         goto fs_fini;
+    }
 
     r = alloc_inodes(fs);
-    if (r != EOK)
+    if (r != EOK) {
         goto fs_fini;
+    }
 
     r = create_dirs(fs);
-    if (r != EOK)
+    if (r != EOK) {
         goto fs_fini;
+    }
 
     r = create_journal_inode(fs, info);
-    if (r != EOK)
+    if (r != EOK) {
         goto fs_fini;
+    }
 
-    fs_fini:
+fs_fini:
     ext4_fs_fini(fs);
 
-    cache_fini:
+cache_fini:
     ext4_block_cache_write_back(bd, 0);
     ext4_bcache_fini_dynamic(&bc);
 
-    block_fini:
+block_fini:
     ext4_block_fini(bd);
 
     return r;

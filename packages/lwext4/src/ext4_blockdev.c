@@ -87,7 +87,6 @@ static int ext4_bdif_bwrite(struct ext4_blockdev *bdev, const void *buf,
 
 int ext4_block_init(struct ext4_blockdev *bdev)
 {
-    int rc;
     ext4_assert(bdev);
     ext4_assert(bdev->bdif);
     ext4_assert(bdev->bdif->open &&
@@ -99,11 +98,6 @@ int ext4_block_init(struct ext4_blockdev *bdev)
         bdev->bdif->ph_refctr++;
         return EOK;
     }
-
-    /*Low level block init*/
-    rc = bdev->bdif->open(bdev);
-    if (rc != EOK)
-        return rc;
 
     bdev->bdif->ph_refctr = 1;
     return EOK;
@@ -137,8 +131,7 @@ int ext4_block_fini(struct ext4_blockdev *bdev)
     if (bdev->bdif->ph_refctr)
         return EOK;
 
-    /*Low level block fini*/
-    return bdev->bdif->close(bdev);
+    return EOK;
 }
 
 int ext4_block_flush_buf(struct ext4_blockdev *bdev, struct ext4_buf *buf)
@@ -321,8 +314,9 @@ int ext4_block_writebytes(struct ext4_blockdev *bdev, uint64_t off,
     if (!bdev->bdif->ph_refctr)
         return EIO;
 
-    if (off + len > bdev->part_size)
+    if (off + len > bdev->part_size) {
         return EINVAL; /*Ups. Out of range operation*/
+    }
 
     block_idx = ((off + bdev->part_offset) / bdev->bdif->ph_bsize);
 
@@ -391,8 +385,9 @@ int ext4_block_readbytes(struct ext4_blockdev *bdev, uint64_t off, void *buf,
     if (!bdev->bdif->ph_refctr)
         return EIO;
 
-    if (off + len > bdev->part_size)
+    if (off + len > bdev->part_size) {
         return EINVAL; /*Ups. Out of range operation*/
+    }
 
     block_idx = ((off + bdev->part_offset) / bdev->bdif->ph_bsize);
 

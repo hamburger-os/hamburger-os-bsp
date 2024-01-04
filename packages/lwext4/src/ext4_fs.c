@@ -68,12 +68,12 @@ int ext4_fs_init(struct ext4_fs *fs, struct ext4_blockdev *bdev,
     ext4_assert(fs && bdev);
 
     fs->bdev = bdev;
-
     fs->read_only = read_only;
 
     r = ext4_sb_read(fs->bdev, &fs->sb);
-    if (r != EOK)
+    if (r != EOK) {
         return r;
+    }
 
     if (!ext4_sb_check(&fs->sb))
         return ENOTSUP;
@@ -83,8 +83,9 @@ int ext4_fs_init(struct ext4_fs *fs, struct ext4_blockdev *bdev,
         return ENXIO;
 
     r = ext4_fs_check_features(fs, &read_only);
-    if (r != EOK)
+    if (r != EOK) {
         return r;
+    }
 
     if (read_only)
         fs->read_only = read_only;
@@ -113,8 +114,9 @@ int ext4_fs_init(struct ext4_fs *fs, struct ext4_blockdev *bdev,
         /* Mark system as mounted */
         ext4_set16(&fs->sb, state, EXT4_SUPERBLOCK_STATE_ERROR_FS);
         r = ext4_sb_write(fs->bdev, &fs->sb);
-        if (r != EOK)
+        if (r != EOK) {
             return r;
+        }
 
         /*Update mount count*/
         ext4_set16(&fs->sb, mount_count, ext4_get16(&fs->sb, mount_count) + 1);

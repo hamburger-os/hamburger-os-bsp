@@ -66,14 +66,17 @@ static void ext4_unlock(void)
 
 rt_inline const char *get_fd_file(struct dfs_fd *fd)
 {
-    const char *fn = NULL;
-
+//    const char *fn = NULL;
+    static char fn[256] = {0};
+    memset(fn, 0, 256);
     if (fd)
     {
 #if (RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 0))
         fn = fd->vnode->fullpath;
 #else
-        fn = fd->path;
+//        fn = fd->fs->path;
+        strcpy(&fn[strlen(fn)], fd->fs->path);
+        strcpy(&fn[strlen(fn)], fd->path);
 #endif
     }
 
@@ -88,7 +91,9 @@ static int dfs_ext_mount(struct dfs_filesystem *fs, unsigned long rwflag, const 
 
     /* create dfs ext4 block device */
     dbd = dfs_ext4_blockdev_create(fs->dev_id);
-    if (!dbd) return -RT_ERROR;
+    if (!dbd) {
+        return -RT_ERROR;
+    }
 
     bd = &dbd->bd;
     rc = ext4_mount(bd, fs->path, false);
@@ -153,19 +158,17 @@ static int dfs_ext_mkfs(rt_device_t devid)
 
     /* create dfs ext4 block device */
     dbd = dfs_ext4_blockdev_create(devid);
-    if (!dbd) return -RT_ERROR;
+    if (!dbd) {
+        return -RT_ERROR;
+    }
 
     /* get ext4 block device */
     bd = &dbd->bd;
 
-    /* try to open device */
-    rt_device_open(devid, RT_DEVICE_OFLAG_RDWR);
     rc = ext4_mkfs(&fs, bd, &info, F_SET_EXT4);
 
     /* no matter what, unregister */
     dfs_ext4_blockdev_destroy(dbd);
-    /* close device */
-    rt_device_close(devid);
 
     rc = -rc;
     return rc;
@@ -412,7 +415,6 @@ static int dfs_ext_stat(struct dfs_filesystem *fs, const char *path, struct stat
     char *stat_path;
     struct ext4_inode inode;
     uint32_t ino = 0;
-    uint32_t dev = 0;
 
     union
     {
@@ -449,9 +451,9 @@ static int dfs_ext_stat(struct dfs_filesystem *fs, const char *path, struct stat
 
         if (ext4_raw_inode_fill(stat_path, &ino, &inode) == EOK)
         {
-            dev = ext4_inode_get_dev(&inode);
+            ext4_inode_get_dev(&inode);
         }
-        st->st_dev = (dev_t)(fs->dev_id);
+        st->st_dev = 0;
         st->st_ino = ino;
         st->st_mode = mode;
         st->st_size = var.dir.f.fsize;
@@ -473,9 +475,9 @@ static int dfs_ext_stat(struct dfs_filesystem *fs, const char *path, struct stat
             ext4_ctime_get(stat_path, &ctime);
             if (ext4_raw_inode_fill(stat_path, &ino, &inode) == EOK)
             {
-                dev = ext4_inode_get_dev(&inode);
+                ext4_inode_get_dev(&inode);
             }
-            st->st_dev = (dev_t)(fs->dev_id);
+            st->st_dev = 0;
             st->st_ino = ino;
             st->st_mode = mode;
             st->st_size = ext4_fsize(&(var.f));

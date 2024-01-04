@@ -63,7 +63,6 @@ static int blockdev_open(struct ext4_blockdev *bdev)
     int r;
     struct dfs_ext4_blockdev *dbd;
     rt_device_t device = NULL;
-    struct rt_device_blk_geometry geometry;
 
     dbd = dfs_ext4_blockdev_from_bd(bdev);
     if (!dbd) return -RT_EINVAL;
@@ -77,6 +76,7 @@ static int blockdev_open(struct ext4_blockdev *bdev)
         return r;
     }
 
+    struct rt_device_blk_geometry geometry;
     r = rt_device_control(device, RT_DEVICE_CTRL_BLK_GETGEOME, &geometry);
     if (r == RT_EOK)
     {
@@ -122,7 +122,7 @@ static int blockdev_read(struct ext4_blockdev *bdev, void *buf, uint64_t blk_id,
     }
     else
     {
-        result = -RT_EIO;
+        result = RT_EIO;
     }
 
     return result;
@@ -148,7 +148,7 @@ static int blockdev_write(struct ext4_blockdev *bdev, const void *buf,
     }
     else
     {
-        result = -RT_EIO;
+        result = RT_EIO;
     }
 
     return result;
@@ -156,7 +156,7 @@ static int blockdev_write(struct ext4_blockdev *bdev, const void *buf,
 
 static int blockdev_close(struct ext4_blockdev *bdev)
 {
-    int result;
+    int r;
     struct dfs_ext4_blockdev *dbd;
     rt_device_t device = NULL;
 
@@ -166,20 +166,28 @@ static int blockdev_close(struct ext4_blockdev *bdev)
     device = dbd->devid;
     RT_ASSERT(device != NULL);
 
-    result = rt_device_close(device);
+    r = rt_device_close(device);
+    if (r != RT_EOK)
+    {
+        return r;
+    }
 
-    return result;
+    return r;
 }
 
 int dfs_ext4_blockdev_init(struct dfs_ext4_blockdev* dbd, rt_device_t devid)
 {
+    int r;
     uint8_t *ph_bbuf = NULL;
     struct ext4_blockdev *bd = NULL;
+    rt_device_t device = NULL;
     struct ext4_blockdev_iface *iface = NULL;
 
     if (dbd && devid)
     {
         dbd->devid = devid;
+        device = dbd->devid;
+        RT_ASSERT(device != NULL);
 
         bd = &dbd->bd;
         iface = (struct ext4_blockdev_iface *)rt_calloc(1, sizeof(struct ext4_blockdev_iface));
@@ -201,6 +209,26 @@ int dfs_ext4_blockdev_init(struct dfs_ext4_blockdev* dbd, rt_device_t devid)
         bd->bdif = iface;
         bd->part_offset = 0;
         bd->part_size = 0;
+
+        struct rt_device_blk_geometry geometry;
+        r = rt_device_control(device, RT_DEVICE_CTRL_BLK_GETGEOME, &geometry);
+        if (r == RT_EOK)
+        {
+            if (geometry.block_size != geometry.bytes_per_sector)
+            {
+                rt_kprintf("block device: block size != bytes_per_sector\n");
+                return -RT_EIO;
+            }
+
+            bd->part_size = (uint64_t)geometry.sector_count * geometry.bytes_per_sector;
+            bd->bdif->ph_bsize = geometry.block_size;
+            bd->bdif->ph_bcnt = bd->part_size / bd->bdif->ph_bsize;
+        }
+        else
+        {
+            rt_kprintf("block device: get geometry failed!\n");
+            return -RT_EIO;
+        }
     }
 
     return 0;

@@ -2023,8 +2023,9 @@ int ext4_extent_get_blocks(struct ext4_inode_ref *inode_ref, ext4_lblk_t iblock,
     ext4_lblk_t next;
     ext4_fsblk_t newblock;
 
-    if (result)
+    if (result) {
         *result = 0;
+    }
 
     if (blocks_count)
         *blocks_count = 0;
@@ -2071,13 +2072,15 @@ int ext4_extent_get_blocks(struct ext4_inode_ref *inode_ref, ext4_lblk_t iblock,
             newblock = iblock - ee_block + ee_start;
             err = ext4_ext_zero_unwritten_range(inode_ref, newblock,
                                 zero_range);
-            if (err != EOK)
+            if (err != EOK) {
                 goto out2;
+            }
 
             err = ext4_ext_convert_to_initialized(
                 inode_ref, &path, iblock, zero_range);
-            if (err != EOK)
+            if (err != EOK) {
                 goto out2;
+            }
 
             goto out;
         }
@@ -2101,8 +2104,9 @@ int ext4_extent_get_blocks(struct ext4_inode_ref *inode_ref, ext4_lblk_t iblock,
     /* allocate new block */
     goal = ext4_ext_find_goal(inode_ref, path, iblock);
     newblock = ext4_new_meta_blocks(inode_ref, goal, 0, &allocated, &err);
-    if (!newblock)
+    if (!newblock) {
         goto out2;
+    }
 
     /* try to insert new extent into found leaf and return */
     newex.first_block = to_le32(iblock);

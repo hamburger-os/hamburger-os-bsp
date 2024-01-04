@@ -152,9 +152,10 @@ uint32_t ext4_dmask_get(void);
 
 #if CONFIG_DEBUG_PRINTF
 #include <stdio.h>
+#include "board.h"
 
 /**@brief   Debug printf.*/
-#define ext4_dbg(m, ...)                                                       \
+#define ext4_dbg(m, ...)                                    \
     if ((m) & ext4_dmask_get()) {                           \
         if (!((m) & DEBUG_NOPREFIX)) {                      \
             rt_kprintf("%s", ext4_dmask_id2str(m));         \
@@ -174,7 +175,7 @@ uint32_t ext4_dmask_get(void);
 
 #define ext4_assert(_v)                                         \
     if (!(_v)) {                                                \
-        rt_kprintf("assertion failed:\nfile: %s\nline: %d\n",   \
+        rt_kprintf("assertion failed: file: %s line: %d\n",     \
                     __FILE__, __LINE__);                        \
         while (1);                                              \
     }
