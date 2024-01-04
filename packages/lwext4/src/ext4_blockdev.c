@@ -100,6 +100,11 @@ int ext4_block_init(struct ext4_blockdev *bdev)
         return EOK;
     }
 
+    /*Low level block init*/
+    rc = bdev->bdif->open(bdev);
+    if (rc != EOK)
+        return rc;
+
     bdev->bdif->ph_refctr = 1;
     return EOK;
 }

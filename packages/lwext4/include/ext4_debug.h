@@ -152,10 +152,9 @@ uint32_t ext4_dmask_get(void);
 
 #if CONFIG_DEBUG_PRINTF
 #include <stdio.h>
-#include "board.h"
 
 /**@brief   Debug printf.*/
-#define ext4_dbg(m, ...)                                    \
+#define ext4_dbg(m, ...)                                                       \
     if ((m) & ext4_dmask_get()) {                           \
         if (!((m) & DEBUG_NOPREFIX)) {                      \
             rt_kprintf("%s", ext4_dmask_id2str(m));         \

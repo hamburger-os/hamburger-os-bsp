@@ -31,10 +31,6 @@
 #include "dfs_ext.h"
 #include "dfs_ext_blockdev.h"
 
-#define DBG_TAG "ext"
-#define DBG_LVL DBG_LOG
-#include <rtdbg.h>
-
 static rt_mutex_t ext4_mutex = RT_NULL;
 
 static void ext4_lock(void);
@@ -92,17 +88,12 @@ static int dfs_ext_mount(struct dfs_filesystem *fs, unsigned long rwflag, const 
 
     /* create dfs ext4 block device */
     dbd = dfs_ext4_blockdev_create(fs->dev_id);
-    if (!dbd)
-    {
-        LOG_E("blockdev create error!");
-        return -RT_ERROR;
-    }
+    if (!dbd) return -RT_ERROR;
 
     bd = &dbd->bd;
     rc = ext4_mount(bd, fs->path, false);
     if (rc != RT_EOK)
     {
-        LOG_E("mount error %d!", rc);
         dfs_ext4_blockdev_destroy(dbd);
         rc = -rc;
     }
@@ -127,13 +118,12 @@ static int dfs_ext_unmount(struct dfs_filesystem *fs)
         char *mp = fs->path; /*mount point */
 
         rc = ext4_umount(mp);
-        if (rc == RT_EOK)
+        if (rc == 0)
         {
             dfs_ext4_blockdev_destroy(dbd);
         }
         else
         {
-            LOG_E("umount error %d!", rc);
             rc = -rc;
         }
     }
@@ -163,11 +153,7 @@ static int dfs_ext_mkfs(rt_device_t devid)
 
     /* create dfs ext4 block device */
     dbd = dfs_ext4_blockdev_create(devid);
-    if (!dbd)
-    {
-        LOG_E("blockdev create error!");
-        return -RT_ERROR;
-    }
+    if (!dbd) return -RT_ERROR;
 
     /* get ext4 block device */
     bd = &dbd->bd;
@@ -175,10 +161,6 @@ static int dfs_ext_mkfs(rt_device_t devid)
     /* try to open device */
     rt_device_open(devid, RT_DEVICE_OFLAG_RDWR);
     rc = ext4_mkfs(&fs, bd, &info, F_SET_EXT4);
-    if (rc != RT_EOK)
-    {
-        LOG_E("mkfs error %d!", rc);
-    }
 
     /* no matter what, unregister */
     dfs_ext4_blockdev_destroy(dbd);
@@ -192,13 +174,12 @@ static int dfs_ext_mkfs(rt_device_t devid)
 static int dfs_ext_statfs(struct dfs_filesystem *fs, struct statfs *buf)
 {
     struct ext4_sblock *sb = NULL;
-    int rc;
+    int error = RT_EOK;
 
-    rc = ext4_get_sblock(fs->path, &sb);
-    if (rc != RT_EOK)
+    error = ext4_get_sblock(fs->path, &sb);
+    if (error != RT_EOK)
     {
-        LOG_E("get sblock error %d!", rc);
-        rc = -rc;
+        return -error;
     }
 
     buf->f_bsize = ext4_sb_get_block_size(sb);
@@ -206,7 +187,7 @@ static int dfs_ext_statfs(struct dfs_filesystem *fs, struct statfs *buf)
     buf->f_bfree = ext4_sb_get_free_blocks_cnt(sb);
     //TODO this is not accurate, because it is free blocks available to unprivileged user, but ...
 //    buf->f_bavail = buf->f_bfree;
-    return rc;
+    return error;
 
 }
 static int dfs_ext_ioctl(struct dfs_fd *fd, int cmd, void *args)
@@ -284,47 +265,43 @@ static int dfs_ext_write(struct dfs_fd *fd, const void *buf, size_t count)
 
 static int dfs_ext_flush(struct dfs_fd *fd)
 {
-    int rc;
+    int error = RT_EOK;
 
-    rc = ext4_cache_flush(get_fd_file(fd));
-    if (rc != RT_EOK)
+    error = ext4_cache_flush(get_fd_file(fd));
+    if (error != RT_EOK)
     {
-        LOG_E("cache flush error %d!", rc);
-        rc = -rc;
+        return -error;
     }
 
-    return rc;
+    return error;
 }
 
 static int dfs_ext_lseek(struct dfs_fd *fd, off_t offset)
 {
-    int rc;
+    int r;
     ext4_file *file = fd->data;
 
-    rc = ext4_fseek(file, (int64_t)offset, SEEK_SET);
-    if (rc == RT_EOK)
+    r = ext4_fseek(file, (int64_t)offset, SEEK_SET);
+    if (r == RT_EOK)
     {
         return file->fpos;
     }
-    LOG_E("fseek error %d!", rc);
 
-    return rc;
+    return -r;
 }
 
 static int dfs_ext_close(struct dfs_fd *file)
 {
-    int rc;
+    int r;
 
-    rc = ext4_fclose(file->data);
-    if (rc == EOK)
+    r = ext4_fclose(file->data);
+    if (r == EOK)
     {
         rt_free(file->data);
         file->data = NULL;
-        return EOK;
     }
-    LOG_E("fclose error %d!", rc);
 
-    return rc;
+    return -r;
 }
 
 static int dfs_ext_open(struct dfs_fd *file)
@@ -377,8 +354,7 @@ static int dfs_ext_open(struct dfs_fd *file)
             }
         }
     }
-
-    return r;
+    return -r;
 }
 
 static int dfs_ext_unlink(struct dfs_filesystem *fs, const char *pathname)
@@ -421,7 +397,7 @@ static int dfs_ext_unlink(struct dfs_filesystem *fs, const char *pathname)
         r = ext4_fremove(stat_path);
     }
 
-    return r;
+    return -r;
 }
 
 static int dfs_ext_stat(struct dfs_filesystem *fs, const char *path, struct stat *st)
@@ -436,6 +412,7 @@ static int dfs_ext_stat(struct dfs_filesystem *fs, const char *path, struct stat
     char *stat_path;
     struct ext4_inode inode;
     uint32_t ino = 0;
+    uint32_t dev = 0;
 
     union
     {
@@ -472,7 +449,7 @@ static int dfs_ext_stat(struct dfs_filesystem *fs, const char *path, struct stat
 
         if (ext4_raw_inode_fill(stat_path, &ino, &inode) == EOK)
         {
-            ext4_inode_get_dev(&inode);
+            dev = ext4_inode_get_dev(&inode);
         }
         st->st_dev = (dev_t)(fs->dev_id);
         st->st_ino = ino;
@@ -496,7 +473,7 @@ static int dfs_ext_stat(struct dfs_filesystem *fs, const char *path, struct stat
             ext4_ctime_get(stat_path, &ctime);
             if (ext4_raw_inode_fill(stat_path, &ino, &inode) == EOK)
             {
-                ext4_inode_get_dev(&inode);
+                dev = ext4_inode_get_dev(&inode);
             }
             st->st_dev = (dev_t)(fs->dev_id);
             st->st_ino = ino;
@@ -524,7 +501,7 @@ static int dfs_ext_stat(struct dfs_filesystem *fs, const char *path, struct stat
         }
     }
 
-    return r;
+    return -r;
 }
 
 static int dfs_ext_getdents(struct dfs_fd *file, struct dirent *dirp, rt_uint32_t count)
@@ -577,15 +554,11 @@ static int dfs_ext_getdents(struct dfs_fd *file, struct dirent *dirp, rt_uint32_
 
 static int dfs_ext_rename(struct dfs_filesystem *fs, const char *oldpath, const char *newpath)
 {
-    int rc;
+    int r;
 
-    rc = ext4_frename(oldpath, newpath);
-    if (rc != EOK)
-    {
-        LOG_E("frename error %d!", rc);
-    }
+    r = ext4_frename(oldpath, newpath);
 
-    return rc;
+    return -r;
 }
 
 static const struct dfs_file_ops _ext_fops =

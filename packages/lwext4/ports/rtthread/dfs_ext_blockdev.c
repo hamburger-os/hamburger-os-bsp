@@ -18,10 +18,6 @@
 #include "dfs_ext.h"
 #include "dfs_ext_blockdev.h"
 
-#define DBG_TAG "ext_blk"
-#define DBG_LVL DBG_LOG
-#include <rtdbg.h>
-
 static int blockdev_lock(struct ext4_blockdev *bdev);
 static int blockdev_unlock(struct ext4_blockdev *bdev);
 static int blockdev_open(struct ext4_blockdev *bdev);
@@ -78,7 +74,6 @@ static int blockdev_open(struct ext4_blockdev *bdev)
     r = rt_device_open(device, RT_DEVICE_OFLAG_RDWR);
     if (r != RT_EOK)
     {
-        LOG_E("open '%s' error %d!", device->parent.name, r);
         return r;
     }
 
@@ -87,7 +82,7 @@ static int blockdev_open(struct ext4_blockdev *bdev)
     {
         if (geometry.block_size != geometry.bytes_per_sector)
         {
-            LOG_E("block size != bytes_per_sector");
+            rt_kprintf("block device: block size != bytes_per_sector\n");
             rt_device_close(device);
             return -RT_EIO;
         }
@@ -99,7 +94,7 @@ static int blockdev_open(struct ext4_blockdev *bdev)
     }
     else
     {
-        LOG_E("get geometry failed!");
+        rt_kprintf("block device: get geometry failed!\n");
         rt_device_close(device);
         return -RT_EIO;
     }
@@ -172,10 +167,6 @@ static int blockdev_close(struct ext4_blockdev *bdev)
     RT_ASSERT(device != NULL);
 
     result = rt_device_close(device);
-    if (result != RT_EOK)
-    {
-        LOG_E("close '%s' error %d!", device->parent.name, result);
-    }
 
     return result;
 }
@@ -212,7 +203,7 @@ int dfs_ext4_blockdev_init(struct dfs_ext4_blockdev* dbd, rt_device_t devid)
         bd->part_size = 0;
     }
 
-    return RT_EOK;
+    return 0;
 }
 
 struct dfs_ext4_blockdev *dfs_ext4_blockdev_from_bd(struct ext4_blockdev *bd)
