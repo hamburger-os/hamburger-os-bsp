@@ -1,0 +1,204 @@
+import os
+import rtconfig
+from building import *
+
+Import('SDK_LIB')
+
+cwd = GetCurrentDir()
+startup_path_prefix = SDK_LIB
+
+# add general drivers
+src = Split('''
+	board.c
+	ports/drv_ram.c
+''')
+
+path =  [cwd]
+path += [cwd + '/ports']
+        
+if GetDepend(['SOC_MINILINK_V2']):
+    src += Glob('CubeMX_Config/stm32f103_minilink_v2/Src/main.c')
+    src += Glob('CubeMX_Config/stm32f103_minilink_v2/Src/stm32f1xx_hal_msp.c')
+    path += [cwd + '/CubeMX_Config/stm32f103_minilink_v2/Inc']
+    CPPDEFINES = ['STM32F103xB']
+    if rtconfig.PLATFORM in ['gcc']:
+        src += [startup_path_prefix + '/STM32F1xx_HAL/CMSIS/Device/ST/STM32F1xx/Source/Templates/gcc/startup_stm32f103xb.s']
+    elif rtconfig.PLATFORM in ['armcc', 'armclang']:
+        src += [startup_path_prefix + '/STM32F1xx_HAL/CMSIS/Device/ST/STM32F1xx/Source/Templates/arm/startup_stm32f103xb.s']
+    elif rtconfig.PLATFORM in ['iccarm']:
+        src += [startup_path_prefix + '/STM32F1xx_HAL/CMSIS/Device/ST/STM32F1xx/Source/Templates/iar/startup_stm32f103xb.s']
+
+if GetDepend(['SOC_ATK_EXPLORER_V24']):
+    src += Glob('CubeMX_Config/stm32f407_atk_explorer_v24/Src/main.c')
+    src += Glob('CubeMX_Config/stm32f407_atk_explorer_v24/Src/stm32f4xx_hal_msp.c')
+    path += [cwd + '/CubeMX_Config/stm32f407_atk_explorer_v24/Inc']
+    CPPDEFINES = ['STM32F407xx']
+    if rtconfig.PLATFORM in ['gcc']:
+        src += [startup_path_prefix + '/STM32F4xx_HAL/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc/startup_stm32f407xx.s']
+    elif rtconfig.PLATFORM in ['armcc', 'armclang']:
+        src += [startup_path_prefix + '/STM32F4xx_HAL/CMSIS/Device/ST/STM32F4xx/Source/Templates/arm/startup_stm32f407xx.s']
+    elif rtconfig.PLATFORM in ['iccarm']:
+        src += [startup_path_prefix + '/STM32F4xx_HAL/CMSIS/Device/ST/STM32F4xx/Source/Templates/iar/startup_stm32f407xx.s']
+
+if GetDepend(['RT_USING_FAL']):
+    src += Glob('ports/drv_fal.c')
+    src += Glob('ports/fal_init.c')
+    src += Glob('ports/fal_cfg.c')
+    
+if GetDepend(['RT_USING_DFS']):
+    src += Glob('ports/dfs_init.c')
+    
+if GetDepend(['RT_USING_DFS_NFS']):
+    src += Glob('ports/drv_nfs.c')
+    
+if GetDepend(['BSP_USING_ROOTFS']):
+    src += Glob('ports/drv_rootfs.c')
+    
+if GetDepend(['BSP_USING_FM25xx']):
+    src += Glob('ports/drv_fm25xx.c')
+        
+if GetDepend(['BSP_USING_SPI_FLASH']):
+    src += Glob('ports/drv_spiflash.c')
+    
+if GetDepend(['BSP_USING_S25FL512']):
+    src += Glob('ports/drv_S25FL512.c')
+    
+if GetDepend(['BSP_USING_AT45DB321E']):
+    src += Glob('ports/drv_AT45DB321E.c')
+    
+if GetDepend(['BSP_USING_FMCLCD']):
+    src += Glob('ports/drv_fmclcd.c')
+    
+if GetDepend(['BSP_USING_LVGL']):
+    path += [cwd + '/ports/lvgl']
+    src += Glob('ports/lvgl/lv_port_disp.c')
+    src += Glob('ports/lvgl/lv_port_indev.c')
+    src += Glob('ports/lvgl/lv_dlsyms.c')
+    path += [cwd + '/ports/lvgl/demo']
+    src += Glob('ports/lvgl/demo/lv_demo.c')
+    src += Glob('ports/lvgl/demo/lv_demo_calendar.c')
+
+if GetDepend(['BSP_USING_TOUCH']):
+    src += Glob('ports/touch/drv_touch.c')
+    if GetDepend(['TOUCH_USING_XPT2046']):
+        src += Glob('ports/touch/xpt2046.c')
+    path += [cwd + '/ports/touch']
+        
+if GetDepend(['BSP_USING_WM8978']):
+    src += Glob('ports/wm8978/drv_wm8978.c')
+    src += Glob('ports/wm8978/drv_sound.c')
+    path += [cwd + '/ports/wm8978']
+
+if GetDepend(['BSP_USING_ADAU1761']):
+    src += Glob('ports/adau1761/adau1761.c')
+    src += Glob('ports/adau1761/drv_sound.c')
+    path += [cwd + '/ports/adau1761']
+
+if GetDepend(['BSP_USING_NORFLASH']):
+    src += Glob('ports/drv_nor_flash.c')
+    
+if GetDepend(['BSP_USING_EMMC']):
+    src += Glob('ports/drv_emmc.c')
+    
+if GetDepend(['BSP_USING_USBH_CHERRY']):
+    src += Glob('ports/drv_usbh_cherry.c')
+    
+if GetDepend(['BSP_USING_USBD_CHERRY']):
+    src += Glob('ports/drv_usbd_cherry.c')
+    
+if GetDepend(['BSP_USING_USBH_STM32']):
+    src += Glob('ports/usb_stm32/drv_usbh_stm32.c')
+    src += Glob('ports/usb_stm32/usb_host.c')
+    src += Glob('ports/usb_stm32/usbh_conf.c')
+    src += Glob('ports/usb_stm32/usbh_diskio.c')
+    path += [cwd + '/ports/usb_stm32']
+    
+if GetDepend(['BSP_USING_KSZ8851']):
+    src += Glob('ports/ksz8851/drv_fmc_eth.c')
+    src += Glob('ports/ksz8851/ksz8851.c')
+    if GetDepend(['BSP_USE_LINK_LAYER_COMMUNICATION']):
+        src += Glob('ports/drv_link_layer_list.c')
+    path += [cwd + '/ports/ksz8851']
+    
+if GetDepend(['BSP_USING_ETH']):
+    src += Glob('ports/eth/drv_eth.c')
+    if GetDepend(['PHY_USING_LAN8720A']):
+        src += Glob('ports/eth/lan8720.c')
+    if GetDepend(['BSP_USE_LINK_LAYER_COMMUNICATION']):
+        src += Glob('ports/drv_link_layer_list.c')
+    path += [cwd + '/ports/eth']
+ 
+if GetDepend(['BSP_USING_MAX31826']):
+    src += Glob('ports/drv_max31826.c')
+    src += Glob('ports/drv_ds2484.c')
+
+if GetDepend(['BSP_USING_DS28E01']):
+    src += Glob('ports/drv_ds28e01.c')
+        
+if GetDepend(['BSP_USING_DS1682']):
+    src += Glob('ports/drv_ds1682.c')
+    
+if GetDepend(['BSP_USING_LTC2945']):
+    src += Glob('ports/drv_ltc2945.c')
+    
+if GetDepend(['BSP_USING_LTC2991']):
+    src += Glob('ports/drv_ltc2991.c')
+    
+if GetDepend(['BSP_USING_DS28E01']):
+    src += Glob('ports/drv_ds28e01.c')
+
+if GetDepend(['BSP_USING_I2C']):
+    src += Glob('ports/drv_i2c.c')
+    
+if GetDepend(['BSP_USING_CPUTEMP']):
+    src += Glob('ports/drv_cpu_temp.c')
+    
+if GetDepend(['BSP_USING_I2S']):
+    src += Glob('ports/drv_i2s.c')
+    
+if GetDepend(['BSP_USING_EEPROM_24Cxx']):
+    src += Glob('ports/drv_24cxx.c')
+    
+if GetDepend(['BSP_USING_LED']):
+    src += Glob('ports/drv_led.c')
+    
+if GetDepend(['BSP_USING_TCA9555']):
+    src += Glob('ports/drv_tca9555.c')
+    
+if GetDepend(['BSP_USING_LTC186X']):
+    src += Glob('ports/drv_ltc186x.c')
+    
+if GetDepend(['BSP_USING_GNSS']):
+    src += Glob('ports/drv_gnss.c')
+    
+if GetDepend(['BSP_USING_LORA']):
+    src += Glob('ports/drv_lora.c')
+    
+if GetDepend(['BSP_USING_KSZ8794']):
+    src += Glob('ports/drv_ksz8794.c')
+  
+if GetDepend(['BSP_USING_MCP2517FD']):
+    src += Glob('ports/mcp2517/drv_mcp2517.c')
+    path += [cwd + '/ports/mcp2517']
+  
+if GetDepend(['BSP_USING_LTC4281I']):
+    src += Glob('ports/drv_ltc4281i.c')
+    
+if GetDepend(['BSP_USING_SC16IS752']):
+    src += Glob('ports/sc16is7xx/sc16is7xx.c')
+    src += Glob('ports/sc16is7xx/drv_SC16IS752.c')
+
+if GetDepend(['BSP_USING_MVB']):
+    src += Glob('ports/mvb/src/drv_mvb.c')
+    src += Glob('ports/mvb/src/mue_sv.c')
+    src += Glob('ports/mvb/src/mue_pd_full.c')
+    src += Glob('ports/mvb/src/mue_cch.c')
+    src += Glob('ports/mvb/src/mue_app.c')
+    src += Glob('ports/mvb/src/mue_acc.c')
+    path += [cwd + '/ports/mvb/inc']
+    
+if GetDepend(['BSP_USING_Z8523L16']):
+    src += Glob('ports/drv_z8523l16.c')
+
+group = DefineGroup('Drivers', src, depend = [''], CPPPATH = path, CPPDEFINES = CPPDEFINES)
+Return('group')

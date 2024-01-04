@@ -1,0 +1,38 @@
+import rtconfig
+from building import *
+
+# get current directory
+cwd = GetCurrentDir()
+
+# The set of source files associated with this SConscript file.
+
+src = Split('''
+    Core/Src/usbh_core.c
+    Core/Src/usbh_ctlreq.c
+    Core/Src/usbh_ioreq.c
+    Core/Src/usbh_pipes.c
+    Class/AUDIO/Src/usbh_audio.c
+    Class/CDC/Src/usbh_cdc.c
+    Class/HID/Src/usbh_hid.c
+    Class/HID/Src/usbh_hid_keybd.c
+    Class/HID/Src/usbh_hid_mouse.c
+    Class/HID/Src/usbh_hid_parser.c
+    Class/MSC/Src/usbh_msc.c
+    Class/MSC/Src/usbh_msc_bot.c
+    Class/MSC/Src/usbh_msc_scsi.c
+    Class/MTP/Src/usbh_mtp.c
+    Class/MTP/Src/usbh_mtp_ptp.c
+''')
+
+path = []
+path += [cwd + '/Core/Inc']
+path += [cwd + '/Class/AUDIO/Inc']
+path += [cwd + '/Class/CDC/Inc']
+path += [cwd + '/Class/HID/Inc']
+path += [cwd + '/Class/MSC/Inc']
+path += [cwd + '/Class/MTP/Inc']
+
+group = DefineGroup('STM32_USB_Host_Library', src, depend = ['BSP_USING_USBH_STM32'], CPPPATH = path)
+
+Return('group')
+

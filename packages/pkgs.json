@@ -1,0 +1,22 @@
+[
+ {
+  "path": "/packages/system/enhanced-kservice/rt_memcpy_cm", 
+  "ver": "latest", 
+  "name": "RT_MEMCPY_CM"
+ }, 
+ {
+  "path": "/packages/system/enhanced-kservice/rt_kprintf_threadsafe", 
+  "ver": "latest", 
+  "name": "RT_KPRINTF_THREADSAFE"
+ }, 
+ {
+  "path": "/packages/system/syswatch", 
+  "ver": "latest", 
+  "name": "SYSWATCH"
+ }, 
+ {
+  "path": "/packages/system/CherryUSB", 
+  "ver": "latest", 
+  "name": "CHERRYUSB"
+ }
+]

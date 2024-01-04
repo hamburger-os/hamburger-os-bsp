@@ -1,0 +1,25 @@
+# RT-Thread building script for bridge
+
+import rtconfig
+from building import *
+
+cwd     = GetCurrentDir()
+CPPPATH = [cwd, str(Dir('#'))]
+src     = Split("""
+        """)
+                
+if GetDepend(['AMRPLAYER_USING_PLAY']):
+    src +=  Split('''
+        amrplayer.c
+        amrplayer_cmd.c
+        ''')
+
+if GetDepend(['AMRPLAYER_USING_RECORD']):
+    src +=  Split('''
+        amrrecorder.c
+        amrrecorder_cmd.c
+        ''')
+
+group = DefineGroup('amrplayer', src, depend = ['PKG_USING_AMRPLAYER'], CPPPATH = CPPPATH)
+
+Return('group')
