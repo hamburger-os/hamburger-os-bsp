@@ -35,6 +35,10 @@ menu "On-chip Peripheral Drivers"
                 config SOC_M4COREBOARD_SDRAM
                     bool "Select M4 core board with sdram"
                     select SOC_SERIES_STM32F4
+
+                config SOC_M4COREBOARD_VOICE
+                    bool "Select M4 core board for voice"
+                    select SOC_SERIES_STM32F4
     
                 config SOC_H7COREBOARD_NOSRAM
                     bool "Select H7 core board with no sram"
@@ -341,7 +345,7 @@ menu "On-chip Peripheral Drivers"
                 int "Set UART1 TX buffer size"
                 depends on BSP_USING_UART1 && RT_USING_SERIAL_V2
                 default 128
-	                
+
             config BSP_UART1_RX_BUFSIZE
                 int "Set UART1 RX buffer size"
                 depends on BSP_USING_UART1 && RT_USING_SERIAL_V2
@@ -354,14 +358,19 @@ menu "On-chip Peripheral Drivers"
                 select RT_USING_PIN
                 
             config BSP_UART1_DERE
-		        string "Set the GPIO of the UART1 rs485 DE/RE, default: PF.8"
-		        depends on BSP_USING_UART1 && BSP_UART1_RS485MODE
-		        default "PF.8"
+                string "Set the GPIO of rs485 DE/RE, default: PF.8"
+                depends on BSP_UART1_RS485MODE
+                default "PF.8"
+                
+            config BSP_UART1_DERE_REVERSE
+                bool "Enable the rs485 DE/RE effective level reverse"
+                depends on BSP_UART1_RS485MODE
+                default n
                 
             config BSP_USING_UART2
                 bool "Enable UART2"
                 default n
-   
+
             config BSP_UART2_RX_USING_DMA
                 bool "Enable UART2 RX DMA"
                 depends on BSP_USING_UART2 && RT_SERIAL_USING_DMA
@@ -389,9 +398,14 @@ menu "On-chip Peripheral Drivers"
                 select RT_USING_PIN
                 
             config BSP_UART2_DERE
-		        string "Set the GPIO of the UART2 rs485 DE/RE, default: PF.8"
-		        depends on BSP_USING_UART2 && BSP_UART2_RS485MODE
-		        default "PF.8"
+                string "Set the GPIO of rs485 DE/RE, default: PF.8"
+                depends on BSP_UART2_RS485MODE
+                default "PF.8"
+                
+            config BSP_UART2_DERE_REVERSE
+                bool "Enable the rs485 DE/RE effective level reverse"
+                depends on BSP_UART2_RS485MODE
+                default n
                 
             config BSP_USING_UART3
                 bool "Enable UART3"
@@ -424,9 +438,14 @@ menu "On-chip Peripheral Drivers"
                 select RT_USING_PIN
                 
             config BSP_UART3_DERE
-		        string "Set the GPIO of the UART3 rs485 DE/RE, default: PF.8"
-		        depends on BSP_USING_UART3 && BSP_UART3_RS485MODE
-		        default "PF.8"
+                string "Set the GPIO of rs485 DE/RE, default: PF.8"
+                depends on BSP_UART3_RS485MODE
+                default "PF.8"
+                
+            config BSP_UART3_DERE_REVERSE
+                bool "Enable the rs485 DE/RE effective level reverse"
+                depends on BSP_UART3_RS485MODE
+                default n
                 
             config BSP_USING_UART4
                 bool "Enable UART4"
@@ -459,9 +478,14 @@ menu "On-chip Peripheral Drivers"
                 select RT_USING_PIN
                 
             config BSP_UART4_DERE
-		        string "Set the GPIO of the UART4 rs485 DE/RE, default: PF.8"
-		        depends on BSP_USING_UART4 && BSP_UART4_RS485MODE
-		        default "PF.8"
+                string "Set the GPIO of rs485 DE/RE, default: PF.8"
+                depends on BSP_UART4_RS485MODE
+                default "PF.8"
+                
+            config BSP_UART4_DERE_REVERSE
+                bool "Enable the rs485 DE/RE effective level reverse"
+                depends on BSP_UART4_RS485MODE
+                default n
                 
             config BSP_USING_UART5
                 bool "Enable UART5"
@@ -494,9 +518,14 @@ menu "On-chip Peripheral Drivers"
                 select RT_USING_PIN
                 
             config BSP_UART5_DERE
-		        string "Set the GPIO of the UART5 rs485 DE/RE, default: PF.8"
-		        depends on BSP_USING_UART5 && BSP_UART5_RS485MODE
-		        default "PF.8"
+                string "Set the GPIO of rs485 DE/RE, default: PF.8"
+                depends on BSP_UART5_RS485MODE
+                default "PF.8"
+                
+            config BSP_UART5_DERE_REVERSE
+                bool "Enable the rs485 DE/RE effective level reverse"
+                depends on BSP_UART5_RS485MODE
+                default n
                 
             config BSP_USING_UART6
                 bool "Enable UART6"
@@ -529,9 +558,14 @@ menu "On-chip Peripheral Drivers"
                 select RT_USING_PIN
                 
             config BSP_UART6_DERE
-		        string "Set the GPIO of the UART6 rs485 DE/RE, default: PF.8"
-		        depends on BSP_USING_UART6 && BSP_UART6_RS485MODE
-		        default "PF.8"
+                string "Set the GPIO of rs485 DE/RE, default: PF.8"
+                depends on BSP_UART6_RS485MODE
+                default "PF.8"
+                
+            config BSP_UART6_DERE_REVERSE
+                bool "Enable the rs485 DE/RE effective level reverse"
+                depends on BSP_UART6_RS485MODE
+                default n
                 
             config BSP_USING_UART7
                 bool "Enable UART7"
@@ -564,9 +598,14 @@ menu "On-chip Peripheral Drivers"
                 select RT_USING_PIN
                 
             config BSP_UART7_DERE
-		        string "Set the GPIO of the UART7 rs485 DE/RE, default: PF.8"
-		        depends on BSP_USING_UART7 && BSP_UART7_RS485MODE
-		        default "PF.8"
+                string "Set the GPIO of rs485 DE/RE, default: PF.8"
+                depends on BSP_UART7_RS485MODE
+                default "PF.8"
+                
+            config BSP_UART7_DERE_REVERSE
+                bool "Enable the rs485 DE/RE effective level reverse"
+                depends on BSP_UART7_RS485MODE
+                default n
 		        
 		    config BSP_USING_UART8
                 bool "Enable UART8"
@@ -599,9 +638,14 @@ menu "On-chip Peripheral Drivers"
                 select RT_USING_PIN
                 
             config BSP_UART8_DERE
-		        string "Set the GPIO of the UART8 rs485 DE/RE, default: PF.8"
-		        depends on BSP_USING_UART8 && BSP_UART8_RS485MODE
-		        default "PF.8"
+                string "Set the GPIO of rs485 DE/RE, default: PF.8"
+                depends on BSP_UART8_RS485MODE
+                default "PF.8"
+                
+            config BSP_UART8_DERE_REVERSE
+                bool "Enable the rs485 DE/RE effective level reverse"
+                depends on BSP_UART8_RS485MODE
+                default n
         endif
         
     menuconfig BSP_USING_CCMSRAM

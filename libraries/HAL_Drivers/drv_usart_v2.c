@@ -112,7 +112,6 @@ static struct stm32_uart_config uart_config[] =
 #endif
 };
 
-
 static struct stm32_uart uart_obj[sizeof(uart_config) / sizeof(uart_config[0])] = {0};
 
 static void stm32_rs485_dere(struct stm32_uart *uart, enum rs485_dere_def dere)
@@ -121,7 +120,10 @@ static void stm32_rs485_dere(struct stm32_uart *uart, enum rs485_dere_def dere)
 
     if (uart->rs485_flag)
     {
-        rt_pin_write(uart->rs485_DERE, dere);
+        if (uart->rs485_DERE_reverse)
+            rt_pin_write(uart->rs485_DERE, !dere);
+        else
+            rt_pin_write(uart->rs485_DERE, dere);
     }
 }
 
@@ -909,7 +911,13 @@ static void stm32_uart_get_config(void)
     uart_obj[UART1_INDEX].rs485_flag = 1;
     uart_obj[UART1_INDEX].rs485_DERE = rt_pin_get(BSP_UART1_DERE);
     rt_pin_mode(uart_obj[UART1_INDEX].rs485_DERE, PIN_MODE_OUTPUT);
+#ifdef BSP_UART1_DERE_REVERSE
+    uart_obj[UART1_INDEX].rs485_DERE_reverse = 1;
+    rt_pin_write(uart_obj[UART1_INDEX].rs485_DERE, RS485_DE);
+#else
+    uart_obj[UART1_INDEX].rs485_DERE_reverse = 0;
     rt_pin_write(uart_obj[UART1_INDEX].rs485_DERE, RS485_RE);
+#endif
 #endif
 #endif
 
@@ -937,7 +945,13 @@ static void stm32_uart_get_config(void)
     uart_obj[UART2_INDEX].rs485_flag = 1;
     uart_obj[UART2_INDEX].rs485_DERE = rt_pin_get(BSP_UART2_DERE);
     rt_pin_mode(uart_obj[UART2_INDEX].rs485_DERE, PIN_MODE_OUTPUT);
+#ifdef BSP_UART2_DERE_REVERSE
+    uart_obj[UART2_INDEX].rs485_DERE_reverse = 1;
+    rt_pin_write(uart_obj[UART2_INDEX].rs485_DERE, RS485_DE);
+#else
+    uart_obj[UART2_INDEX].rs485_DERE_reverse = 0;
     rt_pin_write(uart_obj[UART2_INDEX].rs485_DERE, RS485_RE);
+#endif
 #endif
 #endif
 
@@ -965,7 +979,13 @@ static void stm32_uart_get_config(void)
     uart_obj[UART3_INDEX].rs485_flag = 1;
     uart_obj[UART3_INDEX].rs485_DERE = rt_pin_get(BSP_UART3_DERE);
     rt_pin_mode(uart_obj[UART3_INDEX].rs485_DERE, PIN_MODE_OUTPUT);
+#ifdef BSP_UART3_DERE_REVERSE
+    uart_obj[UART3_INDEX].rs485_DERE_reverse = 1;
+    rt_pin_write(uart_obj[UART3_INDEX].rs485_DERE, RS485_DE);
+#else
+    uart_obj[UART3_INDEX].rs485_DERE_reverse = 0;
     rt_pin_write(uart_obj[UART3_INDEX].rs485_DERE, RS485_RE);
+#endif
 #endif
 #endif
 
@@ -993,7 +1013,13 @@ static void stm32_uart_get_config(void)
     uart_obj[UART4_INDEX].rs485_flag = 1;
     uart_obj[UART4_INDEX].rs485_DERE = rt_pin_get(BSP_UART4_DERE);
     rt_pin_mode(uart_obj[UART4_INDEX].rs485_DERE, PIN_MODE_OUTPUT);
+#ifdef BSP_UART4_DERE_REVERSE
+    uart_obj[UART4_INDEX].rs485_DERE_reverse = 1;
+    rt_pin_write(uart_obj[UART4_INDEX].rs485_DERE, RS485_DE);
+#else
+    uart_obj[UART4_INDEX].rs485_DERE_reverse = 0;
     rt_pin_write(uart_obj[UART4_INDEX].rs485_DERE, RS485_RE);
+#endif
 #endif
 #endif
 
@@ -1021,7 +1047,13 @@ static void stm32_uart_get_config(void)
     uart_obj[UART5_INDEX].rs485_flag = 1;
     uart_obj[UART5_INDEX].rs485_DERE = rt_pin_get(BSP_UART5_DERE);
     rt_pin_mode(uart_obj[UART5_INDEX].rs485_DERE, PIN_MODE_OUTPUT);
+#ifdef BSP_UART5_DERE_REVERSE
+    uart_obj[UART5_INDEX].rs485_DERE_reverse = 1;
+    rt_pin_write(uart_obj[UART5_INDEX].rs485_DERE, RS485_DE);
+#else
+    uart_obj[UART5_INDEX].rs485_DERE_reverse = 0;
     rt_pin_write(uart_obj[UART5_INDEX].rs485_DERE, RS485_RE);
+#endif
 #endif
 #endif
 
@@ -1049,7 +1081,13 @@ static void stm32_uart_get_config(void)
     uart_obj[UART6_INDEX].rs485_flag = 1;
     uart_obj[UART6_INDEX].rs485_DERE = rt_pin_get(BSP_UART6_DERE);
     rt_pin_mode(uart_obj[UART6_INDEX].rs485_DERE, PIN_MODE_OUTPUT);
+#ifdef BSP_UART6_DERE_REVERSE
+    uart_obj[UART6_INDEX].rs485_DERE_reverse = 1;
+    rt_pin_write(uart_obj[UART6_INDEX].rs485_DERE, RS485_DE);
+#else
+    uart_obj[UART6_INDEX].rs485_DERE_reverse = 0;
     rt_pin_write(uart_obj[UART6_INDEX].rs485_DERE, RS485_RE);
+#endif
 #endif
 #endif
 
@@ -1077,7 +1115,13 @@ static void stm32_uart_get_config(void)
     uart_obj[UART7_INDEX].rs485_flag = 1;
     uart_obj[UART7_INDEX].rs485_DERE = rt_pin_get(BSP_UART7_DERE);
     rt_pin_mode(uart_obj[UART7_INDEX].rs485_DERE, PIN_MODE_OUTPUT);
+#ifdef BSP_UART7_DERE_REVERSE
+    uart_obj[UART7_INDEX].rs485_DERE_reverse = 1;
+    rt_pin_write(uart_obj[UART7_INDEX].rs485_DERE, RS485_DE);
+#else
+    uart_obj[UART7_INDEX].rs485_DERE_reverse = 0;
     rt_pin_write(uart_obj[UART7_INDEX].rs485_DERE, RS485_RE);
+#endif
 #endif
 #endif
 
@@ -1105,7 +1149,13 @@ static void stm32_uart_get_config(void)
     uart_obj[UART8_INDEX].rs485_flag = 1;
     uart_obj[UART8_INDEX].rs485_DERE = rt_pin_get(BSP_UART8_DERE);
     rt_pin_mode(uart_obj[UART8_INDEX].rs485_DERE, PIN_MODE_OUTPUT);
+#ifdef BSP_UART8_DERE_REVERSE
+    uart_obj[UART8_INDEX].rs485_DERE_reverse = 1;
+    rt_pin_write(uart_obj[UART8_INDEX].rs485_DERE, RS485_DE);
+#else
+    uart_obj[UART8_INDEX].rs485_DERE_reverse = 0;
     rt_pin_write(uart_obj[UART8_INDEX].rs485_DERE, RS485_RE);
+#endif
 #endif
 #endif
 }

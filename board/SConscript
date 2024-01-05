@@ -16,7 +16,7 @@ src = Split('''
 path =  [cwd]
 path += [cwd + '/ports']
 
-if GetDepend(['SOC_M4COREBOARD_NOSRAM']) or GetDepend(['SOC_M4COREBOARD_SRAM']) or GetDepend(['SOC_M4COREBOARD_SDRAM']):
+if GetDepend(['SOC_M4COREBOARD_NOSRAM']) or GetDepend(['SOC_M4COREBOARD_SRAM']) or GetDepend(['SOC_M4COREBOARD_SDRAM']) or GetDepend(['SOC_M4COREBOARD_VOICE']):
     if GetDepend(['SOC_M4COREBOARD_NOSRAM']):
         src += Glob('CubeMX_Config/M4_CoreBoard_NOSRAM/Src/main.c')
         src += Glob('CubeMX_Config/M4_CoreBoard_NOSRAM/Src/stm32f4xx_hal_msp.c')
@@ -26,6 +26,10 @@ if GetDepend(['SOC_M4COREBOARD_NOSRAM']) or GetDepend(['SOC_M4COREBOARD_SRAM']) 
         src += Glob('CubeMX_Config/M4_CoreBoard_SRAM/Src/stm32f4xx_hal_msp.c')
         path += [cwd + '/CubeMX_Config/M4_CoreBoard_SRAM/Inc']
     if GetDepend(['SOC_M4COREBOARD_SDRAM']):
+        src += Glob('CubeMX_Config/M4_CoreBoard_SDRAM/Src/main.c')
+        src += Glob('CubeMX_Config/M4_CoreBoard_SDRAM/Src/stm32f4xx_hal_msp.c')
+        path += [cwd + '/CubeMX_Config/M4_CoreBoard_SDRAM/Inc']
+    if GetDepend(['SOC_M4COREBOARD_VOICE']):
         src += Glob('CubeMX_Config/M4_CoreBoard_SDRAM/Src/main.c')
         src += Glob('CubeMX_Config/M4_CoreBoard_SDRAM/Src/stm32f4xx_hal_msp.c')
         path += [cwd + '/CubeMX_Config/M4_CoreBoard_SDRAM/Inc']

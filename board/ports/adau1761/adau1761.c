@@ -57,7 +57,7 @@ static void adau1761_show()
 
     adau1761_read_reg(0x4000, data, pll_len);
     adau1761_read_reg(0x4008, data + pll_len, sizeof(data) - pll_len);
-    LOG_HEX("reg hex  ", 16, data, sizeof(data));
+    LOG_HEX(DBG_TAG, 16, data, sizeof(data));
 }
 
 static void adau1761_program(uint16_t addr, uint8_t *data, uint16_t len_u16)
@@ -103,6 +103,20 @@ void adau1761_set_volume(uint8_t volume)
     uint8_t mute = (vol > 0)?(1):(0);
     LOG_D("volume: %d %d -> %d", mute, volume, vol);
 
+    R29_0x4023_Play_HP_left_vol r29 = {
+        .HPEN = 1,
+        .LHPM = mute,
+        .LHPVOL = vol,
+    };
+    adau1761_program(ADDR_R29_0x4023_Play_HP_left_vol, (uint8_t *)&r29, sizeof(R29_0x4023_Play_HP_left_vol));
+
+    R30_0x4024_Play_HP_right_vol r30 = {
+        .HPMODE = 1,
+        .RHPM = mute,
+        .RHPVOL = vol,
+    };
+    adau1761_program(ADDR_R30_0x4024_Play_HP_right_vol, (uint8_t *)&r30, sizeof(R30_0x4024_Play_HP_right_vol));
+
     R31_0x4025_Line_output_left_vol r31 = {
         .LOMODE = 0,
         .LOUTM = mute,
@@ -116,6 +130,13 @@ void adau1761_set_volume(uint8_t volume)
         .ROUTVOL = vol,
     };
     adau1761_program(ADDR_R32_0x4026_Line_output_right_vol, (uint8_t *)&r32, sizeof(R32_0x4026_Line_output_right_vol));
+
+    R33_0x4027_Play_mono_output r33 = {
+        .MOMODE = 1,
+        .MONOM = mute,
+        .MONOVOL = vol,
+    };
+    adau1761_program(ADDR_R33_0x4027_Play_mono_output, (uint8_t *)&r33, sizeof(R33_0x4027_Play_mono_output));
 }
 
 /*
@@ -492,14 +513,14 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
     R29_0x4023_Play_HP_left_vol r29 = {
         .HPEN = 1,
         .LHPM = 1,
-        .LHPVOL = 0b111111,
+        .LHPVOL = 0b011111,
     };
     adau1761_program(ADDR_R29_0x4023_Play_HP_left_vol, (uint8_t *)&r29, sizeof(R29_0x4023_Play_HP_left_vol));
 
     R30_0x4024_Play_HP_right_vol r30 = {
         .HPMODE = 1,
         .RHPM = 1,
-        .RHPVOL = 0b111111,
+        .RHPVOL = 0b011111,
     };
     adau1761_program(ADDR_R30_0x4024_Play_HP_right_vol, (uint8_t *)&r30, sizeof(R30_0x4024_Play_HP_right_vol));
 
@@ -518,9 +539,9 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
     adau1761_program(ADDR_R32_0x4026_Line_output_right_vol, (uint8_t *)&r32, sizeof(R32_0x4026_Line_output_right_vol));
 
     R33_0x4027_Play_mono_output r33 = {
-        .MOMODE = 0,
-        .MONOM = 0,
-        .MONOVOL = 0b111111,
+        .MOMODE = 1,
+        .MONOM = 1,
+        .MONOVOL = 0b011111,
     };
     adau1761_program(ADDR_R33_0x4027_Play_mono_output, (uint8_t *)&r33, sizeof(R33_0x4027_Play_mono_output));
 
@@ -684,7 +705,7 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
     };
     adau1761_program(ADDR_R66_0x40FA_Clock_Enable_1, (uint8_t *)&r66, sizeof(R66_0x40FA_Clock_Enable_1));
 
-//    adau1761_show();
+    adau1761_show();
 
     return 0;
 }
