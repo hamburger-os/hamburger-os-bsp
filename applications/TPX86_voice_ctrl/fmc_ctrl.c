@@ -13,7 +13,7 @@
 #include "tpx86_voice_ctrl.h"
 
 #define DBG_TAG "tpx86-fmc"
-#define DBG_LVL DBG_LOG
+#define DBG_LVL DBG_INFO
 #include <rtdbg.h>
 
 static void fmc_hw_init(uint32_t NSBank)

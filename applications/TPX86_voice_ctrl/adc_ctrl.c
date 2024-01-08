@@ -13,7 +13,7 @@
 #include "tpx86_voice_ctrl.h"
 
 #define DBG_TAG "tpx86-adc"
-#define DBG_LVL DBG_LOG
+#define DBG_LVL DBG_INFO
 #include <rtdbg.h>
 
 static void adc_thread_entry(void *parameter)

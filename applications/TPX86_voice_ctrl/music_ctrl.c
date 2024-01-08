@@ -12,9 +12,7 @@
 
 #include "tpx86_voice_ctrl.h"
 
-#ifdef PKG_USING_WAVPLAYER
 #include "wavplayer.h"
-#endif
 
 #define DBG_TAG "tpx86-music"
 #define DBG_LVL DBG_INFO
@@ -24,21 +22,21 @@ static void music_thread_entry(void *parameter)
 {
     VoiceCtrlUserData *puserdata = (VoiceCtrlUserData *)parameter;
 
-    uint8_t volume = 20;
+    uint8_t volume = 0;
     LOG_I("music thread startup...");
     while(puserdata->isThreadRun)
     {
-#ifdef PKG_USING_WAVPLAYER
-        if (volume > 50)
+        volume += 20;
+        if (volume > 100)
             volume = 20;
-        wavplayer_volume_set(volume += 20);
+        wavplayer_volume_set(volume);
         wavplayer_play(puserdata->wav_path);
 
         while(wavplayer_state_get() != 0)
         {
             rt_thread_delay(100);
         }
-#endif
+        
         rt_thread_delay(1000);
     }
 }

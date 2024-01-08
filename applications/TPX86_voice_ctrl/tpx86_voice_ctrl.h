@@ -95,7 +95,7 @@ typedef struct
     char *wav_path;
 
     uint32_t NSBank[2];
-    __IO uint32_t *NSBankAddress[2];
+    volatile uint32_t *NSBankAddress[2];
     FMC_ValueDef NSBankValue[2];
 
     int isThreadRun;
