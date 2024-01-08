@@ -2185,11 +2185,11 @@ menu "On-chip Peripheral Drivers"
         default y
 
     config BSP_USING_FMC
-        bool
+        bool "Enable FMC"
         default n
         
     config BSP_USING_SRAM
-        bool
+        bool "Enable SRAM"
         default n
         
     config BSP_USING_LCD
@@ -2274,9 +2274,14 @@ menu "Onboard Peripheral Drivers"
                 default "ud0p0"
                 
             config ROOTFS_UPDATE_PATH
-                string "Set firmware path, default: /mnt/udisk/ud0p0/rootfs/"
+                string "Set update path, default: /mnt/udisk/ud0p0/rootfs/"
                 depends on ROOTFS_USING_UPDATE
                 default "/mnt/udisk/ud0p0/rootfs"
+                
+            config ROOTFS_UPDATE_PATH_USE_MNT
+                bool "Enable update path use mnt"
+                depends on ROOTFS_USING_UPDATE
+                default n
 
         endif
 
@@ -3153,7 +3158,7 @@ menu "Onboard Peripheral Drivers"
         bool "Enable EMMC"
         default n
         
-        if BSP_USING_EMMC            
+        if BSP_USING_EMMC
             choice
                 prompt "Select the bus wide"
                 default BSP_SDIO_BUS_WIDE_4B

@@ -137,6 +137,7 @@ menu "Product Application and Function"
     source "applications/coupler_controller/Kconfig"
     source "applications/ly_05c/Kconfig"
     source "applications/ly_05c1_test/Kconfig"
+    source "applications/TPX86_voice_ctrl/Kconfig"
     source "applications/sto_record_board/Kconfig"
     source "applications/sto_com_board/Kconfig"
     

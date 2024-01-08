@@ -1,0 +1,8 @@
+config APP_TPX86_VOICE_CTRL
+    bool "Enable TPX86 voice ctrl application"
+    select PKG_USING_WAVPLAYER
+    default n
+    
+if APP_TPX86_VOICE_CTRL
+
+endif

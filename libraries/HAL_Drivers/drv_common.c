@@ -23,6 +23,10 @@
 #define DBG_LVL    DBG_INFO
 #include <rtdbg.h>
 
+#ifdef BSP_USING_SRAM
+RTM_EXPORT(HAL_SRAM_Init);
+#endif
+
 #ifdef RT_USING_FINSH
 #include <finsh.h>
 static void reboot(uint8_t argc, char **argv)
@@ -110,12 +114,11 @@ void _Error_Handler(char *s, int num)
 {
     /* USER CODE BEGIN Error_Handler */
     /* User can add his own implementation to report the HAL error return state */
-    LOG_E("Error_Handler at file:%s num:%d", s, num);
-    while (1)
-    {
-    }
+    LOG_E("Error_Handler %s : %d", s, num);
+    while (1);
     /* USER CODE END Error_Handler */
 }
+RTM_EXPORT(_Error_Handler);
 
 /**
  * This function will delay for some us.

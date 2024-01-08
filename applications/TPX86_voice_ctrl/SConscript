@@ -1,0 +1,20 @@
+# RT-Thread building script for bridge
+
+import rtconfig
+from building import *
+
+cwd     = GetCurrentDir()
+CPPPATH = [cwd, str(Dir('#'))]
+src     = Split("""
+                tpx86_voice_ctrl.c
+                led_ctrl.c
+                play_ctrl.c
+                voice_ctrl.c
+                adc_ctrl.c
+                fmc_ctrl.c
+                music_ctrl.c
+                """)
+
+group = DefineGroup('tpx86_voice_ctrl', src, depend = ['APP_TPX86_VOICE_CTRL'], CPPPATH = CPPPATH)
+
+Return('group')
