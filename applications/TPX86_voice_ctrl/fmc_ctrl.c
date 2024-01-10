@@ -74,6 +74,27 @@ static void fmc_thread_entry(void *parameter)
         puserdata->NSBankValue[0] = *(FMC_ValueDef *)puserdata->NSBankAddress[0];
         puserdata->NSBankValue[1] = *(FMC_ValueDef *)puserdata->NSBankAddress[1];
 
+        if (puserdata->NSBankValue[1].key0 == 0)
+        {
+            LOG_D("key0 press");
+        }
+        if (puserdata->NSBankValue[1].key1 == 0)
+        {
+            LOG_D("key1 press");
+        }
+        if (puserdata->NSBankValue[1].key2 == 0)
+        {
+            LOG_D("key2 press");
+        }
+        if (puserdata->NSBankValue[1].key3 == 0)
+        {
+            LOG_D("key3 press");
+        }
+        if (puserdata->NSBankValue[1].key4 == 0)
+        {
+            LOG_D("key4 press");
+        }
+
         LOG_D("value  : 0x%x 0x%x", puserdata->NSBankValue[0].value, puserdata->NSBankValue[1].value);
     }
 }

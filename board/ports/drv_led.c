@@ -7,6 +7,8 @@
  * Date           Author       Notes
  * 2022-10-11     lvhan       the first version
  */
+#include <stdlib.h>
+
 #include "board.h"
 
 #ifdef BSP_USING_LED

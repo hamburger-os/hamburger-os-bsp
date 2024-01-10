@@ -30,6 +30,7 @@ struct stm32_emmc
     MMC_HandleTypeDef hmmc;
     struct rt_mutex hmmc_mutex;
     struct rt_completion hmmc_completion;
+    rt_tick_t last_tick;
 
     uint8_t TxBuffer[MMC_BLOCKSIZE];
     uint8_t RxBuffer[MMC_BLOCKSIZE];
@@ -354,10 +355,14 @@ static void emmc_thread_entry(void* parameter)
     uint8_t data[EMMC_BLK_SIZE];
     while(1)
     {
-        rt_thread_delay(1000*60);
-        if (fal_emmc_read(0, data, EMMC_BLK_SIZE) != EMMC_BLK_SIZE)
+        rt_thread_delay(10000);
+        if (rt_tick_get_millisecond() - emmc_obj.last_tick > 60000)
         {
-            LOG_E("heartbeat read error!");
+            if (fal_emmc_read(0, data, EMMC_BLK_SIZE) != EMMC_BLK_SIZE)
+            {
+                LOG_E("heartbeat read error!");
+            }
+            LOG_D("heartbeat run...");
         }
     }
 }
@@ -422,6 +427,7 @@ static int fal_emmc_init(void)
 static int fal_emmc_32read(long offset, uint8_t *buffer, size_t size)
 {
     rt_mutex_take(&emmc_obj.hmmc_mutex, RT_WAITING_FOREVER);
+    emmc_obj.last_tick = rt_tick_get_millisecond();
     HAL_StatusTypeDef ret = HAL_OK;
     uint32_t addr = emmc_fal_flash.addr + offset;
     if (addr + size > emmc_fal_flash.addr + emmc_fal_flash.len)
@@ -458,6 +464,8 @@ static int fal_emmc_32read(long offset, uint8_t *buffer, size_t size)
         if(ret != HAL_OK)
         {
             LOG_E("ReadBlocks Error (0x%p) %d %d", blk_addr, 1, ret);
+            MX_DMA_Init();
+            MX_SDIO_MMC_Init();
             rt_mutex_release(&emmc_obj.hmmc_mutex);
             return -RT_EIO;
         }
@@ -520,6 +528,7 @@ static int fal_emmc_32read(long offset, uint8_t *buffer, size_t size)
 static uint32_t fal_emmc_read(uint64_t offset, uint8_t *buffer, uint32_t size)
 {
     rt_mutex_take(&emmc_obj.hmmc_mutex, RT_WAITING_FOREVER);
+    emmc_obj.last_tick = rt_tick_get_millisecond();
     HAL_StatusTypeDef ret = HAL_OK;
     uint64_t addr = emmc_flash.addr + offset;
     if (addr + size > emmc_flash.addr + emmc_flash.len)
@@ -559,6 +568,8 @@ static uint32_t fal_emmc_read(uint64_t offset, uint8_t *buffer, uint32_t size)
         if(ret != HAL_OK)
         {
             LOG_E("ReadBlocks Error (0x%p) %d %d", blk_addr, 1, ret);
+            MX_DMA_Init();
+            MX_SDIO_MMC_Init();
             rt_mutex_release(&emmc_obj.hmmc_mutex);
             return -RT_EIO;
         }
@@ -591,6 +602,8 @@ static uint32_t fal_emmc_read(uint64_t offset, uint8_t *buffer, uint32_t size)
     if(ret != HAL_OK)
     {
         LOG_E("ReadBlocks Error (0x%p) %d %d", blk_addr, blk_size, ret);
+        MX_DMA_Init();
+        MX_SDIO_MMC_Init();
         rt_mutex_release(&emmc_obj.hmmc_mutex);
         return -RT_EIO;
     }
@@ -604,6 +617,7 @@ static uint32_t fal_emmc_read(uint64_t offset, uint8_t *buffer, uint32_t size)
 static int fal_emmc_32write(long offset, const uint8_t *buffer, size_t size)
 {
     rt_mutex_take(&emmc_obj.hmmc_mutex, RT_WAITING_FOREVER);
+    emmc_obj.last_tick = rt_tick_get_millisecond();
     HAL_StatusTypeDef ret = HAL_OK;
     uint32_t addr = emmc_fal_flash.addr + offset;
     if (addr + size > emmc_fal_flash.addr + emmc_fal_flash.len)
@@ -642,6 +656,8 @@ static int fal_emmc_32write(long offset, const uint8_t *buffer, size_t size)
         if(ret != HAL_OK)
         {
             LOG_E("ReadBlocks Error (0x%p) %d %d", blk_addr, 1, ret);
+            MX_DMA_Init();
+            MX_SDIO_MMC_Init();
             rt_mutex_release(&emmc_obj.hmmc_mutex);
             return -RT_EIO;
         }
@@ -695,6 +711,8 @@ static int fal_emmc_32write(long offset, const uint8_t *buffer, size_t size)
         if(ret != HAL_OK)
         {
             LOG_E("WriteBlocks Error (0x%p) %d %d", blk_addr, 1, ret);
+            MX_DMA_Init();
+            MX_SDIO_MMC_Init();
             rt_mutex_release(&emmc_obj.hmmc_mutex);
             return -RT_EIO;
         }
@@ -720,6 +738,8 @@ static int fal_emmc_32write(long offset, const uint8_t *buffer, size_t size)
     if(ret != HAL_OK)
     {
         LOG_E("WriteBlocks Error (0x%p) %d %d", blk_addr, blk_size, ret);
+        MX_DMA_Init();
+        MX_SDIO_MMC_Init();
         rt_mutex_release(&emmc_obj.hmmc_mutex);
         return -RT_EIO;
     }
@@ -733,6 +753,7 @@ static int fal_emmc_32write(long offset, const uint8_t *buffer, size_t size)
 static uint32_t fal_emmc_write(uint64_t offset, const rt_uint8_t *buffer, uint32_t size)
 {
     rt_mutex_take(&emmc_obj.hmmc_mutex, RT_WAITING_FOREVER);
+    emmc_obj.last_tick = rt_tick_get_millisecond();
     HAL_StatusTypeDef ret = HAL_OK;
     uint64_t addr = emmc_flash.addr + offset;
     if (addr + size > emmc_flash.addr + emmc_flash.len)
@@ -772,6 +793,8 @@ static uint32_t fal_emmc_write(uint64_t offset, const rt_uint8_t *buffer, uint32
         if(ret != HAL_OK)
         {
             LOG_E("WriteBlocks Error (0x%p) %d %d", blk_addr, 1, ret);
+            MX_DMA_Init();
+            MX_SDIO_MMC_Init();
             rt_mutex_release(&emmc_obj.hmmc_mutex);
             return -RT_EIO;
         }
@@ -800,6 +823,8 @@ static uint32_t fal_emmc_write(uint64_t offset, const rt_uint8_t *buffer, uint32
     if(ret != HAL_OK)
     {
         LOG_E("WriteBlocks Error (0x%p) %d %d", blk_addr, blk_size, ret);
+        MX_DMA_Init();
+        MX_SDIO_MMC_Init();
         rt_mutex_release(&emmc_obj.hmmc_mutex);
         return -RT_EIO;
     }
@@ -813,6 +838,7 @@ static uint32_t fal_emmc_write(uint64_t offset, const rt_uint8_t *buffer, uint32
 static int fal_emmc_32erase(long offset, size_t size)
 {
     rt_mutex_take(&emmc_obj.hmmc_mutex, RT_WAITING_FOREVER);
+    emmc_obj.last_tick = rt_tick_get_millisecond();
     HAL_StatusTypeDef ret = HAL_OK;
     uint32_t addr = emmc_fal_flash.addr + offset;
     if ((addr + size) > emmc_fal_flash.addr + emmc_fal_flash.len)
@@ -849,6 +875,8 @@ static int fal_emmc_32erase(long offset, size_t size)
         if(ret != HAL_OK)
         {
             LOG_E("WriteBlocks Error (0x%p) %d %d", blk_addr, 1, ret);
+            MX_DMA_Init();
+            MX_SDIO_MMC_Init();
             rt_mutex_release(&emmc_obj.hmmc_mutex);
             return -RT_EIO;
         }
@@ -874,6 +902,8 @@ static int fal_emmc_32erase(long offset, size_t size)
     if(ret != HAL_OK)
     {
         LOG_E("WriteBlocks Error (0x%p) %d %d", blk_addr, blk_size, ret);
+        MX_DMA_Init();
+        MX_SDIO_MMC_Init();
         rt_mutex_release(&emmc_obj.hmmc_mutex);
         return -RT_EIO;
     }
@@ -887,6 +917,7 @@ static int fal_emmc_32erase(long offset, size_t size)
 static uint32_t fal_emmc_erase(uint64_t offset, uint32_t size)
 {
     rt_mutex_take(&emmc_obj.hmmc_mutex, RT_WAITING_FOREVER);
+    emmc_obj.last_tick = rt_tick_get_millisecond();
     uint64_t addr = emmc_flash.addr + offset;
     if ((addr + size) > emmc_flash.addr + emmc_flash.len)
     {
