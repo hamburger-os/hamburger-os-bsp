@@ -202,7 +202,7 @@ sint32_t ly_05c_main(void)
     return RT_EOK;
 }
 
-#if 0 //如果使用dl动态模块方式
+#ifndef APP_LY_05C //如果使用dl动态模块方式
 int main(int argc, char *argv[])
 {
     ly_05c_main();

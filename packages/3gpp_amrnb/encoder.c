@@ -26,8 +26,6 @@
 #include "typedef.h"
 #include "interf_enc.h"
 
-#include "board.h"
-
 #ifndef ETSI
 #ifndef IF2
 #define AMR_MAGIC_NUMBER "#!AMR\n"
@@ -253,7 +251,4 @@ static void encoder(int argc, char *argv[])
         rt_thread_startup(thread);
     return;
 }
-
-#ifdef AMRNB_USING_CMD
 MSH_CMD_EXPORT_ALIAS(encoder, amr_encoder, AMR - NB encoder cmd);
-#endif

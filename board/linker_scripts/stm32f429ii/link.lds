@@ -80,9 +80,9 @@ SECTIONS
         _slow = .;
         
         . = ALIGN(4);
-        /* section information for lvgl */
-        *(.lvgl)
-        *(.lvgl*)
+        /* section information for Low speed code segment */
+        *(.lowcode)
+        *(.lowcode*)
 
         . = ALIGN(4);
         *(.rodata)                      /* read-only data (constants) */
