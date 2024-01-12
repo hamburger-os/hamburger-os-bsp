@@ -36,10 +36,14 @@ static int dev_old_flag;
 #include <msh.h>
 #include <shell.h>
 
+#define DBG_TAG "telnet"
+#define DBG_LVL DBG_LOG
+#include <rtdbg.h>
+
 #define TELNET_PORT         23
 #define TELNET_BACKLOG      5
-#define RX_BUFFER_SIZE      256
-#define TX_BUFFER_SIZE      4096
+#define RX_BUFFER_SIZE      1024
+#define TX_BUFFER_SIZE      1024
 
 #define ISO_nl              0x0a
 #define ISO_cr              0x0d
@@ -66,6 +70,9 @@ struct telnet_session
     rt_mutex_t rx_ringbuffer_lock;
     rt_mutex_t tx_ringbuffer_lock;
 
+    rt_uint8_t tx_buffer[TX_BUFFER_SIZE];
+    rt_uint8_t recv_buf[RX_BUFFER_SIZE];
+
     struct rt_device device;
     rt_int32_t server_fd;
     rt_int32_t client_fd;
@@ -83,20 +90,19 @@ static struct telnet_session* telnet;
 static void send_to_client(struct telnet_session* telnet)
 {
     rt_size_t length;
-    rt_uint8_t tx_buffer[32];
 
     while (1)
     {
-        rt_memset(tx_buffer, 0, sizeof(tx_buffer));
+        rt_memset(telnet->tx_buffer, 0, sizeof(telnet->tx_buffer));
         rt_mutex_take(telnet->tx_ringbuffer_lock, RT_WAITING_FOREVER);
         /* get buffer from ringbuffer */
-        length = rt_ringbuffer_get(&(telnet->tx_ringbuffer), tx_buffer, sizeof(tx_buffer));
+        length = rt_ringbuffer_get(&(telnet->tx_ringbuffer), telnet->tx_buffer, sizeof(telnet->tx_buffer));
         rt_mutex_release(telnet->tx_ringbuffer_lock);
 
         /* do a tx procedure */
         if (length > 0)
         {
-            send(telnet->client_fd, tx_buffer, length, 0);
+            send(telnet->client_fd, telnet->tx_buffer, length, 0);
         }
         else break;
     }
@@ -161,27 +167,32 @@ static void process_rx(struct telnet_session* telnet, rt_uint8_t *data, rt_size_
                 }
             }
             break;
-
             /* don't option */
         case STATE_WILL:
         case STATE_WONT:
             send_option_to_client(telnet, TELNET_DONT, *data);
             telnet->state = STATE_NORMAL;
             break;
-
             /* won't option */
         case STATE_DO:
         case STATE_DONT:
             send_option_to_client(telnet, TELNET_WONT, *data);
             telnet->state = STATE_NORMAL;
             break;
-
         case STATE_NORMAL:
             if (*data == TELNET_IAC)
             {
                 telnet->state = STATE_IAC;
             }
-            else if (*data != '\r') /* ignore '\r' */
+//            else if (*data != '\r') /* ignore '\r' */
+//            {
+//                rt_mutex_take(telnet->rx_ringbuffer_lock, RT_WAITING_FOREVER);
+//                /* put buffer to ringbuffer */
+//                rt_ringbuffer_putchar(&(telnet->rx_ringbuffer), *data);
+//                rt_mutex_release(telnet->rx_ringbuffer_lock);
+//                rt_sem_release(telnet->read_notice);
+//            }
+            else
             {
                 rt_mutex_take(telnet->rx_ringbuffer_lock, RT_WAITING_FOREVER);
                 /* put buffer to ringbuffer */
@@ -232,7 +243,7 @@ static void client_close(struct telnet_session* telnet)
     /* restore shell option */
     finsh_set_echo(telnet->echo_mode);
 
-    rt_kprintf("telnet: resume console to %s\n", RT_CONSOLE_DEVICE_NAME);
+    LOG_I("resume console to %s", RT_CONSOLE_DEVICE_NAME);
 }
 
 /* RT-Thread Device Driver Interface */
@@ -318,22 +329,20 @@ static rt_err_t telnet_control(rt_device_t dev, int cmd, void *args)
 /* telnet server thread entry */
 static void telnet_thread(void* parameter)
 {
-#define RECV_BUF_LEN 128
     struct sockaddr_in addr;
     socklen_t addr_size;
-    rt_uint8_t recv_buf[RECV_BUF_LEN];
     rt_int32_t recv_len = 0;
     rt_int32_t keepalive = 1;
 
     if ((telnet->server_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
-        rt_kprintf("telnet: create socket failed\n");
+        LOG_E("create socket failed");
         return;
     }
 
     if(setsockopt(telnet->server_fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&keepalive, sizeof(keepalive)) < 0)
     {
-        rt_kprintf("telnet:set socket keepalive failed\n");
+        LOG_E("set socket keepalive failed");
         return;
     }
 
@@ -343,13 +352,13 @@ static void telnet_thread(void* parameter)
     rt_memset(&(addr.sin_zero), 0, sizeof(addr.sin_zero));
     if (bind(telnet->server_fd, (struct sockaddr *) &addr, sizeof(struct sockaddr)) == -1)
     {
-        rt_kprintf("telnet: bind socket failed\n");
+        LOG_E("bind socket failed");
         return;
     }
 
     if (listen(telnet->server_fd, TELNET_BACKLOG) == -1)
     {
-        rt_kprintf("telnet: listen socket failed\n");
+        LOG_E("listen socket failed");
         return;
     }
 
@@ -380,7 +389,7 @@ static void telnet_thread(void* parameter)
             continue;
         }
 
-        rt_kprintf("telnet: new telnet client(%s:%d) connection, switch console to telnet...\n", inet_ntoa(addr.sin_addr), addr.sin_port);
+        LOG_I("new telnet client(%s:%d) connection, switch console to telnet...", inet_ntoa(addr.sin_addr), addr.sin_port);
 
         /* process the new connection */
         /* set console */
@@ -424,9 +433,10 @@ static void telnet_thread(void* parameter)
             send_to_client(telnet);
 
             /* do a rx procedure */
-            if ((recv_len = recv(telnet->client_fd, recv_buf, RECV_BUF_LEN, 0)) > 0)
+            rt_memset(telnet->recv_buf, 0, RX_BUFFER_SIZE);
+            if ((recv_len = recv(telnet->client_fd, telnet->recv_buf, RX_BUFFER_SIZE, 0)) > 0)
             {
-                process_rx(telnet, recv_buf, recv_len);
+                process_rx(telnet, telnet->recv_buf, recv_len);
             }
             else
             {
@@ -450,7 +460,7 @@ static int telnet_server(void)
         telnet = rt_malloc(sizeof(struct telnet_session));
         if (telnet == RT_NULL)
         {
-            rt_kprintf("telnet: no memory\n");
+            LOG_E("no memory");
             return -RT_ENOMEM;
         }
         /* init ringbuffer */
@@ -461,7 +471,7 @@ static int telnet_server(void)
         }
         else
         {
-            rt_kprintf("telnet: no memory\n");
+            LOG_E("no memory");
             return -RT_ENOMEM;
         }
         ptr = rt_malloc(TX_BUFFER_SIZE);
@@ -471,7 +481,7 @@ static int telnet_server(void)
         }
         else
         {
-            rt_kprintf("telnet: no memory\n");
+            LOG_E("no memory");
             return -RT_ENOMEM;
         }
         /* create tx ringbuffer lock */
@@ -485,12 +495,12 @@ static int telnet_server(void)
         if (tid != RT_NULL)
         {
             rt_thread_startup(tid);
-            rt_kprintf("Telnet server start successfully\n");
+            LOG_I("Server start successfully");
         }
     }
     else
     {
-        rt_kprintf("telnet: server already running\n");
+        LOG_I("Server already running");
     }
 
     return RT_EOK;

@@ -19,6 +19,10 @@
 #include "tftp_xfer.h"
 #include "tftp.h"
 
+#define DBG_TAG "tftp"
+#define DBG_LVL DBG_LOG
+#include <rtdbg.h>
+
 #define TFTP_SERVER_EVENT_CONNECT   (0x1 << 0)
 #define TFTP_SERVER_EVENT_DATA      (0x1 << 1)
 #define TFTP_SERVER_EVENT_TIMEOUT   (0x1 << 2)
@@ -266,7 +270,7 @@ static void tftp_server_transf_handle(struct tftp_server *server, struct tftp_cl
             if (recv_size < 0)
             {
                 /* Receiving failed. */
-                tftp_printf("server read data err! disconnect client\n");
+                LOG_D("server read data err! disconnect client");
                 tftp_client_xfer_destroy(server, client);
             }
             else
@@ -276,7 +280,7 @@ static void tftp_server_transf_handle(struct tftp_server *server, struct tftp_cl
                 if (w_size != recv_size)
                 {
                     /* Write file error, close connection */
-                    tftp_printf("server write file err! disconnect client\n");
+                    tftp_printf("server write file err! disconnect client");
                     tftp_transfer_err(client->xfer, 0, "write file err!");
                     tftp_client_xfer_destroy(server, client);
                     break;
@@ -323,7 +327,7 @@ static void tftp_server_transf_handle(struct tftp_server *server, struct tftp_cl
         }
         break;
     default:
-        tftp_printf("warr!! unknown event:%d\n", event);
+        tftp_printf("warr!! unknown event:%d", event);
         break;
     }
 }
@@ -351,7 +355,7 @@ static struct tftp_client_xfer *tftp_server_request_handle(struct tftp_server *s
     /* Can write ? */
     if (ntohs(packet->cmd) == TFTP_CMD_WRQ && (!server->is_write))
     {
-        tftp_printf("server read only!\n");
+        tftp_printf("server read only!");
         tftp_transfer_err(xfer, 0, "server read only!");
         tftp_xfer_destroy(xfer);
         return NULL;
@@ -369,7 +373,7 @@ static struct tftp_client_xfer *tftp_server_request_handle(struct tftp_server *s
         blocksize = atoi(blksize_str + strlen(blksize_str) + 1);
         if (tftp_xfer_blksize_set(xfer, blocksize) != TFTP_OK)
         {
-            tftp_printf("set block size err:%d\n", blocksize);
+            tftp_printf("set block size err:%d", blocksize);
             tftp_transfer_err(xfer, 0, "block size err!");
             tftp_xfer_destroy(xfer);
             return NULL;
@@ -379,7 +383,7 @@ static struct tftp_client_xfer *tftp_server_request_handle(struct tftp_server *s
     name_len = strlen(path) + strlen(server->root_name) + 2;
     if (name_len >= TFTP_SERVER_FILE_NAME_MAX)
     {
-        tftp_printf("file name is to long!!\n");
+        tftp_printf("file name is to long!");
         tftp_transfer_err(xfer, 0, "file name to long!");
         tftp_xfer_destroy(xfer);
         return NULL;
@@ -387,7 +391,7 @@ static struct tftp_client_xfer *tftp_server_request_handle(struct tftp_server *s
     full_path = malloc(name_len);
     if (full_path == NULL)
     {
-        tftp_printf("mallo full path failed!\n");
+        tftp_printf("mallo full path failed!");
         tftp_transfer_err(xfer, 0, "server err!");
         tftp_xfer_destroy(xfer);
         return NULL;
@@ -412,7 +416,7 @@ static struct tftp_client_xfer *tftp_server_request_handle(struct tftp_server *s
     free(full_path);
     if (fd == NULL)
     {
-        tftp_printf("open file failed!\n");
+        tftp_printf("open file failed!");
         tftp_transfer_err(xfer, 0, "file err");
         tftp_xfer_destroy(xfer);
         return NULL;
@@ -421,7 +425,7 @@ static struct tftp_client_xfer *tftp_server_request_handle(struct tftp_server *s
     client_xfer = tftp_client_xfer_add(server, xfer);
     if (client_xfer == NULL)
     {
-        tftp_printf("too many connections!!");
+        tftp_printf("too many connections!");
         tftp_transfer_err(xfer, 0, "too many connections!");
         tftp_xfer_destroy(xfer);
         tftp_file_close(fd);
@@ -472,7 +476,7 @@ void tftp_server_run(struct tftp_server *server)
         return;
     }
     _private->server_xfer = xfer;
-    tftp_printf("tftp server start!\n");
+    tftp_printf("Server start successfully");
     /* run server */
     while (!server->is_stop)
     {
@@ -533,7 +537,7 @@ void tftp_server_run(struct tftp_server *server)
     free(server->root_name);
     free(server);
     free(packet);
-    tftp_printf("tftp server stop!\n");
+    tftp_printf("Server stop!");
 }
 
 struct tftp_server *tftp_server_create(const char *root_name, int port)

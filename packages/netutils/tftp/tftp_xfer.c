@@ -17,6 +17,10 @@
 #include "tftp_xfer.h"
 #include "tftp.h"
 
+#define DBG_TAG "tftp"
+#define DBG_LVL DBG_LOG
+#include <rtdbg.h>
+
 struct tftp_xfer_private
 {
     struct sockaddr_in server;
@@ -142,17 +146,17 @@ int tftp_read_data(struct tftp_xfer *xfer, struct tftp_packet *pack, int len)
     }
     else if (r_size < 4)
     {
-        tftp_printf("Bad packet: r_size=%d\n", r_size);
+        tftp_printf("Bad packet: r_size=%d", r_size);
         return -TFTP_EDATA;
     }
     else if (ntohs(pack->cmd) == TFTP_CMD_ERROR)
     {
-        tftp_printf("err[%d] msg:%s code:%d\n", ntohs(pack->info.code), pack->data, ntohs(pack->info.code));
+        tftp_printf("err[%d] msg:%s code:%d", ntohs(pack->info.code), pack->data, ntohs(pack->info.code));
         return -TFTP_ECMD;
     }
     else if ((_private->block + 1) != pack->info.block)
     {
-        tftp_printf("Bad block recv:%d != check:%d\n", _private->block + 1, pack->info.block);
+        tftp_printf("Bad block recv:%d != check:%d", _private->block + 1, pack->info.block);
         return -TFTP_EBLK;
     }
 
@@ -298,7 +302,7 @@ int tftp_xfer_type_set(struct tftp_xfer *xfer, int type)
             /* Binding port */
             if (bind(xfer->sock, (struct sockaddr *)&_private->server, sizeof(struct sockaddr_in)) < 0)
             {
-                tftp_printf("tftp server bind failed!! exit\n");
+                tftp_printf("tftp server bind failed!! exit");
                 return -TFTP_ESYS;
             }
             xfer->type = TFTP_XFER_TYPE_SERVER;
@@ -340,7 +344,7 @@ struct tftp_xfer *tftp_xfer_create(const char *ip_addr, int port)
     xfer = rt_malloc(mem_len);
     if (xfer == NULL)
     {
-        tftp_printf("can't create tftp transfer!! exit\n");
+        tftp_printf("can't create tftp transfer!! exit");
         return NULL;
     }
     rt_memset(xfer, 0, mem_len);
@@ -350,7 +354,7 @@ struct tftp_xfer *tftp_xfer_create(const char *ip_addr, int port)
     sock = socket(PF_INET, SOCK_DGRAM, 0);
     if (sock < 0)
     {
-        tftp_printf("can't create socket!! exit\n");
+        tftp_printf("can't create socket!! exit");
         rt_free(xfer);
         return NULL;
     }

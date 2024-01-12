@@ -374,7 +374,6 @@ static void emmc_ctrl(uint8_t onoff)
     rt_pin_mode(pin, PIN_MODE_OUTPUT);
 
     rt_pin_write(pin, onoff);
-    rt_thread_delay(100);
 }
 #endif
 
@@ -386,6 +385,7 @@ static int fal_emmc_init(void)
 
 #ifdef BSP_SDIO_USING_CTRL
     emmc_ctrl(1);
+    rt_thread_delay(30);
 #endif
 
     MX_DMA_Init();
@@ -419,6 +419,20 @@ static int fal_emmc_init(void)
     LOG_I("init succeed %d MB [ %d block ]"
         , (uint32_t)(emmc_flash.len / 1024 / 1024)
         , emmc_flash.blk_size);
+
+    return RT_EOK;
+}
+
+static int fal_emmc_reset(void)
+{
+#ifdef BSP_SDIO_USING_CTRL
+    emmc_ctrl(0);
+    rt_thread_delay(30);
+    emmc_ctrl(1);
+    rt_thread_delay(30);
+#endif
+
+    MX_SDIO_MMC_Init();
 
     return RT_EOK;
 }
@@ -464,6 +478,7 @@ static int fal_emmc_32read(long offset, uint8_t *buffer, size_t size)
         if(ret != HAL_OK)
         {
             LOG_E("ReadBlocks Error (0x%p) %d %d", blk_addr, 1, ret);
+            fal_emmc_reset();
             rt_mutex_release(&emmc_obj.hmmc_mutex);
             return -RT_EIO;
         }
@@ -513,6 +528,7 @@ static int fal_emmc_32read(long offset, uint8_t *buffer, size_t size)
     if(ret != HAL_OK)
     {
         LOG_E("ReadBlocks Error (0x%p) %d %d", blk_addr, blk_size, ret);
+        fal_emmc_reset();
         rt_mutex_release(&emmc_obj.hmmc_mutex);
         return -RT_EIO;
     }
@@ -566,6 +582,7 @@ static uint32_t fal_emmc_read(uint64_t offset, uint8_t *buffer, uint32_t size)
         if(ret != HAL_OK)
         {
             LOG_E("ReadBlocks Error (0x%p) %d %d", blk_addr, 1, ret);
+            fal_emmc_reset();
             rt_mutex_release(&emmc_obj.hmmc_mutex);
             return -RT_EIO;
         }
@@ -598,6 +615,7 @@ static uint32_t fal_emmc_read(uint64_t offset, uint8_t *buffer, uint32_t size)
     if(ret != HAL_OK)
     {
         LOG_E("ReadBlocks Error (0x%p) %d %d", blk_addr, blk_size, ret);
+        fal_emmc_reset();
         rt_mutex_release(&emmc_obj.hmmc_mutex);
         return -RT_EIO;
     }
@@ -650,6 +668,7 @@ static int fal_emmc_32write(long offset, const uint8_t *buffer, size_t size)
         if(ret != HAL_OK)
         {
             LOG_E("ReadBlocks Error (0x%p) %d %d", blk_addr, 1, ret);
+            fal_emmc_reset();
             rt_mutex_release(&emmc_obj.hmmc_mutex);
             return -RT_EIO;
         }
@@ -703,6 +722,7 @@ static int fal_emmc_32write(long offset, const uint8_t *buffer, size_t size)
         if(ret != HAL_OK)
         {
             LOG_E("WriteBlocks Error (0x%p) %d %d", blk_addr, 1, ret);
+            fal_emmc_reset();
             rt_mutex_release(&emmc_obj.hmmc_mutex);
             return -RT_EIO;
         }
@@ -728,6 +748,7 @@ static int fal_emmc_32write(long offset, const uint8_t *buffer, size_t size)
     if(ret != HAL_OK)
     {
         LOG_E("WriteBlocks Error (0x%p) %d %d", blk_addr, blk_size, ret);
+        fal_emmc_reset();
         rt_mutex_release(&emmc_obj.hmmc_mutex);
         return -RT_EIO;
     }
@@ -781,6 +802,7 @@ static uint32_t fal_emmc_write(uint64_t offset, const rt_uint8_t *buffer, uint32
         if(ret != HAL_OK)
         {
             LOG_E("WriteBlocks Error (0x%p) %d %d", blk_addr, 1, ret);
+            fal_emmc_reset();
             rt_mutex_release(&emmc_obj.hmmc_mutex);
             return -RT_EIO;
         }
@@ -809,6 +831,7 @@ static uint32_t fal_emmc_write(uint64_t offset, const rt_uint8_t *buffer, uint32
     if(ret != HAL_OK)
     {
         LOG_E("WriteBlocks Error (0x%p) %d %d", blk_addr, blk_size, ret);
+        fal_emmc_reset();
         rt_mutex_release(&emmc_obj.hmmc_mutex);
         return -RT_EIO;
     }
@@ -859,6 +882,7 @@ static int fal_emmc_32erase(long offset, size_t size)
         if(ret != HAL_OK)
         {
             LOG_E("WriteBlocks Error (0x%p) %d %d", blk_addr, 1, ret);
+            fal_emmc_reset();
             rt_mutex_release(&emmc_obj.hmmc_mutex);
             return -RT_EIO;
         }
@@ -884,6 +908,7 @@ static int fal_emmc_32erase(long offset, size_t size)
     if(ret != HAL_OK)
     {
         LOG_E("WriteBlocks Error (0x%p) %d %d", blk_addr, blk_size, ret);
+        fal_emmc_reset();
         rt_mutex_release(&emmc_obj.hmmc_mutex);
         return -RT_EIO;
     }

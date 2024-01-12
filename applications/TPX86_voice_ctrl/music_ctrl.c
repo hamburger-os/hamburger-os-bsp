@@ -24,11 +24,14 @@ static void music_thread_entry(void *parameter)
 
     uint8_t volume = 0;
     LOG_I("music thread startup...");
-    while(puserdata->isThreadRun)
+
+    while(volume < 100)
     {
+        rt_thread_delay(1000);
+
         volume += 20;
-        if (volume > 100)
-            volume = 20;
+//        if (volume > 100)
+//            volume = 20;
         wavplayer_volume_set(volume);
         wavplayer_play(puserdata->wav_path);
 
@@ -36,8 +39,6 @@ static void music_thread_entry(void *parameter)
         {
             rt_thread_delay(100);
         }
-        
-        rt_thread_delay(1000);
     }
 }
 

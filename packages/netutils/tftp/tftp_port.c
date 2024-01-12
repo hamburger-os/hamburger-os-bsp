@@ -20,6 +20,10 @@
 #include <string.h>
 #include "tftp.h"
 
+#define DBG_TAG "tftp"
+#define DBG_LVL DBG_LOG
+#include <rtdbg.h>
+
 RT_WEAK void *tftp_file_open(const char *fname, const char *mode, int is_write)
 {
     int fd = 0;
