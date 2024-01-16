@@ -395,7 +395,7 @@ static int fal_nor_erase(long offset, size_t size)
     size_t countmax = (size%nor_flash.blk_size == 0)?(size/nor_flash.blk_size):(size/nor_flash.blk_size + 1);
     for (size_t count = 0; count < countmax; count++)
     {
-        rt_tick_t tick = rt_tick_get();
+//        rt_tick_t tick = rt_tick_get();
         /* Erase the NOR memory block to write on */
         if (HAL_NOR_Erase_Block(&hnor, addr - nor_flash.addr + count*nor_flash.blk_size, nor_flash.addr) != HAL_OK)
         {

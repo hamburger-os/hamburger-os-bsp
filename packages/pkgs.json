@@ -1,28 +1,18 @@
 [
  {
-  "path": "/packages/iot/WebTerminal", 
+  "path": "/packages/multimedia/wavplayer", 
   "ver": "latest", 
-  "name": "WEBTERMINAL"
+  "name": "WAVPLAYER"
  }, 
  {
-  "path": "/packages/iot/netutils", 
-  "ver": "latest", 
-  "name": "NETUTILS"
+  "path": "/packages/multimedia/helix", 
+  "ver": "v1.0.0", 
+  "name": "HELIX"
  }, 
  {
-  "path": "/packages/iot/agile_ftp", 
+  "path": "/packages/multimedia/mp3player", 
   "ver": "latest", 
-  "name": "AGILE_FTP"
- }, 
- {
-  "path": "/packages/tools/Dhrystone", 
-  "ver": "latest", 
-  "name": "DHRYSTONE"
- }, 
- {
-  "path": "/packages/tools/MemoryPerf", 
-  "ver": "latest", 
-  "name": "MEMORYPERF"
+  "name": "MP3PLAYER"
  }, 
  {
   "path": "/packages/system/enhanced-kservice/rt_memcpy_cm", 
@@ -58,11 +48,6 @@
   "path": "/packages/system/littlefs", 
   "ver": "latest", 
   "name": "LITTLEFS"
- }, 
- {
-  "path": "/packages/system/lwext4", 
-  "ver": "latest", 
-  "name": "LWEXT4"
  }, 
  {
   "path": "/packages/system/syswatch", 

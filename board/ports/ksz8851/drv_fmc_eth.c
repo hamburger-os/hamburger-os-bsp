@@ -633,15 +633,15 @@ static int rt_netdev_set_if_init(void)
         {
             char ip_addr_str[16];
             rt_sprintf(ip_addr_str, "192.168.1.%d", i + 30);
-            strcpy(ip_addr, ip_addr_str);
+            rt_strcpy(ip_addr, ip_addr_str);
         }
         if (kvdb_get(gw_key[i], gw_addr) == 0)
         {
-            strcpy(gw_addr, "192.168.1.1");
+            rt_strcpy(gw_addr, "192.168.1.1");
         }
         if (kvdb_get(mask_key[i], nm_addr) == 0)
         {
-            strcpy(nm_addr, "255.255.255.0");
+            rt_strcpy(nm_addr, "255.255.255.0");
         }
 
         netdev_set_if(fmc_eth_device.port[i].dev_name, ip_addr, gw_addr, nm_addr);
