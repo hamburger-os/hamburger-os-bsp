@@ -45,18 +45,44 @@ void OTG_FS_IRQHandler(void)
 }
 #endif
 
+#ifdef BSP_USING_USBH_STM32_HS
+/**
+  * @brief This function handles USB On The Go HS End Point 1 Out global interrupt.
+  */
+void OTG_HS_EP1_OUT_IRQHandler(void)
+{
+    /* enter interrupt */
+    rt_interrupt_enter();
+
+    HAL_HCD_IRQHandler(&hhcd_USB_OTG);
+    /* leave interrupt */
+    rt_interrupt_leave();
+}
+
+/**
+  * @brief This function handles USB On The Go HS End Point 1 In global interrupt.
+  */
+void OTG_HS_EP1_IN_IRQHandler(void)
+{
+    /* enter interrupt */
+    rt_interrupt_enter();
+
+    HAL_HCD_IRQHandler(&hhcd_USB_OTG);
+    /* leave interrupt */
+    rt_interrupt_leave();
+}
+
 /**
   * @brief This function handles USB On The Go HS global interrupt.
   */
-#ifdef BSP_USING_USBH_STM32_HS
 void OTG_HS_IRQHandler(void)
 {
-  /* enter interrupt */
-  rt_interrupt_enter();
+    /* enter interrupt */
+    rt_interrupt_enter();
 
-  HAL_HCD_IRQHandler(&hhcd_USB_OTG);
-  /* leave interrupt */
-  rt_interrupt_leave();
+    HAL_HCD_IRQHandler(&hhcd_USB_OTG);
+    /* leave interrupt */
+    rt_interrupt_leave();
 }
 #endif
 
@@ -195,6 +221,14 @@ USBH_StatusTypeDef USBH_LL_Init(USBH_HandleTypeDef *phost)
     hhcd_USB_OTG.Init.low_power_enable = DISABLE;
     hhcd_USB_OTG.Init.vbus_sensing_enable = DISABLE;
     hhcd_USB_OTG.Init.use_external_vbus = DISABLE;
+
+    HAL_NVIC_SetPriority(OTG_HS_EP1_OUT_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(OTG_HS_EP1_OUT_IRQn);
+    HAL_NVIC_SetPriority(OTG_HS_EP1_IN_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(OTG_HS_EP1_IN_IRQn);
+    HAL_NVIC_SetPriority(OTG_HS_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
+
     if (HAL_HCD_Init(&hhcd_USB_OTG) != HAL_OK)
     {
         Error_Handler();
@@ -224,6 +258,13 @@ USBH_StatusTypeDef USBH_LL_Init(USBH_HandleTypeDef *phost)
     hhcd_USB_OTG.Init.Sof_enable = DISABLE;
     hhcd_USB_OTG.Init.use_external_vbus = ENABLE;
 #endif /* USBH_STM32_USING_EXTERNAL_PHY */
+
+    HAL_NVIC_SetPriority(OTG_HS_EP1_OUT_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(OTG_HS_EP1_OUT_IRQn);
+    HAL_NVIC_SetPriority(OTG_HS_EP1_IN_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(OTG_HS_EP1_IN_IRQn);
+    HAL_NVIC_SetPriority(OTG_HS_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
 
     if (HAL_HCD_Init(&hhcd_USB_OTG) != HAL_OK)
     {

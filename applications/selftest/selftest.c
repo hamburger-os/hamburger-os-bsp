@@ -17,10 +17,6 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-#ifdef PKG_USING_WAVPLAYER
-#include "wavplayer.h"
-#endif
-
 static SelftestUserData selftest_userdata = {
     .gpio_devname = {
         {BSP_GPIO_TABLE_PWM1        , BSP_GPIO_TABLE_GPIO1      },
@@ -105,14 +101,10 @@ static void selftest_start(int argc, char *argv[])
     selftest_gpio_test(puserdata);
     //filesysterm
     selftest_fs_test(puserdata);
-#ifdef PKG_USING_WAVPLAYER
-    wavplayer_volume_set(80);
-#endif
+    //i2s
+    selftest_i2s_test(puserdata);
     //key
     selftest_key_test(puserdata);
-    //i2s
-    rt_tick_t tick = rt_tick_get();
-    selftest_i2s_test(puserdata);
     //spi
     selftest_spi_test(puserdata);
     //i2c
@@ -143,13 +135,10 @@ static void selftest_start(int argc, char *argv[])
         }
     }
 
-    rt_thread_delay_until(&tick, 6000);
+    //等待音频播放结束
+    selftest_i2s_wait(puserdata);
 
     gui_display_result(puserdata->result, sizeof(puserdata->result)/sizeof(puserdata->result[0]));
-
-#ifdef PKG_USING_WAVPLAYER
-    wavplayer_volume_set(50);
-#endif
 }
 
 #ifdef RT_USING_FINSH

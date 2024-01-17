@@ -23,8 +23,6 @@
 #define LCD_PIXEL_FORMAT    RTGRAPHIC_PIXEL_FORMAT_RGB565
 #define LCD_RGB2BGR(x)      (((x & 0xf800) >> 11) | (x & 0x07e0) | ((x & 0x001f) << 11))
 
-static LTDC_HandleTypeDef LtdcHandle = {0};
-
 struct drv_lcd_device
 {
     struct rt_device parent;
@@ -32,13 +30,16 @@ struct drv_lcd_device
     struct rt_device_graphic_info lcd_info;
 
     struct rt_semaphore lcd_lock;
+    struct rt_completion dma2d_completion;
 
     /* 0:front_buf is being used 1: back_buf is being used*/
     rt_uint8_t cur_buf;
     rt_uint8_t *front_buf;
     rt_uint8_t *back_buf;
-};
 
+    LTDC_HandleTypeDef LtdcHandle;
+    DMA2D_HandleTypeDef hdma2d;
+};
 static struct drv_lcd_device _lcd;
 
 static rt_err_t drv_lcd_init(struct rt_device *device)
@@ -48,7 +49,22 @@ static rt_err_t drv_lcd_init(struct rt_device *device)
     lcd = lcd;
     return RT_EOK;
 }
-#ifndef ART_PI_TouchGFX_LIB
+
+static void lcd_DMA2D_Copy(void * pSrc, void * pDst, uint32_t xSize, uint32_t ySize, uint32_t OffLineSrc, uint32_t OffLineDst)
+{
+    struct drv_lcd_device *lcd = &_lcd;
+
+    lcd->hdma2d.Init.OutputOffset = OffLineDst;
+    lcd->hdma2d.LayerCfg[1].InputOffset = OffLineSrc;
+    HAL_DMA2D_Init(&lcd->hdma2d);
+    HAL_DMA2D_ConfigLayer(&lcd->hdma2d, 1);
+    HAL_DMA2D_Start_IT(&lcd->hdma2d, (uint32_t)pSrc, (uint32_t)pDst, xSize, ySize);
+    if (rt_completion_wait(&lcd->dma2d_completion, 1000) != RT_EOK)
+    {
+        LOG_E("dma2d copy timeout %d %d %d %d!", xSize, ySize, OffLineSrc, OffLineDst);
+    }
+}
+
 static rt_err_t drv_lcd_control(struct rt_device *device, int cmd, void *args)
 {
     struct drv_lcd_device *lcd = LCD_DEVICE(device);
@@ -61,23 +77,29 @@ static rt_err_t drv_lcd_control(struct rt_device *device, int cmd, void *args)
         if (_lcd.cur_buf)
         {
             /* back_buf is being used */
-            rt_memcpy(_lcd.front_buf, _lcd.lcd_info.framebuffer, LCD_BUF_SIZE);
+            lcd_DMA2D_Copy(_lcd.lcd_info.framebuffer, _lcd.front_buf, LCD_WIDTH, LCD_HEIGHT, 0, 0);
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+            SCB_InvalidateDCache_by_Addr((uint32_t *)_lcd.front_buf, LCD_BUF_SIZE);
+#endif
             /* Configure the color frame buffer start address */
-            LTDC_LAYER(&LtdcHandle, 0)->CFBAR &= ~(LTDC_LxCFBAR_CFBADD);
-            LTDC_LAYER(&LtdcHandle, 0)->CFBAR = (uint32_t)(_lcd.front_buf);
+            LTDC_LAYER(&lcd->LtdcHandle, 0)->CFBAR &= ~(LTDC_LxCFBAR_CFBADD);
+            LTDC_LAYER(&lcd->LtdcHandle, 0)->CFBAR = (uint32_t)(_lcd.front_buf);
             _lcd.cur_buf = 0;
         }
         else
         {
             /* front_buf is being used */
-            rt_memcpy(_lcd.back_buf, _lcd.lcd_info.framebuffer, LCD_BUF_SIZE);
+            lcd_DMA2D_Copy(_lcd.lcd_info.framebuffer, _lcd.back_buf, LCD_WIDTH, LCD_HEIGHT, 0, 0);
+#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
+            SCB_InvalidateDCache_by_Addr((uint32_t *)_lcd.back_buf, LCD_BUF_SIZE);
+#endif
             /* Configure the color frame buffer start address */
-            LTDC_LAYER(&LtdcHandle, 0)->CFBAR &= ~(LTDC_LxCFBAR_CFBADD);
-            LTDC_LAYER(&LtdcHandle, 0)->CFBAR = (uint32_t)(_lcd.back_buf);
+            LTDC_LAYER(&lcd->LtdcHandle, 0)->CFBAR &= ~(LTDC_LxCFBAR_CFBADD);
+            LTDC_LAYER(&lcd->LtdcHandle, 0)->CFBAR = (uint32_t)(_lcd.back_buf);
             _lcd.cur_buf = 1;
         }
         rt_sem_take(&_lcd.lcd_lock, RT_TICK_PER_SECOND / 20);
-        HAL_LTDC_Reload(&LtdcHandle, LTDC_SRCR_VBR);
+        HAL_LTDC_Reload(&lcd->LtdcHandle, LTDC_SRCR_VBR);
     }
     break;
 
@@ -103,27 +125,112 @@ static rt_err_t drv_lcd_control(struct rt_device *device, int cmd, void *args)
 
 void HAL_LTDC_ReloadEventCallback(LTDC_HandleTypeDef *hltdc)
 {
-    /* emable line interupt */
-    __HAL_LTDC_ENABLE_IT(&LtdcHandle, LTDC_IER_LIE);
+    /* enable line interupt */
+    __HAL_LTDC_ENABLE_IT(&_lcd.LtdcHandle, LTDC_IER_LIE);
 }
 
 void HAL_LTDC_LineEventCallback(LTDC_HandleTypeDef *hltdc)
 {
     rt_sem_release(&_lcd.lcd_lock);
 }
-#endif
+
+void HAL_DMA2D_LineEventCallback(DMA2D_HandleTypeDef *hdma2d)
+{
+
+}
+
+void HAL_DMA2D_CLUTLoadingCpltCallback(DMA2D_HandleTypeDef *hdma2d)
+{
+
+}
+
+/**
+  * @brief  DMA2D Transfer completed callback
+  * @param  hdma2d: DMA2D handle.
+  * @note   This example shows a simple way to report end of DMA2D transfer, and
+  *         you can add your own implementation.
+  * @retval None
+  */
+static void HAL_DMA2D_TransferComplete(DMA2D_HandleTypeDef *hdma2d)
+{
+    rt_completion_done(&_lcd.dma2d_completion);
+}
+
+/**
+  * @brief  DMA2D error callbacks
+  * @param  hdma2d: DMA2D handle
+  * @note   This example shows a simple way to report DMA2D transfer error, and you can
+  *         add your own implementation.
+  * @retval None
+  */
+static void HAL_DMA2D_TransferError(DMA2D_HandleTypeDef *hdma2d)
+{
+    rt_completion_done(&_lcd.dma2d_completion);
+    LOG_E("DMA2D Transfer Error!");
+}
+
 void LTDC_IRQHandler(void)
 {
     rt_interrupt_enter();
 
-    HAL_LTDC_IRQHandler(&LtdcHandle);
+    HAL_LTDC_IRQHandler(&_lcd.LtdcHandle);
 
     rt_interrupt_leave();
 }
 
-rt_err_t stm32_lcd_init(struct drv_lcd_device *lcd)
+void DMA2D_IRQHandler(void)
 {
-    __HAL_RCC_DMA2D_CLK_ENABLE();
+    rt_interrupt_enter();
+
+    HAL_DMA2D_IRQHandler(&_lcd.hdma2d);
+
+    rt_interrupt_leave();
+}
+
+static rt_err_t stm32_lcd_init(struct drv_lcd_device *lcd)
+{
+    //初始化dma2d
+    lcd->hdma2d.Instance = DMA2D;
+    lcd->hdma2d.Init.Mode = DMA2D_M2M;
+    lcd->hdma2d.Init.ColorMode = DMA2D_OUTPUT_RGB565;
+    lcd->hdma2d.Init.OutputOffset = 0;
+    lcd->hdma2d.LayerCfg[1].InputOffset = 0;
+    lcd->hdma2d.LayerCfg[1].InputColorMode = DMA2D_INPUT_RGB565;
+    /* Pixel Format configuration*/
+    if (lcd->lcd_info.pixel_format == RTGRAPHIC_PIXEL_FORMAT_RGB565)
+    {
+        lcd->hdma2d.LayerCfg[1].InputColorMode = DMA2D_INPUT_RGB565;
+    }
+    else if (lcd->lcd_info.pixel_format == RTGRAPHIC_PIXEL_FORMAT_ARGB888)
+    {
+        lcd->hdma2d.LayerCfg[1].InputColorMode = DMA2D_INPUT_ARGB8888;
+    }
+    else if (lcd->lcd_info.pixel_format == RTGRAPHIC_PIXEL_FORMAT_RGB888)
+    {
+        lcd->hdma2d.LayerCfg[1].InputColorMode = DMA2D_INPUT_RGB888;
+    }
+    lcd->hdma2d.LayerCfg[1].AlphaMode = DMA2D_NO_MODIF_ALPHA;
+    lcd->hdma2d.LayerCfg[1].InputAlpha = 0xFF;
+#ifdef SOC_SERIES_STM32H7
+    lcd->hdma2d.LayerCfg[1].AlphaInverted = DMA2D_REGULAR_ALPHA;
+#ifdef LCD_USING_RGB2BGR
+    lcd->hdma2d.LayerCfg[1].RedBlueSwap = DMA2D_RB_SWAP;
+#else
+    lcd->hdma2d.LayerCfg[1].RedBlueSwap = DMA2D_RB_REGULAR;
+#endif
+    lcd->hdma2d.LayerCfg[1].ChromaSubSampling = DMA2D_NO_CSS;
+#endif
+    /* DMA2D Callbacks */
+    lcd->hdma2d.XferCpltCallback = HAL_DMA2D_TransferComplete;
+    lcd->hdma2d.XferErrorCallback = HAL_DMA2D_TransferError;
+    if (HAL_DMA2D_Init(&lcd->hdma2d) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    if (HAL_DMA2D_ConfigLayer(&lcd->hdma2d, 1) != HAL_OK)
+    {
+        Error_Handler();
+    }
 
     LTDC_LayerCfgTypeDef pLayerCfg = {0};
 
@@ -131,38 +238,38 @@ rt_err_t stm32_lcd_init(struct drv_lcd_device *lcd)
 
     /* Polarity configuration */
     /* Initialize the horizontal synchronization polarity as active low */
-    LtdcHandle.Init.HSPolarity = LTDC_HSPOLARITY_AL;
+    lcd->LtdcHandle.Init.HSPolarity = LTDC_HSPOLARITY_AL;
     /* Initialize the vertical synchronization polarity as active low */
-    LtdcHandle.Init.VSPolarity = LTDC_VSPOLARITY_AL;
+    lcd->LtdcHandle.Init.VSPolarity = LTDC_VSPOLARITY_AL;
     /* Initialize the data enable polarity as active low */
-    LtdcHandle.Init.DEPolarity = LTDC_DEPOLARITY_AL;
+    lcd->LtdcHandle.Init.DEPolarity = LTDC_DEPOLARITY_AL;
     /* Initialize the pixel clock polarity as input pixel clock */
-    LtdcHandle.Init.PCPolarity = LTDC_PCPOLARITY_IPC;
+    lcd->LtdcHandle.Init.PCPolarity = LTDC_PCPOLARITY_IPC;
 
     /* Timing configuration */
     /* Horizontal synchronization width = Hsync - 1 */
-    LtdcHandle.Init.HorizontalSync = LCD_HSYNC_WIDTH - 1;
+    lcd->LtdcHandle.Init.HorizontalSync = LCD_HSYNC_WIDTH - 1;
     /* Vertical synchronization height = Vsync - 1 */
-    LtdcHandle.Init.VerticalSync = LCD_VSYNC_HEIGHT - 1;
+    lcd->LtdcHandle.Init.VerticalSync = LCD_VSYNC_HEIGHT - 1;
     /* Accumulated horizontal back porch = Hsync + HBP - 1 */
-    LtdcHandle.Init.AccumulatedHBP = LCD_HSYNC_WIDTH + LCD_HBP - 1;
+    lcd->LtdcHandle.Init.AccumulatedHBP = LCD_HSYNC_WIDTH + LCD_HBP - 1;
     /* Accumulated vertical back porch = Vsync + VBP - 1 */
-    LtdcHandle.Init.AccumulatedVBP = LCD_VSYNC_HEIGHT + LCD_VBP - 1;
+    lcd->LtdcHandle.Init.AccumulatedVBP = LCD_VSYNC_HEIGHT + LCD_VBP - 1;
     /* Accumulated active width = Hsync + HBP + Active Width - 1 */
-    LtdcHandle.Init.AccumulatedActiveW = LCD_HSYNC_WIDTH + LCD_HBP + lcd->lcd_info.width - 1;
+    lcd->LtdcHandle.Init.AccumulatedActiveW = LCD_HSYNC_WIDTH + LCD_HBP + lcd->lcd_info.width - 1;
     /* Accumulated active height = Vsync + VBP + Active Heigh - 1 */
-    LtdcHandle.Init.AccumulatedActiveH = LCD_VSYNC_HEIGHT + LCD_VBP + lcd->lcd_info.height - 1;
+    lcd->LtdcHandle.Init.AccumulatedActiveH = LCD_VSYNC_HEIGHT + LCD_VBP + lcd->lcd_info.height - 1;
     /* Total height = Vsync + VBP + Active Heigh + VFP - 1 */
-    LtdcHandle.Init.TotalHeigh = LtdcHandle.Init.AccumulatedActiveH + LCD_VFP;
+    lcd->LtdcHandle.Init.TotalHeigh = lcd->LtdcHandle.Init.AccumulatedActiveH + LCD_VFP;
     /* Total width = Hsync + HBP + Active Width + HFP - 1 */
-    LtdcHandle.Init.TotalWidth = LtdcHandle.Init.AccumulatedActiveW + LCD_HFP;
+    lcd->LtdcHandle.Init.TotalWidth = lcd->LtdcHandle.Init.AccumulatedActiveW + LCD_HFP;
 
     /* Configure R,G,B component values for LCD background color */
-    LtdcHandle.Init.Backcolor.Blue = 0;
-    LtdcHandle.Init.Backcolor.Green = 0;
-    LtdcHandle.Init.Backcolor.Red = 0;
+    lcd->LtdcHandle.Init.Backcolor.Blue = 0;
+    lcd->LtdcHandle.Init.Backcolor.Green = 0;
+    lcd->LtdcHandle.Init.Backcolor.Red = 0;
 
-    LtdcHandle.Instance = LTDC;
+    lcd->LtdcHandle.Instance = LTDC;
 
     /* Layer1 Configuration ------------------------------------------------------*/
 
@@ -180,10 +287,6 @@ rt_err_t stm32_lcd_init(struct drv_lcd_device *lcd)
     else if (lcd->lcd_info.pixel_format == RTGRAPHIC_PIXEL_FORMAT_ARGB888)
     {
         pLayerCfg.PixelFormat = LTDC_PIXEL_FORMAT_ARGB8888;
-    }
-    else if (lcd->lcd_info.pixel_format == RTGRAPHIC_PIXEL_FORMAT_RGB888)
-    {
-        pLayerCfg.PixelFormat = LTDC_PIXEL_FORMAT_RGB888;
     }
     else if (lcd->lcd_info.pixel_format == RTGRAPHIC_PIXEL_FORMAT_RGB888)
     {
@@ -222,29 +325,27 @@ rt_err_t stm32_lcd_init(struct drv_lcd_device *lcd)
     pLayerCfg.ImageHeight = lcd->lcd_info.height;
 
     /* Configure the LTDC */
-    if (HAL_LTDC_Init(&LtdcHandle) != HAL_OK)
+    if (HAL_LTDC_Init(&lcd->LtdcHandle) != HAL_OK)
     {
-        LOG_E("LTDC init failed");
-        return -RT_ERROR;
+        Error_Handler();
     }
 
     /* Configure the Background Layer*/
-    if (HAL_LTDC_ConfigLayer(&LtdcHandle, &pLayerCfg, 0) != HAL_OK)
+    if (HAL_LTDC_ConfigLayer(&lcd->LtdcHandle, &pLayerCfg, 0) != HAL_OK)
     {
-        LOG_E("LTDC layer init failed");
-        return -RT_ERROR;
+        Error_Handler();
     }
-    else
-    {
-        /* enable LTDC interrupt */
-        HAL_NVIC_SetPriority(LTDC_IRQn, 1, 0);
-        HAL_NVIC_EnableIRQ(LTDC_IRQn);
-        LOG_D("LTDC init success");
-        return RT_EOK;
-    }
+
+    /* enable interrupt */
+    HAL_NVIC_SetPriority(DMA2D_IRQn, 1, 0);
+    HAL_NVIC_EnableIRQ(DMA2D_IRQn);
+    HAL_NVIC_SetPriority(LTDC_IRQn, 1, 0);
+    HAL_NVIC_EnableIRQ(LTDC_IRQn);
+    LOG_D("LTDC init success");
+    return RT_EOK;
 }
 #if defined(LCD_BACKLIGHT_USING_PWM)
-void turn_on_lcd_backlight(void)
+static void turn_on_lcd_backlight(void)
 {
     struct rt_device_pwm *pwm_dev;
 
@@ -255,7 +356,7 @@ void turn_on_lcd_backlight(void)
     rt_pwm_enable(pwm_dev, LCD_PWM_DEV_CHANNEL);
 }
 #elif defined(LCD_BACKLIGHT_USING_GPIO)
-void turn_on_lcd_backlight(void)
+static void turn_on_lcd_backlight(void)
 {
     /* turn on the LCD backlight */
     rt_base_t ctl_pin = rt_pin_get(LCD_BKLT_CTL_GPIO);
@@ -264,30 +365,11 @@ void turn_on_lcd_backlight(void)
     rt_pin_write(ctl_pin, PIN_LOW);
 }
 #else
-void turn_on_lcd_backlight(void)
+static void turn_on_lcd_backlight(void)
 {
     /* turn on the LCD backlight */
 }
 #endif
-
-static void DMA2D_Copy(void * pSrc, void * pDst, uint32_t xSize, uint32_t ySize, uint32_t OffLineSrc,
-        uint32_t OffLineDst, uint32_t PixelFormat)
-{
-    /* DMA2D 采用存储器到存储器模式, 这种模式是前景层作为 DMA2D 输入 */
-    DMA2D->CR = 0x00000000UL | (1 << 9);
-    DMA2D->FGMAR = (uint32_t) pSrc;
-    DMA2D->OMAR = (uint32_t) pDst;
-    DMA2D->FGOR = OffLineSrc;
-    DMA2D->OOR = OffLineDst;
-    /* 前景层和输出区域都采用的 RGB565 颜色格式 */
-    DMA2D->FGPFCCR = PixelFormat;
-    DMA2D->OPFCCR = PixelFormat;
-    DMA2D->NLR = (uint32_t) (xSize << 16) | (uint16_t) ySize;
-    /* 启动传输 */
-    DMA2D->CR |= DMA2D_CR_START;
-    /* 等待 DMA2D 传输完成 */
-    while (DMA2D->CR & DMA2D_CR_START);
-}
 
 void lcd_fill_array(rt_uint16_t x_start, rt_uint16_t y_start, rt_uint16_t x_end, rt_uint16_t y_end, void *pcolor)
 {
@@ -295,26 +377,9 @@ void lcd_fill_array(rt_uint16_t x_start, rt_uint16_t y_start, rt_uint16_t x_end,
     uint16_t *pixel = (uint16_t *)pcolor;
     uint16_t *framebuffer = (uint16_t *)&lcd->lcd_info.framebuffer[2 * (y_start * lcd->lcd_info.width + x_start)];
 
-#if 1
-    uint16_t cycle_y, x_offset = 0;
-    for(cycle_y = y_start; cycle_y <= y_end; cycle_y++)
-    {
-        for(x_offset = 0;x_start + x_offset <= x_end; x_offset++)
-        {
-            framebuffer = (uint16_t *)&lcd->lcd_info.framebuffer[2 * (cycle_y * lcd->lcd_info.width + x_start + x_offset)];
-#ifdef LCD_USING_RGB2BGR
-            *framebuffer = LCD_RGB2BGR(*pixel);//核心板的lvds转接将RGB接为了BGR
-#else
-            *framebuffer = *pixel;
-#endif
-            pixel ++;
-        }
-    }
-#else
-    DMA2D_Copy(pixel, framebuffer, x_end - x_start + 1, y_end - y_start + 1, 0, lcd->lcd_info.width - x_end + x_start - 1, LTDC_PIXEL_FORMAT_RGB565);
+    lcd_DMA2D_Copy(pixel, framebuffer, x_end - x_start + 1, y_end - y_start + 1, 0, lcd->lcd_info.width - x_end + x_start - 1);
 #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
     SCB_InvalidateDCache_by_Addr((uint32_t *)lcd->lcd_info.framebuffer, LCD_BUF_SIZE);
-#endif
 #endif
 
     lcd->parent.control(&lcd->parent, RTGRAPHIC_CTRL_RECT_UPDATE, RT_NULL);
@@ -354,6 +419,16 @@ static void drv_lcd_set_pixel(const char *pixel, int x, int y)
 //返回值:此点的颜色
 static void drv_lcd_get_pixel(char *pixel, int x, int y)
 {
+    uint16_t *color = (uint16_t *)pixel;
+    uint16_t *framebuffer;
+
+    struct drv_lcd_device *lcd = &_lcd;
+
+    framebuffer = (uint16_t *)&lcd->lcd_info.framebuffer[2 * (y * lcd->lcd_info.width + x)];
+    *color = *framebuffer;
+#ifdef LCD_USING_RGB2BGR
+    *color = LCD_RGB2BGR(*color);
+#endif
 }
 
 //画横线
@@ -424,6 +499,8 @@ static int drv_lcd_hw_init(void)
         result = -RT_ENOMEM;
         goto __exit;
     }
+    /* init dma2d completion */
+    rt_completion_init(&_lcd.dma2d_completion);
 
     /* config LCD dev info */
     _lcd.lcd_info.height = LCD_HEIGHT;
@@ -452,9 +529,7 @@ static int drv_lcd_hw_init(void)
     device->ops = &lcd_ops;
 #else
     device->init = drv_lcd_init;
-#ifndef ART_PI_TouchGFX_LIB
     device->control = drv_lcd_control;
-#endif
 #endif
     device->user_data = &drv_lcd_ops;
 

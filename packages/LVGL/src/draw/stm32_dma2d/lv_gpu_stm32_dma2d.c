@@ -6,6 +6,7 @@
 /*********************
  *      INCLUDES
  *********************/
+#include "board.h"
 #include "lv_gpu_stm32_dma2d.h"
 #include "../../core/lv_refr.h"
 
@@ -77,13 +78,7 @@ static bool isDma2dInProgess = false; // indicates whether DMA2D transfer *initi
 void lv_draw_stm32_dma2d_init(void)
 {
     // Enable DMA2D clock
-#if defined(STM32F4) || defined(STM32F7)
-    RCC->AHB1ENR |= RCC_AHB1ENR_DMA2DEN; // enable DMA2D
-#elif defined(STM32H7)
-    RCC->AHB3ENR |= RCC_AHB3ENR_DMA2DEN;
-#else
-# warning "LVGL can't enable the clock of DMA2D"
-#endif
+    __HAL_RCC_DMA2D_CLK_ENABLE();
 
     // Wait for hardware access to complete
     __asm volatile("DSB\n");

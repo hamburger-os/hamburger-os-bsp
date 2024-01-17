@@ -69,6 +69,7 @@ void selftest_fs_test(SelftestUserData *puserdata);
 void selftest_spi_test(SelftestUserData *puserdata);
 void selftest_i2c_test(SelftestUserData *puserdata);
 void selftest_i2s_test(SelftestUserData *puserdata);
+void selftest_i2s_wait(SelftestUserData *puserdata);
 void selftest_uart_test(SelftestUserData *puserdata);
 void selftest_can_test(SelftestUserData *puserdata);
 void selftest_eth_test(SelftestUserData *puserdata);

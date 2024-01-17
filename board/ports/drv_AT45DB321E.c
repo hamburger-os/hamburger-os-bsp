@@ -70,7 +70,7 @@ static void at45db321e_wait_busy(void)
     /* 发送读命令 */
     uint8_t cmd[] = {0xD7};
 
-    rt_tick_t tick = rt_tick_get();
+//    rt_tick_t tick = rt_tick_get();
     while((value[0] & 0x80) == 0x00)
     {
         /* 读数据 */

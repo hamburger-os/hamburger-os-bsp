@@ -70,20 +70,13 @@ void lv_port_disp_init(void)
     fbuf1 = rt_malloc(info.width * info.height * sizeof(lv_color_t));
     if (fbuf1 == RT_NULL)
     {
-        LOG_E("alloc disp buf fail!");
+        LOG_E("alloc disp buf1 fail!");
         return;
     }
-
     fbuf2 = rt_malloc(info.width * info.height * sizeof(lv_color_t));
-    if (fbuf2 == RT_NULL)
-    {
-        LOG_E("alloc disp buf fail!");
-        rt_free(fbuf1);
-        return;
-    }
 
     /*Initialize `disp_buf` with the buffer(s). With only one buffer use NULL instead buf_2 */
-    lv_disp_draw_buf_init(&disp_buf, fbuf1, fbuf2, info.width * info.height);
+    lv_disp_draw_buf_init(&disp_buf, fbuf1, fbuf2, info.width * info.height * sizeof(lv_color_t));
 
     lv_disp_drv_init(&disp_drv); /*Basic initialization*/
 
