@@ -30,9 +30,9 @@ if GetDepend(['SOC_M4COREBOARD_NOSRAM']) or GetDepend(['SOC_M4COREBOARD_SRAM']) 
         src += Glob('CubeMX_Config/M4_CoreBoard_SDRAM/Src/stm32f4xx_hal_msp.c')
         path += [cwd + '/CubeMX_Config/M4_CoreBoard_SDRAM/Inc']
     if GetDepend(['SOC_M4COREBOARD_VOICE']):
-        src += Glob('CubeMX_Config/M4_CoreBoard_SDRAM/Src/main.c')
-        src += Glob('CubeMX_Config/M4_CoreBoard_SDRAM/Src/stm32f4xx_hal_msp.c')
-        path += [cwd + '/CubeMX_Config/M4_CoreBoard_SDRAM/Inc']
+        src += Glob('CubeMX_Config/M4_CoreBoard_VOICE/Src/main.c')
+        src += Glob('CubeMX_Config/M4_CoreBoard_VOICE/Src/stm32f4xx_hal_msp.c')
+        path += [cwd + '/CubeMX_Config/M4_CoreBoard_VOICE/Inc']
     CPPDEFINES = ['STM32F429xx']
     if rtconfig.PLATFORM in ['gcc']:
         src += [startup_path_prefix + '/STM32F4xx_HAL/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc/startup_stm32f429xx.s']
@@ -134,6 +134,9 @@ if GetDepend(['BSP_USING_S25FL512']):
     
 if GetDepend(['BSP_USING_AT45DB321E']):
     src += Glob('ports/drv_AT45DB321E.c')
+    
+if GetDepend(['BSP_USING_FMC']):
+    src += Glob('ports/drv_fmc.c')
     
 if GetDepend(['BSP_USING_FMCLCD']):
     src += Glob('ports/drv_fmclcd.c')

@@ -1306,6 +1306,16 @@ void HAL_SRAM_MspInit(SRAM_HandleTypeDef* hsram){
   /* USER CODE END SRAM_MspInit 1 */
 }
 
+void HAL_NOR_MspInit(NOR_HandleTypeDef* hnor){
+  /* USER CODE BEGIN NOR_MspInit 0 */
+
+  /* USER CODE END NOR_MspInit 0 */
+  HAL_FMC_MspInit();
+  /* USER CODE BEGIN NOR_MspInit 1 */
+
+  /* USER CODE END NOR_MspInit 1 */
+}
+
 void HAL_SDRAM_MspInit(SDRAM_HandleTypeDef* hsdram){
   /* USER CODE BEGIN SDRAM_MspInit 0 */
 
@@ -1422,6 +1432,16 @@ void HAL_SRAM_MspDeInit(SRAM_HandleTypeDef* hsram){
   /* USER CODE BEGIN SRAM_MspDeInit 1 */
 
   /* USER CODE END SRAM_MspDeInit 1 */
+}
+
+void HAL_NOR_MspDeInit(NOR_HandleTypeDef* hnor){
+  /* USER CODE BEGIN NOR_MspDeInit 0 */
+
+  /* USER CODE END NOR_MspDeInit 0 */
+  HAL_FMC_MspDeInit();
+  /* USER CODE BEGIN NOR_MspDeInit 1 */
+
+  /* USER CODE END NOR_MspDeInit 1 */
 }
 
 void HAL_SDRAM_MspDeInit(SDRAM_HandleTypeDef* hsdram){

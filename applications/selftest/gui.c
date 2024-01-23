@@ -39,6 +39,9 @@ struct ui_object
     lv_obj_t * label_icon;
     lv_obj_t * icon;
 
+    lv_obj_t * slider_lcd;
+    lv_obj_t * slider_lcd_label;
+
     lv_obj_t * table_result;
     lv_obj_t * btn_enter;
     lv_obj_t * btn_enter_label;
@@ -57,6 +60,7 @@ struct ui_object
     lv_obj_t * btn_refresh_label;
 
     rt_thread_t thread_selftest;
+    rt_device_t lcd_device;
 };
 static struct ui_object ui = {0};
 
@@ -68,15 +72,9 @@ void gui_display_result(SelftestResult *presult, uint16_t num)
     {
         lv_obj_clean(ui.table_result);
 
-        lv_table_set_cell_value(ui.table_result, 0, 0, "Project");
-        lv_table_set_cell_value(ui.table_result, 0, 1, "");
-        lv_table_set_cell_value(ui.table_result, 0, 2, "Project");
-        lv_table_set_cell_value(ui.table_result, 0, 3, "");
-        lv_table_set_cell_value(ui.table_result, 0, 4, "Project");
-        lv_table_set_cell_value(ui.table_result, 0, 5, "");
         for (uint16_t i = 0; i < num; i++)
         {
-            uint16_t row = i / 3 + 1;
+            uint16_t row = i / 3;
             uint16_t col[2];
             if (i % 3 == 0)
             {
@@ -372,6 +370,19 @@ static long list_memheap(void)
     return 0;
 }
 
+static void slider_event_cb(lv_event_t * event)
+{
+    lv_obj_t * slider = lv_event_get_target(event);
+    uint32_t value = lv_slider_get_value(slider);
+
+    lv_label_set_text_fmt(ui.slider_lcd_label, "%d%%", (int)value);
+
+    if (ui.lcd_device != NULL)
+    {
+        rt_device_control(ui.lcd_device, RTGRAPHIC_CTRL_SET_BRIGHTNESS, &value);
+    }
+}
+
 static void btn_pressed_event_cb(lv_event_t *event)
 {
     lv_obj_t * btn = lv_event_get_target(event);
@@ -424,6 +435,13 @@ static void ta_event_cb(lv_event_t * e)
 
 void lv_user_gui_init(void)
 {
+    ui.lcd_device = rt_device_find("lcd");
+    if (ui.lcd_device == RT_NULL)
+    {
+        LOG_E("find lcd error!");
+        return;
+    }
+
     lv_style_init(&ui.bg_style);
 
     /*Make a gradient*/
@@ -480,12 +498,6 @@ void lv_user_gui_init(void)
     ui.table_result = lv_table_create(ui.tile_main);
     lv_obj_set_height(ui.table_result, LV_VER_RES_MAX*10/17);
     lv_obj_align(ui.table_result, LV_ALIGN_CENTER, 0, 0);
-    lv_table_set_cell_value(ui.table_result, 0, 0, "Project");
-    lv_table_set_cell_value(ui.table_result, 0, 1, "");
-    lv_table_set_cell_value(ui.table_result, 0, 2, "Project");
-    lv_table_set_cell_value(ui.table_result, 0, 3, "");
-    lv_table_set_cell_value(ui.table_result, 0, 4, "Project");
-    lv_table_set_cell_value(ui.table_result, 0, 5, "");
     lv_table_set_col_width(ui.table_result, 0, LV_HOR_RES_MAX*2/9);
     lv_table_set_col_width(ui.table_result, 1, LV_HOR_RES_MAX/12);
     lv_table_set_col_width(ui.table_result, 2, LV_HOR_RES_MAX*2/9);
@@ -503,6 +515,19 @@ void lv_user_gui_init(void)
     lv_obj_set_style_text_align(ui.btn_enter_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_align(ui.btn_enter_label, LV_ALIGN_CENTER, 0, 0);
     lv_label_set_text(ui.btn_enter_label, LV_SYMBOL_PLAY);
+
+    //添加屏幕亮度控制
+    /*Create a slider in the center of the display*/
+    ui.slider_lcd = lv_slider_create(ui.tile_main);
+    lv_slider_set_range(ui.slider_lcd, 10, 100);
+    lv_slider_set_value(ui.slider_lcd, 100, LV_ANIM_ON);
+    lv_obj_set_size(ui.slider_lcd, LV_HOR_RES_MAX/4, LV_VER_RES_MAX/32);
+    lv_obj_align(ui.slider_lcd, LV_ALIGN_TOP_RIGHT, -LV_HOR_RES_MAX/8, LV_VER_RES_MAX/12);
+    lv_obj_add_event_cb(ui.slider_lcd, slider_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+    /*Create a label below the slider*/
+    ui.slider_lcd_label = lv_label_create(ui.tile_main);
+    lv_label_set_text(ui.slider_lcd_label, "100%");
+    lv_obj_align_to(ui.slider_lcd_label, ui.slider_lcd, LV_ALIGN_OUT_RIGHT_MID, 16, 0);
 
     //添加文件浏览器
     ui.file_explorer = lv_file_explorer_create(ui.tile_file);

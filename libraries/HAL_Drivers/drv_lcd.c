@@ -20,7 +20,13 @@
 
 #define LCD_DEVICE(dev)     (struct drv_lcd_device*)(dev)
 #define LCD_BUF_SIZE        (LCD_WIDTH * LCD_HEIGHT * LCD_BITS_PER_PIXEL / 8)
+#if LCD_BITS_PER_PIXEL == 16
 #define LCD_PIXEL_FORMAT    RTGRAPHIC_PIXEL_FORMAT_RGB565
+#elif LCD_BITS_PER_PIXEL == 32
+#define LCD_PIXEL_FORMAT    RTGRAPHIC_PIXEL_FORMAT_ARGB888
+#elif LCD_BITS_PER_PIXEL == 24
+#define LCD_PIXEL_FORMAT    RTGRAPHIC_PIXEL_FORMAT_RGB888
+#endif
 #define LCD_RGB2BGR(x)      (((x & 0xf800) >> 11) | (x & 0x07e0) | ((x & 0x001f) << 11))
 
 struct drv_lcd_device
@@ -31,11 +37,6 @@ struct drv_lcd_device
 
     struct rt_semaphore lcd_lock;
     struct rt_completion dma2d_completion;
-
-    /* 0:front_buf is being used 1: back_buf is being used*/
-    rt_uint8_t cur_buf;
-    rt_uint8_t *front_buf;
-    rt_uint8_t *back_buf;
 
     LTDC_HandleTypeDef LtdcHandle;
     DMA2D_HandleTypeDef hdma2d;
@@ -50,6 +51,42 @@ static rt_err_t drv_lcd_init(struct rt_device *device)
     return RT_EOK;
 }
 
+#if defined(LCD_BACKLIGHT_USING_PWM)
+//亮度控制0~100
+#define LCD_PWM_PERIOD 1000000
+static void change_lcd_brightness(uint32_t value)
+{
+    if (value > 100)
+        value = 100;
+    uint32_t brightness = LCD_PWM_PERIOD - value * LCD_PWM_PERIOD / 100;
+    struct rt_device_pwm *pwm_dev;
+
+    /* turn on the LCD backlight */
+    pwm_dev = (struct rt_device_pwm *)rt_device_find(LCD_BKLT_CTL_PWM);
+    /* pwm frequency:100K = 10000ns */
+    rt_pwm_set(pwm_dev, LCD_BKLT_CTL_PWM_CHANNEL, LCD_PWM_PERIOD, brightness);
+    rt_pwm_enable(pwm_dev, LCD_BKLT_CTL_PWM_CHANNEL);
+}
+static void turn_on_lcd_backlight(void)
+{
+    change_lcd_brightness(100);
+}
+#elif defined(LCD_BACKLIGHT_USING_GPIO)
+static void turn_on_lcd_backlight(void)
+{
+    /* turn on the LCD backlight */
+    rt_base_t ctl_pin = rt_pin_get(LCD_BKLT_CTL_GPIO);
+    rt_pin_mode(ctl_pin, PIN_MODE_OUTPUT);
+
+    rt_pin_write(ctl_pin, PIN_LOW);
+}
+#else
+static void turn_on_lcd_backlight(void)
+{
+    /* turn on the LCD backlight */
+}
+#endif
+
 static void lcd_DMA2D_Copy(void * pSrc, void * pDst, uint32_t xSize, uint32_t ySize, uint32_t OffLineSrc, uint32_t OffLineDst)
 {
     struct drv_lcd_device *lcd = &_lcd;
@@ -58,6 +95,7 @@ static void lcd_DMA2D_Copy(void * pSrc, void * pDst, uint32_t xSize, uint32_t yS
     lcd->hdma2d.LayerCfg[1].InputOffset = OffLineSrc;
     HAL_DMA2D_Init(&lcd->hdma2d);
     HAL_DMA2D_ConfigLayer(&lcd->hdma2d, 1);
+
     HAL_DMA2D_Start_IT(&lcd->hdma2d, (uint32_t)pSrc, (uint32_t)pDst, xSize, ySize);
     if (rt_completion_wait(&lcd->dma2d_completion, 1000) != RT_EOK)
     {
@@ -73,33 +111,8 @@ static rt_err_t drv_lcd_control(struct rt_device *device, int cmd, void *args)
     {
     case RTGRAPHIC_CTRL_RECT_UPDATE:
     {
-        /* update */
-        if (_lcd.cur_buf)
-        {
-            /* back_buf is being used */
-            lcd_DMA2D_Copy(_lcd.lcd_info.framebuffer, _lcd.front_buf, LCD_WIDTH, LCD_HEIGHT, 0, 0);
-#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
-            SCB_InvalidateDCache_by_Addr((uint32_t *)_lcd.front_buf, LCD_BUF_SIZE);
-#endif
-            /* Configure the color frame buffer start address */
-            LTDC_LAYER(&lcd->LtdcHandle, 0)->CFBAR &= ~(LTDC_LxCFBAR_CFBADD);
-            LTDC_LAYER(&lcd->LtdcHandle, 0)->CFBAR = (uint32_t)(_lcd.front_buf);
-            _lcd.cur_buf = 0;
-        }
-        else
-        {
-            /* front_buf is being used */
-            lcd_DMA2D_Copy(_lcd.lcd_info.framebuffer, _lcd.back_buf, LCD_WIDTH, LCD_HEIGHT, 0, 0);
-#if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
-            SCB_InvalidateDCache_by_Addr((uint32_t *)_lcd.back_buf, LCD_BUF_SIZE);
-#endif
-            /* Configure the color frame buffer start address */
-            LTDC_LAYER(&lcd->LtdcHandle, 0)->CFBAR &= ~(LTDC_LxCFBAR_CFBADD);
-            LTDC_LAYER(&lcd->LtdcHandle, 0)->CFBAR = (uint32_t)(_lcd.back_buf);
-            _lcd.cur_buf = 1;
-        }
         rt_sem_take(&_lcd.lcd_lock, RT_TICK_PER_SECOND / 20);
-        HAL_LTDC_Reload(&lcd->LtdcHandle, LTDC_SRCR_VBR);
+        HAL_LTDC_Reload(&lcd->LtdcHandle, LTDC_RELOAD_IMMEDIATE);
     }
     break;
 
@@ -116,6 +129,16 @@ static rt_err_t drv_lcd_control(struct rt_device *device, int cmd, void *args)
     }
     break;
 
+    case RTGRAPHIC_CTRL_SET_BRIGHTNESS:
+    {
+#if defined(LCD_BACKLIGHT_USING_PWM)
+        uint32_t *brightness = (uint32_t *) args;
+
+        change_lcd_brightness(*brightness);
+#endif
+    }
+    break;
+
     default:
         return -RT_EINVAL;
     }
@@ -125,8 +148,7 @@ static rt_err_t drv_lcd_control(struct rt_device *device, int cmd, void *args)
 
 void HAL_LTDC_ReloadEventCallback(LTDC_HandleTypeDef *hltdc)
 {
-    /* enable line interupt */
-    __HAL_LTDC_ENABLE_IT(&_lcd.LtdcHandle, LTDC_IER_LIE);
+
 }
 
 void HAL_LTDC_LineEventCallback(LTDC_HandleTypeDef *hltdc)
@@ -189,7 +211,8 @@ void DMA2D_IRQHandler(void)
 
 static rt_err_t stm32_lcd_init(struct drv_lcd_device *lcd)
 {
-    //初始化dma2d
+    /* DMA2D Initialization -------------------------------------------------------*/
+
     lcd->hdma2d.Instance = DMA2D;
     lcd->hdma2d.Init.Mode = DMA2D_M2M;
     lcd->hdma2d.Init.ColorMode = DMA2D_OUTPUT_RGB565;
@@ -232,8 +255,6 @@ static rt_err_t stm32_lcd_init(struct drv_lcd_device *lcd)
         Error_Handler();
     }
 
-    LTDC_LayerCfgTypeDef pLayerCfg = {0};
-
     /* LTDC Initialization -------------------------------------------------------*/
 
     /* Polarity configuration */
@@ -271,6 +292,14 @@ static rt_err_t stm32_lcd_init(struct drv_lcd_device *lcd)
 
     lcd->LtdcHandle.Instance = LTDC;
 
+    /* Configure the LTDC */
+    if (HAL_LTDC_Init(&lcd->LtdcHandle) != HAL_OK)
+    {
+        Error_Handler();
+    }
+
+    LTDC_LayerCfgTypeDef pLayerCfg = {0};
+
     /* Layer1 Configuration ------------------------------------------------------*/
 
     /* Windowing configuration */
@@ -299,7 +328,7 @@ static rt_err_t stm32_lcd_init(struct drv_lcd_device *lcd)
     }
 
     /* Start Address configuration : frame buffer is located at FLASH memory */
-    pLayerCfg.FBStartAdress = (uint32_t)lcd->front_buf;
+    pLayerCfg.FBStartAdress = (uint32_t)lcd->lcd_info.framebuffer;
 
     /* Alpha constant (255 totally opaque) */
     pLayerCfg.Alpha = 255;
@@ -324,12 +353,6 @@ static rt_err_t stm32_lcd_init(struct drv_lcd_device *lcd)
     pLayerCfg.ImageWidth = lcd->lcd_info.width;
     pLayerCfg.ImageHeight = lcd->lcd_info.height;
 
-    /* Configure the LTDC */
-    if (HAL_LTDC_Init(&lcd->LtdcHandle) != HAL_OK)
-    {
-        Error_Handler();
-    }
-
     /* Configure the Background Layer*/
     if (HAL_LTDC_ConfigLayer(&lcd->LtdcHandle, &pLayerCfg, 0) != HAL_OK)
     {
@@ -341,35 +364,9 @@ static rt_err_t stm32_lcd_init(struct drv_lcd_device *lcd)
     HAL_NVIC_EnableIRQ(DMA2D_IRQn);
     HAL_NVIC_SetPriority(LTDC_IRQn, 1, 0);
     HAL_NVIC_EnableIRQ(LTDC_IRQn);
-    LOG_D("LTDC init success");
+    LOG_I("Init successfully");
     return RT_EOK;
 }
-#if defined(LCD_BACKLIGHT_USING_PWM)
-static void turn_on_lcd_backlight(void)
-{
-    struct rt_device_pwm *pwm_dev;
-
-    /* turn on the LCD backlight */
-    pwm_dev = (struct rt_device_pwm *)rt_device_find(LCD_PWM_DEV_NAME);
-    /* pwm frequency:100K = 10000ns */
-    rt_pwm_set(pwm_dev, LCD_PWM_DEV_CHANNEL, 10000, 10000);
-    rt_pwm_enable(pwm_dev, LCD_PWM_DEV_CHANNEL);
-}
-#elif defined(LCD_BACKLIGHT_USING_GPIO)
-static void turn_on_lcd_backlight(void)
-{
-    /* turn on the LCD backlight */
-    rt_base_t ctl_pin = rt_pin_get(LCD_BKLT_CTL_GPIO);
-    rt_pin_mode(ctl_pin, PIN_MODE_OUTPUT);
-
-    rt_pin_write(ctl_pin, PIN_LOW);
-}
-#else
-static void turn_on_lcd_backlight(void)
-{
-    /* turn on the LCD backlight */
-}
-#endif
 
 void lcd_fill_array(rt_uint16_t x_start, rt_uint16_t y_start, rt_uint16_t x_end, rt_uint16_t y_end, void *pcolor)
 {
@@ -510,9 +507,7 @@ static int drv_lcd_hw_init(void)
 
     /* malloc memory for Triple Buffering */
     _lcd.lcd_info.framebuffer = rt_malloc_align(LCD_BUF_SIZE, RT_ALIGN_SIZE);
-    _lcd.back_buf = rt_malloc_align(LCD_BUF_SIZE, RT_ALIGN_SIZE);
-    _lcd.front_buf = rt_malloc_align(LCD_BUF_SIZE, RT_ALIGN_SIZE);
-    if (_lcd.lcd_info.framebuffer == RT_NULL || _lcd.back_buf == RT_NULL || _lcd.front_buf == RT_NULL)
+    if (_lcd.lcd_info.framebuffer == RT_NULL)
     {
         LOG_E("init frame buffer failed!");
         result = -RT_ENOMEM;
@@ -521,8 +516,6 @@ static int drv_lcd_hw_init(void)
 
     /* memset buff to 0xFF */
     rt_memset(_lcd.lcd_info.framebuffer, 0xFF, LCD_BUF_SIZE);
-    rt_memset(_lcd.back_buf, 0xFF, LCD_BUF_SIZE);
-    rt_memset(_lcd.front_buf, 0xFF, LCD_BUF_SIZE);
 
     device->type = RT_Device_Class_Graphic;
 #ifdef RT_USING_DEVICE_OPS
@@ -547,22 +540,12 @@ static int drv_lcd_hw_init(void)
 __exit:
     if (result != RT_EOK)
     {
-        LOG_E("init lcd failed!");
+        LOG_E("init failed!");
         rt_sem_detach(&_lcd.lcd_lock);
 
         if (_lcd.lcd_info.framebuffer)
         {
-            rt_free(_lcd.lcd_info.framebuffer);
-        }
-
-        if (_lcd.back_buf)
-        {
-            rt_free(_lcd.back_buf);
-        }
-
-        if (_lcd.front_buf)
-        {
-            rt_free(_lcd.front_buf);
+            rt_free_align(_lcd.lcd_info.framebuffer);
         }
     }
     return result;

@@ -23,10 +23,6 @@
 #define DBG_LVL    DBG_INFO
 #include <rtdbg.h>
 
-#ifdef BSP_USING_SRAM
-RTM_EXPORT(HAL_SRAM_Init);
-#endif
-
 #ifdef RT_USING_FINSH
 #include <finsh.h>
 static void reboot(uint8_t argc, char **argv)

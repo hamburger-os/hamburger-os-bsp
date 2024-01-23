@@ -77,6 +77,12 @@ enum
 #ifdef BSP_USING_PWM17
     PWM17_INDEX,
 #endif
+#ifdef BSP_USING_PWM18
+    PWM18_INDEX,
+#endif
+#ifdef BSP_USING_PWM19
+    PWM19_INDEX,
+#endif
 };
 
 struct stm32_pwm
@@ -155,6 +161,14 @@ static struct stm32_pwm stm32_pwm_obj[] =
 
 #ifdef BSP_USING_PWM17
     PWM17_CONFIG,
+#endif
+
+#ifdef BSP_USING_PWM18
+    PWM18_CONFIG,
+#endif
+
+#ifdef BSP_USING_PWM19
+    PWM19_CONFIG,
 #endif
 };
 
@@ -648,5 +662,5 @@ static int stm32_pwm_init(void)
 __exit:
     return result;
 }
-INIT_DEVICE_EXPORT(stm32_pwm_init);
+INIT_PREV_EXPORT(stm32_pwm_init);
 #endif /* BSP_USING_PWM */

@@ -1216,7 +1216,7 @@
     #ifdef CONFIG_LV_FONT_FMT_TXT_LARGE
         #define LV_FONT_FMT_TXT_LARGE CONFIG_LV_FONT_FMT_TXT_LARGE
     #else
-        #define LV_FONT_FMT_TXT_LARGE 0
+        #define LV_FONT_FMT_TXT_LARGE 1
     #endif
 #endif
 
@@ -2104,7 +2104,7 @@
     #ifdef CONFIG_LV_USE_PNG
         #define LV_USE_PNG CONFIG_LV_USE_PNG
     #else
-        #define LV_USE_PNG 0
+        #define LV_USE_PNG 1
     #endif
 #endif
 
@@ -2113,7 +2113,7 @@
     #ifdef CONFIG_LV_USE_BMP
         #define LV_USE_BMP CONFIG_LV_USE_BMP
     #else
-        #define LV_USE_BMP 0
+        #define LV_USE_BMP 1
     #endif
 #endif
 
@@ -2132,7 +2132,7 @@
     #ifdef CONFIG_LV_USE_GIF
         #define LV_USE_GIF CONFIG_LV_USE_GIF
     #else
-        #define LV_USE_GIF 0
+        #define LV_USE_GIF 1
     #endif
 #endif
 

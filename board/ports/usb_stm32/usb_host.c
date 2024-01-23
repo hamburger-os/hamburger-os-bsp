@@ -26,7 +26,7 @@
 #include "usbh_cdc.h"
 #include "usbh_msc.h"
 #include "usbh_hid.h"
-#include "usbh_mtp.h"
+//#include "usbh_mtp.h"
 
 #include "usbh_diskio.h"
 
@@ -80,10 +80,10 @@ void MX_USB_HOST_Init(void)
     {
         Error_Handler();
     }
-    if (USBH_RegisterClass(&hUsbHost, USBH_MTP_CLASS) != USBH_OK)
-    {
-        Error_Handler();
-    }
+//    if (USBH_RegisterClass(&hUsbHost, USBH_MTP_CLASS) != USBH_OK)
+//    {
+//        Error_Handler();
+//    }
     if (USBH_Start(&hUsbHost) != USBH_OK)
     {
         Error_Handler();

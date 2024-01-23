@@ -21,7 +21,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#define DBG_TAG "cube"
+#define DBG_LVL DBG_LOG
+#include <rtdbg.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -73,7 +75,7 @@ UART_HandleTypeDef huart6;
 HCD_HandleTypeDef hhcd_USB_OTG_HS;
 
 SRAM_HandleTypeDef hsram1;
-SRAM_HandleTypeDef hsram4;
+NOR_HandleTypeDef hnor4;
 SDRAM_HandleTypeDef hsdram2;
 
 /* USER CODE BEGIN PV */
@@ -110,13 +112,72 @@ static void MX_USART2_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+__weak
 /* USER CODE END 0 */
 
 /**
   * @brief  The application entry point.
   * @retval int
   */
+int main(void)
+{
+  /* USER CODE BEGIN 1 */
+
+  /* USER CODE END 1 */
+
+  /* MCU Configuration--------------------------------------------------------*/
+
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
+
+  /* USER CODE BEGIN Init */
+
+  /* USER CODE END Init */
+
+  /* Configure the system clock */
+  SystemClock_Config();
+
+  /* USER CODE BEGIN SysInit */
+
+  /* USER CODE END SysInit */
+
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_CRC_Init();
+  MX_RTC_Init();
+  MX_USART3_UART_Init();
+  MX_IWDG_Init();
+  MX_FMC_Init();
+  MX_SPI1_Init();
+  MX_SDIO_MMC_Init();
+  MX_CAN1_Init();
+  MX_CAN2_Init();
+  MX_USB_OTG_HS_HCD_Init();
+  MX_I2C1_Init();
+  MX_I2C2_Init();
+  MX_UART4_Init();
+  MX_I2S2_Init();
+  MX_ADC1_Init();
+  MX_DMA2D_Init();
+  MX_RNG_Init();
+  MX_USART1_UART_Init();
+  MX_USART6_UART_Init();
+  MX_UART7_Init();
+  MX_USART2_UART_Init();
+  /* USER CODE BEGIN 2 */
+
+  /* USER CODE END 2 */
+
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+  while (1)
+  {
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
+  }
+  /* USER CODE END 3 */
+}
 
 /**
   * @brief System Clock Configuration
@@ -956,26 +1017,26 @@ static void MX_FMC_Init(void)
     Error_Handler( );
   }
 
-  /** Perform the SRAM4 memory initialization sequence
+  /** Perform the NOR4 memory initialization sequence
   */
-  hsram4.Instance = FMC_NORSRAM_DEVICE;
-  hsram4.Extended = FMC_NORSRAM_EXTENDED_DEVICE;
-  /* hsram4.Init */
-  hsram4.Init.NSBank = FMC_NORSRAM_BANK4;
-  hsram4.Init.DataAddressMux = FMC_DATA_ADDRESS_MUX_DISABLE;
-  hsram4.Init.MemoryType = FMC_MEMORY_TYPE_SRAM;
-  hsram4.Init.MemoryDataWidth = FMC_NORSRAM_MEM_BUS_WIDTH_16;
-  hsram4.Init.BurstAccessMode = FMC_BURST_ACCESS_MODE_DISABLE;
-  hsram4.Init.WaitSignalPolarity = FMC_WAIT_SIGNAL_POLARITY_LOW;
-  hsram4.Init.WrapMode = FMC_WRAP_MODE_DISABLE;
-  hsram4.Init.WaitSignalActive = FMC_WAIT_TIMING_BEFORE_WS;
-  hsram4.Init.WriteOperation = FMC_WRITE_OPERATION_DISABLE;
-  hsram4.Init.WaitSignal = FMC_WAIT_SIGNAL_DISABLE;
-  hsram4.Init.ExtendedMode = FMC_EXTENDED_MODE_DISABLE;
-  hsram4.Init.AsynchronousWait = FMC_ASYNCHRONOUS_WAIT_ENABLE;
-  hsram4.Init.WriteBurst = FMC_WRITE_BURST_DISABLE;
-  hsram4.Init.ContinuousClock = FMC_CONTINUOUS_CLOCK_SYNC_ONLY;
-  hsram4.Init.PageSize = FMC_PAGE_SIZE_NONE;
+  hnor4.Instance = FMC_NORSRAM_DEVICE;
+  hnor4.Extended = FMC_NORSRAM_EXTENDED_DEVICE;
+  /* hnor4.Init */
+  hnor4.Init.NSBank = FMC_NORSRAM_BANK4;
+  hnor4.Init.DataAddressMux = FMC_DATA_ADDRESS_MUX_DISABLE;
+  hnor4.Init.MemoryType = FMC_MEMORY_TYPE_NOR;
+  hnor4.Init.MemoryDataWidth = FMC_NORSRAM_MEM_BUS_WIDTH_16;
+  hnor4.Init.BurstAccessMode = FMC_BURST_ACCESS_MODE_DISABLE;
+  hnor4.Init.WaitSignalPolarity = FMC_WAIT_SIGNAL_POLARITY_LOW;
+  hnor4.Init.WrapMode = FMC_WRAP_MODE_DISABLE;
+  hnor4.Init.WaitSignalActive = FMC_WAIT_TIMING_BEFORE_WS;
+  hnor4.Init.WriteOperation = FMC_WRITE_OPERATION_DISABLE;
+  hnor4.Init.WaitSignal = FMC_WAIT_SIGNAL_DISABLE;
+  hnor4.Init.ExtendedMode = FMC_EXTENDED_MODE_DISABLE;
+  hnor4.Init.AsynchronousWait = FMC_ASYNCHRONOUS_WAIT_ENABLE;
+  hnor4.Init.WriteBurst = FMC_WRITE_BURST_DISABLE;
+  hnor4.Init.ContinuousClock = FMC_CONTINUOUS_CLOCK_SYNC_ONLY;
+  hnor4.Init.PageSize = FMC_PAGE_SIZE_NONE;
   /* Timing */
   Timing.AddressSetupTime = 15;
   Timing.AddressHoldTime = 15;
@@ -986,7 +1047,7 @@ static void MX_FMC_Init(void)
   Timing.AccessMode = FMC_ACCESS_MODE_A;
   /* ExtTiming */
 
-  if (HAL_SRAM_Init(&hsram4, &Timing, NULL) != HAL_OK)
+  if (HAL_NOR_Init(&hnor4, &Timing, NULL) != HAL_OK)
   {
     Error_Handler( );
   }
@@ -1122,7 +1183,7 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
+  LOG_E("Error_Handler");
   while (1)
   {
   }

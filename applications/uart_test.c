@@ -189,7 +189,7 @@ static void uart_echo_test(int argc, char **argv)
                 if (rt_device_open(uart_test.uart_dev, RT_DEVICE_FLAG_RX_NON_BLOCKING | RT_DEVICE_FLAG_TX_BLOCKING) != RT_EOK)
 #endif
 #ifdef RT_USING_SERIAL_V1
-                if (rt_device_open(uart_test.uart_dev, RT_DEVICE_FLAG_DMA_RX) != RT_EOK)
+                if (rt_device_open(uart_test.uart_dev, RT_DEVICE_FLAG_INT_RX) != RT_EOK)
 #endif
                 {
                     LOG_E("open '%s' error!", argv[2]);

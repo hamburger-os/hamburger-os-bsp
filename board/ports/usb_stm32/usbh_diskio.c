@@ -58,7 +58,6 @@ struct usbh_diskio
 static struct usbh_diskio udisk_part[MAX_PARTITION_COUNT] = { 0 };
 
 /* Private function prototypes -----------------------------------------------*/
-static rt_err_t USBH_status(rt_device_t dev);
 static rt_size_t USBH_read(rt_device_t dev, rt_off_t sector, void* buff, rt_size_t count);
 
 #if _USE_WRITE == 1
@@ -262,6 +261,7 @@ rt_err_t USBH_diskio_uninitialize()
     return ret;
 }
 
+#ifdef USBH_ENABLE_STATUS
 /**
  * @brief  Gets Disk Status
  * @param  lun : lun id
@@ -283,6 +283,7 @@ static rt_err_t USBH_status(rt_device_t dev)
 
     return res;
 }
+#endif
 
 /**
  * @brief  Reads Sector(s)
