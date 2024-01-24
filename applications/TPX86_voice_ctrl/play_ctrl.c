@@ -16,9 +16,37 @@
 #define DBG_LVL DBG_INFO
 #include <rtdbg.h>
 
-static void play_thread_entry(void *parameter)
+void tpx86_voice_ctrl_play_press(int key)
 {
-    VoiceCtrlUserData *puserdata = (VoiceCtrlUserData *)parameter;
+    VoiceCtrlUserData *puserdata = (VoiceCtrlUserData *)&voice_ctrl_userdata;
+    switch(key)
+    {
+    case PLAY_CTL0:
+    case PLAY_CTL1:
+        rt_pin_write(puserdata->play_pin[key], PIN_LOW);
+        break;
+    default:
+        break;
+    }
+}
+
+void tpx86_voice_ctrl_play_release(int key)
+{
+    VoiceCtrlUserData *puserdata = (VoiceCtrlUserData *)&voice_ctrl_userdata;
+    switch(key)
+    {
+    case PLAY_CTL0:
+    case PLAY_CTL1:
+        rt_pin_write(puserdata->play_pin[key], PIN_HIGH);
+        break;
+    default:
+        break;
+    }
+}
+
+int tpx86_voice_ctrl_play_init(void)
+{
+    VoiceCtrlUserData *puserdata = (VoiceCtrlUserData *)&voice_ctrl_userdata;
 
     puserdata->play_pin[PLAY_CTL0] = rt_pin_get(puserdata->play_devname[PLAY_CTL0]);
     rt_pin_mode(puserdata->play_pin[PLAY_CTL0], PIN_MODE_OUTPUT);
@@ -27,29 +55,6 @@ static void play_thread_entry(void *parameter)
     puserdata->play_pin[PLAY_CTL1] = rt_pin_get(puserdata->play_devname[PLAY_CTL1]);
     rt_pin_mode(puserdata->play_pin[PLAY_CTL1], PIN_MODE_OUTPUT);
     rt_pin_write(puserdata->play_pin[PLAY_CTL1], PIN_HIGH);
-
-    LOG_I("play thread startup...");
-    while(puserdata->isThreadRun)
-    {
-        rt_thread_delay(500);
-        rt_pin_write(puserdata->play_pin[PLAY_CTL0], !rt_pin_read(puserdata->play_pin[PLAY_CTL0]));
-        rt_pin_write(puserdata->play_pin[PLAY_CTL1], !rt_pin_read(puserdata->play_pin[PLAY_CTL1]));
-    }
-}
-
-int tpx86_voice_ctrl_play_init(void)
-{
-    /* 创建 play 线程 */
-    rt_thread_t thread = rt_thread_create("play", play_thread_entry, &voice_ctrl_userdata, 2048, 29, 10);
-    /* 创建成功则启动线程 */
-    if (thread != RT_NULL)
-    {
-        rt_thread_startup(thread);
-    }
-    else
-    {
-        LOG_E("thread startup error!");
-    }
 
     return RT_EOK;
 }

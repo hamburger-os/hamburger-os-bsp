@@ -20,11 +20,11 @@ VoiceCtrlUserData voice_ctrl_userdata = {
     .adc_devname = "adc1",
     .adc_channel = 8,
 
-    .led_devname = {"PC13", "PI8", "PC15", "PI10"},
+    .led_devname = {"PC.13", "PI.8", "PC.15", "PI.10"},
 
-    .play_devname = {"PH2", "PH3"},
+    .play_devname = {"PH.2", "PH.3"},
 
-    .voice_devname = {"PB8", "PB9", "PI6", "PI7", "PI5"},
+    .voice_devname = {"PB.8", "PB.9", "PI.6", "PI.7", "PI.5"},
 
     .uart_devname = {"uart2", "uart3", "uart4", "uart7", "uart6"},
 

@@ -43,6 +43,7 @@ typedef struct
 {
     char *gpio_devname[6][2];
     char *key_devname;
+    rt_base_t key_channel;
     char *fs_path[5];
     char *spi_devname;
     char *spi_devname_cs;

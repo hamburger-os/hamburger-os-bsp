@@ -111,7 +111,9 @@ static int fmc_hw_init(void)
         hsram.Init.MemoryDataWidth = fmc_list[i].hsram.Init.MemoryDataWidth;
         hsram.Init.BurstAccessMode = FMC_BURST_ACCESS_MODE_DISABLE;
         hsram.Init.WaitSignalPolarity = FMC_WAIT_SIGNAL_POLARITY_LOW;
+#ifdef SOC_SERIES_STM32F4
         hsram.Init.WrapMode = FMC_WRAP_MODE_DISABLE;
+#endif
         hsram.Init.WaitSignalActive = FMC_WAIT_TIMING_BEFORE_WS;
         hsram.Init.WriteOperation = FMC_WRITE_OPERATION_DISABLE;
         hsram.Init.WaitSignal = FMC_WAIT_SIGNAL_DISABLE;
@@ -119,6 +121,9 @@ static int fmc_hw_init(void)
         hsram.Init.AsynchronousWait = FMC_ASYNCHRONOUS_WAIT_ENABLE;
         hsram.Init.WriteBurst = FMC_WRITE_BURST_DISABLE;
         hsram.Init.ContinuousClock = FMC_CONTINUOUS_CLOCK_SYNC_ONLY;
+#ifdef SOC_SERIES_STM32H7
+        hsram.Init.WriteFifo = FMC_WRITE_FIFO_ENABLE;
+#endif
         hsram.Init.PageSize = FMC_PAGE_SIZE_NONE;
         /* Timing */
         Timing.AddressSetupTime = fmc_list[i].Timing.AddressSetupTime;

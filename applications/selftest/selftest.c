@@ -25,7 +25,8 @@ static SelftestUserData selftest_userdata = {
         {BSP_GPIO_TABLE_GPIO4       , BSP_GPIO_TABLE_GPIO7      },
         {BSP_GPIO_TABLE_SPI1_CS1    , BSP_GPIO_TABLE_SPI1_CS2   },
         {BSP_GPIO_TABLE_PWM2        , BSP_GPIO_TABLE_GPIO2      }},
-    .key_devname = BSP_GPIO_TABLE_PWM3,
+    .key_devname = BSP_DEV_TABLE_PWM3,
+    .key_channel = BSP_DEV_TABLE_PWM3_CHANNEL,
     .fs_path = {
         "/mnt/fram",
         "/mnt/spinor64",

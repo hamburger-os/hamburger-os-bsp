@@ -16,9 +16,39 @@
 #define DBG_LVL DBG_INFO
 #include <rtdbg.h>
 
-static void voice_thread_entry(void *parameter)
+void tpx86_voice_ctrl_voice_press(int key)
 {
-    VoiceCtrlUserData *puserdata = (VoiceCtrlUserData *)parameter;
+    VoiceCtrlUserData *puserdata = (VoiceCtrlUserData *)&voice_ctrl_userdata;
+    switch(key)
+    {
+    case VOICE_CT1:
+    case VOICE_CT2:
+    case VOICE_CT3:
+        rt_pin_write(puserdata->voice_pin[key], PIN_LOW);
+        break;
+    default:
+        break;
+    }
+}
+
+void tpx86_voice_ctrl_voice_release(int key)
+{
+    VoiceCtrlUserData *puserdata = (VoiceCtrlUserData *)&voice_ctrl_userdata;
+    switch(key)
+    {
+    case VOICE_CT1:
+    case VOICE_CT2:
+    case VOICE_CT3:
+        rt_pin_write(puserdata->voice_pin[key], PIN_HIGH);
+        break;
+    default:
+        break;
+    }
+}
+
+int tpx86_voice_ctrl_voice_init(void)
+{
+    VoiceCtrlUserData *puserdata = (VoiceCtrlUserData *)&voice_ctrl_userdata;
 
     puserdata->voice_pin[VOICE_CT1] = rt_pin_get(puserdata->voice_devname[VOICE_CT1]);
     rt_pin_mode(puserdata->voice_pin[VOICE_CT1], PIN_MODE_OUTPUT);
@@ -39,32 +69,6 @@ static void voice_thread_entry(void *parameter)
     puserdata->voice_pin[VOICE_SUB] = rt_pin_get(puserdata->voice_devname[VOICE_SUB]);
     rt_pin_mode(puserdata->voice_pin[VOICE_SUB], PIN_MODE_OUTPUT);
     rt_pin_write(puserdata->voice_pin[VOICE_SUB], PIN_HIGH);
-
-    LOG_I("voice thread startup...");
-    while(puserdata->isThreadRun)
-    {
-        rt_thread_delay(500);
-//        rt_pin_write(puserdata->voice_pin[VOICE_CT1], !rt_pin_read(puserdata->voice_pin[VOICE_CT1]));
-//        rt_pin_write(puserdata->voice_pin[VOICE_CT2], !rt_pin_read(puserdata->voice_pin[VOICE_CT2]));
-//        rt_pin_write(puserdata->voice_pin[VOICE_CT3], !rt_pin_read(puserdata->voice_pin[VOICE_CT3]));
-        rt_pin_write(puserdata->voice_pin[VOICE_ADD], !rt_pin_read(puserdata->voice_pin[VOICE_ADD]));
-        rt_pin_write(puserdata->voice_pin[VOICE_SUB], !rt_pin_read(puserdata->voice_pin[VOICE_SUB]));
-    }
-}
-
-int tpx86_voice_ctrl_voice_init(void)
-{
-    /* 创建 voice 线程 */
-    rt_thread_t thread = rt_thread_create("voice", voice_thread_entry, &voice_ctrl_userdata, 2048, 28, 10);
-    /* 创建成功则启动线程 */
-    if (thread != RT_NULL)
-    {
-        rt_thread_startup(thread);
-    }
-    else
-    {
-        LOG_E("thread startup error!");
-    }
 
     return RT_EOK;
 }

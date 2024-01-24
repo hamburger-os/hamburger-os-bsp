@@ -58,12 +58,12 @@ static void change_lcd_brightness(uint32_t value)
 {
     if (value > 100)
         value = 100;
-    uint32_t brightness = LCD_PWM_PERIOD - value * LCD_PWM_PERIOD / 100;
+    uint32_t brightness = LCD_PWM_PERIOD - LCD_PWM_PERIOD / 100 * value;
     struct rt_device_pwm *pwm_dev;
 
     /* turn on the LCD backlight */
     pwm_dev = (struct rt_device_pwm *)rt_device_find(LCD_BKLT_CTL_PWM);
-    /* pwm frequency:100K = 10000ns */
+    /* Convert nanosecond to frequency and duty cycle. 1s = 1 * 1000 * 1000 * 1000 ns */
     rt_pwm_set(pwm_dev, LCD_BKLT_CTL_PWM_CHANNEL, LCD_PWM_PERIOD, brightness);
     rt_pwm_enable(pwm_dev, LCD_BKLT_CTL_PWM_CHANNEL);
 }

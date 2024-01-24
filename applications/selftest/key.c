@@ -18,31 +18,33 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-static void key_hz_test(rt_base_t pin, uint16_t hz, uint16_t ms)
-{
-    uint32_t us = 1000000.0f/hz/2;
-    uint32_t count = ms * 1000.0f / us / 2;
+static struct rt_device_pwm *pwm_dev;
 
-    for (uint32_t n = 0; n < count; n++)
-    {
-        rt_hw_us_delay(us);
-        rt_pin_write(pin, PIN_HIGH);
-        rt_hw_us_delay(us);
-        rt_pin_write(pin, PIN_LOW);
-    }
+//频率控制20~20000 hz
+#define KEY_PWM_PERIOD 1000000000
+static void output_frequency(SelftestUserData *puserdata, uint32_t hz)
+{
+    uint32_t cycle = KEY_PWM_PERIOD/hz;
+    /* Convert nanosecond to frequency and duty cycle. 1s = 1 * 1000 * 1000 * 1000 ns */
+    rt_pwm_set(pwm_dev, puserdata->key_channel, cycle, cycle/2);
 }
 
 void selftest_key_test(SelftestUserData *puserdata)
 {
-    puserdata->key_pin = rt_pin_get(puserdata->key_devname);
+    pwm_dev = (struct rt_device_pwm *)rt_device_find(puserdata->key_devname);
 
     LOG_I("pwm voice run...");
-    rt_pin_mode(puserdata->key_pin, PIN_MODE_OUTPUT);
-    key_hz_test(puserdata->key_pin, 262, 200);
-    key_hz_test(puserdata->key_pin, 294, 200);
-    key_hz_test(puserdata->key_pin, 330, 200);
-    key_hz_test(puserdata->key_pin, 349, 200);
-    key_hz_test(puserdata->key_pin, 392, 200);
-    rt_pin_mode(puserdata->key_pin, PIN_MODE_INPUT);
+    rt_pwm_enable(pwm_dev, puserdata->key_channel);
+    output_frequency(puserdata, 262);
+    rt_thread_delay(200);
+    output_frequency(puserdata, 294);
+    rt_thread_delay(200);
+    output_frequency(puserdata, 330);
+    rt_thread_delay(200);
+    output_frequency(puserdata, 349);
+    rt_thread_delay(200);
+    output_frequency(puserdata, 392);
+    rt_thread_delay(200);
+    rt_pwm_disable(pwm_dev, puserdata->key_channel);
     LOG_I("pwm voice end");
 }

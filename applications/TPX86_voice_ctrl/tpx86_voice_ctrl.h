@@ -110,4 +110,10 @@ int tpx86_voice_ctrl_adc_init(void);
 int tpx86_voice_ctrl_fmc_init(void);
 int tpx86_music_ctrl_music_init(void);
 
+void tpx86_voice_ctrl_play_press(int key);
+void tpx86_voice_ctrl_play_release(int key);
+
+void tpx86_voice_ctrl_voice_press(int key);
+void tpx86_voice_ctrl_voice_release(int key);
+
 #endif /* APPLICATIONS_TPX86_VOICE_CTRL_TPX86_VOICE_CTRL_H_ */
