@@ -16,6 +16,13 @@
 #include "drv_spi.h"
 #include "drv_soft_spi.h"
 
+#ifdef RT_USING_SERIAL_V1
+#include "drv_usart.h"
+#endif
+#ifdef RT_USING_SERIAL_V2
+#include "drv_usart_v2.h"
+#endif
+
 /* SC16IS752 dirver class */
 struct SC16IS752Def
 {
