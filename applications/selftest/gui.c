@@ -20,6 +20,8 @@
 #include <lvgl.h>
 #endif
 
+#include "sysinfo.h"
+
 #define DBG_TAG "gui "
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
@@ -122,10 +124,28 @@ static void gesture_event_cb(lv_event_t *event)
     {
     case LV_DIR_BOTTOM:
     {
-        lv_obj_t * mbox = lv_msgbox_create(NULL, "SWOS2",
-                "Standardized Automatic Testing Tooling\n"
+        char str[512] = {0};
+        struct SysInfoDef info = {0};
+        sysinfo_get(&info);
+        char SN_str[sizeof(info.SN) + 1] = {0};
+        rt_memcpy(SN_str, info.SN, sizeof(info.SN));
+
+        rt_snprintf(str, sizeof(str),
+                "----------------------------------------\n"
+                "- version : %s\n"
+                "- type : 0x%X\n"
+                "- sn : %s\n"
+                "- cpu temp : %d (C * 100) \n"
+                "- chip id : %02X %02X %02X %02X %02X %02X %02X %02X\n"
+                "- chip temp : %d (C * 100) \n"
+                "- times : %d s\n"
+                "- count : %d\n"
+                "----------------------------------------\n"
                 "Powered by hnthinker team\n"
-                , NULL, true);
+                , info.version, info.type, SN_str, info.cpu_temp
+                , info.chip_id[0], info.chip_id[1], info.chip_id[2], info.chip_id[3], info.chip_id[4], info.chip_id[5], info.chip_id[6], info.chip_id[7]
+                , info.chip_temp, info.times, info.count);
+        lv_obj_t * mbox = lv_msgbox_create(NULL, "SWOS2", str, NULL, true);
         lv_obj_set_width(mbox, LV_HOR_RES_MAX/2);
         lv_obj_align(mbox, LV_ALIGN_CENTER, 0, 0);
     }
