@@ -30,6 +30,7 @@ struct rt_stm32_eth
 
     struct rt_completion TxPkt_completion;
 
+    char *dev_name;
     uint8_t phy_addr;
     /* interface address info, hw address */
     uint8_t mac[MAC_ADDR_LEN];

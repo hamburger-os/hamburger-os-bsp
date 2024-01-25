@@ -14,11 +14,11 @@
 #include "drv_fmc_eth.h"
 #include "ksz8851.h"
 
-#ifdef BSP_USE_KVDB_NET_IF
+#ifdef BSP_USING_KSZ8851_KVDB_NET_IF
 #include "flashdb_port.h"
 #endif
 
-#ifdef BSP_USE_SYSINFO_MAC
+#ifdef BSP_USING_KSZ8851_SYSINFO_MAC
 #include "sysinfo.h"
 #endif
 
@@ -522,16 +522,62 @@ static void fmc_eth_get_config(void)
 #endif
 }
 
+#if defined(BSP_USING_KSZ8851_KVDB_NET_IF)
+static int rt_fmc_eth_set_if(void)
+{
+    rt_err_t state = RT_EOK;
+
+    /* Config the lwip device */
+    char *ip_key[] = {"e0_ip", "e1_ip", "e2_ip"};
+    char *gw_key[] = {"e0_gw", "e1_gw", "e2_gw"};
+    char *mask_key[] = {"e0_mask", "e1_mask", "e2_mask"};
+
+    char ip_addr[16] = {0};
+    char gw_addr[16] = {0};
+    char nm_addr[16] = {0};
+
+    for (int i = 0; i < sizeof(fmc_eth_port) / sizeof(struct rt_fmc_eth_port); i++)
+    {
+        extern void netdev_set_if(char* netdev_name, char* ip_addr, char* gw_addr, char* nm_addr);
+#if !LWIP_DHCP
+        if (kvdb_get(ip_key[i], ip_addr) == 0)
+        {
+            char ip_addr_str[16];
+            rt_sprintf(ip_addr_str, "192.168.1.%d", i + 30);
+            rt_strcpy(ip_addr, ip_addr_str);
+        }
+        if (kvdb_get(gw_key[i], gw_addr) == 0)
+        {
+            rt_strcpy(gw_addr, "192.168.1.1");
+        }
+        if (kvdb_get(mask_key[i], nm_addr) == 0)
+        {
+            rt_strcpy(nm_addr, "255.255.255.0");
+        }
+
+        netdev_set_if(fmc_eth_device.port[i].dev_name, ip_addr, gw_addr, nm_addr);
+        LOG_I("netdev %s set if %s %s %s", fmc_eth_device.port[i].dev_name, ip_addr, gw_addr, nm_addr);
+#endif
+    }
+    return state;
+}
+#endif
+
 /* Register the EMAC device */
 static int rt_fmc_eth_init(void)
 {
     rt_err_t state = RT_EOK;
+#ifdef BSP_USING_KSZ8851_KVDB_MAC
+    char *mac_key[] = {"e0_mac", "e1_mac", "e2_mac"};
+    char mac_addr[18] = {0};
+#endif
+
     fmc_eth_get_config();
     fmc_eth_hard_reset();
 
     for (int i = 0; i < sizeof(fmc_eth_port) / sizeof(struct rt_fmc_eth_port); i++)
     {
-#ifdef BSP_USE_SYSINFO_MAC
+#if defined(BSP_USING_KSZ8851_SYSINFO_MAC)
         struct SysInfoFixV0Def sysinfofix = {0};
         if (sysinfofix_get(&sysinfofix) == 0)
         {
@@ -544,7 +590,20 @@ static int rt_fmc_eth_init(void)
             fmc_eth_device.port[i].mac[4] = sysinfofix.mac[i][4];
             fmc_eth_device.port[i].mac[5] = sysinfofix.mac[i][5];
         }
-        else
+#elif defined(BSP_USING_KSZ8851_KVDB_MAC)
+        if (kvdb_get(mac_key[i], mac_addr) != 0)
+        {
+            /* OUI 厂商ID */
+            fmc_eth_device.port[i].mac[0] = strtoul(&mac_addr[0], NULL, 16);
+            fmc_eth_device.port[i].mac[1] = strtoul(&mac_addr[3], NULL, 16);
+            fmc_eth_device.port[i].mac[2] = strtoul(&mac_addr[6], NULL, 16);
+            /* 设备MAC地址 */
+            fmc_eth_device.port[i].mac[3] = strtoul(&mac_addr[9], NULL, 16);
+            fmc_eth_device.port[i].mac[4] = strtoul(&mac_addr[12], NULL, 16);
+            fmc_eth_device.port[i].mac[5] = strtoul(&mac_addr[15], NULL, 16);
+        }
+#endif
+        if (fmc_eth_device.port[i].mac[0] == 0 && fmc_eth_device.port[i].mac[1] == 0 && fmc_eth_device.port[i].mac[2] == 0 )
         {
             /* OUI 00-80-E1 STMICROELECTRONICS.前三个字节为厂商ID */
             fmc_eth_device.port[i].mac[0] = 0xF8;
@@ -555,19 +614,7 @@ static int rt_fmc_eth_init(void)
             fmc_eth_device.port[i].mac[4] = *(uint8_t *)(UID_BASE + 1 + i);
             fmc_eth_device.port[i].mac[5] = *(uint8_t *)(UID_BASE + 0 + i);
         }
-#else
-        /* OUI 00-80-E1 STMICROELECTRONICS.前三个字节为厂商ID */
-        fmc_eth_device.port[i].mac[0] = 0xF8;
-        fmc_eth_device.port[i].mac[1] = 0x09;
-        fmc_eth_device.port[i].mac[2] = 0xA4;
-        /* generate MAC addr from 96bit unique ID (only for test). */
-        fmc_eth_device.port[i].mac[3] = *(uint8_t *)(UID_BASE + 2 + i);
-        fmc_eth_device.port[i].mac[4] = *(uint8_t *)(UID_BASE + 1 + i);
-        fmc_eth_device.port[i].mac[5] = *(uint8_t *)(UID_BASE + 0 + i);
-#endif
-        LOG_I("netdev %s set MAC %02X %02X %02X %02X %02X %02X", fmc_eth_device.port[i].dev_name
-                , fmc_eth_device.port[i].mac[0], fmc_eth_device.port[i].mac[1], fmc_eth_device.port[i].mac[2]
-                , fmc_eth_device.port[i].mac[3], fmc_eth_device.port[i].mac[4], fmc_eth_device.port[i].mac[5]);
+
         fmc_eth_device.port[i].parent.parent.init = fmc_eth_init;
         fmc_eth_device.port[i].parent.parent.open = fmc_eth_open;
         fmc_eth_device.port[i].parent.parent.close = fmc_eth_close;
@@ -595,7 +642,9 @@ static int rt_fmc_eth_init(void)
         state = eth_device_init(&(fmc_eth_device.port[i].parent), fmc_eth_device.port[i].dev_name);
         if (RT_EOK == state)
         {
-            LOG_I("device %s init success", fmc_eth_device.port[i].dev_name);
+            LOG_I("device %s init success MAC %02X %02X %02X %02X %02X %02X", fmc_eth_device.port[i].dev_name
+                    , fmc_eth_device.port[i].mac[0], fmc_eth_device.port[i].mac[1], fmc_eth_device.port[i].mac[2]
+                    , fmc_eth_device.port[i].mac[3], fmc_eth_device.port[i].mac[4], fmc_eth_device.port[i].mac[5]);
         }
         else
         {
@@ -604,55 +653,12 @@ static int rt_fmc_eth_init(void)
         }
     }
 
+#if defined(BSP_USING_KSZ8851_KVDB_NET_IF)
+    rt_fmc_eth_set_if();
+#endif
     return state;
 }
-INIT_COMPONENT_EXPORT(rt_fmc_eth_init);
-
-#if defined(BSP_USE_KVDB_NET_IF)
-static int rt_netdev_set_if_init(void)
-{
-    rt_err_t state = RT_EOK;
-
-#ifdef BSP_USE_KVDB_NET_IF
-    /* Config the lwip device */
-    char *ip_key[] = {"e0_ip", "e1_ip", "e2_ip"};
-    char *gw_key[] = {"e0_gw", "e1_gw", "e2_gw"};
-    char *mask_key[] = {"e0_mask", "e1_mask", "e2_mask"};
-
-    char ip_addr[16] = {0};
-    char gw_addr[16] = {0};
-    char nm_addr[16] = {0};
-#endif
-
-    for (int i = 0; i < sizeof(fmc_eth_port) / sizeof(struct rt_fmc_eth_port); i++)
-    {
-#ifdef BSP_USE_KVDB_NET_IF
-        extern void netdev_set_if(char* netdev_name, char* ip_addr, char* gw_addr, char* nm_addr);
-#if !LWIP_DHCP
-        if (kvdb_get(ip_key[i], ip_addr) == 0)
-        {
-            char ip_addr_str[16];
-            rt_sprintf(ip_addr_str, "192.168.1.%d", i + 30);
-            rt_strcpy(ip_addr, ip_addr_str);
-        }
-        if (kvdb_get(gw_key[i], gw_addr) == 0)
-        {
-            rt_strcpy(gw_addr, "192.168.1.1");
-        }
-        if (kvdb_get(mask_key[i], nm_addr) == 0)
-        {
-            rt_strcpy(nm_addr, "255.255.255.0");
-        }
-
-        netdev_set_if(fmc_eth_device.port[i].dev_name, ip_addr, gw_addr, nm_addr);
-        LOG_I("netdev %s set if %s %s %s", fmc_eth_device.port[i].dev_name, ip_addr, gw_addr, nm_addr);
-#endif
-#endif
-    }
-    return state;
-}
-INIT_ENV_EXPORT(rt_netdev_set_if_init);
-#endif
+INIT_ENV_EXPORT(rt_fmc_eth_init);
 
 #include <netdev.h>       /* 当需要网卡操作是，需要包含这两个头文件 */
 

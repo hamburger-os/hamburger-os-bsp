@@ -3851,15 +3851,26 @@ menu "Onboard Peripheral Drivers"
                 int "Set the BusTurnAroundDuration, default: 8"
                 default (8)
                 
-            config BSP_USE_KVDB_NET_IF
+            config BSP_USING_KSZ8851_KVDB_NET_IF
                 bool "Enable kvdb set netdev if"
                 select PKG_USING_FLASHDB_PORT
-                default n
+                default y
+
+            choice
+                prompt "Select the set mac method"
+                default BSP_USING_KSZ8851_SYSINFO_MAC
                 
-            config BSP_USE_SYSINFO_MAC
-                bool "Enable sysinfo set mac"
-                select PKG_USING_SYSINFO
-                default n
+                config BSP_USING_KSZ8851_SYSINFO_MAC
+                    bool "Enable sysinfo set mac"
+                    select PKG_USING_SYSINFO
+    
+                config BSP_USING_KSZ8851_KVDB_MAC
+                    bool "Enable kvdb set mac"
+                    select PKG_USING_FLASHDB_PORT
+                    
+                config BSP_USING_KSZ8851_UID_MAC
+                    bool "Enable UID set mac"
+            endchoice
             
             menuconfig BSP_USE_ETH1
                 bool "Enable ETH port 1"
@@ -3993,37 +4004,22 @@ menu "Onboard Peripheral Drivers"
                     bool "Select phy LAN8720A"
             endchoice
             
-            config BSP_USING_ETH_SET_MAC
-                bool "Enable set mac addr"
-                default n
-                
-        		if BSP_USING_ETH_SET_MAC
-        		
-		            config BSP_ETH_MAC_ADDR1
-		                hex "Set ETH addr1, default: 0xF8"
-		                default (0xF8)
-        		
-		            config BSP_ETH_MAC_ADDR2
-		                hex "Set ETH addr2, default: 0x09"
-		                default (0x09)
-        		
-		            config BSP_ETH_MAC_ADDR3
-		                hex "Set ETH addr3, default: 0xA4"
-		                default (0xA4)
-        		
-		            config BSP_ETH_MAC_ADDR4
-		                hex "Set ETH addr4, default: 0x51"
-		                default (0x51)
-        		
-		            config BSP_ETH_MAC_ADDR5
-		                hex "Set ETH addr5, default: 0x0E"
-		                default (0x0E)
-        		
-		            config BSP_ETH_MAC_ADDR6
-		                hex "Set ETH addr6, default: 0x00"
-		                default (0x00)
-        		
-        		endif
+            config ETH_USING_KVDB_NET_IF
+                bool "Enable kvdb set netdev if"
+                select PKG_USING_FLASHDB_PORT
+                default y
+
+            choice
+                prompt "Select the set mac method"
+                default ETH_USING_KVDB_MAC
+    
+                config ETH_USING_KVDB_MAC
+                    bool "Enable kvdb set mac"
+                    select PKG_USING_FLASHDB_PORT
+                    
+                config ETH_USING_UID_MAC
+                    bool "Enable UID set mac"
+            endchoice
         endif
         
     menuconfig BSP_USING_MAX31826

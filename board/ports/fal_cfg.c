@@ -110,7 +110,9 @@ const size_t device_table_len = sizeof(device_table) / sizeof(struct fal_flash_d
 const struct fal_partition partition_table_def[] =
 {
 #ifdef BSP_USING_ON_CHIP_FLASH
+#if FLASH_SIZE_BOOTLOADER > 0
     {FAL_PART_MAGIC_WORD,"bootloader",        FLASH_DEV_NAME,       FLASH_OFFSET_BOOTLOADER,               FLASH_SIZE_BOOTLOADER, 0},
+#endif
 #if FLASH_SIZE_APP > 0
     {FAL_PART_MAGIC_WORD,       "app",        FLASH_DEV_NAME,              FLASH_OFFSET_APP,                      FLASH_SIZE_APP, 0},
 #endif

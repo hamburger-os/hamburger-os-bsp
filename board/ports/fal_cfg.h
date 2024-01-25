@@ -19,11 +19,14 @@ extern "C" {
 #ifdef BSP_USING_ON_CHIP_FLASH
 //内部flash定义,无需修改
 #define FLASH_SIZE_TOTAL                    (STM32_FLASH_SIZE)
+#ifdef BSP_USING_NOBOOT
+#define FLASH_SIZE_BOOTLOADER               (0)
+#endif
 #ifdef BSP_USING_JUMP_0x20000
-#define FLASH_SIZE_BOOTLOADER               0x20000
+#define FLASH_SIZE_BOOTLOADER               (0x20000)
 #endif
 #ifdef BSP_USING_JUMP_0x80000
-#define FLASH_SIZE_BOOTLOADER               0x80000
+#define FLASH_SIZE_BOOTLOADER               (0x80000)
 #endif
 #define FLASH_SIZE_APP                      (FLASH_SIZE_TOTAL - FLASH_SIZE_BOOTLOADER - FLASH_SIZE_DOWNLOAD - FLASH_SIZE_FACTORY - FLASH_SIZE_KVDB)
 #define FLASH_OFFSET_BOOTLOADER             (0)

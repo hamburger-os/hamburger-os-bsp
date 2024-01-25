@@ -26,18 +26,33 @@ static int kvdb_init(void)
 {
     fdb_err_t ret = FDB_NO_ERR;
 
+    char mac[4][18];
+    for (int i = 0; i < 4; i++)
+    {
+        rt_snprintf(mac[i], 18, "F8-09-A4-%02X-%02X-%02X"
+            , *(uint8_t *)(UID_BASE + 2 + i)
+            , *(uint8_t *)(UID_BASE + 1 + i)
+            , *(uint8_t *)(UID_BASE + 0 + i));
+    }
+
     struct fdb_default_kv_node default_kv_table[] =
     {
-        {"system_version"               , "2.0.0"                   },
+        {"e_ip"                         , "192.168.1.29"            },
+        {"e_gw"                         , "192.168.1.1"             },
+        {"e_mask"                       , "255.255.255.0"           },
+        {"e_mac"                        , mac[0]                    },
         {"e0_ip"                        , "192.168.1.30"            },
         {"e0_gw"                        , "192.168.1.1"             },
         {"e0_mask"                      , "255.255.255.0"           },
+        {"e0_mac"                       , mac[1]                    },
         {"e1_ip"                        , "192.168.1.31"            },
         {"e1_gw"                        , "192.168.1.1"             },
         {"e1_mask"                      , "255.255.255.0"           },
+        {"e1_mac"                       , mac[2]                    },
         {"e2_ip"                        , "192.168.1.32"            },
         {"e2_gw"                        , "192.168.1.1"             },
         {"e2_mask"                      , "255.255.255.0"           },
+        {"e2_mac"                       , mac[3]                    },
     };
 
     struct fdb_default_kv default_kv = {0};
