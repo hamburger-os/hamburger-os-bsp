@@ -720,7 +720,7 @@ static void hdlc_int_pin_hdr(void *args)
         {
             g_s_z85230_hdlc_frame.index = 0;
             dev->rx_err_cnt++;
-            LOG_E("1.hdlc rx err num %d", dev->rx_err_cnt);
+//            LOG_E("1.hdlc rx err num %d", dev->rx_err_cnt);
         }
         if( (rr0 & SYNC_HUNT) != 0 )
         {
@@ -737,7 +737,7 @@ static void hdlc_int_pin_hdr(void *args)
             }
             else
             {
-                LOG_E("g_s_z85230_hdlc_frame.index >= Z85230_HDLC_BUF_SIZE");
+//                LOG_E("g_s_z85230_hdlc_frame.index >= Z85230_HDLC_BUF_SIZE");
             }
         }
 
@@ -747,7 +747,7 @@ static void hdlc_int_pin_hdr(void *args)
             {
                 /** hdlc crc error */
                 dev->rx_err_cnt++;
-                LOG_E("2.hdlc rx err num %d", dev->rx_err_cnt);
+//                LOG_E("2.hdlc rx err num %d", dev->rx_err_cnt);
             }
             else
             {
@@ -764,7 +764,7 @@ static void hdlc_int_pin_hdr(void *args)
                     S_Z85230_HDLC_BUF *p_buf= rt_malloc(sizeof(S_Z85230_HDLC_BUF));
                     if(RT_NULL == p_buf)
                     {
-                        LOG_E("malloc p_buf null size %d", sizeof(S_Z85230_HDLC_BUF));
+//                        LOG_E("malloc p_buf null size %d", sizeof(S_Z85230_HDLC_BUF));
                         return;
                     }
                     else
@@ -781,6 +781,7 @@ static void hdlc_int_pin_hdr(void *args)
 
                         rt_hw_interrupt_enable(level);
 
+//                        rt_kprintf("pin hdr %d\r\n", dev->rx_err_cnt);
                         if(dev->dev.rx_indicate != RT_NULL)
                         {
                             dev->dev.rx_indicate(&dev->dev, p_buf->len);
