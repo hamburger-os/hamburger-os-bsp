@@ -4547,8 +4547,8 @@ menu "Onboard Peripheral Drivers"
         
         if BSP_USING_Z8523L16
             config BSP_USING_Z85230_HDLC_MODE
-                bool "Enable Z85230 HDLC MODE, default serial com mode"
-                default n
+                bool "Enable Z85230 serial MODE, default HDLC MODE"
+                default y
                 
             config Z8523L16_NE
                   hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x2"
