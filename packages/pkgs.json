@@ -1,13 +1,33 @@
 [
  {
-  "path": "/packages/iot/webnet", 
-  "ver": "v2.0.3", 
-  "name": "WEBNET"
- }, 
- {
   "path": "/packages/iot/netutils", 
   "ver": "latest", 
   "name": "NETUTILS"
+ }, 
+ {
+  "path": "/packages/iot/lssdp", 
+  "ver": "latest", 
+  "name": "LSSDP"
+ }, 
+ {
+  "path": "/packages/security/tinycrypt", 
+  "ver": "latest", 
+  "name": "TINYCRYPT"
+ }, 
+ {
+  "path": "/packages/language/JSON/cJSON", 
+  "ver": "v1.7.16", 
+  "name": "CJSON"
+ }, 
+ {
+  "path": "/packages/tools/adbd", 
+  "ver": "latest", 
+  "name": "ADBD"
+ }, 
+ {
+  "path": "/packages/tools/CoreMark", 
+  "ver": "latest", 
+  "name": "COREMARK"
  }, 
  {
   "path": "/packages/system/enhanced-kservice/rt_memcpy_cm", 
