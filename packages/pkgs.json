@@ -1,18 +1,13 @@
 [
  {
-  "path": "/packages/multimedia/wavplayer", 
-  "ver": "latest", 
-  "name": "WAVPLAYER"
+  "path": "/packages/iot/webnet", 
+  "ver": "v2.0.3", 
+  "name": "WEBNET"
  }, 
  {
-  "path": "/packages/multimedia/helix", 
-  "ver": "v1.0.0", 
-  "name": "HELIX"
- }, 
- {
-  "path": "/packages/multimedia/mp3player", 
+  "path": "/packages/iot/netutils", 
   "ver": "latest", 
-  "name": "MP3PLAYER"
+  "name": "NETUTILS"
  }, 
  {
   "path": "/packages/system/enhanced-kservice/rt_memcpy_cm", 
