@@ -164,7 +164,6 @@ static int fal_s25fl512_init(void)
     return ret;
 }
 
-#define READ_SIZE 65535
 static int fal_s25fl512_read(long offset, rt_uint8_t *buf, size_t size)
 {
     uint32_t addr = s25fl512_flash.addr + offset;
@@ -179,38 +178,15 @@ static int fal_s25fl512_read(long offset, rt_uint8_t *buf, size_t size)
         return 0;
     }
 
-    uint32_t addr_page = addr;
-    uint8_t *buf_page = (uint8_t *) buf;
-    size_t size_less = size;
-    size_t size_page = READ_SIZE;
-    size_t countmax = (size % READ_SIZE == 0) ? (size / READ_SIZE) : (size / READ_SIZE + 1);
+    /* 发送读命令 */
+    uint8_t cmd[] = { 0x13, (uint8_t) ((addr) >> 24U), (uint8_t) ((addr) >> 16U), (uint8_t) ((addr) >> 8U), (uint8_t) ((addr)) };
 
-    for (size_t count = 0; count < countmax; count++)
+    /* 读数据 */
+    rt_err_t ret = rt_spi_send_then_recv(s25fl512_spidev, cmd, sizeof(cmd), buf, size);
+    if (ret != RT_EOK)
     {
-        /* 计算页长度 */
-        if (size_less >= READ_SIZE)
-        {
-            size_page = READ_SIZE;
-        }
-        else
-        {
-            size_page = size_less % READ_SIZE;
-        }
-
-        /* 发送读命令 */
-        uint8_t cmd[] = { 0x13, (uint8_t) ((addr_page) >> 24U), (uint8_t) ((addr_page) >> 16U), (uint8_t) ((addr_page) >> 8U), (uint8_t) ((addr_page)) };
-
-        /* 读数据 */
-        rt_err_t ret = rt_spi_send_then_recv(s25fl512_spidev, cmd, sizeof(cmd), buf_page, size_page);
-        if (ret != RT_EOK)
-        {
-            LOG_E("read data error %d!", ret);
-            return -RT_EIO;
-        }
-
-        addr_page += size_page;
-        buf_page += size_page;
-        size_less -= size_page;
+        LOG_E("read data error %d!", ret);
+        return -RT_EIO;
     }
 
     LOG_HEX("read", 16, buf, (size > 64)?(64):(size));
@@ -219,7 +195,7 @@ static int fal_s25fl512_read(long offset, rt_uint8_t *buf, size_t size)
     return size;
 }
 
-#define PAGE_SIZE 4096
+#define PAGE_SIZE 512
 static int fal_s25fl512_write(long offset, const rt_uint8_t *buf, size_t size)
 {
     uint32_t addr = s25fl512_flash.addr + offset;
