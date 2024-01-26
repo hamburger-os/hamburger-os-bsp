@@ -335,7 +335,7 @@ static int fal_fram_init(void)
     return ret;
 }
 
-#define READ_SIZE 16
+#define READ_SIZE 65535
 static int fal_fram_read(long offset, rt_uint8_t *buf, size_t size)
 {
     uint32_t addr = fm25xx_fram.addr + offset;
@@ -389,6 +389,7 @@ static int fal_fram_read(long offset, rt_uint8_t *buf, size_t size)
 
     return size;
 }
+
 static int fal_fram_write(long offset, const rt_uint8_t *buf, size_t size)
 {
     uint32_t addr = fm25xx_fram.addr + offset;

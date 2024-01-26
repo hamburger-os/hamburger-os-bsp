@@ -164,7 +164,7 @@ static int fal_s25fl512_init(void)
     return ret;
 }
 
-#define READ_SIZE 16
+#define READ_SIZE 65535
 static int fal_s25fl512_read(long offset, rt_uint8_t *buf, size_t size)
 {
     uint32_t addr = s25fl512_flash.addr + offset;
@@ -219,7 +219,7 @@ static int fal_s25fl512_read(long offset, rt_uint8_t *buf, size_t size)
     return size;
 }
 
-#define PAGE_SIZE 512
+#define PAGE_SIZE 4096
 static int fal_s25fl512_write(long offset, const rt_uint8_t *buf, size_t size)
 {
     uint32_t addr = s25fl512_flash.addr + offset;

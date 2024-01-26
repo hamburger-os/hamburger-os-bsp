@@ -450,7 +450,9 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
                 /* clear the old error flag */
                 __HAL_SPI_CLEAR_OVRFLAG(spi_handle);
 
+                rt_enter_critical();
                 state = HAL_SPI_Receive(spi_handle, (uint8_t *)recv_buf, send_length, send_length * 4);
+                rt_exit_critical();
             }
         }
         else
@@ -461,33 +463,21 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
 
         if (state != HAL_OK)
         {
-            if (state == HAL_TIMEOUT)
-            {
-                LOG_W("SPI transfer timeout: 0x%p 0x%p 0x%p %d", send_buf, recv_buf, p_txrx_buffer, send_length);
-            }
-            else
-            {
-                LOG_E("SPI transfer error: %d 0x%p 0x%p 0x%p %d", state, send_buf, recv_buf, p_txrx_buffer, send_length);
-                message->length = 0;
-                spi_handle->State = HAL_SPI_STATE_READY;
-                break;
-            }
+            LOG_E("SPI transfer error: %d 0x%p 0x%p 0x%p %d", state, send_buf, recv_buf, p_txrx_buffer, send_length);
+            break;
         }
         else
         {
             LOG_D("%s transfer done", spi_drv->config->bus_name);
         }
 
-        /* For simplicity reasons, this example is just waiting till the end of the
-           transfer, but application may perform other tasks while transfer operation
-           is ongoing. */
         if ((spi_drv->spi_dma_flag & (SPI_USING_TX_DMA_FLAG | SPI_USING_RX_DMA_FLAG)) && (send_length >= DMA_TRANS_MIN_LEN))
         {
             /* blocking the thread,and the other tasks can run */
             if (rt_completion_wait(&spi_drv->cpt, send_length * 4) != RT_EOK)
             {
                 state = HAL_TIMEOUT;
-                LOG_E("wait for DMA interrupt overtime!");
+                LOG_E("SPI transfer timeout: 0x%p 0x%p 0x%p %d", send_buf, recv_buf, p_txrx_buffer, send_length);
                 break;
             }
         }
@@ -516,7 +506,7 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
 
     if(state != HAL_OK)
     {
-        return -RT_ERROR;
+        return 0;
     }
     return message->length;
 }
