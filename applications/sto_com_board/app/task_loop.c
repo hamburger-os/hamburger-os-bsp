@@ -15,10 +15,10 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-#define TASK_HIGH_THREAD_PRIORITY         15
+#define TASK_HIGH_THREAD_PRIORITY         21
 #define TASK_HIGH_THREAD_STACK_SIZE       (1024 * 10)
 
-#define TASK_LOW_THREAD_PRIORITY         20
+#define TASK_LOW_THREAD_PRIORITY         22
 #define TASK_LOW_THREAD_STACK_SIZE       (1024 * 10)
 
 static void TaskHighThreadEntry(void *parameter)

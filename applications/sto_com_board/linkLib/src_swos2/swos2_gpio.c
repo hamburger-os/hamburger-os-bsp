@@ -220,8 +220,9 @@ E_SLOT_ID if_gpio_getSlotId(void)
             }
             break;
         default:
-            return E_SLOT_ID_MAX;
+            return E_SLOT_ID_3;
         }
     }
+    slot_id = E_SLOT_ID_3;
     return slot_id;
 }

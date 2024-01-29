@@ -53,7 +53,6 @@ static rt_err_t swos2_rx_ind(rt_device_t dev, rt_size_t size)
     uint32_t read_size;
 
     read_size = size;
-
     result = rt_mq_send(p_dev->size_mq, &read_size, sizeof(uint32_t));
     if (result != RT_EOK)
     {
@@ -94,7 +93,7 @@ static void swos2_hdlc_rx_thread_entry(void *param)
                 }
             }
         }
-        rt_thread_mdelay(5);
+        rt_thread_mdelay(1);
     }
 }
 
@@ -144,7 +143,8 @@ BOOL if_hdlc_init(void)
     }
 
     /* 4.创建，启动接收线程 */
-    tid = rt_thread_create("if hdlc rx", swos2_hdlc_rx_thread_entry, &swos2_hdlc_dev, 2048, 12, 5);
+//    tid = rt_thread_create("if hdlc rx", swos2_hdlc_rx_thread_entry, &swos2_hdlc_dev, 2048, 12, 5);
+    tid = rt_thread_create("if hdlc rx", swos2_hdlc_rx_thread_entry, &swos2_hdlc_dev, 2048, 20, 5);
     if (tid == RT_NULL)
     {
         LOG_E("sw_hdlc_rx thread create fail!");

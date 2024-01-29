@@ -21,7 +21,7 @@
 
 #include "if_gpio.h"
 
-#define CAN_RX_THREAD_PRIORITY         13
+#define CAN_RX_THREAD_PRIORITY         20//13
 #define CAN_RX_THREAD_STACK_SIZE       (1024 * 4)
 #define CAN_RX_THREAD_TIMESLICE        5
 
