@@ -450,7 +450,8 @@ BOOL if_eth_init(void)
     }
 
     /* 4.创建，启动接收线程 */
-    tid = rt_thread_create("if eth rx", sw_ethrx_thread_entry, RT_NULL, 2048, 12, 5);
+//    tid = rt_thread_create("if eth rx", sw_ethrx_thread_entry, RT_NULL, 2048, 12, 5);
+    tid = rt_thread_create("if eth rx", sw_ethrx_thread_entry, RT_NULL, 2048, 20, 5);
     if (tid == RT_NULL)
     {
         LOG_E("sw_eth_rx thread create fail!");

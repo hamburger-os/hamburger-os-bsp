@@ -267,22 +267,8 @@ typedef enum {
     E_LIST_CLER_MODE_ALL = 1,
 } E_LIST_CLER_MODE;
 
-typedef struct tagZ85230_RX_BUF /* 接收缓冲区 */
-{
-//    rt_list_t list; /* 链表 */
-//    uint16_t len;   /* 长度 */
-//    uint16_t index;  /* 索引 */
-//    uint8_t buf[Z85230_RX_BUF_SIZE];
-    uint16_t in;
-    uint16_t out;
-    uint8_t buf[Z85230_RX_BUF_SIZE];
-} S_Z85230_RX_BUF;
-
 #ifdef BSP_USING_Z85230_HDLC_MODE
 
-#else
-static S_Z85230_RX_BUF g_s_z85230_rbuf;
-#endif
 typedef struct tagZ85230_HDLC_BUF /* 接收缓冲区 */
 {
     rt_list_t list; /* 链表 */
@@ -298,6 +284,23 @@ typedef struct
     S_Z85230_HDLC_BUF *rx_head;
     uint32_t rx_buf_num;
 } S_Z85230_RX_LIST;
+
+#else
+
+typedef struct tagZ85230_RX_BUF /* 接收缓冲区 */
+{
+//    rt_list_t list; /* 链表 */
+//    uint16_t len;   /* 长度 */
+//    uint16_t index;  /* 索引 */
+//    uint8_t buf[Z85230_RX_BUF_SIZE];
+    uint16_t in;
+    uint16_t out;
+    uint8_t buf[Z85230_RX_BUF_SIZE];
+} S_Z85230_RX_BUF;
+
+static S_Z85230_RX_BUF g_s_z85230_rbuf;
+
+#endif
 
 typedef struct {
     const char *pin_name;
@@ -318,8 +321,10 @@ typedef struct {
     S_Z8523L16_GPIO isr_pin;      /** 中断引脚 */
     S_Z8523L16_GPIO te_pin;       /** 引脚 */
     S_Z8523L16_FMC_CFG fmc;
+#ifdef BSP_USING_Z85230_HDLC_MODE
     S_Z85230_RX_LIST rx_list;
     uint32_t rx_err_cnt;
+#endif
     struct rt_semaphore sem;
 } S_Z8523L16_DEV;
 
@@ -333,6 +338,8 @@ static S_Z8523L16_DEV z8523l16_dev =
     .fmc.hw_addr = (volatile void *)(Z8523L16_CMD - 2),
     .fmc.hw_addr_cmd = (volatile void *)(Z8523L16_CMD),
 };
+
+static void hdlc_int_pin_hdr(void *args);
 
 static uint8_t hdlc_readb(volatile uint8_t *addr)
 {
@@ -358,6 +365,8 @@ static void hdlc_wrreg(S_Z8523L16_FMC_CFG *p_fmc, uint8_t reg_u8, uint8_t value_
     hdlc_writeb(reg_u8, p_fmc->hw_addr_cmd);
     hdlc_writeb(value_u8, p_fmc->hw_addr_cmd);
 }
+
+#ifdef BSP_USING_Z85230_HDLC_MODE
 
 static rt_err_t z85230_rx_list_init(S_Z85230_RX_LIST *list)
 {
@@ -386,7 +395,6 @@ static rt_err_t z85230_rx_list_init(S_Z85230_RX_LIST *list)
       LOG_E("rx_list init error");
       return -RT_EEMPTY;
   }
-
   return RT_EOK;
 }
 
@@ -438,6 +446,8 @@ rt_err_t z85230_rx_list_clear(S_Z85230_RX_LIST *rx_list, E_LIST_CLER_MODE mode)
     return RT_EOK;
 }
 
+#endif
+
 static rt_err_t z8523l16_pin_init(S_Z8523L16_DEV *dev)
 {
     if(RT_NULL == dev)
@@ -456,7 +466,7 @@ static rt_err_t z8523l16_pin_init(S_Z8523L16_DEV *dev)
     rt_pin_write(dev->te_pin.pin_index, PIN_HIGH);
     return RT_EOK;
 }
-static void hdlc_int_pin_hdr(void *args);
+
 static rt_err_t z8523l16_isr_pin_init(S_Z8523L16_DEV *dev, void (*pin_callback)(void *args))
 {
     if(RT_NULL == dev)
@@ -542,9 +552,10 @@ static rt_err_t z85230_init(S_Z8523L16_DEV *dev)
         return -RT_EEMPTY;
     }
 
+#ifdef BSP_USING_Z85230_HDLC_MODE
     dev->rx_err_cnt = 0;
-    dev->rx_list.rx_head = RT_NULL;
     memset(&g_s_z85230_hdlc_frame, 0, sizeof(S_Z85230_HDLC_BUF));
+#endif
 
     /** reset the chip */
     hdlc_wrreg(&dev->fmc, R9, FHWRES|NV|DLC);
@@ -709,7 +720,7 @@ static void hdlc_int_pin_hdr(void *args)
         {
             g_s_z85230_hdlc_frame.index = 0;
             dev->rx_err_cnt++;
-            LOG_E("1.hdlc rx err num %d", dev->rx_err_cnt);
+//            LOG_E("1.hdlc rx err num %d", dev->rx_err_cnt);
         }
         if( (rr0 & SYNC_HUNT) != 0 )
         {
@@ -726,7 +737,7 @@ static void hdlc_int_pin_hdr(void *args)
             }
             else
             {
-                LOG_E("g_s_z85230_hdlc_frame.index >= Z85230_HDLC_BUF_SIZE");
+//                LOG_E("g_s_z85230_hdlc_frame.index >= Z85230_HDLC_BUF_SIZE");
             }
         }
 
@@ -736,7 +747,7 @@ static void hdlc_int_pin_hdr(void *args)
             {
                 /** hdlc crc error */
                 dev->rx_err_cnt++;
-                LOG_E("2.hdlc rx err num %d", dev->rx_err_cnt);
+//                LOG_E("2.hdlc rx err num %d", dev->rx_err_cnt);
             }
             else
             {
@@ -748,29 +759,33 @@ static void hdlc_int_pin_hdr(void *args)
                     z85230_rx_list_clear(&dev->rx_list, E_LIST_CLER_MODE_ONE);
                 }
 
-                S_Z85230_HDLC_BUF *p_buf= rt_malloc(sizeof(S_Z85230_HDLC_BUF));
-                if(RT_NULL == p_buf)
+                if(dev->rx_list.rx_buf_num < Z85230_RX_LIST_NUM)
                 {
-                    LOG_E("malloc p_buf null size %d", sizeof(S_Z85230_HDLC_BUF));
-                    return;
-                }
-                else
-                {
-                    rt_base_t level;
-
-                    level = rt_hw_interrupt_disable();
-
-                    p_buf->index = g_s_z85230_hdlc_frame.index;
-                    p_buf->len = g_s_z85230_hdlc_frame.len;
-                    rt_memcpy(p_buf->buf, g_s_z85230_hdlc_frame.buf, g_s_z85230_hdlc_frame.len);
-                    rt_list_insert_before(&dev->rx_list.rx_head->list, &p_buf->list);
-                    dev->rx_list.rx_buf_num++;
-
-                    rt_hw_interrupt_enable(level);
-
-                    if(dev->dev.rx_indicate != RT_NULL)
+                    S_Z85230_HDLC_BUF *p_buf= rt_malloc(sizeof(S_Z85230_HDLC_BUF));
+                    if(RT_NULL == p_buf)
                     {
-                        dev->dev.rx_indicate(&dev->dev, p_buf->len);
+//                        LOG_E("malloc p_buf null size %d", sizeof(S_Z85230_HDLC_BUF));
+                        return;
+                    }
+                    else
+                    {
+                        rt_base_t level;
+
+                        level = rt_hw_interrupt_disable();
+
+                        p_buf->index = g_s_z85230_hdlc_frame.index;
+                        p_buf->len = g_s_z85230_hdlc_frame.len;
+                        rt_memcpy(p_buf->buf, g_s_z85230_hdlc_frame.buf, g_s_z85230_hdlc_frame.len);
+                        rt_list_insert_before(&dev->rx_list.rx_head->list, &p_buf->list);
+                        dev->rx_list.rx_buf_num++;
+
+                        rt_hw_interrupt_enable(level);
+
+//                        rt_kprintf("pin hdr %d\r\n", dev->rx_err_cnt);
+                        if(dev->dev.rx_indicate != RT_NULL)
+                        {
+                            dev->dev.rx_indicate(&dev->dev, p_buf->len);
+                        }
                     }
                 }
             }
@@ -832,7 +847,7 @@ static void z8523l16_rx_thread_entry(void *param)
         {
             p_dev->dev.rx_indicate(&p_dev->dev, 1);
         }
-        rt_thread_mdelay(5);
+        rt_thread_mdelay(1);
     }
 }
 
@@ -976,11 +991,12 @@ static int rt_hw_z8523l16_init(void)
         LOG_E("init hdlc rem error");
         return -RT_ERROR;
     }
-
+#ifdef BSP_USING_Z85230_HDLC_MODE
     if(z85230_rx_list_init(&p_dev->rx_list) != RT_EOK)
     {
         return -RT_ERROR;
     }
+#endif
 
     z8523l16_pin_init(p_dev);
 

@@ -19,7 +19,7 @@
 #include "if_gpio.h"
 
 #define SWOS2_RS_THREAD_STACK      (2048U)
-#define SWOS2_RS_THREAD_PRIORITY   (13U)
+#define SWOS2_RS_THREAD_PRIORITY   (20U)
 #define SWOS2_RS_THREAD_TICK       (5U)
 
 #define SWOS2_RS_MQ_NUM  (256U)

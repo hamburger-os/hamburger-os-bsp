@@ -19,6 +19,7 @@
 #include "support_gpio.h"
 #include "support_rs485.h"
 #include "support_mvb.h"
+#include "support_hdlc.h"
 
 /*******************************************************************************************
  *        Local definitions
@@ -260,37 +261,55 @@ static void test_task01(void)
     static S_TIMER_INFO rx_timer = { FALSE, 0U };
     S_HDLC_FRAME hdlc_frame;
     S_HDLC_FRAME rx_hdlc_frame;
+    static uint8 send_data_str[256] = {"TCMS-qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM0123456789+qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM0123456789"};
+    static uint8 send_cnt = 0;
 
+//    if ( TRUE == support_timer_timeoutM(&timer, 40U))
+//    {
+//        hdlc_frame.data_u8[0] = send_cnt;
+//        memset(&hdlc_frame.data_u8[1], 0xAA, 141);
+//        hdlc_frame.len = 142;
+//
+////        MY_Printf("send len %d\r\n", sizeof(send_data_str));
+////        memcpy(hdlc_frame.data_u8, send_data_str, sizeof(send_data_str));
+////        hdlc_frame.len = sizeof(send_data_str);
+//
+//        if(support_hdlc_sendData(E_HDLC_ID_1, &hdlc_frame) != E_HDLC_OK)
+//        {
+//            MY_Printf("hdlc send error\r\n");
+//        }
+//        else
+//        {
+//            send_cnt++;
+//            if(send_cnt > 255)
+//            {
+//                send_cnt = 0;
+//            }
+//        }
+//    }
 
-    if ( TRUE == support_timer_timeoutM(&timer, 1000U))
-    {
-        hdlc_frame.data_u8[0] = 0xFE;
-        hdlc_frame.data_u8[1] = 0xFE;
-        hdlc_frame.data_u8[2] = 0x68;
-        hdlc_frame.data_u8[3] = 0x3c;
-        memset(&hdlc_frame.data_u8[4], 0xAA, 60);
-        hdlc_frame.data_u8[63] = 0x16;
-        hdlc_frame.len = 64;
-
-        if(support_hdlc_sendData(E_HDLC_ID_1, &hdlc_frame) != E_HDLC_OK)
-        {
-            MY_Printf("hdlc send error\r\n");
-        }
-    }
-
-    if ( TRUE == support_timer_timeoutM(&rx_timer, 10U))
+    if ( TRUE == support_timer_timeoutM(&rx_timer, 40U))
     {
         if(supprot_hdlc_getData(E_HDLC_ID_1, &rx_hdlc_frame) == E_HDLC_OK)
         {
             if(rx_hdlc_frame.len != 0)
             {
-                MY_Printf("hdlc read len %d\r\n", rx_hdlc_frame.len);
-                for(int i = 0; i < rx_hdlc_frame.len; i++)
-                {
-                    MY_Printf("%x ", rx_hdlc_frame.data_u8[i]);
-                }
-                MY_Printf("\r\n");
+//                MY_Printf("hdlc read len %d\r\n", rx_hdlc_frame.len);
+//                for(int i = 0; i < rx_hdlc_frame.len; i++)
+//                {
+//                    MY_Printf("%x ", rx_hdlc_frame.data_u8[i]);
+//                }
+//                MY_Printf("\r\n");
+
+                MY_Printf("%x\r\n", rx_hdlc_frame.data_u8[0]);
             }
+
+
+//            if(support_hdlc_sendData(E_HDLC_ID_1, &rx_hdlc_frame) != E_HDLC_OK)
+//            {
+//                MY_Printf("hdlc send error\r\n");
+//            }
+
         }
     }
 }
