@@ -447,9 +447,6 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
             }
             else
             {
-                /* clear the old error flag */
-                __HAL_SPI_CLEAR_OVRFLAG(spi_handle);
-
                 rt_enter_critical();
                 state = HAL_SPI_Receive(spi_handle, (uint8_t *)recv_buf, send_length, send_length * 4);
                 rt_exit_critical();
