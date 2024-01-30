@@ -4,3 +4,6 @@
 [submodule "packages/sysinfo"]
 	path = packages/sysinfo
 	url = http://192.168.101.251:8088/sw-software/sysinfo.git
+[submodule "packages/swops"]
+	path = packages/swops
+	url = http://192.168.101.251:8088/sw-software/swops.git

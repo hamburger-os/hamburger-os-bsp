@@ -181,4 +181,6 @@ menuconfig PKG_USING_OTA_FROM_FILE
             string "Set firmware tftp path, default: /usr/download.rbl"
             default "/mnt/emmc/download.rbl"
     endif
+
+source "packages/swops/Kconfig"
     
