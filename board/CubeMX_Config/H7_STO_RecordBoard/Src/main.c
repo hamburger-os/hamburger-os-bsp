@@ -962,7 +962,7 @@ static void MX_USB_OTG_HS_HCD_Init(void)
   hhcd_USB_OTG_HS.Init.phy_itface = USB_OTG_ULPI_PHY;
   hhcd_USB_OTG_HS.Init.Sof_enable = DISABLE;
   hhcd_USB_OTG_HS.Init.low_power_enable = DISABLE;
-  hhcd_USB_OTG_HS.Init.use_external_vbus = ENABLE;
+  hhcd_USB_OTG_HS.Init.use_external_vbus = DISABLE;
   if (HAL_HCD_Init(&hhcd_USB_OTG_HS) != HAL_OK)
   {
     Error_Handler();
