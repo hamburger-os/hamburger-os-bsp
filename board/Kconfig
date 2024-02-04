@@ -1281,12 +1281,21 @@ menu "On-chip Peripheral Drivers"
                     default n
                     
                 config USBH_STM32_POWER_PIN
-                    string "Set the usb power pin, default: PA.15"
+                    string "Set the USB power pin, default: PA.15"
                     depends on USBH_STM32_USING_POWER
                     default "PA.15"
+                    
+                config USBH_STM32_USING_RST
+                    bool "Enable USB reset"
+                    default n
+                    
+                config USBH_STM32_RST_PIN
+                    string "Set the USB reset pin, default: PA.2"
+                    depends on USBH_STM32_USING_RST
+                    default "PA.2"
                 
                 config USBH_STM32_USING_EXTERNAL_PHY
-                    bool "Enable EXTERNAL PHY"
+                    bool "Enable USB EXTERNAL PHY"
                     default n
             
                 config USBH_THREAD_STACK_SIZE

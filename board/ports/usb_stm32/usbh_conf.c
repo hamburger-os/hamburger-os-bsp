@@ -171,6 +171,14 @@ USBH_StatusTypeDef USBH_LL_Init(USBH_HandleTypeDef *phost)
     rt_pin_write(usb_pwr, PIN_LOW);
 #endif
 
+#ifdef USBH_STM32_USING_RST
+    rt_base_t usb_rst = rt_pin_get(USBH_STM32_RST_PIN);
+    rt_pin_mode(usb_rst, PIN_MODE_OUTPUT);
+    rt_pin_write(usb_rst, PIN_HIGH);
+    rt_thread_delay(100);
+    rt_pin_write(usb_rst, PIN_LOW);
+#endif
+
   /* Init USB_IP */
   if (phost->id == HOST_FS)
   {
