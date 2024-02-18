@@ -10,7 +10,13 @@
 #include "board.h"
 
 #ifdef BSP_USING_MAX31826
-#include "sensor.h"
+
+#ifdef RT_USING_SENSOR
+#include <drivers/sensor.h>
+#else
+#include <drivers/sensor_v2.h>
+#endif
+
 #include "fal.h"
 
 #define DBG_TAG "max31826"

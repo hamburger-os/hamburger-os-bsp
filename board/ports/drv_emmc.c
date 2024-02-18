@@ -243,7 +243,7 @@ static void MX_SDIO_MMC_Init(void)
     emmc_obj.hmmc.Init.ClockPowerSave = SDIO_CLOCK_POWER_SAVE_DISABLE;
     emmc_obj.hmmc.Init.BusWide = SDIO_BUS_WIDE_1B;
     emmc_obj.hmmc.Init.HardwareFlowControl = SDIO_HARDWARE_FLOW_CONTROL_DISABLE;
-    emmc_obj.hmmc.Init.ClockDiv = 0;
+    emmc_obj.hmmc.Init.ClockDiv = 1;
     if (HAL_MMC_Init(&emmc_obj.hmmc) != HAL_OK)
     {
         Error_Handler();
@@ -264,12 +264,14 @@ static void MX_SDIO_MMC_Init(void)
     defined (STM32H7A3xx) || defined (STM32H7A3xxQ) || defined (STM32H7B3xx) || defined (STM32H7B3xxQ) || defined (STM32H7B0xx) || defined (STM32H7B0xxQ) || \
     defined (STM32H735xx) || defined (STM32H733xx)  || defined (STM32H730xx) || defined (STM32H730xxQ) || defined (STM32H725xx) || defined (STM32H723xx)
 
+    uint32_t ClockDiv = HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_SDMMC)/1000000/52;
+
     emmc_obj.hmmc.Instance = emmc_obj.Instance;
     emmc_obj.hmmc.Init.ClockEdge = SDMMC_CLOCK_EDGE_RISING;
     emmc_obj.hmmc.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_DISABLE;
     emmc_obj.hmmc.Init.BusWide = SDMMC_BUS_WIDE_1B;
     emmc_obj.hmmc.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_DISABLE;
-    emmc_obj.hmmc.Init.ClockDiv = 1;
+    emmc_obj.hmmc.Init.ClockDiv = ClockDiv;
     if (HAL_MMC_Init(&emmc_obj.hmmc) != HAL_OK)
     {
         Error_Handler();

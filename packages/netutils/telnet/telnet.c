@@ -28,7 +28,11 @@
 #endif /* defined(RT_USING_POSIX_STDIO) */
 
 #if defined(RT_USING_POSIX_STDIO) || defined(RT_USING_POSIX)
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+#include "posix/stdio.h"
+#else
 #include <libc.h>
+#endif
 static int dev_old_flag;
 #endif /* defined(RT_USING_POSIX_STDIO) || defined(RT_USING_POSIX) */
 
@@ -42,8 +46,8 @@ static int dev_old_flag;
 
 #define TELNET_PORT         23
 #define TELNET_BACKLOG      5
-#define RX_BUFFER_SIZE      1024
-#define TX_BUFFER_SIZE      1024
+#define RX_BUFFER_SIZE      2048
+#define TX_BUFFER_SIZE      2048
 
 #define ISO_nl              0x0a
 #define ISO_cr              0x0d
@@ -167,18 +171,21 @@ static void process_rx(struct telnet_session* telnet, rt_uint8_t *data, rt_size_
                 }
             }
             break;
+
             /* don't option */
         case STATE_WILL:
         case STATE_WONT:
             send_option_to_client(telnet, TELNET_DONT, *data);
             telnet->state = STATE_NORMAL;
             break;
+
             /* won't option */
         case STATE_DO:
         case STATE_DONT:
             send_option_to_client(telnet, TELNET_WONT, *data);
             telnet->state = STATE_NORMAL;
             break;
+
         case STATE_NORMAL:
             if (*data == TELNET_IAC)
             {
@@ -229,8 +236,13 @@ static void client_close(struct telnet_session* telnet)
     rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
     /* set finsh device */
 #if defined(RT_USING_POSIX_STDIO) || defined(RT_USING_POSIX)
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+    ioctl(rt_posix_stdio_get_console(), F_SETFL, (void *) dev_old_flag);
+    rt_posix_stdio_set_console(RT_CONSOLE_DEVICE_NAME, O_RDWR);
+#else
     ioctl(libc_stdio_get_console(), F_SETFL, (void *) dev_old_flag);
     libc_stdio_set_console(RT_CONSOLE_DEVICE_NAME, O_RDWR);
+#endif
 #else
     finsh_set_device(RT_CONSOLE_DEVICE_NAME);
 #endif /* defined(RT_USING_POSIX_STDIO) || defined(RT_USING_POSIX) */
@@ -262,7 +274,11 @@ static rt_err_t telnet_close(rt_device_t dev)
     return RT_EOK;
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static rt_ssize_t telnet_read(rt_device_t dev, rt_off_t pos, void* buffer, rt_size_t size)
+#else
 static rt_size_t telnet_read(rt_device_t dev, rt_off_t pos, void* buffer, rt_size_t size)
+#endif
 {
     rt_size_t result;
 
@@ -285,7 +301,11 @@ static rt_size_t telnet_read(rt_device_t dev, rt_off_t pos, void* buffer, rt_siz
     return result;
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static rt_ssize_t telnet_write (rt_device_t dev, rt_off_t pos, const void* buffer, rt_size_t size)
+#else
 static rt_size_t telnet_write (rt_device_t dev, rt_off_t pos, const void* buffer, rt_size_t size)
+#endif
 {
     const rt_uint8_t *ptr;
 
@@ -397,12 +417,21 @@ static void telnet_thread(void* parameter)
 
         /* set finsh device */
 #if defined(RT_USING_POSIX_STDIO) || defined(RT_USING_POSIX)
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+        /* backup flag */
+        dev_old_flag = ioctl(rt_posix_stdio_get_console(), F_GETFL, (void *) RT_NULL);
+        /* add non-block flag */
+        ioctl(rt_posix_stdio_get_console(), F_SETFL, (void *) (dev_old_flag | O_NONBLOCK));
+        /* set tcp shell device for console */
+        rt_posix_stdio_set_console("telnet", O_RDWR);
+#else
         /* backup flag */
         dev_old_flag = ioctl(libc_stdio_get_console(), F_GETFL, (void *) RT_NULL);
         /* add non-block flag */
         ioctl(libc_stdio_get_console(), F_SETFL, (void *) (dev_old_flag | O_NONBLOCK));
         /* set tcp shell device for console */
         libc_stdio_set_console("telnet", O_RDWR);
+#endif
         /* resume finsh thread, make sure it will unblock from last device receive */
         rt_thread_t tid = rt_thread_find(FINSH_THREAD_NAME);
         if (tid)

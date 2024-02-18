@@ -392,7 +392,11 @@ static int stm32_getc(struct rt_serial_device *serial)
     return ch;
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static rt_ssize_t stm32_transmit(struct rt_serial_device     *serial,
+#else
 static rt_size_t stm32_transmit(struct rt_serial_device     *serial,
+#endif
                                        rt_uint8_t           *buf,
                                        rt_size_t             size,
                                        rt_uint32_t           tx_flag)
@@ -426,7 +430,6 @@ static void dma_recv_isr(struct rt_serial_device *serial, rt_uint8_t isr_flag)
     rt_size_t recv_len, counter;
 
     RT_ASSERT(serial != RT_NULL);
-
     uart = rt_container_of(serial, struct stm32_uart, serial);
 
     recv_len = 0;
@@ -438,11 +441,11 @@ static void dma_recv_isr(struct rt_serial_device *serial, rt_uint8_t isr_flag)
         recv_len = serial->config.rx_bufsz + uart->dma_rx.remaining_cnt - counter;
     if (recv_len)
     {
-        uart->dma_rx.remaining_cnt = counter;
 #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
         struct rt_serial_rx_fifo *rx_fifo = (struct rt_serial_rx_fifo *) serial->serial_rx;
-        SCB_CleanInvalidateDCache_by_Addr((uint32_t *)rx_fifo->buffer, serial->config.rx_bufsz);
+        SCB_InvalidateDCache_by_Addr((uint32_t *)rx_fifo->buffer, serial->config.rx_bufsz);
 #endif
+        uart->dma_rx.remaining_cnt = counter;
         rt_hw_serial_isr(serial, RT_SERIAL_EVENT_RX_DMADONE | (recv_len << 8));
     }
 }

@@ -46,7 +46,11 @@ static void can_thread_entry(void *parameter)
     LOG_D("thread startup...");
     while (ptest->thread_is_run)
     {
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+        rxmsg.hdr_index = -1;
+#else
         rxmsg.hdr = -1;
+#endif
         /* 阻塞等待接收信号量 */
         result = rt_sem_take(&ptest->rx_sem, 1000);
         if (result == RT_EOK)

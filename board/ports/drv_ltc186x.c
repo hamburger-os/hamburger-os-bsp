@@ -145,7 +145,7 @@ static int rt_hw_ltc186x_spi_device_init(void)
         }
     } while (rt_device_find(dev_name));
 
-//    rt_hw_soft_spi_device_attach(ltc186x_dev.spibus, dev_name, ltc186x_dev.cspin);
+//    rt_hw_soft_spi_device_attach(ltc186x_dev.spibus, dev_name, rt_pin_get(ltc186x_dev.cspin));
     rt_hw_spi_device_attach(ltc186x_dev.spibus, dev_name, rt_pin_get(ltc186x_dev.cspin));
     ltc186x_dev.spidev = (struct rt_spi_device *)rt_device_find(dev_name);
     if (ltc186x_dev.spidev == NULL)

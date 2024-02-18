@@ -43,12 +43,20 @@ static RTC_AlarmTypeDef Alarm_InitStruct = { 0 };
 static struct rtc_device_object rtc_device;
 static RTC_HandleTypeDef RTC_Handler;
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+rt_weak uint32_t HAL_RTCEx_BKUPRead(RTC_HandleTypeDef *hrtc, uint32_t BackupRegister)
+#else
 RT_WEAK uint32_t HAL_RTCEx_BKUPRead(RTC_HandleTypeDef *hrtc, uint32_t BackupRegister)
+#endif
 {
     return (~BKUP_REG_DATA);
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+rt_weak void HAL_RTCEx_BKUPWrite(RTC_HandleTypeDef *hrtc, uint32_t BackupRegister, uint32_t Data)
+#else
 RT_WEAK void HAL_RTCEx_BKUPWrite(RTC_HandleTypeDef *hrtc, uint32_t BackupRegister, uint32_t Data)
+#endif
 {
     return;
 }

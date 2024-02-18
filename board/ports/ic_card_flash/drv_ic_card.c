@@ -187,7 +187,7 @@ static int rt_hw_iccard_init(void)
         }
     } while (rt_device_find(dev_name));
 
-//    rt_hw_soft_spi_device_attach(BSP_ICCARD_FLASH_SPI_BUS, dev_name, BSP_ICCARD_FLASH_SPI_CS_PIN);
+//    rt_hw_soft_spi_device_attach(BSP_ICCARD_FLASH_SPI_BUS, dev_name, rt_pin_get(BSP_ICCARD_FLASH_SPI_CS_PIN));
     rt_hw_spi_device_attach(BSP_ICCARD_FLASH_SPI_BUS, dev_name, rt_pin_get(BSP_ICCARD_FLASH_SPI_CS_PIN));
     iccard_config.spidev = (struct rt_spi_device *)rt_device_find(dev_name);
     if (iccard_config.spidev == NULL)

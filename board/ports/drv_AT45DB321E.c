@@ -100,7 +100,7 @@ static int at45db321e_spi_device_init(void)
         }
     } while (rt_device_find(dev_name));
 
-//    rt_hw_soft_spi_device_attach(BSP_AT45DB321E_SPI_BUS, dev_name, BSP_AT45DB321E_SPI_CS_PIN);
+//    rt_hw_soft_spi_device_attach(BSP_AT45DB321E_SPI_BUS, dev_name, rt_pin_get(BSP_AT45DB321E_SPI_CS_PIN));
     rt_hw_spi_device_attach(BSP_AT45DB321E_SPI_BUS, dev_name, rt_pin_get(BSP_AT45DB321E_SPI_CS_PIN));
     at45db321e_spidev = (struct rt_spi_device *)rt_device_find(dev_name);
     if (at45db321e_spidev == NULL)

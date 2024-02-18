@@ -535,7 +535,11 @@ static int ota_from_file_init(void)
 }
 INIT_SERVICE_EXPORT(ota_from_file_init);
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+rt_weak void ota_from_file_handle(OtaHandleTypeDef type)
+#else
 RT_WEAK void ota_from_file_handle(OtaHandleTypeDef type)
+#endif
 {
     switch(type)
     {

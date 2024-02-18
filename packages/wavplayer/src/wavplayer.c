@@ -12,8 +12,8 @@
 #include <wavhdr.h>
 #include <wavplayer.h>
 
-#define DBG_TAG              "WAV_PLAYER"
-#define DBG_LVL              DBG_INFO
+#define DBG_TAG     "WAV_PLAYER"
+#define DBG_LVL     DBG_INFO
 #include <rtdbg.h>
 
 #define VOLUME_MIN (0)
@@ -65,7 +65,7 @@ struct wavplayer
 
 static struct wavplayer player;
 
-#if (DBG_LEVEL >= DBG_LOG)
+#if (DBG_LVL >= DBG_LOG)
 
 static const char *state_str[] =
 {
@@ -312,7 +312,7 @@ static int wavplayer_event_handler(struct wavplayer *player, int timeout)
     int event;
     rt_err_t result;
     struct play_msg msg;
-#if (DBG_LEVEL >= DBG_LOG)
+#if (DBG_LVL >= DBG_LOG)
     rt_uint8_t last_state;
 #endif
 
@@ -323,7 +323,7 @@ static int wavplayer_event_handler(struct wavplayer *player, int timeout)
         return event;
     }
 
-#if (DBG_LEVEL >= DBG_LOG)
+#if (DBG_LVL >= DBG_LOG)
     last_state = player->state;
 #endif
 
@@ -356,7 +356,7 @@ static int wavplayer_event_handler(struct wavplayer *player, int timeout)
 
     rt_completion_done(&player->ack);
 
-#if (DBG_LEVEL >= DBG_LOG)
+#if (DBG_LVL >= DBG_LOG)
     LOG_D("EVENT:%s, STATE:%s -> %s", event_str[event], state_str[last_state], state_str[player->state]);
 #endif
 

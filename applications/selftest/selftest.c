@@ -139,7 +139,9 @@ static void selftest_start(int argc, char *argv[])
     //等待音频播放结束
     selftest_i2s_wait(puserdata);
 
+#ifdef PKG_USING_LVGL
     gui_display_result(puserdata->result, sizeof(puserdata->result)/sizeof(puserdata->result[0]));
+#endif
 }
 
 #ifdef RT_USING_FINSH
@@ -172,7 +174,9 @@ static int selftest_init(void)
         }
     }
 
+#ifdef PKG_USING_LVGL
     gui_display_result(puserdata->result, sizeof(puserdata->result)/sizeof(puserdata->result[0]));
+#endif
 
     return RT_EOK;
 }

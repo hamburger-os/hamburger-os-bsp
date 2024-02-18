@@ -295,7 +295,7 @@ static int fram_spi_device_init(void)
         }
     } while (rt_device_find(dev_name));
 
-//    rt_hw_soft_spi_device_attach(BSP_FM25xx_SPI_BUS, dev_name, BSP_FM25xx_SPI_CS_PIN);
+//    rt_hw_soft_spi_device_attach(BSP_FM25xx_SPI_BUS, dev_name, rt_pin_get(BSP_FM25xx_SPI_CS_PIN));
     rt_hw_spi_device_attach(BSP_FM25xx_SPI_BUS, dev_name, rt_pin_get(BSP_FM25xx_SPI_CS_PIN));
     fm25xx_spidev = (struct rt_spi_device *)rt_device_find(dev_name);
     if (fm25xx_spidev == NULL)

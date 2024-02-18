@@ -66,7 +66,7 @@ static int sc16is752_spi_device_init(void)
         }
     } while (rt_device_find(dev_name));
 
-//    rt_hw_soft_spi_device_attach(sc16is752_config.spi_bus, dev_name, sc16is752_config.cs));
+//    rt_hw_soft_spi_device_attach(sc16is752_config.spi_bus, dev_name, rt_pin_get(sc16is752_config.cs));
     rt_hw_spi_device_attach(sc16is752_config.spi_bus, dev_name, rt_pin_get(sc16is752_config.cs));
     sc16is752_config.spidev = (struct rt_spi_device *)rt_device_find(dev_name);
     if (sc16is752_config.spidev == NULL)

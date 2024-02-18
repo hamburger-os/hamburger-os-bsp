@@ -360,7 +360,11 @@ static int _dfs_lfs_unmount(struct dfs_filesystem* dfs)
 }
 
 #ifndef LFS_READONLY
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static int _dfs_lfs_mkfs(rt_device_t dev_id, const char *fs_name)
+#else
 static int _dfs_lfs_mkfs(rt_device_t dev_id)
+#endif
 {
     int result;
     int index;
@@ -480,7 +484,7 @@ static int _dfs_lfs_unlink(struct dfs_filesystem* dfs, const char* path)
 
 static void _dfs_lfs_tostat(struct stat* st, struct lfs_info* info)
 {
-    rt_memset(st, 0, sizeof(struct stat));
+    memset(st, 0, sizeof(struct stat));
 
     /* convert to dfs stat structure */
     st->st_dev = 0;
@@ -539,7 +543,11 @@ static int _dfs_lfs_rename(struct dfs_filesystem* dfs, const char* from, const c
 /******************************************************************************
  * file operations
  ******************************************************************************/
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static int _dfs_lfs_open(struct dfs_file* file)
+#else
 static int _dfs_lfs_open(struct dfs_fd* file)
+#endif
 {
     struct dfs_filesystem* dfs;
     dfs_lfs_t* dfs_lfs;
@@ -547,9 +555,25 @@ static int _dfs_lfs_open(struct dfs_fd* file)
     int flags = 0;
 
     RT_ASSERT(file != RT_NULL);
-    RT_ASSERT(file->data != RT_NULL);
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+    dfs = (struct dfs_filesystem*)file->vnode->fs;
+
+    RT_ASSERT(file->vnode->ref_count > 0);
+    if (file->vnode->ref_count > 1)
+    {
+        if (file->vnode->type == FT_DIRECTORY
+                && !(file->flags & O_DIRECTORY))
+        {
+            return -ENOENT;
+        }
+        file->pos = 0;
+        return 0;
+    }
+#else
     dfs = (struct dfs_filesystem*)file->data;
+#endif
+
     dfs_lfs = (dfs_lfs_t*)dfs->data;
 
     if (file->flags & O_DIRECTORY)
@@ -568,7 +592,11 @@ static int _dfs_lfs_open(struct dfs_fd* file)
         if (file->flags & O_CREAT)
         {
 #ifndef LFS_READONLY
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+            result = lfs_mkdir(dfs_lfs_fd->lfs, file->vnode->path);
+#else
             result = lfs_mkdir(dfs_lfs_fd->lfs, file->path);
+#endif
 #else
             result = -EINVAL;
 #endif
@@ -578,7 +606,11 @@ static int _dfs_lfs_open(struct dfs_fd* file)
             }
         }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+        result = lfs_dir_open(dfs_lfs_fd->lfs, &dfs_lfs_fd->u.dir, file->vnode->path);
+#else
         result = lfs_dir_open(dfs_lfs_fd->lfs, &dfs_lfs_fd->u.dir, file->path);
+#endif
         if (result != LFS_ERR_OK)
         {
             goto _error_dir;
@@ -625,7 +657,11 @@ static int _dfs_lfs_open(struct dfs_fd* file)
         if (file->flags & O_APPEND)
             flags |= LFS_O_APPEND;
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+        result = lfs_file_open(dfs_lfs_fd->lfs, &dfs_lfs_fd->u.file, file->vnode->path, flags);
+#else
         result = lfs_file_open(dfs_lfs_fd->lfs, &dfs_lfs_fd->u.file, file->path, flags);
+#endif
         if (result != LFS_ERR_OK)
         {
             goto _error_file;
@@ -634,7 +670,11 @@ static int _dfs_lfs_open(struct dfs_fd* file)
         {
             file->data = (void*)dfs_lfs_fd;
             file->pos = dfs_lfs_fd->u.file.pos;
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+            file->vnode->size = dfs_lfs_fd->u.file.ctz.size;
+#else
             file->size = dfs_lfs_fd->u.file.ctz.size;
+#endif
             return RT_EOK;
         }
 
@@ -648,16 +688,32 @@ static int _dfs_lfs_open(struct dfs_fd* file)
     }
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static int _dfs_lfs_close(struct dfs_file* file)
+#else
 static int _dfs_lfs_close(struct dfs_fd* file)
+#endif
 {
     int result;
     dfs_lfs_fd_t* dfs_lfs_fd;
     RT_ASSERT(file != RT_NULL);
     RT_ASSERT(file->data != RT_NULL);
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+    RT_ASSERT(file->vnode->ref_count > 0);
+    if (file->vnode->ref_count > 1)
+    {
+        return 0;
+    }
+#endif
+
     dfs_lfs_fd = (dfs_lfs_fd_t*)file->data;
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+    if (file->vnode->type == FT_DIRECTORY)
+#else
     if (file->type == FT_DIRECTORY)
+#endif
     {
         result = lfs_dir_close(dfs_lfs_fd->lfs, &dfs_lfs_fd->u.dir);
     }
@@ -671,12 +727,20 @@ static int _dfs_lfs_close(struct dfs_fd* file)
     return _lfs_result_to_dfs(result);
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static int _dfs_lfs_ioctl(struct dfs_file* file, int cmd, void* args)
+#else
 static int _dfs_lfs_ioctl(struct dfs_fd* file, int cmd, void* args)
+#endif
 {
     return -ENOSYS;
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static int _dfs_lfs_read(struct dfs_file* file, void* buf, size_t len)
+#else
 static int _dfs_lfs_read(struct dfs_fd* file, void* buf, size_t len)
+#endif
 {
     lfs_ssize_t ssize;
     dfs_lfs_fd_t* dfs_lfs_fd;
@@ -684,7 +748,11 @@ static int _dfs_lfs_read(struct dfs_fd* file, void* buf, size_t len)
     RT_ASSERT(file != RT_NULL);
     RT_ASSERT(file->data != RT_NULL);
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+    if (file->vnode->type == FT_DIRECTORY)
+#else
     if (file->type == FT_DIRECTORY)
+#endif
     {
         return -EISDIR;
     }
@@ -715,14 +783,22 @@ static int _dfs_lfs_read(struct dfs_fd* file, void* buf, size_t len)
 }
 
 #ifndef LFS_READONLY
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static int _dfs_lfs_write(struct dfs_file* file, const void* buf, size_t len)
+#else
 static int _dfs_lfs_write(struct dfs_fd* file, const void* buf, size_t len)
+#endif
 {
     lfs_ssize_t ssize;
     dfs_lfs_fd_t* dfs_lfs_fd;
     RT_ASSERT(file != RT_NULL);
     RT_ASSERT(file->data != RT_NULL);
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+    if (file->vnode->type == FT_DIRECTORY)
+#else
     if (file->type == FT_DIRECTORY)
+#endif
     {
         return -EISDIR;
     }
@@ -748,13 +824,21 @@ static int _dfs_lfs_write(struct dfs_fd* file, const void* buf, size_t len)
 
     /* update position and file size */
     file->pos = dfs_lfs_fd->u.file.pos;
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+    file->vnode->size = dfs_lfs_fd->u.file.ctz.size;
+#else
     file->size = dfs_lfs_fd->u.file.ctz.size;
+#endif
 
     return ssize;
 }
 #endif
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static int _dfs_lfs_flush(struct dfs_file* file)
+#else
 static int _dfs_lfs_flush(struct dfs_fd* file)
+#endif
 {
     int result;
     dfs_lfs_fd_t* dfs_lfs_fd;
@@ -768,7 +852,11 @@ static int _dfs_lfs_flush(struct dfs_fd* file)
     return _lfs_result_to_dfs(result);
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static off_t _dfs_lfs_lseek(struct dfs_file *file, off_t offset)
+#else
 static int _dfs_lfs_lseek(struct dfs_fd* file, rt_off_t offset)
+#endif
 {
     dfs_lfs_fd_t* dfs_lfs_fd;
 
@@ -777,7 +865,11 @@ static int _dfs_lfs_lseek(struct dfs_fd* file, rt_off_t offset)
 
     dfs_lfs_fd = (dfs_lfs_fd_t*)file->data;
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+    if (file->vnode->type == FT_REGULAR)
+#else
     if (file->type == FT_REGULAR)
+#endif
     {
         lfs_soff_t soff = lfs_file_seek(dfs_lfs_fd->lfs, &dfs_lfs_fd->u.file, offset, LFS_SEEK_SET);
         if (soff < 0)
@@ -787,7 +879,11 @@ static int _dfs_lfs_lseek(struct dfs_fd* file, rt_off_t offset)
 
         file->pos = dfs_lfs_fd->u.file.pos;
     }
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+    else if (file->vnode->type == FT_DIRECTORY)
+#else
     else if (file->type == FT_DIRECTORY)
+#endif
     {
         lfs_soff_t soff = lfs_dir_seek(dfs_lfs_fd->lfs, &dfs_lfs_fd->u.dir, offset);
         if (soff < 0)
@@ -801,7 +897,11 @@ static int _dfs_lfs_lseek(struct dfs_fd* file, rt_off_t offset)
     return (file->pos);
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static int _dfs_lfs_getdents(struct dfs_file* file, struct dirent* dirp, uint32_t count)
+#else
 static int _dfs_lfs_getdents(struct dfs_fd* file, struct dirent* dirp, uint32_t count)
+#endif
 {
     dfs_lfs_fd_t* dfs_lfs_fd;
     int result;

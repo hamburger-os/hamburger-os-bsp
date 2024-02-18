@@ -166,20 +166,32 @@ static rt_err_t _ep_disable(uep_t ep)
     return RT_EOK;
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static rt_ssize_t _ep_read(rt_uint8_t address, void *buffer)
+#else
 static rt_size_t _ep_read(rt_uint8_t address, void *buffer)
+#endif
 {
     rt_size_t size = 0;
     RT_ASSERT(buffer != RT_NULL);
     return size;
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static rt_ssize_t _ep_read_prepare(rt_uint8_t address, void *buffer, rt_size_t size)
+#else
 static rt_size_t _ep_read_prepare(rt_uint8_t address, void *buffer, rt_size_t size)
+#endif
 {
     HAL_PCD_EP_Receive(&_stm_pcd, address, buffer, size);
     return size;
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static rt_ssize_t _ep_write(rt_uint8_t address, void *buffer, rt_size_t size)
+#else
 static rt_size_t _ep_write(rt_uint8_t address, void *buffer, rt_size_t size)
+#endif
 {
     HAL_PCD_EP_Transmit(&_stm_pcd, address, buffer, size);
     return size;

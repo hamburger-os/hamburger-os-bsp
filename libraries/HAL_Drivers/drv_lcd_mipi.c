@@ -230,23 +230,38 @@ int rt_hw_lcd_init(void)
 }
 INIT_DEVICE_EXPORT(rt_hw_lcd_init);
 
-
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+rt_weak void stm32_mipi_lcd_init(void)
+else
 RT_WEAK void stm32_mipi_lcd_init(void)
+#endif
 {
     rt_kprintf("please Implementation function %s\n", __func__);
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+rt_weak void stm32_mipi_lcd_config(rt_uint32_t pixel_format)
+else
 RT_WEAK void stm32_mipi_lcd_config(rt_uint32_t pixel_format)
+#endif
 {
     rt_kprintf("please Implementation function %s\n", __func__);
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+rt_weak void stm32_mipi_display_on(void)
+else
 RT_WEAK void stm32_mipi_display_on(void)
+#endif
 {
     rt_kprintf("please Implementation function %s\n", __func__);
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+rt_weak void stm32_mipi_display_off(void)
+else
 RT_WEAK void stm32_mipi_display_off(void)
+#endif
 {
     rt_kprintf("please Implementation function %s\n", __func__);
 }

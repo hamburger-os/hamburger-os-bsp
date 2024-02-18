@@ -36,7 +36,7 @@ void selftest_spi_test(SelftestUserData *puserdata)
         }
     } while (rt_device_find(dev_name));
 
-//    rt_hw_soft_spi_device_attach(puserdata->spi_devname, dev_name, puserdata->spi_devname_cs);
+//    rt_hw_soft_spi_device_attach(puserdata->spi_devname, dev_name, rt_pin_get(puserdata->spi_devname_cs));
     rt_hw_spi_device_attach(puserdata->spi_devname, dev_name, rt_pin_get(puserdata->spi_devname_cs));
     spidev = (struct rt_spi_device *)rt_device_find(dev_name);
     if (spidev == NULL)

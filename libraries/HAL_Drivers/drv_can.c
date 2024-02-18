@@ -342,7 +342,11 @@ static rt_err_t _can_control(struct rt_can_device *can, int cmd, void *arg)
             /* get default filter */
             for (int i = 0; i < filter_cfg->count; i++)
             {
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+                if (filter_cfg->items[i].hdr_bank == -1)
+#else
                 if (filter_cfg->items[i].hdr == -1)
+#endif
                 {
                     /* use default filter bank settings */
                     if (rt_strcmp(drv_can->name, "can1") == 0)
@@ -359,7 +363,11 @@ static rt_err_t _can_control(struct rt_can_device *can, int cmd, void *arg)
                 else
                 {
                     /* use user-defined filter bank settings */
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+                    drv_can->FilterConfig.FilterBank = filter_cfg->items[i].hdr_bank;
+#else
                     drv_can->FilterConfig.FilterBank = filter_cfg->items[i].hdr;
+#endif
                 }
                  /**
                  * ID     | CAN_FxR1[31:24] | CAN_FxR1[23:16] | CAN_FxR1[15:8] | CAN_FxR1[7:0]       |
@@ -410,6 +418,7 @@ static rt_err_t _can_control(struct rt_can_device *can, int cmd, void *arg)
                 drv_can->FilterConfig.FilterMaskIdLow = mask_l;
 
                 drv_can->FilterConfig.FilterMode = filter_cfg->items[i].mode;
+                drv_can->FilterConfig.FilterFIFOAssignment = filter_cfg->items[i].rxfifo;/*rxfifo = CAN_RX_FIFO0/CAN_RX_FIFO1*/
                 /* Filter conf */
                 HAL_CAN_ConfigFilter(&drv_can->CanHandle, &drv_can->FilterConfig);
             }
@@ -619,17 +628,30 @@ static int _can_recvmsg(struct rt_can_device *can, void *buf, rt_uint32_t fifo)
     {
         pmsg->rtr = RT_CAN_RTR;
     }
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+    /*get rxfifo = CAN_RX_FIFO0/CAN_RX_FIFO1*/
+    pmsg->rxfifo = fifo;
+#endif
+
     /* get len */
     pmsg->len = rxheader.DLC;
     /* get hdr */
     if (hcan->Instance == CAN1)
     {
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+        pmsg->hdr_index = rxheader.FilterMatchIndex;
+#else
         pmsg->hdr = (rxheader.FilterMatchIndex + 1) >> 1;
+#endif
     }
 #ifdef CAN2
     else if (hcan->Instance == CAN2)
     {
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+       pmsg->hdr_index = rxheader.FilterMatchIndex;
+#else
        pmsg->hdr = (rxheader.FilterMatchIndex >> 1) + 14;
+#endif
     }
 #endif
 

@@ -53,13 +53,13 @@ void tftp_transfer_err(struct tftp_xfer *xfer, uint16_t err_no, const char *err_
     int str_len;
 
     /* Calculate error message length */
-    str_len = rt_strlen(err_msg);
+    str_len = strlen(err_msg);
     if (str_len > 512)
     {
         str_len = 512;
     }
     /* maloc mem */
-    snd_packet = rt_malloc(str_len + 4);
+    snd_packet = malloc(str_len + 4);
     if (snd_packet == NULL)
     {
         return;
@@ -68,7 +68,7 @@ void tftp_transfer_err(struct tftp_xfer *xfer, uint16_t err_no, const char *err_
     // Send err msg.
     snd_packet[0] = htons(TFTP_CMD_ERROR);
     snd_packet[1] = htons(err_no);
-    rt_strncpy((char *)&snd_packet[2], err_msg, str_len);
+    strncpy((char *)&snd_packet[2], err_msg, str_len);
     sendto(xfer->sock, snd_packet, str_len + 4, 0, (struct sockaddr *)&_private->sender, sizeof(struct sockaddr_in));
     free(snd_packet);
 }
@@ -199,7 +199,7 @@ int tftp_send_request(struct tftp_xfer *xfer, uint16_t cmd, const char *remote_f
         }
     }
     /* malloc mem */
-    send_packet = rt_malloc(sizeof(struct tftp_packet));
+    send_packet = malloc(sizeof(struct tftp_packet));
     if (send_packet == NULL)
     {
         return -TFTP_EMEM;
@@ -211,7 +211,7 @@ int tftp_send_request(struct tftp_xfer *xfer, uint16_t cmd, const char *remote_f
     /* send data */
     r_size = sendto(xfer->sock, send_packet, size, 0,
         (struct sockaddr *)&_private->server, sizeof(struct sockaddr_in));
-    rt_free(send_packet);
+    free(send_packet);
     if (size != r_size)
     {
         return -TFTP_EXFER;
@@ -316,7 +316,7 @@ void tftp_xfer_mode_set(struct tftp_xfer *xfer, const char *mode)
 {
     if (xfer->mode)
     {
-        rt_free(xfer->mode);
+        free(xfer->mode);
     }
     xfer->mode = rt_strdup(mode);
 }
@@ -341,7 +341,7 @@ struct tftp_xfer *tftp_xfer_create(const char *ip_addr, int port)
 
     /* malloc connect object */
     mem_len = sizeof(struct tftp_xfer) + sizeof(struct tftp_xfer_private);
-    xfer = rt_malloc(mem_len);
+    xfer = malloc(mem_len);
     if (xfer == NULL)
     {
         tftp_printf("can't create tftp transfer!! exit");
@@ -355,7 +355,7 @@ struct tftp_xfer *tftp_xfer_create(const char *ip_addr, int port)
     if (sock < 0)
     {
         tftp_printf("can't create socket!! exit");
-        rt_free(xfer);
+        free(xfer);
         return NULL;
     }
 
@@ -373,11 +373,17 @@ struct tftp_xfer *tftp_xfer_create(const char *ip_addr, int port)
 void tftp_xfer_destroy(struct tftp_xfer *xfer)
 {
     struct tftp_xfer_private *_private;
-
+    if (xfer == NULL)
+    {
+        return;
+    }
     /* free all mem */
     _private = xfer->_private;
     closesocket(xfer->sock);
-    rt_free(_private->ip_addr);
-    rt_free(xfer->mode);
-    rt_free(xfer);
+    if (_private && _private->ip_addr)
+    {
+        free(_private->ip_addr);
+    }
+    free(xfer->mode);
+    free(xfer);
 }

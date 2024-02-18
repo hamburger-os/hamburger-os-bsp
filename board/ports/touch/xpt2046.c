@@ -74,7 +74,7 @@ int drv_touch_bus_init(struct _rt_drv_touch *config)
         }
     } while (rt_device_find(dev_name));
 
-    rt_hw_soft_spi_device_attach(TOUCH_XPT2046_SPI_BUS, dev_name, TOUCH_XPT2046_CS_PIN);
+    rt_hw_soft_spi_device_attach(TOUCH_XPT2046_SPI_BUS, dev_name, rt_pin_get(TOUCH_XPT2046_CS_PIN));
 //    rt_hw_spi_device_attach(TOUCH_XPT2046_SPI_BUS, dev_name, rt_pin_get(TOUCH_XPT2046_CS_PIN));
     config->spidev = (struct rt_spi_device *) rt_device_find(dev_name);
     if (config->spidev == NULL)

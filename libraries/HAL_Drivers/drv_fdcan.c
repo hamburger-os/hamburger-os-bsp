@@ -170,7 +170,11 @@ static rt_err_t _inline_can_filter_config(_stm32_fdcan_t *pdrv_can, struct rt_ca
     /* get default filter */
     for (tmp_i32IndexCount = 0; tmp_i32IndexCount < puser_can_filter_config->count; tmp_i32IndexCount++)
     {
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+        pdrv_can->FilterConfig.FilterIndex = puser_can_filter_config->items[tmp_i32IndexCount].hdr_bank;
+#else
         pdrv_can->FilterConfig.FilterIndex = puser_can_filter_config->items[tmp_i32IndexCount].hdr;
+#endif
         pdrv_can->FilterConfig.FilterID1 = puser_can_filter_config->items[tmp_i32IndexCount].id;
         pdrv_can->FilterConfig.FilterID2 = puser_can_filter_config->items[tmp_i32IndexCount].mask;
         if (puser_can_filter_config->items[tmp_i32IndexCount].ide == RT_CAN_EXTID)
@@ -466,7 +470,11 @@ static int _inline_can_recvmsg(struct rt_can_device *can, void *buf, rt_uint32_t
 
         pmsg->len = (pdrv_can->RxHeader.DataLength >> 16) & 0x0f;
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+        pmsg->hdr_index = pdrv_can->RxHeader.FilterIndex;
+#else
         pmsg->hdr = pdrv_can->RxHeader.FilterIndex;
+#endif
         return RT_EOK;
     }
 }

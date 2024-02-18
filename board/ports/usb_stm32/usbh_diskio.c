@@ -58,10 +58,18 @@ struct usbh_diskio
 static struct usbh_diskio udisk_part[MAX_PARTITION_COUNT] = { 0 };
 
 /* Private function prototypes -----------------------------------------------*/
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static rt_ssize_t USBH_read(rt_device_t dev, rt_off_t sector, void* buff, rt_size_t count);
+#else
 static rt_size_t USBH_read(rt_device_t dev, rt_off_t sector, void* buff, rt_size_t count);
+#endif
 
 #if _USE_WRITE == 1
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static rt_ssize_t USBH_write(rt_device_t dev, rt_off_t sector, const void* buff, rt_size_t count);
+#else
 static rt_size_t USBH_write(rt_device_t dev, rt_off_t sector, const void* buff, rt_size_t count);
+#endif
 #endif /* _USE_WRITE == 1 */
 
 #if _USE_IOCTL == 1
@@ -293,7 +301,11 @@ static rt_err_t USBH_status(rt_device_t dev)
  * @param  count: Number of sectors to read (1..128)
  * @retval DRESULT: Operation result
  */
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static rt_ssize_t USBH_read(rt_device_t dev, rt_off_t sector, void* buff, rt_size_t count)
+#else
 static rt_size_t USBH_read(rt_device_t dev, rt_off_t sector, void* buff, rt_size_t count)
+#endif
 {
     struct rt_device *part = (struct rt_device *)dev;
     struct usbh_diskio *msc_class = part->user_data;
@@ -364,7 +376,11 @@ static rt_size_t USBH_read(rt_device_t dev, rt_off_t sector, void* buff, rt_size
  * @retval DRESULT: Operation result
  */
 #if _USE_WRITE == 1
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static rt_ssize_t USBH_write(rt_device_t dev, rt_off_t sector, const void* buff, rt_size_t count)
+#else
 static rt_size_t USBH_write(rt_device_t dev, rt_off_t sector, const void* buff, rt_size_t count)
+#endif
 {
     struct rt_device *part = (struct rt_device *)dev;
     struct usbh_diskio *msc_class = part->user_data;

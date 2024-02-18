@@ -298,15 +298,28 @@ static long list_thread(void)
 
                     lv_obj_t * label = lv_label_create(cont_line);
                     lv_obj_set_size(label, LV_HOR_RES_MAX*4/48, LV_VER_RES_MAX/36);
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+                    lv_label_set_text_fmt(label, "%s", thread->parent.name);
+#else
                     lv_label_set_text_fmt(label, "%s", thread->name);
+#endif
 
                     label = lv_label_create(cont_line);
                     lv_obj_set_size(label, LV_HOR_RES_MAX*3/48, LV_VER_RES_MAX/36);
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+                    stat = (thread->stat & RT_THREAD_STAT_MASK);
+                    if (stat == RT_THREAD_READY)        lv_label_set_text_fmt(label, LV_SYMBOL_PREV"%2d", thread->current_priority);
+                    else if ((stat & RT_THREAD_SUSPEND_MASK) == RT_THREAD_SUSPEND_MASK) lv_label_set_text_fmt(label, LV_SYMBOL_PAUSE"%2d", thread->current_priority);
+                    else if (stat == RT_THREAD_INIT)    lv_label_set_text_fmt(label, LV_SYMBOL_OK"%2d", thread->current_priority);
+                    else if (stat == RT_THREAD_CLOSE)   lv_label_set_text_fmt(label, LV_SYMBOL_CLOSE"%2d", thread->current_priority);
+                    else if (stat == RT_THREAD_RUNNING) lv_label_set_text_fmt(label, LV_SYMBOL_PLAY"%2d", thread->current_priority);
+#else
                     if (stat == RT_THREAD_READY)        lv_label_set_text_fmt(label, LV_SYMBOL_PREV"%2d", thread->current_priority);
                     else if (stat == RT_THREAD_SUSPEND) lv_label_set_text_fmt(label, LV_SYMBOL_PAUSE"%2d", thread->current_priority);
                     else if (stat == RT_THREAD_INIT)    lv_label_set_text_fmt(label, LV_SYMBOL_OK"%2d", thread->current_priority);
                     else if (stat == RT_THREAD_CLOSE)   lv_label_set_text_fmt(label, LV_SYMBOL_CLOSE"%2d", thread->current_priority);
                     else if (stat == RT_THREAD_RUNNING) lv_label_set_text_fmt(label, LV_SYMBOL_PLAY"%2d", thread->current_priority);
+#endif
 
                     uint16_t value = (thread->stack_size - ((rt_ubase_t) ptr - (rt_ubase_t) thread->stack_addr)) * 100 / thread->stack_size;
                     lv_obj_t * bar = lv_bar_create(cont_line);
@@ -328,6 +341,7 @@ static long list_thread(void)
     return 0;
 }
 
+#ifdef RT_USING_MEMHEAP
 static long list_memheap(void)
 {
     rt_base_t level;
@@ -389,6 +403,7 @@ static long list_memheap(void)
 
     return 0;
 }
+#endif /* RT_USING_MEMHEAP */
 
 static void slider_event_cb(lv_event_t * event)
 {
@@ -509,7 +524,11 @@ void lv_user_gui_init(void)
             "2006 - 2023 Copyright\n"
             "by hnthinker team\n"
             , SYS_VERSION
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+            , RT_VERSION_MAJOR, RT_VERSION_MINOR, RT_VERSION_PATCH, __DATE__, __TIME__);
+#else
             , RT_VERSION, RT_SUBVERSION, RT_REVISION, __DATE__, __TIME__);
+#endif
     lv_obj_set_width(ui.label_logo, LV_HOR_RES_MAX/3);
     lv_obj_set_style_text_align(ui.label_logo, LV_TEXT_ALIGN_RIGHT, 0);
     lv_obj_align(ui.label_logo, LV_ALIGN_TOP_LEFT, 96, 0);

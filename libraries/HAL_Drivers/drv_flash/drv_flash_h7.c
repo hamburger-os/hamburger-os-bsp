@@ -46,7 +46,6 @@ int stm32_flash_read(rt_uint32_t addr, rt_uint8_t *buf, size_t size)
 
     if (size < 1)
     {
-//        LOG_W("read size %d! addr is (0x%p)", size, (void*)(addr + size));
         return 0;
     }
     LOG_D("read (0x%p) %d", (void*)(addr), size);
@@ -89,7 +88,6 @@ int stm32_flash_write(rt_uint32_t addr, const rt_uint8_t *buf, size_t size)
 
     if (size < 1)
     {
-//        LOG_W("write size %d! addr is (0x%p)", size, (void*)(addr + size));
         return 0;
     }
     LOG_D("write (0x%p) %d %d", (void*)(addr), addr % 32, size);
@@ -162,7 +160,6 @@ int stm32_flash_erase(rt_uint32_t addr, size_t size)
 
     if (size < 1)
     {
-//        LOG_W("erase size %d! addr is (0x%p)", size, (void*)(addr + size));
         return 0;
     }
     LOG_D("erase start: addr (0x%p), size %d", (void *)addr, size);

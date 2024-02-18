@@ -284,7 +284,11 @@ static rt_err_t fmc_eth_close(rt_device_t dev)
 }
 
 #ifdef BSP_USE_LINK_LAYER_COMMUNICATION
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static rt_ssize_t fmc_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t size)
+#else
 static rt_size_t fmc_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t size)
+#endif
 {
     struct rt_fmc_eth_port *fmc_eth = dev->user_data;
 
@@ -340,7 +344,11 @@ static rt_size_t fmc_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_si
     return read_size;
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static rt_ssize_t fmc_eth_write(rt_device_t dev, rt_off_t pos, const void *buffer, rt_size_t size)
+#else
 static rt_size_t fmc_eth_write(rt_device_t dev, rt_off_t pos, const void *buffer, rt_size_t size)
+#endif
 {
     struct rt_fmc_eth_port *fmc_eth = dev->user_data;
 

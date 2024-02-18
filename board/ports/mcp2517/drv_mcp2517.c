@@ -3299,8 +3299,7 @@ static int rt_hw_mcp2517_init(void)
 
 
         /* attach cs pin */
-        if (rt_hw_spi_device_attach(mcp2517_can_port[i].spi_name, dev_name,
-                mcp2517_can_port[i].spi_cs_pin_index) != RT_EOK)
+        if (rt_hw_spi_device_attach(mcp2517_can_port[i].spi_name, dev_name, mcp2517_can_port[i].spi_cs_pin_index) != RT_EOK)
         {
             LOG_D("can port %d %s dev %d attach cs %d pin error", i, mcp2517_can_port[i].spi_name, dev_name,
                     mcp2517_can_port[i].spi_irq_pin_index);

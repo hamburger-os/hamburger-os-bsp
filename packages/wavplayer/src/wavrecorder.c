@@ -12,8 +12,8 @@
 #include <wavhdr.h>
 #include <wavrecorder.h>
 
-#define DBG_TAG "WAV_RECORDER"
-#define DBG_LVL DBG_LOG
+#define DBG_TAG     "WAV_RECORDER"
+#define DBG_LVL     DBG_INFO
 #include <rtdbg.h>
 
 struct recorder

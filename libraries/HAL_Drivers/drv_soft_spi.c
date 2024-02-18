@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2022, RT-Thread Development Team
+ * Copyright (c) 2006-2023, RT-Thread Development Team
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -8,12 +8,10 @@
  * 2022-6-14      solar        first version
  */
 #include <board.h>
+#include "drv_soft_spi.h"
 #include "drv_config.h"
 
-#ifdef BSP_USING_SOFT_SPI
-
 #if defined(RT_USING_SPI) && defined(RT_USING_SPI_BITOPS) && defined(RT_USING_PIN)
-#include "drv_soft_spi.h"
 
 //#define DRV_DEBUG
 #define LOG_TAG             "drv.soft_spi"
@@ -37,11 +35,11 @@ enum
 static struct stm32_soft_spi_config soft_spi_config[] =
 {
 #ifdef BSP_USING_SOFT_SPI1
-    SOFT_SPI1_BUS_CONFIG,
+        SOFT_SPI1_BUS_CONFIG,
 #endif
 
 #ifdef BSP_USING_SOFT_SPI2
-    SOFT_SPI2_BUS_CONFIG,
+        SOFT_SPI2_BUS_CONFIG,
 #endif
 
 #ifdef BSP_USING_SOFT_SPI3
@@ -52,22 +50,44 @@ static struct stm32_soft_spi_config soft_spi_config[] =
 /**
   * Attach the spi device to soft SPI bus, this function must be used after initialization.
   */
-rt_err_t rt_hw_soft_spi_device_attach(const char *bus_name, const char *device_name, const char *pin_name)
+rt_err_t rt_hw_soft_spi_device_attach(const char *bus_name, const char *device_name, rt_base_t cs_pin)
 {
+    RT_ASSERT(bus_name != RT_NULL);
+    RT_ASSERT(device_name != RT_NULL);
+
     rt_err_t result;
     struct rt_spi_device *spi_device;
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+#else
     /* initialize the cs pin && select the slave*/
-    rt_base_t cs_pin = rt_pin_get(pin_name);
-
     rt_pin_mode(cs_pin,PIN_MODE_OUTPUT);
     rt_pin_write(cs_pin,PIN_HIGH);
+
+    rt_base_t *pcs_pin;
+    pcs_pin = (rt_base_t *)rt_malloc(sizeof(rt_base_t));
+    RT_ASSERT(pcs_pin != RT_NULL);
+    *pcs_pin = cs_pin;
+#endif
 
     /* attach the device to soft spi bus*/
     spi_device = (struct rt_spi_device *)rt_malloc(sizeof(struct rt_spi_device));
     RT_ASSERT(spi_device != RT_NULL);
 
-    result = rt_spi_bus_attach_device(spi_device, device_name, bus_name, (void *)cs_pin);
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+    result = rt_spi_bus_attach_device_cspin(spi_device, device_name, bus_name, cs_pin, RT_NULL);
+#else
+    result = rt_spi_bus_attach_device(spi_device, device_name, bus_name, (void *)pcs_pin);
+#endif
+    if (result != RT_EOK)
+    {
+        LOG_E("%s attach to %s faild, %d", device_name, bus_name, result);
+    }
+
+    RT_ASSERT(result == RT_EOK);
+
+    LOG_D("%s attach to %s done", device_name, bus_name);
+
     return result;
 }
 RTM_EXPORT(rt_hw_soft_spi_device_attach);

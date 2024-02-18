@@ -37,7 +37,7 @@ static inline void lfs_cache_drop(lfs_t *lfs, lfs_cache_t *rcache) {
 
 static inline void lfs_cache_zero(lfs_t *lfs, lfs_cache_t *pcache) {
     // zero to avoid information leak
-    rt_memset(pcache->buffer, 0xff, lfs->cfg->cache_size);
+    memset(pcache->buffer, 0xff, lfs->cfg->cache_size);
     pcache->block = LFS_BLOCK_NULL;
 }
 
@@ -59,7 +59,7 @@ static int lfs_bd_read(lfs_t *lfs,
             if (off >= pcache->off) {
                 // is already in pcache?
                 diff = lfs_min(diff, pcache->size - (off-pcache->off));
-                rt_memcpy(data, &pcache->buffer[off-pcache->off], diff);
+                memcpy(data, &pcache->buffer[off-pcache->off], diff);
 
                 data += diff;
                 off += diff;
@@ -76,7 +76,7 @@ static int lfs_bd_read(lfs_t *lfs,
             if (off >= rcache->off) {
                 // is already in rcache?
                 diff = lfs_min(diff, rcache->size - (off-rcache->off));
-                rt_memcpy(data, &rcache->buffer[off-rcache->off], diff);
+                memcpy(data, &rcache->buffer[off-rcache->off], diff);
 
                 data += diff;
                 off += diff;
@@ -218,7 +218,7 @@ static int lfs_bd_prog(lfs_t *lfs,
             // already fits in pcache?
             lfs_size_t diff = lfs_min(size,
                     lfs->cfg->cache_size - (off-pcache->off));
-            rt_memcpy(&pcache->buffer[off-pcache->off], data, diff);
+            memcpy(&pcache->buffer[off-pcache->off], data, diff);
 
             data += diff;
             off += diff;
@@ -591,7 +591,7 @@ static int lfs_alloc(lfs_t *lfs, lfs_block_t *block) {
         lfs->free.i = 0;
 
         // find mask of free blocks from tree
-        rt_memset(lfs->free.buffer, 0, lfs->cfg->lookahead_size);
+        memset(lfs->free.buffer, 0, lfs->cfg->lookahead_size);
         int err = lfs_fs_rawtraverse(lfs, lfs_alloc_lookahead, lfs, true);
         if (err) {
             lfs_alloc_drop(lfs);
@@ -655,7 +655,7 @@ static lfs_stag_t lfs_dir_getslice(lfs_t *lfs, const lfs_mdir_t *dir,
                 return err;
             }
 
-            rt_memset((uint8_t*)gbuffer + diff, 0, gsize - diff);
+            memset((uint8_t*)gbuffer + diff, 0, gsize - diff);
 
             return tag + gdiff;
         }
@@ -688,7 +688,7 @@ static int lfs_dir_getread(lfs_t *lfs, const lfs_mdir_t *dir,
             if (off >= pcache->off) {
                 // is already in pcache?
                 diff = lfs_min(diff, pcache->size - (off-pcache->off));
-                rt_memcpy(data, &pcache->buffer[off-pcache->off], diff);
+                memcpy(data, &pcache->buffer[off-pcache->off], diff);
 
                 data += diff;
                 off += diff;
@@ -705,7 +705,7 @@ static int lfs_dir_getread(lfs_t *lfs, const lfs_mdir_t *dir,
             if (off >= rcache->off) {
                 // is already in rcache?
                 diff = lfs_min(diff, rcache->size - (off-rcache->off));
-                rt_memcpy(data, &rcache->buffer[off-rcache->off], diff);
+                memcpy(data, &rcache->buffer[off-rcache->off], diff);
 
                 data += diff;
                 off += diff;
@@ -865,6 +865,11 @@ static int lfs_dir_traverse(lfs_t *lfs,
                 };
                 sp += 1;
 
+                dir = dir;
+                off = off;
+                ptag = ptag;
+                attrs = attrs;
+                attrcount = attrcount;
                 tmask = 0;
                 ttag = 0;
                 begin = 0;
@@ -1157,7 +1162,6 @@ static lfs_stag_t lfs_dir_fetchmatch(lfs_t *lfs,
                         dir->erased = false;
                         break;
                     }
-                    return err;
                 }
                 lfs_pair_fromle32(temptail);
             }
@@ -2536,7 +2540,7 @@ static int lfs_dir_rawclose(lfs_t *lfs, lfs_dir_t *dir) {
 }
 
 static int lfs_dir_rawread(lfs_t *lfs, lfs_dir_t *dir, struct lfs_info *info) {
-    rt_memset(info, 0, sizeof(*info));
+    memset(info, 0, sizeof(*info));
 
     // special offset for '.' and '..'
     if (dir->pos == 0) {
@@ -2994,14 +2998,12 @@ cleanup:
     return err;
 }
 
-#ifndef LFS_NO_MALLOC
 static int lfs_file_rawopen(lfs_t *lfs, lfs_file_t *file,
         const char *path, int flags) {
     static const struct lfs_file_config defaults = {0};
     int err = lfs_file_rawopencfg(lfs, file, path, flags, &defaults);
     return err;
 }
-#endif
 
 static int lfs_file_rawclose(lfs_t *lfs, lfs_file_t *file) {
 #ifndef LFS_READONLY
@@ -3074,7 +3076,7 @@ static int lfs_file_relocate(lfs_t *lfs, lfs_file_t *file) {
         }
 
         // copy over new state of file
-        rt_memcpy(file->cache.buffer, lfs->pcache.buffer, lfs->cfg->cache_size);
+        memcpy(file->cache.buffer, lfs->pcache.buffer, lfs->cfg->cache_size);
         file->cache.block = lfs->pcache.block;
         file->cache.off = lfs->pcache.off;
         file->cache.size = lfs->pcache.size;
@@ -4037,7 +4039,7 @@ static int lfs_rawformat(lfs_t *lfs, const struct lfs_config *cfg) {
         }
 
         // create free lookahead
-        rt_memset(lfs->free.buffer, 0, lfs->cfg->lookahead_size);
+        memset(lfs->free.buffer, 0, lfs->cfg->lookahead_size);
         lfs->free.off = 0;
         lfs->free.size = lfs_min(8*lfs->cfg->lookahead_size,
                 lfs->cfg->block_count);
@@ -4193,7 +4195,7 @@ static int lfs_rawmount(lfs_t *lfs, const struct lfs_config *cfg) {
 
             if (superblock.block_size != lfs->cfg->block_size) {
                 LFS_ERROR("Invalid block size (%"PRIu32" != %"PRIu32")",
-                        superblock.block_size, lfs->cfg->block_size);
+                        superblock.block_count, lfs->cfg->block_count);
                 err = LFS_ERR_INVAL;
                 goto cleanup;
             }
@@ -5123,7 +5125,7 @@ static int lfs_rawmigrate(lfs_t *lfs, const struct lfs_config *cfg) {
 
                 // also fetch name
                 char name[LFS_NAME_MAX+1];
-                rt_memset(name, 0, sizeof(name));
+                memset(name, 0, sizeof(name));
                 err = lfs1_bd_read(lfs, dir1.pair[0],
                         entry1.off + 4+entry1.d.elen+entry1.d.alen,
                         name, entry1.d.nlen);

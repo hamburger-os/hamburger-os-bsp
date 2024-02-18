@@ -132,7 +132,7 @@ static int s25fl512_spi_device_init(void)
         }
     } while (rt_device_find(dev_name));
 
-//    rt_hw_soft_spi_device_attach(BSP_S25FL512_SPI_BUS, dev_name, BSP_S25FL512_SPI_CS_PIN);
+//    rt_hw_soft_spi_device_attach(BSP_S25FL512_SPI_BUS, dev_name, rt_pin_get(BSP_S25FL512_SPI_CS_PIN));
     rt_hw_spi_device_attach(BSP_S25FL512_SPI_BUS, dev_name, rt_pin_get(BSP_S25FL512_SPI_CS_PIN));
     s25fl512_spidev = (struct rt_spi_device *)rt_device_find(dev_name);
     if (s25fl512_spidev == NULL)

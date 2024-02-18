@@ -114,7 +114,6 @@ void _Error_Handler(char *s, int num)
     while (1);
     /* USER CODE END Error_Handler */
 }
-RTM_EXPORT(_Error_Handler);
 
 /**
  * This function will delay for some us.
@@ -155,7 +154,11 @@ RTM_EXPORT(rt_hw_us_delay);
 /**
  * This function will initial STM32 board.
  */
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+rt_weak void rt_hw_board_init(void)
+#else
 RT_WEAK void rt_hw_board_init(void)
+#endif
 {
 #ifdef BSP_ENABLE_MPU
     rt_hw_mpu_init();

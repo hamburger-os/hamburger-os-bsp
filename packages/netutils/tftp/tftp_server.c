@@ -270,7 +270,7 @@ static void tftp_server_transf_handle(struct tftp_server *server, struct tftp_cl
             if (recv_size < 0)
             {
                 /* Receiving failed. */
-                LOG_D("server read data err! disconnect client");
+                tftp_printf("server read data err! disconnect client");
                 tftp_client_xfer_destroy(server, client);
             }
             else

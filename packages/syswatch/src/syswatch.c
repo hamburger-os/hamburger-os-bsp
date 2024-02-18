@@ -85,7 +85,11 @@ static void syswatch_wdt_feed(void)
 /* thread except resolve mode 0--system reset */
 static void syswatch_thread_except_resolve_reset(rt_thread_t thread)
 {
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+    LOG_E("%.*s thread exception, priority = %d, execute system reset", RT_NAME_MAX, thread->parent.name, thread->current_priority);
+#else
     LOG_E("%.*s thread exception, priority = %d, execute system reset", RT_NAME_MAX, thread->name, thread->current_priority);
+#endif
     syswatch_event_hook_call(SYSWATCH_EVENT_SYSTEM_RESET, thread);
     rt_thread_mdelay(100);
     rt_hw_cpu_reset();

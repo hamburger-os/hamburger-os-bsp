@@ -70,7 +70,11 @@ void selftest_can_test(SelftestUserData *puserdata)
         rt_thread_delay(100);
 
         rt_memset(&rxmsg, 0, sizeof(rxmsg));
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+        rxmsg.hdr_index = -1;
+#else
         rxmsg.hdr = -1;
+#endif
         rt_device_read(puserdata->can_dev[i][1], 0, &rxmsg, sizeof(rxmsg));
         if (rt_memcmp(txmsg.data, rxmsg.data, txmsg.len) == 0)
         {

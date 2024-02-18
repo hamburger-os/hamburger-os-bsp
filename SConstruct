@@ -2,9 +2,6 @@ import os
 import sys
 import rtconfig
 
-sys.path.append(r".\rt-thread\tools")
-from mdklibproject import MDKLibProject
-
 if os.getenv('RTT_ROOT'):
     RTT_ROOT = os.getenv('RTT_ROOT')
 else:
@@ -17,6 +14,7 @@ if not os.getenv("RTT_ROOT"):
 sys.path = sys.path + [os.path.join(RTT_ROOT, 'tools')]
 try:
     from building import *
+    from mdklibproject import MDKLibProject
 except:
     print('Cannot found RT-Thread root directory, please check RTT_ROOT')
     print(RTT_ROOT)
