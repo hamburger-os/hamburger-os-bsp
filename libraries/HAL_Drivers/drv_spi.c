@@ -244,7 +244,7 @@ static rt_err_t stm32_spi_init(struct stm32_spi *spi_drv, struct rt_spi_configur
     spi_handle->Init.MasterReceiverAutoSusp     = SPI_MASTER_RX_AUTOSUSP_DISABLE;
     spi_handle->Init.MasterKeepIOState          = SPI_MASTER_KEEP_IO_STATE_ENABLE;
     spi_handle->Init.IOSwap                     = SPI_IO_SWAP_DISABLE;
-    spi_handle->Init.FifoThreshold              = SPI_FIFO_THRESHOLD_08DATA;
+    spi_handle->Init.FifoThreshold              = SPI_FIFO_THRESHOLD_04DATA;
 #endif
 
     if (HAL_SPI_Init(spi_handle) != HAL_OK)
@@ -458,6 +458,7 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
             }
             else
             {
+                //h7 hal 的问题，rx api会报ovr错误
                 state = HAL_SPI_TransmitReceive_IT(spi_handle, (uint8_t *)recv_buf, (uint8_t *)recv_buf, send_length);
             }
         }
