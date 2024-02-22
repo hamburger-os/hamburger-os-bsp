@@ -50,7 +50,7 @@ void tftp_transfer_err(struct tftp_xfer *xfer, uint16_t err_no, const char *err_
 {
     uint16_t *snd_packet;
     struct tftp_xfer_private *_private;
-    int str_len;
+    size_t str_len;
 
     /* Calculate error message length */
     str_len = strlen(err_msg);
@@ -68,7 +68,7 @@ void tftp_transfer_err(struct tftp_xfer *xfer, uint16_t err_no, const char *err_
     // Send err msg.
     snd_packet[0] = htons(TFTP_CMD_ERROR);
     snd_packet[1] = htons(err_no);
-    strncpy((char *)&snd_packet[2], err_msg, str_len);
+    strcpy((char *)&snd_packet[2], err_msg);
     sendto(xfer->sock, snd_packet, str_len + 4, 0, (struct sockaddr *)&_private->sender, sizeof(struct sockaddr_in));
     free(snd_packet);
 }

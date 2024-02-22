@@ -1088,16 +1088,13 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
     {
     case HAL_SPI_ERROR_OVR:
         __HAL_SPI_CLEAR_OVRFLAG(hspi);
-        LOG_E("ErrorCallback 0x%x HAL_SPI_ERROR_OVR", error);
+        LOG_E("%s ErrorCallback 0x%x HAL_SPI_ERROR_OVR", spi_drv->config->bus_name, error);
         break;
     case HAL_SPI_ERROR_DMA:
-        LOG_E("ErrorCallback 0x%x HAL_SPI_ERROR_DMA", error);
-        break;
-    case HAL_SPI_ERROR_TIMEOUT:
-        LOG_E("ErrorCallback 0x%x HAL_SPI_ERROR_TIMEOUT", error);
+        LOG_E("%s ErrorCallback 0x%x HAL_SPI_ERROR_DMA", spi_drv->config->bus_name, error);
         break;
     default:
-        LOG_E("ErrorCallback 0x%x", error);
+        LOG_E("%s ErrorCallback 0x%x", spi_drv->config->bus_name, error);
         break;
     }
 }
