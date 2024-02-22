@@ -418,7 +418,9 @@ static rt_err_t _can_control(struct rt_can_device *can, int cmd, void *arg)
                 drv_can->FilterConfig.FilterMaskIdLow = mask_l;
 
                 drv_can->FilterConfig.FilterMode = filter_cfg->items[i].mode;
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
                 drv_can->FilterConfig.FilterFIFOAssignment = filter_cfg->items[i].rxfifo;/*rxfifo = CAN_RX_FIFO0/CAN_RX_FIFO1*/
+#endif
                 /* Filter conf */
                 HAL_CAN_ConfigFilter(&drv_can->CanHandle, &drv_can->FilterConfig);
             }
