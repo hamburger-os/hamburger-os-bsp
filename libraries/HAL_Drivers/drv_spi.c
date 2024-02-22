@@ -237,14 +237,14 @@ static rt_err_t stm32_spi_init(struct stm32_spi *spi_drv, struct rt_spi_configur
     spi_handle->Init.NSSPMode                   = SPI_NSS_PULSE_DISABLE;
     spi_handle->Init.NSSPolarity                = SPI_NSS_POLARITY_LOW;
     spi_handle->Init.CRCPolynomial              = 0x0;
-    spi_handle->Init.TxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
-    spi_handle->Init.RxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
+    spi_handle->Init.TxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ONE_PATTERN;
+    spi_handle->Init.RxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ONE_PATTERN;
     spi_handle->Init.MasterSSIdleness           = SPI_MASTER_SS_IDLENESS_00CYCLE;
     spi_handle->Init.MasterInterDataIdleness    = SPI_MASTER_INTERDATA_IDLENESS_00CYCLE;
     spi_handle->Init.MasterReceiverAutoSusp     = SPI_MASTER_RX_AUTOSUSP_DISABLE;
     spi_handle->Init.MasterKeepIOState          = SPI_MASTER_KEEP_IO_STATE_ENABLE;
     spi_handle->Init.IOSwap                     = SPI_IO_SWAP_DISABLE;
-    spi_handle->Init.FifoThreshold              = SPI_FIFO_THRESHOLD_01DATA;
+    spi_handle->Init.FifoThreshold              = SPI_FIFO_THRESHOLD_08DATA;
 #endif
 
     if (HAL_SPI_Init(spi_handle) != HAL_OK)
@@ -280,11 +280,8 @@ static rt_err_t stm32_spi_init(struct stm32_spi *spi_drv, struct rt_spi_configur
         HAL_NVIC_EnableIRQ(spi_drv->config->dma_tx->dma_irq);
     }
 
-    if(spi_drv->spi_dma_flag & SPI_USING_TX_DMA_FLAG || spi_drv->spi_dma_flag & SPI_USING_RX_DMA_FLAG)
-    {
-        HAL_NVIC_SetPriority(spi_drv->config->irq_type, 2, 0);
-        HAL_NVIC_EnableIRQ(spi_drv->config->irq_type);
-    }
+    HAL_NVIC_SetPriority(spi_drv->config->irq_type, 2, 0);
+    HAL_NVIC_EnableIRQ(spi_drv->config->irq_type);
 
     LOG_D("%s init done", spi_drv->config->bus_name);
     return RT_EOK;
@@ -426,7 +423,7 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
             }
             else
             {
-                state = HAL_SPI_TransmitReceive(spi_handle, (uint8_t *)send_buf, (uint8_t *)recv_buf, send_length, send_length * 4);
+                state = HAL_SPI_TransmitReceive_IT(spi_handle, (uint8_t *)send_buf, (uint8_t *)recv_buf, send_length);
             }
         }
         else if (message->send_buf)
@@ -440,7 +437,7 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
             }
             else
             {
-                state = HAL_SPI_Transmit(spi_handle, (uint8_t *)send_buf, send_length, send_length * 4);
+                state = HAL_SPI_Transmit_IT(spi_handle, (uint8_t *)send_buf, send_length);
             }
 
             if (message->cs_release && (device->config.mode & RT_SPI_3WIRE))
@@ -461,9 +458,7 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
             }
             else
             {
-                rt_enter_critical();
-                state = HAL_SPI_Receive(spi_handle, (uint8_t *)recv_buf, send_length, send_length * 4);
-                rt_exit_critical();
+                state = HAL_SPI_TransmitReceive_IT(spi_handle, (uint8_t *)recv_buf, (uint8_t *)recv_buf, send_length);
             }
         }
         else
@@ -482,15 +477,12 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
             LOG_D("%s transfer done", spi_drv->config->bus_name);
         }
 
-        if ((spi_drv->spi_dma_flag & (SPI_USING_TX_DMA_FLAG | SPI_USING_RX_DMA_FLAG)) && (send_length >= DMA_TRANS_MIN_LEN))
+        /* blocking the thread,and the other tasks can run */
+        if (rt_completion_wait(&spi_drv->cpt, send_length * 4) != RT_EOK)
         {
-            /* blocking the thread,and the other tasks can run */
-            if (rt_completion_wait(&spi_drv->cpt, send_length * 4) != RT_EOK)
-            {
-                state = HAL_TIMEOUT;
-                LOG_E("SPI transfer timeout: 0x%p 0x%p 0x%p %d", send_buf, recv_buf, p_txrx_buffer, send_length);
-                break;
-            }
+            state = HAL_TIMEOUT;
+            LOG_E("SPI transfer timeout: 0x%p 0x%p 0x%p %d", send_buf, recv_buf, p_txrx_buffer, send_length);
+            break;
         }
 
         if(dma_aligned_buffer != RT_NULL) /* re-aligned, so need to copy the data to recv_buf */
@@ -705,7 +697,7 @@ rt_err_t rt_hw_spi_device_attach(const char *bus_name, const char *device_name, 
 }
 RTM_EXPORT(rt_hw_spi_device_attach);
 
-#if defined(BSP_SPI1_TX_USING_DMA) || defined(BSP_SPI1_RX_USING_DMA)
+#if defined(BSP_USING_SPI1)
 void SPI1_IRQHandler(void)
 {
     /* enter interrupt */
@@ -754,7 +746,7 @@ void SPI1_DMA_TX_IRQHandler(void)
 }
 #endif /* defined(BSP_USING_SPI1) && defined(BSP_SPI_USING_DMA) */
 
-#if defined(BSP_SPI2_TX_USING_DMA) || defined(BSP_SPI2_RX_USING_DMA)
+#if defined(BSP_USING_SPI2)
 void SPI2_IRQHandler(void)
 {
     /* enter interrupt */
@@ -803,7 +795,7 @@ void SPI2_DMA_TX_IRQHandler(void)
 }
 #endif /* defined(BSP_USING_SPI2) && defined(BSP_SPI_USING_DMA) */
 
-#if defined(BSP_SPI3_TX_USING_DMA) || defined(BSP_SPI3_RX_USING_DMA)
+#if defined(BSP_USING_SPI3)
 void SPI3_IRQHandler(void)
 {
     /* enter interrupt */
@@ -852,7 +844,7 @@ void SPI3_DMA_TX_IRQHandler(void)
 }
 #endif /* defined(BSP_USING_SPI3) && defined(BSP_SPI_USING_DMA) */
 
-#if defined(BSP_SPI4_TX_USING_DMA) || defined(BSP_SPI4_RX_USING_DMA)
+#if defined(BSP_USING_SPI4)
 void SPI4_IRQHandler(void)
 {
     /* enter interrupt */
@@ -901,7 +893,7 @@ void SPI4_DMA_TX_IRQHandler(void)
 }
 #endif /* defined(BSP_USING_SPI4) && defined(BSP_SPI_USING_DMA) */
 
-#if defined(BSP_SPI5_TX_USING_DMA) || defined(BSP_SPI5_RX_USING_DMA)
+#if defined(BSP_USING_SPI5)
 void SPI5_IRQHandler(void)
 {
     /* enter interrupt */
@@ -950,7 +942,7 @@ void SPI5_DMA_TX_IRQHandler(void)
 }
 #endif /* defined(BSP_USING_SPI5) && defined(BSP_SPI_USING_DMA) */
 
-#if defined(BSP_SPI6_TX_USING_DMA) || defined(BSP_SPI6_RX_USING_DMA)
+#if defined(BSP_USING_SPI6)
 void SPI6_IRQHandler(void)
 {
     /* enter interrupt */
@@ -1093,9 +1085,15 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
 
     switch(error)
     {
+    case HAL_SPI_ERROR_OVR:
+        __HAL_SPI_CLEAR_OVRFLAG(hspi);
+        LOG_E("ErrorCallback 0x%x HAL_SPI_ERROR_OVR", error);
+        break;
     case HAL_SPI_ERROR_DMA:
-        rt_completion_done(&spi_drv->cpt);
         LOG_E("ErrorCallback 0x%x HAL_SPI_ERROR_DMA", error);
+        break;
+    case HAL_SPI_ERROR_TIMEOUT:
+        LOG_E("ErrorCallback 0x%x HAL_SPI_ERROR_TIMEOUT", error);
         break;
     default:
         LOG_E("ErrorCallback 0x%x", error);
