@@ -14,21 +14,35 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-static int rt_hw_clock_information(void)
+static int rt_hw_board_information(void)
 {
-    rt_kprintf("|------------------------------\n");
-    rt_kprintf("| * System Clock information * \n");
-    rt_kprintf("|    name    |\tfrequency\n");
-    rt_kprintf("|------------------------------\n");
-    rt_kprintf("|    SYSCLK  |\t%d\n", HAL_RCC_GetSysClockFreq());
-    rt_kprintf("|    HCLK    |\t%d\n", HAL_RCC_GetHCLKFreq());
-    rt_kprintf("|    PCLK1   |\t%d\n", HAL_RCC_GetPCLK1Freq());
-    rt_kprintf("|    PCLK2   |\t%d\n", HAL_RCC_GetPCLK2Freq());
-    rt_kprintf("|------------------------------\n");
+    rt_kprintf("|---------------------------------------------------------|\n");
+    rt_kprintf("| *              System Clock information               * |\n");
+    rt_kprintf("|         name         |\t frequency                |\n");
+    rt_kprintf("|---------------------------------------------------------|\n");
+    rt_kprintf("|         SYSCLK       |\t%10d                |\n", HAL_RCC_GetSysClockFreq());
+    rt_kprintf("|         HCLK         |\t%10d                |\n", HAL_RCC_GetHCLKFreq());
+    rt_kprintf("|         PCLK1        |\t%10d                |\n", HAL_RCC_GetPCLK1Freq());
+    rt_kprintf("|         PCLK2        |\t%10d                |\n", HAL_RCC_GetPCLK2Freq());
+    rt_kprintf("|---------------------------------------------------------|\n");
+    rt_kprintf("| *              System memory information              * |\n");
+#ifdef RT_USING_MEMHEAP_AS_HEAP
+    extern void list_memheap(void);
+    list_memheap();
+#else /* RT_USING_MEMHEAP_AS_HEAP */
+    rt_size_t total = 0, used = 0, max_used = 0;
+
+    rt_memory_info(&total, &used, &max_used);
+    rt_kprintf("|         total        |\t%10d                \n", total);
+    rt_kprintf("|         used         |\t%10d                \n", used);
+    rt_kprintf("|         maximum      |\t%10d                \n", max_used);
+    rt_kprintf("|         available    |\t%10d                \n", total - used);
+#endif
+    rt_kprintf("|---------------------------------------------------------|\n");
 
     return RT_EOK;
 }
-INIT_PREV_EXPORT(rt_hw_clock_information);
+INIT_PREV_EXPORT(rt_hw_board_information);
 
 /*
  ******************************************************************************************************

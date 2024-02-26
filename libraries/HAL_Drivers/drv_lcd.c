@@ -71,6 +71,10 @@ static void turn_on_lcd_backlight(void)
 {
     change_lcd_brightness(100);
 }
+static void turn_off_lcd_backlight(void)
+{
+    change_lcd_brightness(0);
+}
 #elif defined(LCD_BACKLIGHT_USING_GPIO)
 static void turn_on_lcd_backlight(void)
 {
@@ -80,10 +84,22 @@ static void turn_on_lcd_backlight(void)
 
     rt_pin_write(ctl_pin, PIN_LOW);
 }
+static void turn_off_lcd_backlight(void)
+{
+    /* turn on the LCD backlight */
+    rt_base_t ctl_pin = rt_pin_get(LCD_BKLT_CTL_GPIO);
+    rt_pin_mode(ctl_pin, PIN_MODE_OUTPUT);
+
+    rt_pin_write(ctl_pin, PIN_HIGH);
+}
 #else
 static void turn_on_lcd_backlight(void)
 {
     /* turn on the LCD backlight */
+}
+static void turn_off_lcd_backlight(void)
+{
+    /* turn off the LCD backlight */
 }
 #endif
 
@@ -485,6 +501,8 @@ static int drv_lcd_hw_init(void)
     rt_err_t result = RT_EOK;
     struct rt_device *device = &_lcd.parent;
 
+    turn_off_lcd_backlight();
+
     /* memset _lcd to zero */
     rt_memset(&_lcd, 0x00, sizeof(_lcd));
 
@@ -514,8 +532,8 @@ static int drv_lcd_hw_init(void)
         goto __exit;
     }
 
-    /* memset buff to 0xFF */
-    rt_memset(_lcd.lcd_info.framebuffer, 0xFF, LCD_BUF_SIZE);
+    /* memset buff to 0x00 */
+    rt_memset(_lcd.lcd_info.framebuffer, 0x00, LCD_BUF_SIZE);
 
     device->type = RT_Device_Class_Graphic;
 #ifdef RT_USING_DEVICE_OPS
@@ -532,10 +550,11 @@ static int drv_lcd_hw_init(void)
         result = -RT_ERROR;
         goto __exit;
     }
-    turn_on_lcd_backlight();
 
     /* register lcd device */
     rt_device_register(device, "lcd", RT_DEVICE_FLAG_RDWR | RT_DEVICE_FLAG_STANDALONE);
+
+    turn_on_lcd_backlight();
 
 __exit:
     if (result != RT_EOK)
@@ -550,7 +569,7 @@ __exit:
     }
     return result;
 }
-INIT_DEVICE_EXPORT(drv_lcd_hw_init);
+INIT_PREV_EXPORT(drv_lcd_hw_init);
 
 #ifdef BSP_USING_LCD_TEST
 static int lcd_test(void)
