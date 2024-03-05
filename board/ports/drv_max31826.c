@@ -74,6 +74,9 @@ inline static int GET_DQ(void)
 /* ***************************MAX31826 DEFININS****************************************/
 #define MAX31826_CMD_READ_ROM               ((rt_uint8_t)0x33)
 #define MAX31826_CMD_SKIP_ROM               ((rt_uint8_t)0xCC)
+#define MAX31826_CMD_MATCH_ROM              ((rt_uint8_t)0x55)
+#define MAX31826_CMD_SERCH_ROM              ((rt_uint8_t)0xF0)
+
 #define MAX31826_CMD_READ_SCRATCHPAD        ((rt_uint8_t)0xBE)
 #define MAX31826_CMD_COPY_SCRATCHPAD2       ((rt_uint8_t)0x55)       /*  复制scratchpad2 数据到EEPROM */
 #define MAX31826_CMD_READ_EE_SCRATCHPAD     ((rt_uint8_t)0xAA)       /*  读EEPROM scratchpad数据 */
@@ -87,6 +90,7 @@ inline static int GET_DQ(void)
 #define MAX31826_CMD_TOKEN ((rt_uint8_t)0xA5)
 
 #define TEMP_INVALID                        (-12500)            /*  无效的温度数据 */
+#define MAX31826_MAX_NUM                    8
 
 static struct rt_mutex max31826_mux;    /** 读写互斥信号量 */
 static struct rt_mutex fal_mux;         /** 读写互斥信号量 */
@@ -96,6 +100,65 @@ static int fal_max31826_read(long offset, rt_uint8_t *buf, size_t size);
 static int fal_max31826_write(long offset, const rt_uint8_t *buf, size_t size);
 static int fal_max31826_erase(long offset, size_t size);
 
+static void DEV_MAX31826_Write1Wire(rt_uint8_t data);
+static rt_uint8_t DEV_MAX31826_Read1Wire(void);
+
+static uint8_t LastDiscrepancy = 0;
+static uint8_t LastDeviceFlag = 0;
+static uint8_t LastFamilyDiscrepancy = 0;
+
+typedef enum
+{
+#ifdef BSP_USE_MAX31826_SEN1
+    MAX31826_SEN1,
+#endif
+
+#ifdef BSP_USE_MAX31826_SEN2
+    MAX31826_SEN2,
+#endif
+
+#ifdef BSP_USE_MAX31826_SEN3
+    MAX31826_SEN3,
+#endif
+
+    MAX31826_SEN_ALL,
+} E_MAX31826_SEN;
+
+typedef struct
+{
+    struct rt_sensor_device sensor;
+    const char *dev_name;
+    rt_uint8_t rom_id[8];
+    rt_uint8_t address;
+}MAX31826_SEN_DEV;
+
+
+static MAX31826_SEN_DEV max31826_sen[] = {
+
+#ifdef BSP_USE_MAX31826_SEN1
+    {
+        .dev_name = "max31826_1",
+        .address = MAX31826_ADD1,
+    },
+#endif
+
+#ifdef BSP_USE_MAX31826_SEN2
+    {
+        .dev_name = "max31826_2",
+        .address = MAX31826_ADD2,
+    },
+#endif
+
+#ifdef BSP_USE_MAX31826_SEN3
+    {
+        .dev_name = "max31826_3",
+        .address = MAX31826_ADD3,
+    },
+#endif
+
+};
+
+
 const struct fal_flash_dev max31826_flash = {
     .name = "max31826",
     .addr = MAX31826_START_ADRESS,
@@ -104,6 +167,8 @@ const struct fal_flash_dev max31826_flash = {
     .ops = {fal_max31826_init, fal_max31826_read, fal_max31826_write, fal_max31826_erase},
     .write_gran = 0,
 };
+
+static rt_uint8_t max31826_id_temp[MAX31826_SEN_ALL][8]={0};
 
 #ifdef MAX31826_USING_I2C_DS2484
 
@@ -257,23 +322,6 @@ static void DEV_MAX31826_WriteBit(rt_uint8_t sendbit)
     rt_exit_critical();
 #endif /* MAX31826_USING_IO */
 
-#ifdef MAX31826_USING_I2C_DS2484
-    rt_uint8_t send_data;
-
-    send_data = sendbit;
-    if (ds2484_dev != NULL)
-    {
-        if (ds2484_dev->control(ds2484_dev, DS2484_Control_Write_Byte, (void *) &send_data) != RT_EOK)
-        {
-            LOG_E("MAX31826 write fail.");
-        }
-    }
-    else
-    {
-        LOG_E("MAX31826 write ds2484_dev is null.");
-    }
-#endif /* MAX31826_USING_I2C_DS2484 */
-
     rt_mutex_release(&max31826_mux);
 }
 
@@ -303,20 +351,6 @@ static rt_uint8_t DEV_MAX31826_ReadBit(void)
 //    rt_hw_interrupt_enable(level); /* 开中断 */
     rt_exit_critical();
 #endif /* MAX31826_USING_IO */
-
-#ifdef MAX31826_USING_I2C_DS2484
-    if (ds2484_dev != NULL)
-    {
-        if (ds2484_dev->control(ds2484_dev, DS2484_Control_Read_Byte, (void *) &readbit) != RT_EOK)
-        {
-            LOG_E("MAX31826 read fail.");
-        }
-    }
-    else
-    {
-        LOG_E("MAX31826 read ds2484_dev is null.");
-    }
-#endif /* MAX31826_USING_I2C_DS2484 */
 
     rt_mutex_release(&max31826_mux);
     return readbit;
@@ -360,6 +394,7 @@ static rt_uint8_t crc8_create(rt_uint8_t *data, rt_uint16_t number_of_bytes_in_d
 
 #ifdef MAX31826_USING_I2C_DS2484
 
+/* 挂载单个才能使用 */
 static rt_int32_t DEV_MAX31826_ReadID(rt_uint8_t * u8p_SensorID)
 {
     rt_uint8_t i;
@@ -369,19 +404,22 @@ static rt_int32_t DEV_MAX31826_ReadID(rt_uint8_t * u8p_SensorID)
 
     if (DEV_MAX31826_Reset1Wire())
     {
-        DEV_MAX31826_WriteBit(MAX31826_CMD_READ_ROM);
+        DEV_MAX31826_Write1Wire(MAX31826_CMD_READ_ROM);
 
         for (i = 0; i < 8; i++)
         {
-            u_SensorID.u8p_Data[i] = DEV_MAX31826_ReadBit();
+            u_SensorID.u8p_Data[i] = DEV_MAX31826_Read1Wire();
         }
 
         if (crc8_create((uint8_t *) u_SensorID.u8p_Data, 8) != 0)
         {
+            LOG_E("read id err\r\n");
             ret = -1;
         }
         else
         {
+            LOG_E("read id ok\r\n");
+            LOG_E("ID = %x %x %x %x %x %x %x %x", u_SensorID.u8p_Data[0], u_SensorID.u8p_Data[1], u_SensorID.u8p_Data[2], u_SensorID.u8p_Data[3], u_SensorID.u8p_Data[4], u_SensorID.u8p_Data[5], u_SensorID.u8p_Data[6], u_SensorID.u8p_Data[7]);
             rt_memcpy(u8p_SensorID, u_SensorID.u8p_Data, 8);
             ret = 0;
         }
@@ -391,14 +429,14 @@ static rt_int32_t DEV_MAX31826_ReadID(rt_uint8_t * u8p_SensorID)
         ret = -1;
     }
 
-    DEV_MAX31826_WriteBit(MAX31826_CMD_SKIP_ROM);
-    DEV_MAX31826_WriteBit(MAX31826_CMD_BEGINS_COVERSION);
+    DEV_MAX31826_Write1Wire(MAX31826_CMD_SKIP_ROM);
+    DEV_MAX31826_Write1Wire(MAX31826_CMD_BEGINS_COVERSION);
     DEV_MAX31826_Reset1Wire();
 
     return ret;
 }
 
-int Max3182x_ReadTemp(rt_uint16_t * u16p_temp_value)
+int Max3182x_ReadTemp(rt_uint16_t * u16p_temp_value, struct rt_sensor_device *sensor)
 {
     rt_err_t e_return = -RT_ERROR;
 
@@ -408,11 +446,18 @@ int Max3182x_ReadTemp(rt_uint16_t * u16p_temp_value)
     rt_uint16_t u16_Temp = 0;
     U_MAX31826Memory u_DS_mem;
 
+    MAX31826_SEN_DEV *pSenDev = RT_NULL;
+    pSenDev = (MAX31826_SEN_DEV*)sensor;
+
     rt_thread_delay(118);
 
-    /* 跳过读序号列号的操作 */
-    DEV_MAX31826_WriteBit(MAX31826_CMD_SKIP_ROM);
-    DEV_MAX31826_WriteBit(MAX31826_CMD_READ_SCRATCHPAD);
+    DEV_MAX31826_Write1Wire (MAX31826_CMD_MATCH_ROM);
+    for(i = 0; i < 8; i++)
+    {
+        DEV_MAX31826_Write1Wire(pSenDev->rom_id[i]);
+    }
+    DEV_MAX31826_Write1Wire(MAX31826_CMD_READ_SCRATCHPAD);
+
 
     /*
      *             Scratchpad Memory Layout
@@ -429,7 +474,7 @@ int Max3182x_ReadTemp(rt_uint16_t * u16p_temp_value)
      */
     for (i = 0; i < 9; i++)
     { /* Scratchpad Memory */
-        u_DS_mem.a_data[i] = DEV_MAX31826_ReadBit();
+        u_DS_mem.a_data[i] = DEV_MAX31826_Read1Wire();
     }
     if (crc8_create(u_DS_mem.a_data, 9) != 0)
     {
@@ -481,8 +526,15 @@ int Max3182x_ReadTemp(rt_uint16_t * u16p_temp_value)
     }
 
     DEV_MAX31826_Reset1Wire();
-    DEV_MAX31826_WriteBit(MAX31826_CMD_SKIP_ROM);
-    DEV_MAX31826_WriteBit(MAX31826_CMD_BEGINS_COVERSION);
+
+    DEV_MAX31826_Write1Wire(MAX31826_CMD_MATCH_ROM);
+    for(i = 0; i < 8; i++)
+    {
+        DEV_MAX31826_Write1Wire(pSenDev->rom_id[i]);
+    }
+
+    DEV_MAX31826_Write1Wire(MAX31826_CMD_BEGINS_COVERSION);
+
     DEV_MAX31826_Reset1Wire();
     return e_return;
 }
@@ -494,13 +546,217 @@ static rt_size_t _max31826_polling_get_data(struct rt_sensor_device *sensor, str
     {
         rt_uint16_t s32Tmp = 0;
 
-        Max3182x_ReadTemp(&s32Tmp);
+        Max3182x_ReadTemp(&s32Tmp, sensor);
 
         LOG_D("temp : %d", s32Tmp);
         data->data.temp = s32Tmp;
         data->timestamp = rt_tick_get_millisecond();
     }
     return 1;
+}
+
+static rt_int32_t DEV_MAX31826_Triplet1Wire(rt_uint8_t data)
+{
+    rt_uint8_t send_data;
+
+    rt_mutex_take(&max31826_mux, RT_WAITING_FOREVER);
+    send_data = data;
+    if (ds2484_dev != NULL)
+    {
+        if (ds2484_dev->control(ds2484_dev, DS2484_Control_Triplet, (void *)&send_data) != RT_EOK)
+        {
+            LOG_E("MAX31826 triplet cmd fail.");
+            return -1;
+        }
+    }
+    else
+    {
+        LOG_E("MAX31826 write ds2484_dev is null.");
+        return -1;
+    }
+    rt_mutex_release(&max31826_mux);
+    return 0;
+}
+
+/* 只读取数据,用于遍历id */
+static rt_uint8_t DEV_MAX31826_TripletRead1Wire(void)
+{
+    rt_uint8_t readdata = 0;
+
+    rt_mutex_take(&max31826_mux, RT_WAITING_FOREVER);
+    if (ds2484_dev != NULL)
+    {
+        if (ds2484_dev->control(ds2484_dev, DS2484_Control_Read, (void *)&readdata) != RT_EOK)
+        {
+            LOG_E("MAX31826 triplet cmd fail.");
+        }
+    }
+    else
+    {
+        LOG_E("MAX31826 write ds2484_dev is null.");
+    }
+    rt_mutex_release(&max31826_mux);
+    return readdata;
+}
+
+/* 遍历所有MAX31826的ID */
+static rt_int32_t max31826_search_rom(void)
+{
+    uint8_t i,j;
+    uint8_t Data_Buffer;
+    uint8_t Sensor_ID[8];
+    uint8_t id_bit_number;
+    uint8_t last_zero,rom_byte_number;
+    uint8_t rom_byte_mask,search_direction;
+    uint8_t id_bit, cmp_id_bit;
+
+    LastDiscrepancy = 0;
+    LastDeviceFlag = 0;
+    LastFamilyDiscrepancy = 0;
+
+    for(i = 0; i < MAX31826_SEN_ALL; i++)
+    {
+        id_bit_number = 1;
+        last_zero = 0;
+        rom_byte_number = 0;
+        rom_byte_mask = 1;
+
+        if (DEV_MAX31826_Reset1Wire())
+        {
+            DEV_MAX31826_Write1Wire(MAX31826_CMD_SERCH_ROM);
+            do
+            {
+                //read a bit and its complement
+                if(id_bit_number < LastDiscrepancy)
+                {
+                  search_direction = (((Sensor_ID[rom_byte_number]) & rom_byte_mask) > 0);
+                }
+                else
+                {
+                  search_direction = (id_bit_number == LastDiscrepancy);
+                }
+                if(search_direction)
+                    Data_Buffer = 0x80;
+                else
+                    Data_Buffer = 0x00;
+                if(0 != DEV_MAX31826_Triplet1Wire(Data_Buffer))
+                    return -1;
+                Data_Buffer = DEV_MAX31826_TripletRead1Wire();
+
+                id_bit = ((Data_Buffer & 0x20) > 0);
+                cmp_id_bit = ((Data_Buffer & 0x40) > 0);
+                search_direction = ((Data_Buffer & 0x80) > 0);
+                if((id_bit == 1) && (cmp_id_bit == 1))
+                    return -1;
+                //if 0 was picked then record this position in LastZero
+                if((!id_bit) && (!cmp_id_bit) && (search_direction == 0))
+                {
+                    last_zero = id_bit_number;
+                    //check for Last discrepancy in family
+                    if(last_zero < 9)
+                        LastFamilyDiscrepancy = last_zero;
+                }
+                if(search_direction == 1)
+                    Sensor_ID[rom_byte_number] |= rom_byte_mask;
+                else
+                    Sensor_ID[rom_byte_number] &=~rom_byte_mask;
+                //increment the byte counter id_bit_number;
+                //and shift the mask rom_byte_mask;
+                id_bit_number++;
+                rom_byte_mask <<= 1;
+
+                //if the mask is 0 then go to new byte rom_byte_number and reset mask
+                if(rom_byte_mask == 0)
+                {
+                  rom_byte_number++;
+                  rom_byte_mask = 1;
+                }
+
+            }
+            //loop untill through all rom byte 0~7
+            while(rom_byte_number < 8);
+
+            if(!(id_bit_number < 65))
+            {
+              LastDiscrepancy = last_zero;
+              if(LastDiscrepancy == 0)
+                  LastDeviceFlag = 1;
+            }
+
+            if (Sensor_ID[7] != crc8_create((rt_uint8_t *)Sensor_ID, 7))
+            {
+                LOG_E("STEM1 ERR, i = %d\r\n", i);
+                LOG_E("ID = %x %x %x %x %x %x %x %x", Sensor_ID[0], Sensor_ID[1], Sensor_ID[2], Sensor_ID[3], Sensor_ID[4], Sensor_ID[5], Sensor_ID[6], Sensor_ID[7]);
+            }
+            else
+            {
+                LOG_I("ID = %x %x %x %x %x %x %x %x", Sensor_ID[0], Sensor_ID[1], Sensor_ID[2], Sensor_ID[3], Sensor_ID[4], Sensor_ID[5], Sensor_ID[6], Sensor_ID[7]);
+                rt_memcpy((void*)max31826_id_temp[i], (void*)Sensor_ID, 8);
+            }
+        }
+        else
+        {
+            LOG_E("STEM ERR\r\n");
+            LastDiscrepancy = 0;
+            LastDeviceFlag = 0;
+            LastFamilyDiscrepancy = 0;
+            return -1;
+        }
+    }
+    return 0;
+}
+
+
+/* ID与设备地址匹配 */
+static rt_int32_t max31826_match_rom(void)
+{
+    rt_uint8_t i,j;
+    rt_err_t ret = 0;
+    rt_uint8_t address = 0xff;
+    rt_uint8_t data[9];
+    
+    for(i = 0; i < MAX31826_SEN_ALL; i++)
+    {
+        if (DEV_MAX31826_Reset1Wire())
+        {
+            DEV_MAX31826_Write1Wire(MAX31826_CMD_MATCH_ROM);
+
+            for (j = 0; j < 8; j++)
+            {
+                DEV_MAX31826_Write1Wire(max31826_id_temp[i][j]);
+            }
+
+            DEV_MAX31826_Write1Wire(MAX31826_CMD_READ_SCRATCHPAD);
+
+            for(j = 0; j < 9; j++)
+            {
+                data[j] = DEV_MAX31826_Read1Wire();
+            }
+
+            if (crc8_create((rt_uint8_t *)data, 9) != 0)
+            {
+                ret = -1;
+            }
+            else
+            {
+                address = data[4] & 0x0f;//地址只有低四位有效
+                for(j = 0; j < MAX31826_SEN_ALL; j++)
+                {
+                    if(address == max31826_sen[j].address)
+                    {
+                        rt_memcpy(max31826_sen[j].rom_id, max31826_id_temp[i], 8);
+                        break;
+                    }
+                }
+
+            }
+        }
+        else
+        {
+            ret = -1;
+        }
+    }
+    return ret;
 }
 
 #endif /* MAX31826_USING_I2C_DS2484 */
@@ -513,6 +769,7 @@ static rt_uint8_t DEV_MAX31826_Read1Wire(void)
     rt_uint8_t readdata = 0x00;
     rt_uint16_t setcontrol = 0x0001;
 
+#ifdef MAX31826_USING_IO
     while (setcontrol <= 0x0080)
     {
         if (DEV_MAX31826_ReadBit())
@@ -521,6 +778,24 @@ static rt_uint8_t DEV_MAX31826_Read1Wire(void)
         }
         setcontrol = setcontrol << 1;
     }
+#endif
+
+#ifdef MAX31826_USING_I2C_DS2484
+
+    rt_mutex_take(&max31826_mux, RT_WAITING_FOREVER);
+    if (ds2484_dev != NULL)
+    {
+        if (ds2484_dev->control(ds2484_dev, DS2484_Control_Read_Byte, (void *) &readdata) != RT_EOK)
+        {
+            LOG_E("MAX31826 read fail.");
+        }
+    }
+    else
+    {
+        LOG_E("MAX31826 read ds2484_dev is null.");
+    }
+    rt_mutex_release(&max31826_mux);
+#endif /* MAX31826_USING_I2C_DS2484 */
     return readdata;
 }
 
@@ -533,11 +808,33 @@ static void DEV_MAX31826_Write1Wire(rt_uint8_t data)
     rt_uint8_t i;
     rt_uint8_t temp;
 
+#ifdef MAX31826_USING_IO
     for (i = 0x00; i < 0x08; i++)
     {
         temp = data >> i;
         DEV_MAX31826_WriteBit(temp & 0x01);
     }
+#endif
+
+#ifdef MAX31826_USING_I2C_DS2484
+    rt_uint8_t send_data;
+
+    rt_mutex_take(&max31826_mux, RT_WAITING_FOREVER);
+    send_data = data;
+    if (ds2484_dev != NULL)
+    {
+        if (ds2484_dev->control(ds2484_dev, DS2484_Control_Write_Byte, (void *) &send_data) != RT_EOK)
+        {
+            LOG_E("MAX31826 write fail.");
+        }
+    }
+    else
+    {
+        LOG_E("MAX31826 write ds2484_dev is null.");
+    }
+    rt_mutex_release(&max31826_mux);
+
+#endif /* MAX31826_USING_I2C_DS2484 */
 }
 
 #ifdef MAX31826_USING_IO
@@ -667,10 +964,18 @@ static rt_err_t max31826_control(struct rt_sensor_device *sensor, int cmd, void 
     case RT_SENSOR_CTRL_GET_ID:
         if (args)
         {
+#ifdef MAX31826_USING_IO
             if (DEV_MAX31826_ReadID(args) != 0)
             {
                 ret = -RT_EIO;
             }
+#endif
+
+#ifdef MAX31826_USING_I2C_DS2484
+            MAX31826_SEN_DEV *pSenDev = RT_NULL;
+            pSenDev = (MAX31826_SEN_DEV*)sensor;
+            rt_memcpy(args, &pSenDev->rom_id, 8);
+#endif
         }
         break;
     default:
@@ -703,7 +1008,17 @@ int max31826_write_8bytes(rt_uint8_t offset, rt_uint8_t *buf)
 
     /* 复位传感器,按照时序进行操作 */
     DEV_MAX31826_Reset1Wire();
+#ifdef MAX31826_USING_IO
     DEV_MAX31826_Write1Wire(MAX31826_CMD_SKIP_ROM);
+#endif
+
+#ifdef MAX31826_USING_I2C_DS2484
+    DEV_MAX31826_Write1Wire(MAX31826_CMD_MATCH_ROM);
+    for (i = 0; i < 8; i++)
+    {
+        DEV_MAX31826_Write1Wire(max31826_sen[0].rom_id[i]);
+    }
+#endif
 
     for (i = (rt_uint8_t) 0; i < (rt_uint8_t) MAX31826_BLK_SIZE + 3 - 1; i++)
     {
@@ -717,7 +1032,17 @@ int max31826_write_8bytes(rt_uint8_t offset, rt_uint8_t *buf)
     {
         /* 发送写入命令 */
         DEV_MAX31826_Reset1Wire();
+#ifdef MAX31826_USING_IO
         DEV_MAX31826_Write1Wire(MAX31826_CMD_SKIP_ROM);
+#endif
+
+#ifdef MAX31826_USING_I2C_DS2484
+    DEV_MAX31826_Write1Wire(MAX31826_CMD_MATCH_ROM);
+    for (i = 0; i < 8; i++)
+    {
+        DEV_MAX31826_Write1Wire(max31826_sen[0].rom_id[i]);
+    }
+#endif
         DEV_MAX31826_Write1Wire(MAX31826_CMD_COPY_SCRATCHPAD2);
         DEV_MAX31826_Write1Wire(MAX31826_CMD_TOKEN);
         e_return = 0;
@@ -733,6 +1058,7 @@ int max31826_write_8bytes(rt_uint8_t offset, rt_uint8_t *buf)
 static int fal_max31826_init(void)
 {
     uint8_t p_id[7];
+#ifdef MAX31826_USING_IO
     if (DEV_MAX31826_ReadID(p_id) == 0)
     {
         LOG_I("check succeed %d byte", max31826_flash.len);
@@ -744,6 +1070,11 @@ static int fal_max31826_init(void)
                 ,p_id[0], p_id[1], p_id[2], p_id[3], p_id[4], p_id[5], p_id[6]);
         return -RT_ERROR;
     }
+#endif
+
+#ifdef MAX31826_USING_I2C_DS2484
+    return RT_EOK;
+#endif
 }
 
 int fal_max31826_read(long offset, rt_uint8_t *buf, size_t size)
@@ -767,7 +1098,17 @@ int fal_max31826_read(long offset, rt_uint8_t *buf, size_t size)
     /* 复位传感器,按照时序进行操作 */
     DEV_MAX31826_Reset1Wire();
     rt_thread_delay(100);/* 非常有必要 */
+#ifdef MAX31826_USING_IO
     DEV_MAX31826_Write1Wire(MAX31826_CMD_SKIP_ROM);
+#endif
+
+#ifdef MAX31826_USING_I2C_DS2484
+    DEV_MAX31826_Write1Wire(MAX31826_CMD_MATCH_ROM);
+    for (uint8_t k = 0; k < 8; k++)
+    {
+        DEV_MAX31826_Write1Wire(max31826_sen[0].rom_id[k]);
+    }
+#endif
     DEV_MAX31826_Write1Wire(MAX31826_READ_MEMORY);
     DEV_MAX31826_Write1Wire((rt_uint8_t) addr);
 
@@ -888,6 +1229,7 @@ static struct rt_sensor_ops sensor_ops = { max31826_fetch_data, max31826_control
 
 static int rt_hw_max31826_init()
 {
+    rt_uint8_t i;
     rt_int8_t result;
     rt_sensor_t sensor_temp = RT_NULL;
 
@@ -915,9 +1257,45 @@ static int rt_hw_max31826_init()
         LOG_E("max31826_init_by_ds2484 fail");
         return -RT_ERROR;
     }
+
+    if(max31826_search_rom() != RT_EOK)
+    {
+        LOG_E("max31826 search rom err\r\n");
+        return -RT_ERROR;
+    }
+    if(max31826_match_rom() != RT_EOK)
+    {
+        LOG_E("max31826 match rom err\r\n");
+        return -RT_ERROR;
+    }
+
+    for(i = 0; i < MAX31826_SEN_ALL; i++)
+    {
+        /* temperature sensor register */
+        max31826_sen[i].sensor.info.type = RT_SENSOR_CLASS_TEMP;
+        max31826_sen[i].sensor.info.vendor = RT_SENSOR_VENDOR_MAXIM;
+        max31826_sen[i].sensor.info.model = "max31826";
+        max31826_sen[i].sensor.info.unit = RT_SENSOR_UNIT_DCELSIUS;
+        max31826_sen[i].sensor.info.intf_type = RT_SENSOR_INTF_ONEWIRE;
+        max31826_sen[i].sensor.info.range_max = 125;
+        max31826_sen[i].sensor.info.range_min = -55;
+        max31826_sen[i].sensor.info.period_min = 150;
+
+        max31826_sen[i].sensor.ops = &sensor_ops;
+
+        result = rt_hw_sensor_register(&max31826_sen[i].sensor, max31826_sen[i].dev_name, RT_DEVICE_FLAG_RDONLY, RT_NULL);
+
+        if (result != RT_EOK)
+        {
+            LOG_E("device register err code: %d", result);
+            goto __exit;
+        }
+    }
 #endif /* MAX31826_USING_I2C_DS2484 */
 
-    /* temperature sensor register */
+
+#ifdef MAX31826_USING_IO
+
     sensor_temp = rt_calloc(1, sizeof(struct rt_sensor_device));
     if (sensor_temp == RT_NULL)
         return -RT_ERROR;
@@ -934,13 +1312,13 @@ static int rt_hw_max31826_init()
     sensor_temp->ops = &sensor_ops;
 
     result = rt_hw_sensor_register(sensor_temp, "max31826", RT_DEVICE_FLAG_RDONLY, RT_NULL);
+
     if (result != RT_EOK)
     {
         LOG_E("device register err code: %d", result);
         goto __exit;
     }
 
-#ifdef MAX31826_USING_IO
     DEV_MAX31826_ReadTemp();
 #endif /* MAX31826_USING_IO */
     return RT_EOK;
