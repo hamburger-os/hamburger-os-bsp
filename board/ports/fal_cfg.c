@@ -9,7 +9,7 @@
  */
 #include <fal.h>
 
-
+#ifdef MAX31826_USING_I2C_DS2484
 enum
 {
 #if MAX31826_SEN_ALL > 0
@@ -27,7 +27,9 @@ enum
 #if MAX31826_SEN_ALL > 3
     MAX31826_SEN4,
 #endif
+    MAX31826_MAX,
 };
+#endif
 
 #ifdef BSP_USING_ON_CHIP_FLASH
     extern const struct fal_flash_dev onchip128_flash;

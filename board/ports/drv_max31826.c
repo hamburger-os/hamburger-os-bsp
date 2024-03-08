@@ -159,6 +159,7 @@ const struct fal_flash_dev max31826_flash = {
     .write_gran = 0,
 };
 
+static rt_uint8_t max31826_id_temp[MAX31826_SEN_ALL][8]={0};
 
 #endif
 
@@ -176,7 +177,6 @@ const struct fal_flash_dev max31826_flash = {
 
 #endif
 
-static rt_uint8_t max31826_id_temp[MAX31826_SEN_ALL][8]={0};
 
 #ifdef MAX31826_USING_I2C_DS2484
 
