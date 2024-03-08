@@ -107,23 +107,6 @@ static uint8_t LastDiscrepancy = 0;
 static uint8_t LastDeviceFlag = 0;
 static uint8_t LastFamilyDiscrepancy = 0;
 
-typedef enum
-{
-#ifdef BSP_USE_MAX31826_SEN1
-    MAX31826_SEN1,
-#endif
-
-#ifdef BSP_USE_MAX31826_SEN2
-    MAX31826_SEN2,
-#endif
-
-#ifdef BSP_USE_MAX31826_SEN3
-    MAX31826_SEN3,
-#endif
-
-    MAX31826_SEN_ALL,
-} E_MAX31826_SEN;
-
 typedef struct
 {
     struct rt_sensor_device sensor;
@@ -133,31 +116,54 @@ typedef struct
 }MAX31826_SEN_DEV;
 
 
+#ifdef MAX31826_USING_I2C_DS2484
+
 static MAX31826_SEN_DEV max31826_sen[] = {
 
-#ifdef BSP_USE_MAX31826_SEN1
+#if MAX31826_SEN_ALL > 0
     {
         .dev_name = "max31826_1",
-        .address = MAX31826_ADD1,
+        .address = 0xFF,
     },
 #endif
 
-#ifdef BSP_USE_MAX31826_SEN2
+#if MAX31826_SEN_ALL > 1
     {
         .dev_name = "max31826_2",
-        .address = MAX31826_ADD2,
+        .address = 0xFF,
     },
 #endif
 
-#ifdef BSP_USE_MAX31826_SEN3
+#if MAX31826_SEN_ALL > 2
     {
         .dev_name = "max31826_3",
-        .address = MAX31826_ADD3,
+        .address = 0xFF,
+    },
+#endif
+
+#if MAX31826_SEN_ALL > 3
+    {
+        .dev_name = "max31826_4",
+        .address = 0xFF,
     },
 #endif
 
 };
 
+const struct fal_flash_dev max31826_flash = {
+    .name = "max31826",
+    .addr = MAX31826_START_ADRESS,
+    .len = MAX31826_SIZE_GRANULARITY_TOTAL*MAX31826_SEN_ALL,
+    .blk_size = MAX31826_BLK_SIZE,
+    .ops = {fal_max31826_init, fal_max31826_read, fal_max31826_write, fal_max31826_erase},
+    .write_gran = 0,
+};
+
+
+#endif
+
+
+#ifdef MAX31826_USING_IO
 
 const struct fal_flash_dev max31826_flash = {
     .name = "max31826",
@@ -167,6 +173,8 @@ const struct fal_flash_dev max31826_flash = {
     .ops = {fal_max31826_init, fal_max31826_read, fal_max31826_write, fal_max31826_erase},
     .write_gran = 0,
 };
+
+#endif
 
 static rt_uint8_t max31826_id_temp[MAX31826_SEN_ALL][8]={0};
 
@@ -690,7 +698,14 @@ static rt_int32_t max31826_search_rom(void)
             }
             else
             {
-                LOG_I("ID = %x %x %x %x %x %x %x %x", Sensor_ID[0], Sensor_ID[1], Sensor_ID[2], Sensor_ID[3], Sensor_ID[4], Sensor_ID[5], Sensor_ID[6], Sensor_ID[7]);
+                for(j = 0; j < i; j++)
+                {
+                    if(0 == rt_memcmp(Sensor_ID, max31826_id_temp[j], 8))
+                    {
+                        LOG_E("STEM NUMBER ERR\r\n");
+                        return -1;
+                    }
+                }
                 rt_memcpy((void*)max31826_id_temp[i], (void*)Sensor_ID, 8);
             }
         }
@@ -710,7 +725,7 @@ static rt_int32_t max31826_search_rom(void)
 /* ID与设备地址匹配 */
 static rt_int32_t max31826_match_rom(void)
 {
-    rt_uint8_t i,j;
+    rt_uint8_t i,j,k;
     rt_err_t ret = 0;
     rt_uint8_t address = 0xff;
     rt_uint8_t data[9];
@@ -740,15 +755,41 @@ static rt_int32_t max31826_match_rom(void)
             else
             {
                 address = data[4] & 0x0f;//地址只有低四位有效
-                for(j = 0; j < MAX31826_SEN_ALL; j++)
+                LOG_I("Address is %d", address);
+                LOG_I("ID = %x %x %x %x %x %x %x %x", max31826_id_temp[i][0], max31826_id_temp[i][1], max31826_id_temp[i][2], max31826_id_temp[i][3], max31826_id_temp[i][4], max31826_id_temp[i][5], max31826_id_temp[i][6], max31826_id_temp[i][7]);
+
+                if(i == 0)
                 {
-                    if(address == max31826_sen[j].address)
+                    max31826_sen[0].address = address;
+                    rt_memcpy(max31826_sen[0].rom_id, max31826_id_temp[0], 8);
+                }
+
+                for(j = 0; j < i; j++)
+                {
+                    if(address < max31826_sen[j].address)
                     {
+                        for(k = i; k != j; k--)
+                        {
+                            max31826_sen[k].address = max31826_sen[k-1].address;
+                            rt_memcpy(max31826_sen[k].rom_id, max31826_sen[k-1].rom_id, 8);
+                        }
+                        max31826_sen[j].address = address;
                         rt_memcpy(max31826_sen[j].rom_id, max31826_id_temp[i], 8);
                         break;
                     }
+                    else if(address > max31826_sen[j].address)
+                    {
+                        if((j + 1) == i)
+                        {
+                            max31826_sen[j+1].address = address;
+                            rt_memcpy(max31826_sen[j+1].rom_id, max31826_id_temp[i], 8);
+                        }
+                    }
+                    else
+                    {
+                        return -1;
+                    }
                 }
-
             }
         }
         else
@@ -756,8 +797,17 @@ static rt_int32_t max31826_match_rom(void)
             ret = -1;
         }
     }
+
     return ret;
 }
+
+static void DEV_MAX31826_Convert(void)
+{
+    DEV_MAX31826_Reset1Wire();
+    DEV_MAX31826_Write1Wire(MAX31826_CMD_SKIP_ROM);
+    DEV_MAX31826_Write1Wire(MAX31826_CMD_BEGINS_COVERSION);
+}
+
 
 #endif /* MAX31826_USING_I2C_DS2484 */
 /*
@@ -995,15 +1045,23 @@ static rt_err_t max31826_control(struct rt_sensor_device *sensor, int cmd, void 
  * @retval 0:成功 -1:失败
  *
  *******************************************************/
-int max31826_write_8bytes(rt_uint8_t offset, rt_uint8_t *buf)
+int max31826_write_8bytes(rt_uint32_t offset, rt_uint8_t *buf)
 {
     int e_return = -1;
     rt_uint8_t i;
+    rt_uint8_t chip;
     rt_uint8_t access_buffer[MAX31826_BLK_SIZE + 3] = { 0 };
 
     /* 将要写入的字节放到数组中  */
     access_buffer[0] = MAX31826_WRITE_SCRATCHPAD2;
+#ifdef MAX31826_USING_IO
     access_buffer[1] = offset;
+#endif
+
+#ifdef MAX31826_USING_I2C_DS2484
+    chip = offset/128;
+    access_buffer[1] = offset%128;
+#endif
     rt_memcpy((void *) &access_buffer[2], (void *) buf, (uint16_t) 8);
 
     /* 复位传感器,按照时序进行操作 */
@@ -1016,7 +1074,7 @@ int max31826_write_8bytes(rt_uint8_t offset, rt_uint8_t *buf)
     DEV_MAX31826_Write1Wire(MAX31826_CMD_MATCH_ROM);
     for (i = 0; i < 8; i++)
     {
-        DEV_MAX31826_Write1Wire(max31826_sen[0].rom_id[i]);
+        DEV_MAX31826_Write1Wire(max31826_sen[chip].rom_id[i]);
     }
 #endif
 
@@ -1040,7 +1098,7 @@ int max31826_write_8bytes(rt_uint8_t offset, rt_uint8_t *buf)
     DEV_MAX31826_Write1Wire(MAX31826_CMD_MATCH_ROM);
     for (i = 0; i < 8; i++)
     {
-        DEV_MAX31826_Write1Wire(max31826_sen[0].rom_id[i]);
+        DEV_MAX31826_Write1Wire(max31826_sen[chip].rom_id[i]);
     }
 #endif
         DEV_MAX31826_Write1Wire(MAX31826_CMD_COPY_SCRATCHPAD2);
@@ -1079,15 +1137,38 @@ static int fal_max31826_init(void)
 
 int fal_max31826_read(long offset, rt_uint8_t *buf, size_t size)
 {
+    uint32_t addr;
+    uint8_t chip;
+    uint8_t findflag = RT_FALSE;
+
     rt_mutex_take(&fal_mux, RT_WAITING_FOREVER);
 
-    uint32_t addr = max31826_flash.addr + offset;
+#ifdef MAX31826_USING_I2C_DS2484
+
+    if(MAX31826_SEN_ALL != 0)
+    {
+        if((offset < 128*MAX31826_SEN_ALL) && (offset/128 == (offset + size -1)/128))
+        {
+            addr = offset%128;
+            findflag = RT_TRUE;
+            chip = offset/128;
+        }
+    }
+    if(findflag != RT_TRUE)
+        return -RT_EINVAL;
+
+#endif
+
+#ifdef MAX31826_USING_IO
+    addr = max31826_flash.addr + offset;
     if (addr + size > max31826_flash.addr + max31826_flash.len)
     {
         LOG_E("read outrange flash size! addr is (0x%p)", (void*)(addr + size));
         rt_mutex_release(&fal_mux);
         return -RT_EINVAL;
     }
+#endif
+
     if (size < 1)
     {
 //        LOG_W("read size %d! addr is (0x%p)", size, (void*)(addr + size));
@@ -1106,7 +1187,7 @@ int fal_max31826_read(long offset, rt_uint8_t *buf, size_t size)
     DEV_MAX31826_Write1Wire(MAX31826_CMD_MATCH_ROM);
     for (uint8_t k = 0; k < 8; k++)
     {
-        DEV_MAX31826_Write1Wire(max31826_sen[0].rom_id[k]);
+        DEV_MAX31826_Write1Wire(max31826_sen[chip].rom_id[k]);
     }
 #endif
     DEV_MAX31826_Write1Wire(MAX31826_READ_MEMORY);
@@ -1126,15 +1207,34 @@ int fal_max31826_read(long offset, rt_uint8_t *buf, size_t size)
 
 int fal_max31826_write(long offset, const rt_uint8_t *buf, size_t size)
 {
-    rt_mutex_take(&fal_mux, RT_WAITING_FOREVER);
+    uint32_t addr;
+    uint8_t findflag = RT_FALSE;
 
-    uint32_t addr = max31826_flash.addr + offset;
+    rt_mutex_take(&fal_mux, RT_WAITING_FOREVER);
+#ifdef MAX31826_USING_I2C_DS2484
+
+    if(MAX31826_SEN_ALL != 0)
+    {
+        if((offset < 128*MAX31826_SEN_ALL) && (offset/128 == (offset + size -1)/128))
+        {
+            addr = offset;
+            findflag = RT_TRUE;
+        }
+    }
+    if(findflag != RT_TRUE)
+        return -RT_EINVAL;
+
+#endif
+
+#ifdef MAX31826_USING_IO
+    addr = max31826_flash.addr + offset;
     if (addr + size > max31826_flash.addr + max31826_flash.len)
     {
         LOG_E("write outrange flash size! addr is (0x%p)", (void*)(addr + size));
         rt_mutex_release(&fal_mux);
         return -RT_EINVAL;
     }
+#endif
     if (addr % 8 != 0)
     {
         LOG_E("write addr must be 8-byte alignment (0x%p) %d %d", (void*)(addr), addr % 8, size);
@@ -1150,12 +1250,12 @@ int fal_max31826_write(long offset, const rt_uint8_t *buf, size_t size)
 
     rt_uint8_t a_temp_buf[MAX31826_BLK_SIZE];
     int e_return = -1;
-    rt_uint8_t remain_len, write_len, offset_tmp, error_times = (rt_uint8_t) 0;
+    rt_uint32_t remain_len, write_len, offset_tmp, error_times = (rt_uint32_t) 0;
 
     remain_len = size;
-    offset_tmp = (rt_uint8_t) 0;
+    offset_tmp = (rt_uint32_t) 0;
 
-    while (remain_len > (rt_uint8_t) 0)
+    while (remain_len > (rt_uint32_t) 0)
     {
         /* 每次拷贝8个字节 */
         rt_memset(a_temp_buf, (rt_uint8_t) 0, (uint16_t) 8);
@@ -1171,10 +1271,10 @@ int fal_max31826_write(long offset, const rt_uint8_t *buf, size_t size)
             rt_memcpy((void *) a_temp_buf, (void *) &buf[offset_tmp], (uint16_t) write_len);
         }
 
-        if (max31826_write_8bytes((rt_uint8_t) (addr + offset_tmp), a_temp_buf) == 0/*ok*/)
+        if (max31826_write_8bytes((rt_uint32_t) (addr + offset_tmp), a_temp_buf) == 0/*ok*/)
         {
-            remain_len = (rt_uint8_t) (remain_len - write_len);
-            offset_tmp = (rt_uint8_t) (offset_tmp + write_len);
+            remain_len = (rt_uint32_t) (remain_len - write_len);
+            offset_tmp = (rt_uint32_t) (offset_tmp + write_len);
             error_times = (rt_uint8_t) 0;
             e_return = 0;
             rt_thread_delay(20);
@@ -1208,14 +1308,32 @@ int fal_max31826_write(long offset, const rt_uint8_t *buf, size_t size)
 
 static int fal_max31826_erase(long offset, size_t size)
 {
-    rt_uint32_t addr = max31826_flash.addr + offset;
+    rt_uint32_t addr;
+#ifdef MAX31826_USING_I2C_DS2484
+    rt_uint8_t findflag = RT_FALSE;
+
+    if(MAX31826_SEN_ALL != 0)
+    {
+        if((offset < 128*MAX31826_SEN_ALL) && (offset/128 == (offset + size -1)/128))
+        {
+            addr = offset%128;
+            findflag = RT_TRUE;
+        }
+    }
+    if(findflag != RT_TRUE)
+        return -RT_EINVAL;
+
+#endif
+
+#ifdef MAX31826_USING_IO
+    addr = max31826_flash.addr + offset;
 
     if ((addr + size) > max31826_flash.addr + max31826_flash.len)
     {
         LOG_E("erase outrange flash size! addr is (0x%p)", (void*)(addr + size));
         return -RT_EINVAL;
     }
-
+#endif
     if (size < 1)
     {
 //        LOG_W("erase size %d! addr is (0x%p)", size, (void*)(addr + size));
@@ -1268,6 +1386,8 @@ static int rt_hw_max31826_init()
         LOG_E("max31826 match rom err\r\n");
         return -RT_ERROR;
     }
+    DEV_MAX31826_Convert();
+
 
     for(i = 0; i < MAX31826_SEN_ALL; i++)
     {
@@ -1291,6 +1411,7 @@ static int rt_hw_max31826_init()
             goto __exit;
         }
     }
+    DEV_MAX31826_Convert();
 #endif /* MAX31826_USING_I2C_DS2484 */
 
 

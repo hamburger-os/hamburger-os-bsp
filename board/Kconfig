@@ -4072,39 +4072,9 @@ menu "Onboard Peripheral Drivers"
 				hex "Set the i2c device address, default: 0x18"
 				default (0x18)
             
-            menuconfig BSP_USE_MAX31826_SEN1
-                bool "Enable the MAX31826_SENSOR1"
-                default n
-
-            if BSP_USE_MAX31826_SEN1
-                config MAX31826_ADD1
-                    hex "Set the device address, default: 0"
-                    default(0)
-
-            endif
-
-            menuconfig BSP_USE_MAX31826_SEN2
-                bool "Enable the MAX31826_SENSOR2"
-                default n
-
-            if BSP_USE_MAX31826_SEN2
-                config MAX31826_ADD2
-                    hex "Set the device address, default: 1"
-                    default(0x01)
-
-            endif
-
-            menuconfig BSP_USE_MAX31826_SEN3
-                bool "Enable the MAX31826_SENSOR3"
-                default n
-
-            if BSP_USE_MAX31826_SEN3
-                config MAX31826_ADD3
-                    hex "Set the device address, default: 2"
-                    default(0x02)
-
-            endif
-
+            config MAX31826_SEN_ALL
+                int "Set the number of max31826 devices, default: 3, max: 4 "
+                default (3)
 		endif
 	endif
         

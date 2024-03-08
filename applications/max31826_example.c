@@ -11,36 +11,24 @@
 char *MAX31826_SEN[] =
 {
 
-#ifdef BSP_USE_MAX31826_SEN1
+#if MAX31826_SEN_ALL > 0
         "temp_max31826_1",
 #endif
 
-#ifdef BSP_USE_MAX31826_SEN2
+#if MAX31826_SEN_ALL > 1
         "temp_max31826_2",
 #endif
 
-#ifdef BSP_USE_MAX31826_SEN3
+#if MAX31826_SEN_ALL > 2
         "temp_max31826_3"
 #endif
 
+#if MAX31826_SEN_ALL > 3
+        "temp_max31826_4"
+#endif
+
 };
 
-enum
-{
-#ifdef BSP_USE_MAX31826_SEN1
-    MAX31826_SEN1,
-#endif
-
-#ifdef BSP_USE_MAX31826_SEN2
-    MAX31826_SEN2,
-#endif
-
-#ifdef BSP_USE_MAX31826_SEN3
-    MAX31826_SEN3,
-#endif
-
-    MAX31826_SEN_ALL,
-};
 
 rt_uint8_t max_ID[8] = {0};
 rt_device_t max31826dev;
@@ -96,6 +84,7 @@ static void max31826_echo_test(int argc, char *argv[])
         {
             LOG_D("temp : %d.%02d ℃", max31826data.data.temp / 100, abs(max31826data.data.temp % 100));
         }
+        rt_device_close(max31826dev);
     }
 #endif
 
