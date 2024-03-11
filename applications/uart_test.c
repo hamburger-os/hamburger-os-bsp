@@ -115,8 +115,6 @@ static void uart_thread_entry(void *parameter)
 
 static void uart_echo_test(int argc, char **argv)
 {
-    static uint32_t parity_bit = PARITY_NONE;
-    static uint32_t baud = 115200;
     if (argc != 2 && argc != 3)
     {
         rt_kprintf("Usage: uarttest [cmd]\n");
