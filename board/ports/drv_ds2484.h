@@ -17,7 +17,9 @@
 typedef enum {
   DS2484_Control_Reset      = (rt_uint8_t)(0x01),
   DS2484_Control_Write_Byte = (rt_uint8_t)(0x02),
-  DS2484_Control_Read_Byte  = (rt_uint8_t)(0x03)
+  DS2484_Control_Read_Byte  = (rt_uint8_t)(0x03),
+  DS2484_Control_Triplet    = (rt_uint8_t)(0x04),
+  DS2484_Control_Read       = (rt_uint8_t)(0x05)
 } DS2484_Control_CMD;
 
 int rt_hw_ds2484_init(void);
