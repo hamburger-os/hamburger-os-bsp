@@ -1,5 +1,15 @@
 [
  {
+  "path": "/packages/iot/mongoose", 
+  "ver": "v6.7", 
+  "name": "MONGOOSE"
+ }, 
+ {
+  "path": "/packages/iot/WebTerminal", 
+  "ver": "v0.1.2", 
+  "name": "WEBTERMINAL"
+ }, 
+ {
   "path": "/packages/iot/netutils", 
   "ver": "latest", 
   "name": "NETUTILS"

@@ -27,11 +27,22 @@
  */
 
 #include <stdbool.h>
-#include <shell.h>
-#include <finsh.h>
 #include <rtdevice.h>
 #include <mongoose.h>
 #include "web_terminal.h"
+
+#if defined(RT_USING_POSIX_STDIO) || defined(RT_USING_POSIX)
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+#include "posix/stdio.h"
+#else
+#include <libc.h>
+#endif
+static int dev_old_flag;
+#endif /* defined(RT_USING_POSIX_STDIO) || defined(RT_USING_POSIX) */
+
+#include <finsh.h>
+#include <msh.h>
+#include <shell.h>
 
 #ifndef WEB_RECV_BUF_SIZE
 #define WEB_RECV_BUF_SIZE              1024
@@ -47,7 +58,7 @@
 #endif
 
 /**
- * web_terminal Éè±¸
+ * web_terminal è®¾å¤‡
  */
 typedef struct {
     struct rt_device device;
@@ -56,25 +67,25 @@ typedef struct {
     struct rt_ringbuffer send_buf;
 
     rt_mutex_t recv_buf_lock;
-    /* ÒÑÁ¬½Ó WebSocket ¿Í»§¶ËµÄÁ¬½ÓĞÅÏ¢ */
+    /* å·²è¿æ¥ WebSocket å®¢æˆ·ç«¯çš„è¿æ¥ä¿¡æ¯ */
     struct mg_connection *ws_clinet;
-    /* ¿Í»§¶ËÁ¬½Ó·ÃÎÊËø */
+    /* å®¢æˆ·ç«¯è¿æ¥è®¿é—®é” */
     rt_mutex_t client_nc_lock;
-    /* console ¼° finsh Éè±¸µÄ±¸·İĞÅÏ¢ */
+    /* console åŠ finsh è®¾å¤‡çš„å¤‡ä»½ä¿¡æ¯ */
     const char *console_dev_name_bak;
     const char *finsh_dev_name_bak;
     rt_uint8_t echo_mode_bak;
-    /* ÔËĞĞ±êÖ¾ */
+    /* è¿è¡Œæ ‡å¿— */
     bool is_running;
 } web_terminal, *web_terminal_t;
 
-/* ³õÊ¼»¯³É¹¦±êÖ¾ */
+/* åˆå§‹åŒ–æˆåŠŸæ ‡å¿— */
 static bool init_ok = false;
-/* Web Terminal Éè±¸¶ÔÏóÊµÀı */
+/* Web Terminal è®¾å¤‡å¯¹è±¡å®ä¾‹ */
 static web_terminal_t terminal = NULL;
 
 /**
- * RT-Thread Éè±¸½Ó¿Ú
+ * RT-Thread è®¾å¤‡æ¥å£
  */
 static rt_err_t device_init(rt_device_t dev) {
     return RT_EOK;
@@ -90,7 +101,7 @@ static rt_err_t device_close(rt_device_t dev) {
 
 static rt_size_t device_read(rt_device_t dev, rt_off_t pos, void* buffer, rt_size_t size) {
     rt_size_t result;
-    /* ´Ó WebSokcet ·şÎñÆ÷½ÓÊÕ»º³åÇøÖĞÈ¡³öÊı¾İ£¬²¢´«µİ¸ø Terminal */
+    /* ä» WebSokcet æœåŠ¡å™¨æ¥æ”¶ç¼“å†²åŒºä¸­å–å‡ºæ•°æ®ï¼Œå¹¶ä¼ é€’ç»™ Terminal */
     rt_mutex_take(terminal->recv_buf_lock, RT_WAITING_FOREVER);
     result = rt_ringbuffer_get(&(terminal->recv_buf), buffer, size);
     rt_mutex_release(terminal->recv_buf_lock);
@@ -100,7 +111,7 @@ static rt_size_t device_read(rt_device_t dev, rt_off_t pos, void* buffer, rt_siz
 
 static rt_size_t device_write(rt_device_t dev, rt_off_t pos, const void* buffer, rt_size_t size) {
     if (terminal->ws_clinet) {
-        /* ÍùÒÑÁ¬½ÓµÄ WebSocket ¿Í»§¶Ë·¢ËÍ Terminal ´«ËÍ¹ıÀ´µÄÊı¾İ */
+        /* å¾€å·²è¿æ¥çš„ WebSocket å®¢æˆ·ç«¯å‘é€ Terminal ä¼ é€è¿‡æ¥çš„æ•°æ® */
         rt_mutex_take(terminal->client_nc_lock, RT_WAITING_FOREVER);
         mg_send_websocket_frame(terminal->ws_clinet, WEBSOCKET_OP_TEXT, buffer, size);
         rt_mutex_release(terminal->client_nc_lock);
@@ -110,16 +121,16 @@ static rt_size_t device_write(rt_device_t dev, rt_off_t pos, const void* buffer,
     }
 }
 
-static rt_err_t device_control(rt_device_t dev, rt_uint8_t cmd, void *args) {
+static rt_err_t device_control(rt_device_t dev, int cmd, void *args) {
     return RT_EOK;
 }
 
 static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
     switch (ev) {
     case MG_EV_WEBSOCKET_HANDSHAKE_REQUEST: {
-        /* ½öÔÊĞíÁ¬½Ó 1 ¸ö¿Í»§¶Ë */
+        /* ä»…å…è®¸è¿æ¥ 1 ä¸ªå®¢æˆ·ç«¯ */
         if (terminal->ws_clinet) {
-            /* ¶Ï¿ª¸ÃÁ¬½Ó */
+            /* æ–­å¼€è¯¥è¿æ¥ */
             nc->flags |= MG_F_CLOSE_IMMEDIATELY;
         }
         break;
@@ -128,28 +139,39 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
         char addr[32];
 
         mg_sock_addr_to_str(&nc->sa, addr, sizeof(addr), MG_SOCK_STRINGIFY_IP | MG_SOCK_STRINGIFY_PORT);
-        rt_kprintf("Web Terminal: %s ÒÑÁ¬½Ó\n", addr);
+        rt_kprintf("Web Terminal: %s å·²è¿æ¥\n", addr);
 
         terminal->ws_clinet = nc;
-        /* ±¸·İµ±Ç°µÄ»ØÏÔÄ£Ê½ */
+        /* å¤‡ä»½å½“å‰çš„å›æ˜¾æ¨¡å¼ */
         terminal->echo_mode_bak = finsh_get_echo();
-        /* ±¸·İµ±Ç° console ¼° finsh Éè±¸ */
+        /* å¤‡ä»½å½“å‰ console åŠ finsh è®¾å¤‡ */
         terminal->console_dev_name_bak = rt_console_get_device()->parent.name;
-        terminal->finsh_dev_name_bak = finsh_get_device();
-        /* ÉèÖÃ console ¼° finsh Éè±¸Îª Web Termianl Éè±¸ */
+        terminal->finsh_dev_name_bak = terminal->console_dev_name_bak;
+        /* è®¾ç½® console åŠ finsh è®¾å¤‡ä¸º Web Termianl è®¾å¤‡ */
         rt_console_set_device(WEB_TERMINAL_DEV_NAM);
+        /* set finsh device */
+    #if defined(RT_USING_POSIX_STDIO) || defined(RT_USING_POSIX)
+    #if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+        ioctl(rt_posix_stdio_get_console(), F_SETFL, (void *) dev_old_flag);
+        rt_posix_stdio_set_console(WEB_TERMINAL_DEV_NAM, O_RDWR);
+    #else
+        ioctl(libc_stdio_get_console(), F_SETFL, (void *) dev_old_flag);
+        libc_stdio_set_console(WEB_TERMINAL_DEV_NAM, O_RDWR);
+    #endif
+    #else
         finsh_set_device(WEB_TERMINAL_DEV_NAM);
-        /* ¿ªÆô»ØÏÔÄ£Ê½ */
+    #endif /* defined(RT_USING_POSIX_STDIO) || defined(RT_USING_POSIX) */
+        /* å¼€å¯å›æ˜¾æ¨¡å¼ */
         finsh_set_echo(1);
         break;
     }
     case MG_EV_WEBSOCKET_FRAME: {
         struct websocket_message *wm = (struct websocket_message *) ev_data;
-        /* ½«´Ó WebSokcet ·şÎñÆ÷½ÓÊÕµÄÊı¾İ´æÈë½ÓÊÕ»º³åÇø */
+        /* å°†ä» WebSokcet æœåŠ¡å™¨æ¥æ”¶çš„æ•°æ®å­˜å…¥æ¥æ”¶ç¼“å†²åŒº */
         rt_mutex_take(terminal->recv_buf_lock, RT_WAITING_FOREVER);
         rt_ringbuffer_put(&(terminal->recv_buf), wm->data, wm->size);
         rt_mutex_release(terminal->recv_buf_lock);
-        /* Ö´ĞĞ Web Terminal Éè±¸µÄ½ÓÊÕ»Øµ÷ */
+        /* æ‰§è¡Œ Web Terminal è®¾å¤‡çš„æ¥æ”¶å›è°ƒ */
         if (terminal->device.rx_indicate && wm->size) {
             terminal->device.rx_indicate(&terminal->device, wm->size);
         }
@@ -157,13 +179,26 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
     }
     case MG_EV_CLOSE: {
         if (nc == terminal->ws_clinet) {
-            /* »¹Ô­ finsh Ö®Ç°µÄ»ØÏÔÄ£Ê½ */
+            /* è¿˜åŸ finsh ä¹‹å‰çš„å›æ˜¾æ¨¡å¼ */
             finsh_set_echo(terminal->echo_mode_bak);
-            /* »¹Ô­ console ¼° finsh Éè±¸ */
+            /* è¿˜åŸ console åŠ finsh è®¾å¤‡ */
             rt_console_set_device(terminal->console_dev_name_bak);
+
+            /* set finsh device */
+        #if defined(RT_USING_POSIX_STDIO) || defined(RT_USING_POSIX)
+        #if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+            ioctl(rt_posix_stdio_get_console(), F_SETFL, (void *) dev_old_flag);
+            rt_posix_stdio_set_console(terminal->finsh_dev_name_bak, O_RDWR);
+        #else
+            ioctl(libc_stdio_get_console(), F_SETFL, (void *) dev_old_flag);
+            libc_stdio_set_console(terminal->finsh_dev_name_bak, O_RDWR);
+        #endif
+        #else
             finsh_set_device(terminal->finsh_dev_name_bak);
+        #endif /* defined(RT_USING_POSIX_STDIO) || defined(RT_USING_POSIX) */
+
             terminal->ws_clinet = NULL;
-            rt_kprintf("Web Terminal: ÒÑ¶Ï¿ª\n");
+            rt_kprintf("Web Terminal: å·²æ–­å¼€\n");
         }
         break;
     }
@@ -174,14 +209,14 @@ static void web_terminal_thread(void* parameter) {
     struct mg_mgr mgr;
     struct mg_connection *nc;
 
-    /* ½¨Á¢ WebSocket ·şÎñÆ÷ */
+    /* å»ºç«‹ WebSocket æœåŠ¡å™¨ */
     mg_mgr_init(&mgr, NULL);
 
     nc = mg_bind(&mgr, WEB_TERMINAL_PORT, ev_handler);
 
     if (nc) {
         mg_set_protocol_http_websocket(nc);
-        rt_kprintf("Web Terminal: Æô¶¯Íê³É£¬µÈ´ıÁ¬½Ó¡­¡­\n");
+        rt_kprintf("Web Terminal: å¯åŠ¨å®Œæˆï¼Œç­‰å¾…è¿æ¥â€¦â€¦\n");
         while (terminal->is_running) {
             rt_mutex_take(terminal->client_nc_lock, RT_WAITING_FOREVER);
             mg_mgr_poll(&mgr, 10);
@@ -189,7 +224,7 @@ static void web_terminal_thread(void* parameter) {
             rt_thread_delay(rt_tick_from_millisecond(10));
         }
     } else {
-        rt_kprintf("Web Terminal: °ó¶¨¶Ë¿Ú(%s)Ê§°Ü£¡ÇëÖØÊÔ¡­¡­\n", WEB_TERMINAL_PORT);
+        rt_kprintf("Web Terminal: ç»‘å®šç«¯å£(%s)å¤±è´¥ï¼è¯·é‡è¯•â€¦â€¦\n", WEB_TERMINAL_PORT);
         terminal->is_running = false;
     }
     mg_mgr_free(&mgr);
@@ -197,13 +232,13 @@ static void web_terminal_thread(void* parameter) {
 
 void web_terminal_init(void) {
     if (init_ok) {
-        rt_kprintf("Web Terminal: ÇëÎğÖØ¸´³õÊ¼»¯£¡\n");
+        rt_kprintf("Web Terminal: è¯·å‹¿é‡å¤åˆå§‹åŒ–ï¼\n");
         return;
     }
 
     terminal = rt_calloc(1, sizeof(web_terminal));
     if (terminal == NULL) {
-        rt_kprintf("Web Terminal: ÄÚ´æ²»×ã£¡\n");
+        rt_kprintf("Web Terminal: å†…å­˜ä¸è¶³ï¼\n");
         return;
     }
 
@@ -212,7 +247,7 @@ void web_terminal_init(void) {
         rt_ringbuffer_init(&terminal->recv_buf, ptr, WEB_RECV_BUF_SIZE);
     } else {
         rt_free(terminal);
-        rt_kprintf("Web Terminal: ÄÚ´æ²»×ã£¡\n");
+        rt_kprintf("Web Terminal: å†…å­˜ä¸è¶³ï¼\n");
         return;
     }
 
@@ -220,7 +255,7 @@ void web_terminal_init(void) {
     if (terminal->recv_buf_lock == NULL) {
         rt_free(terminal);
         rt_free(ptr);
-        rt_kprintf("Web Terminal: ÄÚ´æ²»×ã£¡\n");
+        rt_kprintf("Web Terminal: å†…å­˜ä¸è¶³ï¼\n");
         return;
     }
 
@@ -229,11 +264,11 @@ void web_terminal_init(void) {
         rt_mutex_delete(terminal->recv_buf_lock);
         rt_free(terminal);
         rt_free(ptr);
-        rt_kprintf("Web Terminal: ÄÚ´æ²»×ã£¡\n");
+        rt_kprintf("Web Terminal: å†…å­˜ä¸è¶³ï¼\n");
         return;
     }
 
-    /* ×¢²á Web Terminal Éè±¸ */
+    /* æ³¨å†Œ Web Terminal è®¾å¤‡ */
     terminal->device.type      = RT_Device_Class_Char;
     terminal->device.init      = device_init;
     terminal->device.open      = device_open;
@@ -246,13 +281,13 @@ void web_terminal_init(void) {
 
     init_ok = true;
 
-    rt_kprintf("Web Terminal: V%s ³õÊ¼»¯Íê³É\n", WT_SW_VERSION);
+    rt_kprintf("Web Terminal: V%s åˆå§‹åŒ–å®Œæˆ\n", WT_SW_VERSION);
 }
 
 void web_terminal_start(void) {
     if (init_ok) {
         if (terminal->is_running) {
-            rt_kprintf("Web Terminal: ÒÑÆô¶¯\n");
+            rt_kprintf("Web Terminal: å·²å¯åŠ¨\n");
             return;
         }
 
@@ -262,29 +297,29 @@ void web_terminal_start(void) {
             rt_thread_startup(thread);
         }
     } else {
-        rt_kprintf("Web Terminal: Î´³õÊ¼»¯£¡\n");
+        rt_kprintf("Web Terminal: æœªåˆå§‹åŒ–ï¼\n");
     }
 }
 
 void web_terminal_stop(void) {
     if (init_ok) {
         if (terminal->is_running) {
-            /* ½áÊøÏß³Ì */
+            /* ç»“æŸçº¿ç¨‹ */
             terminal->is_running = false;
-            /* µÈ´ıÏß³Ì×Ô¼ºÔËĞĞ½áÊø£¬1S ³¬Ê± */
+            /* ç­‰å¾…çº¿ç¨‹è‡ªå·±è¿è¡Œç»“æŸï¼Œ1S è¶…æ—¶ */
             for (uint8_t i = 0; i < 10; i++) {
                 if ((rt_thread_find(WEB_TERMINAL_THREAD_NAM) == NULL)) {
-                    rt_kprintf("Web Terminal: ÒÑÍ£Ö¹\n");
+                    rt_kprintf("Web Terminal: å·²åœæ­¢\n");
                     break;
                 } else {
                     rt_thread_delay(rt_tick_from_millisecond(100));
                 }
             }
         } else {
-            rt_kprintf("Web Terminal: Î´Æô¶¯\n");
+            rt_kprintf("Web Terminal: æœªå¯åŠ¨\n");
         }
     } else {
-        rt_kprintf("Web Terminal: Î´³õÊ¼»¯£¡\n");
+        rt_kprintf("Web Terminal: æœªåˆå§‹åŒ–ï¼\n");
     }
 }
 
@@ -297,10 +332,10 @@ static void web_term(uint8_t argc, char **argv) {
         } else if (!strcmp(argv[1], "stop")) {
             web_terminal_stop();
         } else {
-            rt_kprintf("ÇëÊäÈë£º `web_term <init|start|stop>`\n");
+            rt_kprintf("è¯·è¾“å…¥ï¼š `web_term <init|start|stop>`\n");
         }
     } else {
-        rt_kprintf("ÇëÊäÈë£º`web_term <init|start|stop>`\n");
+        rt_kprintf("è¯·è¾“å…¥ï¼š`web_term <init|start|stop>`\n");
     }
 }
 MSH_CMD_EXPORT(web_term, Web Terminal 'web_term <init|start|stop>');
