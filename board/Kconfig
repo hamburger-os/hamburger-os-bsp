@@ -4071,6 +4071,10 @@ menu "Onboard Peripheral Drivers"
 			config DS2484_I2C_ADD
 				hex "Set the i2c device address, default: 0x18"
 				default (0x18)
+            
+            config MAX31826_SEN_ALL
+                int "Set the number of max31826 devices, default: 3, max: 4 "
+                default (3)
 		endif
 	endif
         

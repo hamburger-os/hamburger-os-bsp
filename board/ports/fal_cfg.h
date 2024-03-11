@@ -172,9 +172,23 @@ extern "C" {
 
 #ifdef BSP_USING_MAX31826
 //max31826定义,无需修改
+#ifdef MAX31826_USING_IO
 #define MAX31826_DEV_NAME               "max31826"
 #define BLK_MAX31826                    "max31826"
 #define MAX31826_START_ADRESS           (0)
+#endif
+
+#ifdef MAX31826_USING_I2C_DS2484
+
+#define MAX31826_DEV_NAME               "max31826"
+
+#define BLK_MAX31826_1                  "max31826_1"
+#define BLK_MAX31826_2                  "max31826_2"
+#define BLK_MAX31826_3                  "max31826_3"
+#define BLK_MAX31826_4                  "max31826_4"
+#define MAX31826_START_ADRESS           (0)
+#endif
+
 #endif
 
 #ifdef BSP_USING_SDCARD
