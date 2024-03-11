@@ -24,6 +24,8 @@ struct _uart_test
     rt_mq_t                     uart_mq;
     struct rt_ringbuffer *      rb;
     int                         thread_is_run;
+    rt_uint32_t                 parity_bit;
+    rt_uint32_t                 baud;
 };
 static struct _uart_test uart_test = {
     .thread_is_run = 0,
@@ -131,14 +133,16 @@ static void uart_echo_test(int argc, char **argv)
         {
             /* 查找 uart 设备 */
             uart_test.uart_dev = rt_device_find(argv[2]);
+            uart_test.baud = 115200;
+            uart_test.parity_bit = PARITY_NONE;
             if (uart_test.uart_dev != NULL)
             {
                 struct serial_configure config = RT_SERIAL_CONFIG_DEFAULT;
                 /* step2：修改串口配置参数 */
-                config.baud_rate = baud;        // 修改波特率为 115200
+                config.baud_rate = 115200;        // 修改波特率为 115200
                 config.data_bits = DATA_BITS_8;             // 数据位 8
                 config.stop_bits = STOP_BITS_1;             // 停止位 1
-                config.parity    = parity_bit;             // 无奇偶校验位
+                config.parity    = PARITY_NONE;             // 无奇偶校验位
 #ifdef RT_USING_SERIAL_V2
                 config.rx_bufsz  = UART_MAX_LEN;
                 config.tx_bufsz  = UART_MAX_LEN;
@@ -159,14 +163,14 @@ static void uart_echo_test(int argc, char **argv)
         {
             if (uart_test.uart_dev != NULL)
             {
-                baud = strtoul(argv[2], NULL, 10);
+                uart_test.baud = strtoul(argv[2], NULL, 10);
 
                 struct serial_configure config = RT_SERIAL_CONFIG_DEFAULT;
                 /* step2：修改串口配置参数 */
-                config.baud_rate = baud;
+                config.baud_rate = uart_test.baud;
                 config.data_bits = DATA_BITS_8;             // 数据位 8
                 config.stop_bits = STOP_BITS_1;             // 停止位 1
-                config.parity    = parity_bit;             // 无奇偶校验位
+                config.parity    = uart_test.parity_bit;             // 无奇偶校验位
 #ifdef RT_USING_SERIAL_V2
                 config.rx_bufsz  = UART_MAX_LEN;
                 config.tx_bufsz  = UART_MAX_LEN;
@@ -189,23 +193,23 @@ static void uart_echo_test(int argc, char **argv)
             {
                 if(rt_strcmp(argv[2], "odd") == 0)
                 {
-                    parity_bit = PARITY_ODD;
+                    uart_test.parity_bit = PARITY_ODD;
                 }
                 else if(rt_strcmp(argv[2], "even") == 0)
                 {
-                    parity_bit = PARITY_EVEN;
+                    uart_test.parity_bit = PARITY_EVEN;
                 }
                 else
                 {
-                    parity_bit = PARITY_NONE;
+                    uart_test.parity_bit = PARITY_NONE;
                 }
 
                 struct serial_configure config = RT_SERIAL_CONFIG_DEFAULT;
                 /* step2：修改串口配置参数 */
-                config.baud_rate = baud;
+                config.baud_rate = uart_test.baud;
                 config.data_bits = DATA_BITS_8;             // 数据位 8
                 config.stop_bits = STOP_BITS_1;             // 停止位 1
-                config.parity    = parity_bit;             // 无奇偶校验位
+                config.parity    = uart_test.parity_bit;    // 无奇偶校验位
 #ifdef RT_USING_SERIAL_V2
                 config.rx_bufsz  = UART_MAX_LEN;
                 config.tx_bufsz  = UART_MAX_LEN;
@@ -293,8 +297,6 @@ static void uart_echo_test(int argc, char **argv)
             rt_ringbuffer_destroy(uart_test.rb);
             uart_test.uart_thread = RT_NULL;
             uart_test.thread_is_run = 0;
-            parity_bit = PARITY_NONE;
-            baud = 115200;
         }
         else
         {
