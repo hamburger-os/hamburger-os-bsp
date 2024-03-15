@@ -4564,7 +4564,7 @@ menu "Onboard Peripheral Drivers"
                 default y
                 
             config Z8523L16_NE
-                  hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x2"
+                  hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x4"
                   default (0x2)
                   
             config Z8523L16_CMD
