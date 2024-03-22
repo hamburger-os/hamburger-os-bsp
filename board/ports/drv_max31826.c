@@ -106,7 +106,7 @@ static rt_uint8_t DEV_MAX31826_Read1Wire(void);
 static uint8_t LastDiscrepancy = 0;
 static uint8_t LastDeviceFlag = 0;
 static uint8_t LastFamilyDiscrepancy = 0;
-
+uint8_t max31826_serch_num = 0;
 typedef struct
 {
     struct rt_sensor_device sensor;
@@ -702,8 +702,8 @@ static rt_int32_t max31826_search_rom(void)
                 {
                     if(0 == rt_memcmp(Sensor_ID, max31826_id_temp[j], 8))
                     {
-                        LOG_E("STEM NUMBER ERR\r\n");
-                        return -1;
+                        max31826_serch_num = i;
+                        return 0;
                     }
                 }
                 rt_memcpy((void*)max31826_id_temp[i], (void*)Sensor_ID, 8);
@@ -718,6 +718,7 @@ static rt_int32_t max31826_search_rom(void)
             return -1;
         }
     }
+    max31826_serch_num = i;
     return 0;
 }
 
@@ -730,7 +731,7 @@ static rt_int32_t max31826_match_rom(void)
     rt_uint8_t address = 0xff;
     rt_uint8_t data[9];
     
-    for(i = 0; i < MAX31826_SEN_ALL; i++)
+    for(i = 0; i < max31826_serch_num; i++)
     {
         if (DEV_MAX31826_Reset1Wire())
         {
@@ -1145,9 +1146,9 @@ int fal_max31826_read(long offset, rt_uint8_t *buf, size_t size)
 
 #ifdef MAX31826_USING_I2C_DS2484
 
-    if(MAX31826_SEN_ALL != 0)
+    if(max31826_serch_num != 0)
     {
-        if((offset < 128*MAX31826_SEN_ALL) && (offset/128 == (offset + size -1)/128))
+        if((offset < 128*max31826_serch_num) && (offset/128 == (offset + size -1)/128))
         {
             addr = offset%128;
             findflag = RT_TRUE;
@@ -1213,9 +1214,9 @@ int fal_max31826_write(long offset, const rt_uint8_t *buf, size_t size)
     rt_mutex_take(&fal_mux, RT_WAITING_FOREVER);
 #ifdef MAX31826_USING_I2C_DS2484
 
-    if(MAX31826_SEN_ALL != 0)
+    if(max31826_serch_num != 0)
     {
-        if((offset < 128*MAX31826_SEN_ALL) && (offset/128 == (offset + size -1)/128))
+        if((offset < 128*max31826_serch_num) && (offset/128 == (offset + size -1)/128))
         {
             addr = offset;
             findflag = RT_TRUE;
@@ -1312,9 +1313,9 @@ static int fal_max31826_erase(long offset, size_t size)
 #ifdef MAX31826_USING_I2C_DS2484
     rt_uint8_t findflag = RT_FALSE;
 
-    if(MAX31826_SEN_ALL != 0)
+    if(max31826_serch_num != 0)
     {
-        if((offset < 128*MAX31826_SEN_ALL) && (offset/128 == (offset + size -1)/128))
+        if((offset < 128*max31826_serch_num) && (offset/128 == (offset + size -1)/128))
         {
             addr = offset%128;
             findflag = RT_TRUE;
@@ -1366,6 +1367,8 @@ static int rt_hw_max31826_init()
     }
 
 #ifdef MAX31826_USING_I2C_DS2484
+
+    rt_uint16_t temp_value;
     if (rt_hw_ds2484_init() != RT_EOK)
     {
         return -RT_ERROR;
@@ -1389,7 +1392,7 @@ static int rt_hw_max31826_init()
     DEV_MAX31826_Convert();
 
 
-    for(i = 0; i < MAX31826_SEN_ALL; i++)
+    for(i = 0; i < max31826_serch_num; i++)
     {
         /* temperature sensor register */
         max31826_sen[i].sensor.info.type = RT_SENSOR_CLASS_TEMP;
@@ -1410,8 +1413,9 @@ static int rt_hw_max31826_init()
             LOG_E("device register err code: %d", result);
             goto __exit;
         }
+        Max3182x_ReadTemp(&temp_value, &max31826_sen[i].sensor);
     }
-    DEV_MAX31826_Convert();
+
 #endif /* MAX31826_USING_I2C_DS2484 */
 
 
