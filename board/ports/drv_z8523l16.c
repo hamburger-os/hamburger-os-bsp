@@ -252,9 +252,6 @@
 #define Z85230_CLK_MODE     ( 1UL )
 #define Z85230_BAUD_TC      ( Z85230_CLK_FREQ/(2 * Z85230_BAUD * Z85230_CLK_MODE) - 2)
 
-#define HDLC_FRAME_HEAD_DELAY ( 18*1000UL )
-#define HDLC_FRAME_TAIL_DELAY ( 93*1000UL )
-
 #define BYTE_H(_x)           ( (uint8_t)(((_x) >> 8) & 0x00FF) )
 #define BYTE_L(_x)           ( (uint8_t)((_x) & 0x00FF) )
 
@@ -528,6 +525,18 @@ static rt_err_t z85230_hdlc_mode(S_Z8523L16_DEV *dev)
     return RT_EOK;
 }
 
+static uint8_t z85230_outtime( uint32_t time, uint32_t ms )
+{
+    if( ( rt_tick_get() - time ) > ms )
+    {
+        return 1u;
+    }
+    else
+    {
+        return 0u;
+    }
+}
+
 static void z85230_tx_byte(S_Z8523L16_DEV *dev, uint8_t chr)
 {
     if(RT_NULL == dev)
@@ -535,15 +544,18 @@ static void z85230_tx_byte(S_Z8523L16_DEV *dev, uint8_t chr)
         return;
     }
 
-    rt_tick_t tick = rt_tick_get();
+    uint32_t z85230_time = 0u;
+
+    z85230_time = rt_tick_get();
     while( (hdlc_rdreg(&dev->fmc, R0) & Tx_BUF_EMP) == 0 )
     {
-        rt_thread_delay_until(&tick, 3);
-        hdlc_wrreg(&dev->fmc, R0, ERR_RES);
-        hdlc_wrreg(&dev->fmc, R0, RES_EOM_L);
-        break;
+        if (z85230_outtime(z85230_time, 1)== 1u )
+        {
+            hdlc_wrreg(&dev->fmc, R0, ERR_RES);
+            hdlc_wrreg(&dev->fmc, R0, RES_EOM_L);
+            break;
+        }
     }
-
     hdlc_wrreg(&dev->fmc, R8, chr);
 }
 
@@ -588,7 +600,7 @@ static void z8523l16_rx_thread_entry(void *param)
     }
 
     rt_size_t rx_len = 0;
-    uint8_t rr1 = 0, rr3 = 0;
+    uint8_t rr1 = 0, rr3 = 0, rr0 = 0;
 
     while(1)
     {
@@ -597,10 +609,19 @@ static void z8523l16_rx_thread_entry(void *param)
         rt_mutex_take(&p_dev->mux, RT_WAITING_FOREVER);
 
         rr3 = hdlc_rdreg(&p_dev->fmc, R3);
+        rr0 = hdlc_rdreg(&p_dev->fmc, R0);
         if(rr3 & CHARxIP)
         {
-            /* put buffer to ringbuffer */
-            rt_ringbuffer_putchar_force(p_dev->rx_ringbuffer, hdlc_rdreg(&p_dev->fmc, R8));
+            /* 当接收数据FIFO中至少有一个字符可用时，该位被设置为1。
+                          *  当接收数据FIFO是完全空的。通道或硬件重置清空接收数据FIFO。
+                          * 通道有数据，则一直读。
+             */
+            while(rr0 & Rx_CH_AV)
+            {
+                /* put buffer to ringbuffer */
+                rt_ringbuffer_putchar_force(p_dev->rx_ringbuffer, hdlc_rdreg(&p_dev->fmc, R8));
+                rr0 = hdlc_rdreg(&p_dev->fmc, R0);
+            }
         }
 
         rr1 = hdlc_rdreg(&p_dev->fmc, R1);
@@ -744,7 +765,6 @@ static rt_size_t hdlc_write (rt_device_t dev, rt_off_t pos, const void* buffer, 
     p_dev = rt_container_of(dev, S_Z8523L16_DEV, device);
 
     uint32_t i = 0;
-    volatile uint32_t head = HDLC_FRAME_HEAD_DELAY;
 
     if(RT_NULL == p_dev || RT_NULL == buffer)
     {
@@ -756,7 +776,7 @@ static rt_size_t hdlc_write (rt_device_t dev, rt_off_t pos, const void* buffer, 
     hdlc_wrreg(&p_dev->fmc, R5, Tx8|RTS|TxCRC_ENAB|TxENAB);
 
 #ifdef BSP_USING_Z85230_HDLC_MODE
-    while(head--);
+    rt_thread_delay(1);
     hdlc_wrreg(&p_dev->fmc, R0, RES_Tx_CRC);
 #endif
 
