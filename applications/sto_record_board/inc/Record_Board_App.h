@@ -13,6 +13,8 @@
 #include <rtthread.h>
 #include "data_handle.h"
 
+#define ENABLE_RECORD_BOARD_APP 0
+
 void Processing_HMB_HLRT_Message( uint8_t low3bit, uint8_t data[] );
 void Processing_CEU_Message( uint8_t low3bit, uint8_t data[] );
 void Processing_IAP_Message( uint8_t low3bit, uint8_t high8bit, uint8_t data[] );

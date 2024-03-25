@@ -10,14 +10,133 @@
 
 #include "app_layer.h"
 
+#define DBG_TAG "AppLayer"
+#define DBG_LVL DBG_LOG
+#include <rtdbg.h>
+
 #include <rtthread.h>
 #include <rtdevice.h>
 
 #include <string.h>
 
-#define DBG_TAG "AppLayer"
-#define DBG_LVL DBG_LOG
-#include <rtdbg.h>
+#include "safe_layer.h"
+#include "Common.h"
+#include "vcp_time_manage.h"
+#include "eth_thread.h"
+#include "board_info.h"
+
+static uint16_t  applayer_timeajust_ETH0_no_u16 = 0U,
+                                 applayer_timeajust_ETH1_no_u16 = 0U,
+                                 applayer_applytimeajust_ETH0_no_u16 = 0U,
+                                 applayer_applytimeajust_ETH1_no_u16 = 0U,
+                                 applayer_getpluginfo_ETH0_no_u16 = 0U,
+                                 applayer_getpluginfo_ETH1_no_u16 = 0U,
+                                 applayer_setchlinfo_ETH0_no_u16 = 0U,
+                                 applayer_setchlinfo_ETH1_no_u16 = 0U,
+                                 applayer_getchlinfo_ETH0_no_u16 = 0U,
+                                 applayer_getchlinfo_ETH1_no_u16 = 0U,
+                                 applayer_setrouter_ETH0_no_u16 = 0U,
+                                 applayer_setrouter_ETH1_no_u16 = 0U,
+                                 applayer_getrouter_ETH0_no_u16 = 0U,
+                                 applayer_getrouter_ETH1_no_u16 = 0U,
+                                 applayer_exp_ETH0_no_u16 = 0U,
+                                 applayer_exp_ETH1_no_u16 = 0U;
+
+uint8_t  InETH0_2_MainCtl_en = 0, InETH1_2_MainCtl_en = 0;
+uint8_t  InETH0_diff_flag = 0, InETH1_diff_flag = 0;
+uint32_t InETH0_SendDelay_timer = 0, InETH1_SendDelay_timer = 0;
+
+uint32_t g_u32_exp_tx_CmpTime = 0u;
+
+
+/****************************************************************************
+* 函数名: app_clock_adjust
+* 说明:与平台校正时钟同步
+* 参数:   uint8_t *p_safe_layer 安全层数据
+*         r_app_layer *pApp_layer  应用层数据
+*         uint8_t *pbuf 应用层业数据
+* 返回值: 应用层处理结果标识
+ ****************************************************************************/
+static void app_clock_adjust(uint8_t *p_safe_layer, r_app_layer *pApp_layer, uint8_t *pBuf)
+{
+    uint32_t Times = 0;
+    r_safe_layer *pRx_safe = NULL;
+    Times = *(uint32_t *) pBuf;
+
+    if (p_safe_layer != NULL)
+    {
+        pRx_safe = (r_safe_layer *) p_safe_layer;
+
+        if (pRx_safe->res == ETH_CH_INEX_1)
+        {
+            SetTime_ETH0_diff(Times);
+            Times = GetTime_ETH0_diff();
+            InETH0_diff_flag = 1;
+            InETH0_SendDelay_timer = rt_tick_get();
+
+        }
+        else if (pRx_safe->res == ETH_CH_INEX_2)
+        {
+            SetTime_ETH1_diff(Times);
+            Times = GetTime_ETH1_diff();
+            InETH1_diff_flag = 1;
+            InETH1_SendDelay_timer = rt_tick_get();
+        }
+        else
+        {
+            LOG_E("app_clock_adjust chl %d err !\r\n", pRx_safe->res);
+        }
+    }
+
+    /*应用层封装*/
+    if (pApp_layer->msg_type == ROUND_CIRCLE_TYPE) //对于轮询报文发起方 填3  应答方填 5
+        pApp_layer->msg_type = ROUND_CIRCLE_ACK_TYPE;
+
+    add_applayer_pakage_tx(p_safe_layer, pApp_layer, (uint8_t *) &Times, sizeof(Times));
+}
+
+/****************************************************************************
+* 函数名: app_clock_applyadjust
+* 说明:   处理申请的平台校正时钟同步
+* 参数:   uint8_t *p_safe_layer 安全层数据
+*         r_app_layer *pApp_layer  应用层数据
+*         uint8_t *pbuf 应用层业数据
+* 返回值: 应用层处理结果标识
+ ****************************************************************************/
+static void app_clock_applyadjust(uint8_t *p_safe_layer, r_app_layer *pApp_layer, uint8_t *pBuf)
+{
+    uint32_t Times = 0;
+    r_safe_layer *pRx_safe = NULL;
+
+    Times = *(uint32_t *) pBuf;
+//    serial_num = *((uint32_t *) pBuf + 1);
+
+    if (p_safe_layer != NULL)
+    {
+        pRx_safe = (r_safe_layer *) p_safe_layer;
+
+        if (pRx_safe->res == ETH_CH_INEX_1)
+        {
+            SetTime_ETH0_diff(Times);
+            Times = GetTime_ETH0_diff();
+            InETH0_diff_flag = 1;
+            InETH0_SendDelay_timer = rt_tick_get();
+//            LOG_I("clock eth1 applyadjust %d", InETH0_SendDelay_timer);
+        }
+        else if (pRx_safe->res == ETH_CH_INEX_2)
+        {
+            SetTime_ETH1_diff(Times);
+            Times = GetTime_ETH1_diff();
+            InETH1_diff_flag = 1;
+            InETH1_SendDelay_timer = rt_tick_get();
+//            LOG_I("clock eth2 applyadjust %d", InETH1_SendDelay_timer);
+        }
+        else
+        {
+            LOG_E("app_clock_applyadjust chl %d err !\r\n", pRx_safe->res);
+        }
+    }
+}
 
 /****************************************************************************
 * 函数名: tx_data_export
@@ -31,29 +150,8 @@ static void tx_data_to_export(S_DATA_HANDLE * data_handle, uint8_t des_chl , uin
 {
     if (pbuf != NULL)
     {
-        //printf("tx_data_to_export---des_chl:%d!\r\n", des_chl);
         switch (des_chl)
         {
-//           case EXP_FDCAN_3_DEV:
-//           case EXP_FDCAN_4_DEV:
-//           case EXP_FDCAN_5_DEV:
-//        tx_data_to_exp_can(des_chl,pbuf,data_len);
-//           break;
-//           case EXP_KSZ8851_I_DEV:
-//             Tx_Data_to_exp_1net(pbuf,data_len);
-//           break;
-//           case EXP_KSZ8851_II_DEV:
-//             Tx_Data_to_exp_2net(pbuf,data_len);
-//           break;
-//           case RS422_DEV:
-//            tx_data_to_rs422_I(pbuf,data_len);
-//           break;
-//           case HDLC_DEV:
-//            tx_data_to_rs422_II(pbuf,data_len);
-//           break;
-//           case MVB_DEV:
-//            tx_data_to_rs422_II(pbuf,data_len);
-//           break;
         /* 外部硬CAN */
         case DATA_CHANNEL_TX1CAN1:
         case DATA_CHANNEL_TX1CAN2:
@@ -95,7 +193,7 @@ static void tx_data_to_export(S_DATA_HANDLE * data_handle, uint8_t des_chl , uin
             Protocol_STO_2_ETH1_PD(pbuf, data_len);
 #endif
         default:
-            LOG_I("tx_data_export des_chl  = %x err !\r\n", des_chl);
+            LOG_E("tx_data_export des_chl  = %x err !\r\n", des_chl);
             break;
         }
     }
@@ -170,54 +268,56 @@ rt_err_t app_layer_check(S_DATA_HANDLE * data_handle, uint8_t *pBuf, uint8_t *p_
 
     if (pBuf != NULL)
     {
-#if 0 //TODO(mingzhao)
-        //printf("app_layer_check  msg_sub_type %d-%d!\r\n",pApp_layer->msg_type,pApp_layer->msg_sub_type);
+//        LOG_I("pApp_layer %d, %d, %d time %d", pApp_layer->msg_sub_type, pApp_layer->msg_type, pApp_layer->serial_num, rt_tick_get());
         /*轮循模式，请求*/
         if (pApp_layer->msg_type == ROUND_CIRCLE_TYPE)
         {
             switch (pApp_layer->msg_sub_type)
             {
-            case TIME_SET_LOCAL:/*3 轮循模式时 时钟同步，主控下发时钟通信插件同步 业务数据为4个字节 有应答*/
-            {
-                app_clock_adjust(p_safe_layer, pApp_layer, &pBuf[sizeof(r_app_layer)]);
-            }
-                break;
-            case COMM_PLUG_INFO:/*30 轮循模式时 主控获取插件信息，周期+平态工作状态 有应答*/
-            {
-                get_comm_plug_info(p_safe_layer, pApp_layer);
-            }
-                break;
-            case SET_CHANNL_INFO:/*23轮循模式时 设置通道配置信息，即为配置信息 通道数目+通道1参数+通道2参数+N参数 有应答 2字节OK或ERR*/
-            {
-                /*把通道配置信息设置到本地*/
-                set_exp_chanl_refer(p_safe_layer, pApp_layer, &pBuf[sizeof(r_app_layer) + 1],
-                        pBuf[sizeof(r_app_layer)]);
-                /*把通道配置信息存储到本地*/
-                save_exp_chanl_refer(&pBuf[sizeof(r_app_layer) + 1], pBuf[sizeof(r_app_layer)]);
+                case TIME_SET_LOCAL:/*3 轮循模式时 时钟同步，主控下发时钟通信插件同步 业务数据为4个字节 有应答*/
+                {
+                    app_clock_adjust(p_safe_layer, pApp_layer, &pBuf[sizeof(r_app_layer)]);
+                }
+                    break;
+                case COMM_PLUG_INFO:/*30 轮循模式时 主控获取插件信息，周期+平态工作状态 有应答*/
+                {
+                    get_comm_plug_info(p_safe_layer, pApp_layer); //TODO(mingzhao) plug info
+                }
+                    break;
+                case SET_CHANNL_INFO:/*23轮循模式时 设置通道配置信息，即为配置信息 通道数目+通道1参数+通道2参数+N参数 有应答 2字节OK或ERR*/
+                {
+    //                /*把通道配置信息设置到本地*/       //TODO(mingzhao) SET_CHANNL_INFO
+    //                set_exp_chanl_refer(p_safe_layer, pApp_layer, &pBuf[sizeof(r_app_layer) + 1],
+    //                        pBuf[sizeof(r_app_layer)]);
+    //                /*把通道配置信息存储到本地*/
+    //                save_exp_chanl_refer(&pBuf[sizeof(r_app_layer) + 1], pBuf[sizeof(r_app_layer)]);
 
-            }
-                break;
-            case GET_CHANNL_INFO:/*24轮循模式时 查询通道配置信息，通道数目+通道号+通道号+N 有应答 通道数目+通道1参数+通道2参数+N参数*/
-            {
-                get_exp_chanl_refer(p_safe_layer, pApp_layer, &pBuf[sizeof(r_app_layer) + 1],
-                        pBuf[sizeof(r_app_layer)]);
+                    LOG_I("SET_CHANNL_INFO NO");  //TODO(mingzhao )
 
-            }
-                break;
-            case SET_CONTIUE_INFO:/*27轮循模式时 设置数据转发路由表，路由表数目1字节+路由表1(4字节)+N 有应答 2字节OK或ERR*/
-            {
-//                      app_chl_router_save(p_safe_layer ,pApp_layer , &pBuf[sizeof(r_app_layer)+1] , pBuf[sizeof(r_app_layer)] );
-            }
-                break;
-            case GET_CONTIUE_INFO: /*29轮循模式时 查询数据转发路由表，2字节保留 有应答  路由表数目1字节+路由表1(4字节)+N*/
-            {
-//                      app_chl_router_get(p_safe_layer , pApp_layer);
-            }
-                break;
-            default:
-                ret = ER;
-                printf("app_layer_check ROUND_CIRCLE_TYPE msg_sub_type err !\r\n");
-                break;
+                }
+                    break;
+                case GET_CHANNL_INFO:/*24轮循模式时 查询通道配置信息，通道数目+通道号+通道号+N 有应答 通道数目+通道1参数+通道2参数+N参数*/
+                {
+    //                get_exp_chanl_refer(p_safe_layer, pApp_layer, &pBuf[sizeof(r_app_layer) + 1],
+    //                        pBuf[sizeof(r_app_layer)]);       //TODO(mingzhao) GET_CHANNL_INFO
+                    LOG_I("SET_CHANNL_INFO NO");  //TODO(mingzhao )
+
+                }
+                    break;
+                case SET_CONTIUE_INFO:/*27轮循模式时 设置数据转发路由表，路由表数目1字节+路由表1(4字节)+N 有应答 2字节OK或ERR*/
+                {
+    //                      app_chl_router_save(p_safe_layer ,pApp_layer , &pBuf[sizeof(r_app_layer)+1] , pBuf[sizeof(r_app_layer)] );
+                }
+                    break;
+                case GET_CONTIUE_INFO: /*29轮循模式时 查询数据转发路由表，2字节保留 有应答  路由表数目1字节+路由表1(4字节)+N*/
+                {
+    //                      app_chl_router_get(p_safe_layer , pApp_layer);
+                }
+                    break;
+                default:
+                    ret = -RT_ERROR;
+                    LOG_E("app_layer_check ROUND_CIRCLE_TYPE msg_sub_type err !\r\n");
+                    break;
             }
         }
         /*轮循模式，应答*/
@@ -231,27 +331,22 @@ rt_err_t app_layer_check(S_DATA_HANDLE * data_handle, uint8_t *pBuf, uint8_t *p_
             }
                 break;
             default:
-                ret = ER;
-                printf("app_layer_check ROUND_CIRCLE_ACK_TYPE msg_sub_type err !\r\n");
+                ret = -RT_ERROR;
+                LOG_E("app_layer_check ROUND_CIRCLE_ACK_TYPE msg_sub_type err !\r\n");
                 break;
             }
         }
         /*周期模式*/
-        else
-#endif
-
-        if (pApp_layer->msg_type == ROUND_PULSE_MODE)
+        else if (pApp_layer->msg_type == ROUND_PULSE_MODE)
         {
-//            LOG_I("msg_sub_type %d!\r\n", pApp_layer->msg_sub_type);
             switch (pApp_layer->msg_sub_type)
             {
-#if 0 //TODO(mingzhao)
+
                 case IAP_PAKAGE:/* 5周期模式时 IAP数据包  业务数据为IAP数据包  无应答*/
                 {
-                    ;
+
                 }
                 break;
-#endif
                 case RX_MAINCTLDATA_EXP: /*33周期模式时 收到主控数据发送到外部通道  通道数目+通道数据(通道编号1+时间戳4+长度2+数据N)+N  无应答*/
                 {
                     mainctl_2_export(data_handle, &pBuf[sizeof(r_app_layer) + 1], pBuf[sizeof(r_app_layer)]);
@@ -275,5 +370,331 @@ rt_err_t app_layer_check(S_DATA_HANDLE * data_handle, uint8_t *pBuf, uint8_t *p_
         LOG_E("app_layer_check pBuf == NULL err !\r\n");
     }
     return ret;
+}
+
+
+/****************************************************************************
+ * 函数名: get_applayer_pakage_tx_flag
+ * 说明:       获取发送数据标志，时钟同步之前，不反馈除时钟同步之外的命令的应答
+ * 参数:   uint8_t *pSafe 安全层数据
+ *         r_app_layer *pApp  应用层数据
+ * 返回值: 无
+ ****************************************************************************/
+static uint8_t get_applayer_pakage_tx_flag(uint8_t *pSafe, r_app_layer *pApp)
+{
+    r_app_layer app_layer;
+    r_safe_layer *pRx_safe = NULL;
+//    uint8_t Buf[APP_LAYER_PLOADLEN + 4];
+    uint8_t send_flag = 0;
+
+    pRx_safe = (r_safe_layer *) pSafe;
+    app_layer.msg_type = pApp->msg_type;
+    app_layer.msg_sub_type = pApp->msg_sub_type;
+
+    /* 时钟同步命令允许应答 */
+    if((app_layer.msg_type == ROUND_CIRCLE_TYPE) || (app_layer.msg_type == ROUND_CIRCLE_ACK_TYPE))
+    {
+//        LOG_I("app_layer.msg_type %d app_layer.msg_sub_type %d", app_layer.msg_type, app_layer.msg_sub_type);
+        if((app_layer.msg_sub_type == TIME_SET_LOCAL) || (app_layer.msg_sub_type == APPLY_TIME_SET)
+                || (app_layer.msg_sub_type == COMM_PLUG_INFO))
+        send_flag = 1;
+    }
+    /* 其他命令，在收到各自通道时钟同步之前，不允许应答 */
+    else
+    {
+        switch(pRx_safe->res)
+        {
+            case ETH_CH_INEX_1:
+                if(InETH0_2_MainCtl_en)
+                {
+                    send_flag = 1;
+                }
+            break;
+            case ETH_CH_INEX_2:
+                if(InETH1_2_MainCtl_en)
+                {
+                    send_flag = 1;
+                }
+            break;
+            default:
+            break;
+        }
+    }
+
+    return send_flag;
+}
+
+/****************************************************************************
+ * 函数名: add_applayer_pakage_tx
+* 说明:封装APP 层
+* 参数:   uint8_t *pSafe 安全层数据
+*         r_app_layer *pApp  应用层数据
+*         uint8_t *pbuf 应用层业数据
+*         uint8_t app_datalen  应用层业数据长度
+* 返回值: 无
+ ****************************************************************************/
+void add_applayer_pakage_tx(uint8_t *pSafe, r_app_layer *pApp, uint8_t *pbuf, uint16_t app_datalen)
+{
+    r_app_layer app_layer;
+    r_safe_layer *pRx_safe = NULL;
+    uint8_t Buf[APP_LAYER_PLOADLEN + 4];
+    uint8_t send_flag = 0; /* 时钟同步之前，不反馈除时钟同步之外的命令的应答 */
+
+    if ((pApp != NULL) && (pSafe != NULL) && (app_datalen < APP_LAYER_PLOADLEN))
+    {
+        pRx_safe = (r_safe_layer *) pSafe;
+        app_layer.msg_type = pApp->msg_type;
+        app_layer.msg_sub_type = pApp->msg_sub_type;
+
+        send_flag = get_applayer_pakage_tx_flag(pSafe, pApp);
+
+        if (send_flag)
+        {
+            /*轮循模式，请求*/
+            if (app_layer.msg_type == ROUND_CIRCLE_TYPE)
+            {
+//                LOG_I("ROUND_CIRCLE_TYPE msg_sub_type, res %d", app_layer.msg_sub_type, pRx_safe->res);
+                switch (app_layer.msg_sub_type)
+                {
+                case APPLY_TIME_SET:/*6 轮询模式，申请时钟同步*/
+                {
+//                    LOG_I("zk app no %d", pApp->serial_num);
+                    if (pRx_safe->res == ETH_CH_INEX_1)
+                    {
+                        app_layer.serial_num = applayer_applytimeajust_ETH0_no_u16;/*序列号*/
+                        applayer_applytimeajust_ETH0_no_u16 = count_msg_no16(applayer_applytimeajust_ETH0_no_u16);
+                    }
+                    else if (pRx_safe->res == ETH_CH_INEX_2)
+                    {
+                        app_layer.serial_num = applayer_applytimeajust_ETH1_no_u16;/*序列号*/
+                        applayer_applytimeajust_ETH1_no_u16 = count_msg_no16(applayer_applytimeajust_ETH1_no_u16);
+                    }
+                    else
+                    {
+                        ;
+                    }
+                }
+                    break;
+                default:
+                    LOG_E("ROUND_CIRCLE_TYPE app_layer_ser_num err !\r\n");
+                    break;
+                }
+            }
+            /*轮循模式，应答*/
+            else if (app_layer.msg_type == ROUND_CIRCLE_ACK_TYPE)
+            {
+                switch (app_layer.msg_sub_type)
+                {
+                case TIME_SET_LOCAL:/*3 轮循模式时 时钟同步*/
+                {
+//                    LOG_I("2-zk app no %d", pApp->serial_num);
+                    if (pRx_safe->res == ETH_CH_INEX_1)
+                    {
+                        applayer_timeajust_ETH0_no_u16 = pApp->serial_num;
+                        app_layer.serial_num = applayer_timeajust_ETH0_no_u16;/*序列号*/
+                        applayer_timeajust_ETH0_no_u16 = count_msg_no16(applayer_timeajust_ETH0_no_u16);
+//                        LOG_I("TIME_SET_LOCAL eth1 sub_type %d %d", app_layer.serial_num, applayer_timeajust_ETH0_no_u16);
+                    }
+                    else if (pRx_safe->res == ETH_CH_INEX_2)
+                    {
+                        applayer_timeajust_ETH1_no_u16 = pApp->serial_num;
+                        app_layer.serial_num = applayer_timeajust_ETH1_no_u16;/*序列号*/
+                        applayer_timeajust_ETH1_no_u16 = count_msg_no16(applayer_timeajust_ETH1_no_u16);
+//                        LOG_I("TIME_SET_LOCAL eth2 sub_type %d %d", app_layer.serial_num, applayer_timeajust_ETH1_no_u16);
+                    }
+                    else
+                    {
+                        ;
+                    }
+                }
+                    break;
+                case COMM_PLUG_INFO:/*30 轮循模式时*/
+                {
+                    if (pRx_safe->res == ETH_CH_INEX_1)
+                    {
+                        app_layer.serial_num = applayer_getpluginfo_ETH0_no_u16;/*序列号*/
+                        applayer_getpluginfo_ETH0_no_u16 = count_msg_no16(applayer_getpluginfo_ETH0_no_u16);/* 应用层的序列号每发出一帧则增一 */
+                    }
+                    else if (pRx_safe->res == ETH_CH_INEX_2)
+                    {
+                        app_layer.serial_num = applayer_getpluginfo_ETH1_no_u16;/*序列号*/
+                        applayer_getpluginfo_ETH1_no_u16 = count_msg_no16(applayer_getpluginfo_ETH1_no_u16);/* 应用层的序列号每发出一帧则增一 */
+                    }
+                    else
+                    {
+                        ;
+                    }
+                }
+                    break;
+                case SET_CHANNL_INFO:/*23轮循模式时 设置通道配置信息*/
+                {
+                    if (pRx_safe->res == ETH_CH_INEX_1)
+                    {
+                        app_layer.serial_num = applayer_setchlinfo_ETH0_no_u16;/*序列号*/
+                        applayer_setchlinfo_ETH0_no_u16 = count_msg_no16(applayer_setchlinfo_ETH0_no_u16);/*应用层的序列号每发出一帧则增一*/
+                    }
+                    else if (pRx_safe->res == ETH_CH_INEX_2)
+                    {
+                        app_layer.serial_num = applayer_setchlinfo_ETH1_no_u16;/*序列号*/
+                        applayer_setchlinfo_ETH1_no_u16 = count_msg_no16(applayer_setchlinfo_ETH1_no_u16);/*应用层的序列号每发出一帧则增一*/
+                    }
+                    else
+                    {
+                        ;
+                    }
+                }
+                    break;
+                case GET_CHANNL_INFO:/*24轮循模式时 查询通道配置信息*/
+                {
+                    if (pRx_safe->res == ETH_CH_INEX_1)
+                    {
+                        app_layer.serial_num = applayer_getchlinfo_ETH0_no_u16;/*序列号*/
+                        applayer_getchlinfo_ETH0_no_u16 = count_msg_no16(applayer_getchlinfo_ETH0_no_u16);/*应用层的序列号每发出一帧则增一*/
+                    }
+                    else if (pRx_safe->res == ETH_CH_INEX_2)
+                    {
+                        app_layer.serial_num = applayer_getchlinfo_ETH1_no_u16;/*序列号*/
+                        applayer_getchlinfo_ETH1_no_u16 = count_msg_no16(applayer_getchlinfo_ETH1_no_u16);/*应用层的序列号每发出一帧则增一*/
+                    }
+                    else
+                    {
+                        ;
+                    }
+                }
+                    break;
+                case SET_CONTIUE_INFO:/*27轮循模式时 设置数据转发路由表*/
+                {
+                    if (pRx_safe->res == ETH_CH_INEX_1)
+                    {
+                        app_layer.serial_num = applayer_setrouter_ETH0_no_u16;/*序列号*/
+                        applayer_setrouter_ETH0_no_u16 = count_msg_no16(applayer_setrouter_ETH0_no_u16);/*应用层的序列号每发出一帧则增一*/
+                    }
+                    else if (pRx_safe->res == ETH_CH_INEX_2)
+                    {
+                        app_layer.serial_num = applayer_setrouter_ETH1_no_u16;/*序列号*/
+                        applayer_setrouter_ETH1_no_u16 = count_msg_no16(applayer_setrouter_ETH1_no_u16);/*应用层的序列号每发出一帧则增一*/
+                    }
+                    else
+                    {
+                        ;
+                    }
+                }
+                    break;
+                case GET_CONTIUE_INFO: /*29轮循模式时 查询数据转发路由表*/
+                {
+                    if (pRx_safe->res == ETH_CH_INEX_1)
+                    {
+                        app_layer.serial_num = applayer_getrouter_ETH0_no_u16;/*序列号*/
+                        applayer_getrouter_ETH0_no_u16 = count_msg_no16(applayer_getrouter_ETH0_no_u16);/*应用层的序列号每发出一帧则增一*/
+                    }
+                    else if (pRx_safe->res == ETH_CH_INEX_2)
+                    {
+                        app_layer.serial_num = applayer_getrouter_ETH1_no_u16;/*序列号*/
+                        applayer_getrouter_ETH1_no_u16 = count_msg_no16(applayer_getrouter_ETH1_no_u16);/*应用层的序列号每发出一帧则增一*/
+                    }
+                    else
+                    {
+                        ;
+                    }
+                }
+                    break;
+                default:
+                    LOG_E("ROUND_CIRCLE_ACK_TYPE app_layer_ser_num err !\r\n");
+                    break;
+                }
+            }
+            /*周期模式*/
+            else if (app_layer.msg_type == ROUND_PULSE_MODE)
+            {
+//                LOG_I("ROUND_PULSE_MODE app_layer.msg_sub_type%d, res %d", app_layer.msg_sub_type, pRx_safe->res);
+                switch (app_layer.msg_sub_type)
+                {
+                    case IAP_PAKAGE:/* 5周期模式时 IAP数据包  业务数据为IAP数据包*/
+                    {
+
+                    }
+                    break;
+                    case RX_EXPDATA_MAINCTL: /*34周期模式时*/
+                    {
+                        if (pRx_safe->res == ETH_CH_INEX_1)
+                        {
+                            app_layer.serial_num = applayer_exp_ETH0_no_u16;/*序列号*/
+//                            LOG_I("eth1 app num %d", app_layer.serial_num);
+                            applayer_exp_ETH0_no_u16 = count_msg_no16(applayer_exp_ETH0_no_u16);/*应用层的序列号每发出一帧则增一*/
+                        }
+                        else if (pRx_safe->res == ETH_CH_INEX_2)
+                        {
+                            app_layer.serial_num = applayer_exp_ETH1_no_u16;/*序列号*/
+//                            LOG_I("eth2 app num %d", app_layer.serial_num);
+                            applayer_exp_ETH1_no_u16 = count_msg_no16(applayer_exp_ETH1_no_u16);/*应用层的序列号每发出一帧则增一*/
+                        }
+                        else
+                        {
+                            ;
+                        }
+                    }
+                        break;
+                    default:
+                        LOG_E("ROUND_PULSE_MODE app_layer_ser_num err !\r\n");
+                        break;
+                }
+            }
+            else
+            {
+                LOG_E("app_layer.msg_type app_layer_ser_num err !\r\n");
+            }
+            
+            /*应用层头*/
+            memcpy(&Buf[0], (uint8_t *) &app_layer, sizeof(r_app_layer));
+            /*应用层数据域*/
+            memcpy(&Buf[sizeof(r_app_layer)], &pbuf[0], app_datalen);
+            /*调安全层封装并发送走*/
+            app_add_safelayer_pakage_tx(pSafe, Buf, sizeof(r_app_layer) + app_datalen);
+        }
+        else
+        {
+
+        }
+    }
+    else
+    {
+        LOG_E("add_applayer_pakage_tx  pApp == NULL err !\r\n");
+    }
+}
+
+/*******************************************************************************************
+ **  ApplyDiffToSto    向STO发送时钟同步请求
+ **  输入参数：  chl  --  发送通道
+ **  输出参数：
+ *******************************************************************************************/
+void ApplyDiffToSto(uint8_t chl)
+{
+    uint8_t pbuf[4] = { 0, 0, 0, 0 };
+    r_app_layer pApp;
+    r_safe_layer safe_layer;
+
+    /* 轮询模式，请求帧 */
+    pApp.msg_type = ROUND_CIRCLE_TYPE;
+    /*外部数据发往内部数据*/
+    pApp.msg_sub_type = APPLY_TIME_SET;
+
+    safe_layer.src_adr = Safe_RECORD_ADR;
+    /* 主控地址 */
+    if(chl == ETH_CH_INEX_1)
+    {
+        safe_layer.des_adr = Safe_ZK_I_ADR;
+    }
+    else if(chl == ETH_CH_INEX_2)
+    {
+        safe_layer.des_adr = Safe_ZK_II_ADR;
+    }
+    else
+    {
+        LOG_E("ApplyDiffToSto chl err %d", chl);
+    }
+
+    safe_layer.res = chl;
+
+    add_applayer_pakage_tx((uint8_t *) &safe_layer, &pApp, pbuf, 4);
 }
 

@@ -40,8 +40,6 @@ extern volatile uint8_t Socket_Connect_Flag;
 extern volatile uint8_t Socket_Closed_Flag;
 extern volatile uint8_t Socket_Receive_Flag;
 
-extern void RecordBoard_FileDown(void);
-
 
 /* 13-November-2018, by Liang Zhen. */
 /* include ------------------------------------------------------------------------------------- */
@@ -56,6 +54,7 @@ extern void RecordBoard_FileDown(void);
 /* public function declaration ----------------------------------------------------------------- */
 void ThreadFileDownload( void );
 uint32_t DownloadFileInit( void );
+uint32_t GetNewDatagram( uint8_t dgm[], uint32_t len );
 uint32_t GetDownloadDatagram( uint8_t dgm[], uint32_t size );
 
 

@@ -9,6 +9,9 @@ path += [cwd + '/linkLib/inc']
 path += [cwd + '/app']
 path += [cwd + '/support']
 path += [cwd + '/support/include']
+path += [cwd + '/app/code/devlib/include']
+path += [cwd + '/app/code/vcp_protocol/include']
+path += [cwd + '/app/code/protocol/include']
 
 src =  Split('''
     sto_com_board.c
@@ -23,6 +26,7 @@ src =  Split('''
     linkLib/src_swos2/swos2_os.c
     linkLib/src_swos2/swos2_rs485.c
     linkLib/src_swos2/swos2_timer.c
+    linkLib/src_swos2/swos2_cfg_init.c
     support/com_lib/support_libCRC.c
     support/com_lib/support_libList.c
     support/com_lib/support_libOS.c
@@ -38,6 +42,26 @@ src =  Split('''
     support/src/support_timer.c
     app/task_loop.c
     app/to_support_main.c
+    app/code/app_main.c
+    app/code/task/app_init.c
+    app/code/task/app_led.c
+    app/code/task/app_receive_data.c
+    app/code/task/app_send_data.c
+    app/code/vcp_protocol/vcp_app_layer.c
+    app/code/vcp_protocol/vcp_app_layer_process.c
+    app/code/vcp_protocol/vcp_crc.c
+    app/code/vcp_protocol/vcp_safe_layer.c
+    app/code/vcp_protocol/vcp_time_manage.c
+    app/code/devlib/devlib_can.c
+    app/code/devlib/devlib_eth.c
+    app/code/devlib/devlib_hdlc.c
+    app/code/devlib/devlib_mvb.c
+    app/code/devlib/devlib_rs485.c
+    app/code/protocol/list_manage.c
+    app/code/protocol/receive_external_protocol.c
+    app/code/protocol/receive_mainctl_protocol.c
+    app/code/protocol/send_external_protocol.c
+    app/code/protocol/send_mainctl_protocol.c
     '''
     )
 

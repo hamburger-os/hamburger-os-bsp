@@ -18,6 +18,9 @@ typedef enum
   UDP_RECV_NOTEMPTY
 } UDP_RECV_STATUS;
 
+void UDPServerSendData(const void *data, size_t size);
+void udp_send_datagram(void *data, size_t size);
+rt_err_t UDPServerInit(void);
 int UDPServerRcvThreadInit(void);
 rt_err_t UDPServerRcvMQData(void);
 

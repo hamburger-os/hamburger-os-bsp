@@ -15,8 +15,6 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-#include "common.h"
-
 #include <rtthread.h>
 
 #include <stdio.h>
@@ -25,6 +23,7 @@
 #include <sys/stat.h>
 #include <sys/fcntl.h>
 
+#include "common.h"
 #include "utils.h"
 #include "sto_record_board.h"
 #include "power_msg.h"
@@ -229,11 +228,12 @@ uint32_t RecordEventPkt_CRC32 = 0U;
 static char nulldata[8] = { 0u };
 static uint8_t u8_Clear_Flag = 0u;
 
-CAN_FRAME  Record_CanBuffer[150] = { 0u };
+CAN_FRAME  Record_CanBuffer[RECORD_CAN_BUFFER_SIZE] = { 0u };
 /* 在公共信息中更新的记录事项变量 */
 static uint8_t C_jichexinhao[6]  = { 0U };
 static uint8_t C_Lkjxiansu[2]  = { 0x00U, 0x00U };
 static uint8_t C_Lkjsudu[2]  = { 0x00U, 0x00U };
+static uint8_t C_Lkjsudu_temp[2]  = { 0x00U, 0x00U };
 static uint8_t C_gongzuozhuangtai = 0U;
 static uint8_t C_gongzuomoshi = 0xFFU;
 static uint8_t C_liecheguanyali[2]  = { 0x00U, 0x00U };
@@ -348,7 +348,7 @@ static void Get_Gonggongxinxi( void );
 void WriteFileContantPkt( uint8_t num1, uint8_t num2, uint8_t device_code, uint8_t *contant, uint8_t lenth );
 static void WriteGonggongxinxiPkt( void );
 static void Get_FileNameByLKJ(SFile_Directory *directory );
-static rt_err_t Get_FileNameNOLKJ(SFile_Directory *directory);
+static rt_err_t Get_FileNameNOLKJ(S_FILE_MANAGER *p_file_manager);
 static void Get_FileContant( void );
 static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info, uint8_t is_creat_new_file, uint8_t is_online);
 static uint8_t Init_GonggongxinxiState( void );
@@ -523,7 +523,7 @@ static void RecordingCommunicatWithECUMessage(void);
 void RecordBoard_FileCreate(void)
 {
     S_CURRENT_FILE_INFO *current_file_info = file_manager.current_info;
-    char full_path[PATH_NAME_MAX_LEN] = { 0 };
+    char full_path[TEMP_PATH_NAME_MAX_LEN] = { 0 };
 
     if (NULL == current_file_info)
     {
@@ -533,7 +533,6 @@ void RecordBoard_FileCreate(void)
 
     /* 1000ms循环检测 */
     static uint32_t Directory_time = 0u;
-//    uint32_t File_time = 0u;
     static uint32_t File_time = 0u;
     struct stat stat_l;
     int32_t ret = 0;
@@ -541,7 +540,7 @@ void RecordBoard_FileCreate(void)
 
     current_online_state = DataHandleLKJIsOnline();
 
-    if(1 == current_online_state && 0  == last_online_state)
+    if(1 == current_online_state && 0 == last_online_state)
     {
         Directory_time = rt_tick_get() + 1010;
     }
@@ -549,32 +548,19 @@ void RecordBoard_FileCreate(void)
     if (Common_BeTimeOutMN(&Directory_time, 1000u))
     {
         SetNulldataByOnline(current_online_state);
-        if(current_online_state > 0)
+        if(current_online_state > 0)   /* LKJ上线 */
         {
             Init_FileDirectory(current_file_info, Record_Condition_Judge(), current_online_state);
         }
-        else
+        else   /* LKJ未上线 */
         {
-            if(0 == current_file_info->file_dir->off_line_fie_index)
+            if(0 == file_manager.latest_dir_file_info.dir_num)   /* 未创建过文件 */
             {
-                snprintf(full_path, sizeof(full_path), "%s/%s.DSW", RECORD_FILE_PATH_NAME, OFF_LINE_FILE_1_NAME);
-
-                if(access(full_path, F_OK) != 0)  /* 文件不存在 */
-                {
-                    Init_FileDirectory(current_file_info, 1, current_online_state);
-                }
-                else
-                {
-                    /* 文件存在 */
-                    /* 文件名为上次有lkj时的文件名，这个时候不更换为no lkj */
-                    /* 文件创建标志位设置为0 上线状态设置为0，原因：即使没上线，也要让数据记录在上次有lkj信息的文件中，所以不需要再次创建文件 */
-                    SetNulldataByOnline(0);
-                    Init_FileDirectory(current_file_info, 0, 0);
-                }
+                Init_FileDirectory(current_file_info, 1, current_online_state);
             }
             else
             {
-                Init_FileDirectory(current_file_info, Record_Condition_Judge(), current_online_state);
+                Init_FileDirectory(current_file_info, 0, current_online_state);
             }
         }
 
@@ -599,24 +585,61 @@ void RecordBoard_FileCreate(void)
         RecordEventPkt_CRC32 = CRC32CCITT(write_buf.buf + 3U, write_buf.pos - 3U, 0xFFFFFFFF);
 
         /* 将校验值填入buf */
-        rt_memcpy (&(write_buf.buf[write_buf.pos]), &RecordEventPkt_CRC32, 4U);
+        if(write_buf.pos + 4 < FRAM_WRITE_BUF_SIZE)
+        {
+            rt_memcpy (&(write_buf.buf[write_buf.pos]), &RecordEventPkt_CRC32, 4U);
+        }
+        else
+        {
+            LOG_E("write_buf.pos + 4 > size %d", write_buf.pos + 4);
+        }
 
         /* 对数据包内容进行FF-FE编码转换 */
         u16_FFFE_Encode_length = FFFEEncode(write_buf.buf + 3U, write_buf.pos + 4U - 3U, u8_FFFE_Encode_buf);
 
-        /* 将编码后的数据填入buf */
-        rt_memcpy ((write_buf.buf + 3U), u8_FFFE_Encode_buf, u16_FFFE_Encode_length);
+        if(u16_FFFE_Encode_length + 3 < FRAM_WRITE_BUF_SIZE)
+        {
+            /* 将编码后的数据填入buf */
+            rt_memcpy ((write_buf.buf + 3U), u8_FFFE_Encode_buf, u16_FFFE_Encode_length);
+        }
+        else
+        {
+            LOG_E("u16_FFFE_Encode_length + 3 > size %d", u16_FFFE_Encode_length + 3);
+        }
+
         /* 更新buf包长度 */
         write_buf.buf[2U] = (uint8_t) (u16_FFFE_Encode_length + 5U);
-        write_buf.buf[u16_FFFE_Encode_length + 3U] = 0xFF;
-        write_buf.buf[u16_FFFE_Encode_length + 4U] = 0xFD;
-
-        /* 写入文件 */
-        snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, s_File_Directory.ch_file_name);
-        if (FMAppendWrite(full_path, (const void *) write_buf.buf, (u16_FFFE_Encode_length + 5U)) < 0)
+        if(u16_FFFE_Encode_length + 3U < FRAM_WRITE_BUF_SIZE)
         {
-            LOG_E("%s append len %d error", full_path, (u16_FFFE_Encode_length + 5U));
-            return;
+            write_buf.buf[u16_FFFE_Encode_length + 3U] = 0xFF;
+        }
+        else
+        {
+            LOG_E("2-u16_FFFE_Encode_length + 3 > size %d", u16_FFFE_Encode_length + 3);
+        }
+
+        if(u16_FFFE_Encode_length + 4U < FRAM_WRITE_BUF_SIZE)
+        {
+            write_buf.buf[u16_FFFE_Encode_length + 4U] = 0xFD;
+        }
+        else
+        {
+            LOG_E("u16_FFFE_Encode_length + 4 > size %d", u16_FFFE_Encode_length + 4);
+        }
+
+        if(u16_FFFE_Encode_length + 5U < FRAM_WRITE_BUF_SIZE)
+        {
+            /* 写入文件 */
+            rt_snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, s_File_Directory.ch_file_name);
+            if (FMAppendWrite(full_path, (const void *) write_buf.buf, (u16_FFFE_Encode_length + 5U)) < 0)
+            {
+                LOG_E("%s append len %d error", full_path, (u16_FFFE_Encode_length + 5U));
+                return;
+            }
+        }
+        else
+        {
+            LOG_E("u16_FFFE_Encode_length + 5 > size %d", u16_FFFE_Encode_length + 5);
         }
 
         ret = stat(full_path, &stat_l);
@@ -639,9 +662,6 @@ void RecordBoard_FileCreate(void)
 
         /* 置位写公共信息包标志 */
         u8_Gonggongxinxi_Flag = 1U;
-
-//        SoftWare_Cycle_Flag = 0;//TODO(mingzhao) 原本一代代码中没有将该标志清零
-//        LOG_I("clear SoftWare_Cycle_Flag %d", SoftWare_Cycle_Flag);
     }
     else
     {
@@ -694,71 +714,61 @@ static uint8_t Record_Condition_Judge(void)
 static rt_err_t record_file_create(S_FILE_MANAGER *p_file_manager, uint8_t is_online)
 {
     sint32_t ret = 0;
+    char full_path[TEMP_PATH_NAME_MAX_LEN];
 
     if(NULL == p_file_manager)
     {
         return -RT_EEMPTY;
     }
 
+    p_file_manager->latest_dir_file_info.dir_num += 1u;
+    p_file_manager->current_info->file_dir->file_id += 1u;
+    LOG_I("create new file dir num %d id %d online %d", p_file_manager->latest_dir_file_info.dir_num, p_file_manager->current_info->file_dir->file_id, is_online);
+    if (p_file_manager->latest_dir_file_info.dir_num > FILE_MAX_NUM)    /* 目录个数大于最大目录个数 */
+    {
+        p_file_manager->latest_dir_file_info.dir_num -= 1;
+        if(p_file_manager->current_info->file_dir->file_id > FILE_MAX_NUM)  /* 文件id大于最大id号 */
+        {
+            p_file_manager->current_info->file_dir->file_id = 1;            /* 文件id设置为最小  从头开始 */
+        }
+
+        /* 找到当前文件id，删除该文件以及文件对应的目录 */
+        if(fm_free_record_file(p_file_manager) < 0)
+        {
+            LOG_E("delete file %d error %d", p_file_manager->current_info->file_dir->file_id);
+            return -RT_ERROR;
+        }
+        LOG_I("change file di %d num %d", p_file_manager->current_info->file_dir->file_id, p_file_manager->latest_dir_file_info.dir_num);
+    } /* end if */
+
+    /* 生成新目录 */
+    rt_memcpy (p_file_manager->current_info->file_dir->ch_date, &TIME_NYR, 3u);
+    rt_memcpy (p_file_manager->current_info->file_dir->ch_time, &TIME_SFM, 3u);
+
+    /* 计数方式采用先加1后用的方式，避免数据丢失 */
+    p_file_manager->current_info->file_dir->u32_over_flag = 0u;
+    p_file_manager->current_info->file_dir->u32_file_size = sizeof(SFile_Head);
+
+    LOG_I("data %d %d %d %d", p_file_manager->current_info->file_dir->ch_date[0], p_file_manager->current_info->file_dir->ch_date[1],
+            p_file_manager->current_info->file_dir->ch_date[2], p_file_manager->current_info->file_dir->ch_date[3]);
+    LOG_I("dir num %d file id %d", p_file_manager->latest_dir_file_info.dir_num, p_file_manager->current_info->file_dir->file_id);
+
     /* 生成目录与记录文件名 */
     if(is_online)
     {
-        p_file_manager->latest_dir_file_info.dir_num += 1u;
-        LOG_I("start create new file dir num %d", p_file_manager->latest_dir_file_info.dir_num);
-        if (p_file_manager->latest_dir_file_info.dir_num > FILE_MAX_NUM)    //目录个数
-        {
-            if (fm_free_emmc_space() < 0)
-            {
-                LOG_E("fm_free_emmc_space error");
-                return -RT_ERROR;
-            }
-        } /* end if */
-
-
-        /* 生成新目录 */
-        rt_memcpy (p_file_manager->current_info->file_dir->ch_date, &TIME_NYR, 3u);
-        rt_memcpy (p_file_manager->current_info->file_dir->ch_time, &TIME_SFM, 3u);
-
-        /* 计数方式采用先加1后用的方式，避免数据丢失 */
-        p_file_manager->current_info->file_dir->u32_over_flag = 0u;
-        p_file_manager->current_info->file_dir->u32_file_size = sizeof(SFile_Head);
-        p_file_manager->current_info->file_dir->file_id = p_file_manager->latest_dir_file_info.dir_num;
-
-        LOG_I("data %d %d %d %d", p_file_manager->current_info->file_dir->ch_date[0], p_file_manager->current_info->file_dir->ch_date[1],
-                p_file_manager->current_info->file_dir->ch_date[2], p_file_manager->current_info->file_dir->ch_date[3]);
-
         Get_FileNameByLKJ(p_file_manager->current_info->file_dir);
     }
     else
     {
-
-        if(Get_FileNameNOLKJ(p_file_manager->current_info->file_dir) != RT_EOK)
+        if(Get_FileNameNOLKJ(p_file_manager) != RT_EOK)
         {
             LOG_E("get on lkj file name error");
             return -RT_ERROR;
         }
-        else
-        {
-            p_file_manager->latest_dir_file_info.dir_num += 1u;
-            LOG_I("create offline file dir num %d", p_file_manager->latest_dir_file_info.dir_num);
-            if (p_file_manager->latest_dir_file_info.dir_num > FILE_MAX_NUM)    //目录个数
-            {
-                if (fm_free_emmc_space() < 0)
-                {
-                    LOG_E("fm_free_emmc_space error");
-                    return -RT_ERROR;
-                }
-            } /* end if */
-
-            p_file_manager->current_info->file_dir->u32_over_flag = 0u;
-            p_file_manager->current_info->file_dir->u32_file_size = sizeof(SFile_Head);
-            p_file_manager->current_info->file_dir->file_id = p_file_manager->latest_dir_file_info.dir_num;
-        }
     }
 
     /* 1.生成新的记录文件 */
-    char full_path[PATH_NAME_MAX_LEN];
-    snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, p_file_manager->current_info->file_dir->ch_file_name);
+    rt_snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, p_file_manager->current_info->file_dir->ch_file_name);
     LOG_I("creat record file: %s", full_path);
     ret = create_file(full_path);
     if (ret < 0)
@@ -769,8 +779,7 @@ static rt_err_t record_file_create(S_FILE_MANAGER *p_file_manager, uint8_t is_on
 
     /* 2.生成新的目录文件 */
     memset(full_path, 0, sizeof(full_path));
-    snprintf(full_path, sizeof(full_path), "%s/%s", DIR_FILE_PATH_NAME,
-            p_file_manager->latest_dir_file_info.file_name);
+    rt_snprintf(full_path, sizeof(full_path), "%s/%s", DIR_FILE_PATH_NAME, p_file_manager->latest_dir_file_info.file_name);
     LOG_I("creat dir file: %s", full_path);
     ret = create_file(full_path);
     if (ret < 0)
@@ -830,10 +839,10 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info, uint8
     }
 
     static uint8_t CheCi_Count1 = 0u, CheCi_Count2 = 0u, Create_Flag = 0u;
-    char full_path[PATH_NAME_MAX_LEN] = { 0 };
+    char full_path[TEMP_PATH_NAME_MAX_LEN] = { 0 };
     sint32_t ret = 0;
     struct stat stat_l;
-    uint8_t last_off_line_fie_index = 0;
+    uint8_t save_file_id = 0;
 
     /* 确认新文件生成标记，置位开始记录文件标志 */
     if(is_creat_new_file)
@@ -866,7 +875,7 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info, uint8
 
                 s_File_Directory.u32_over_flag = 1u;
 
-                snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, s_File_Directory.ch_file_name);
+                rt_snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, s_File_Directory.ch_file_name);
                 if (FMAppendWrite(full_path, (const void *) write_buf.buf, (u16_FFFE_Encode_length + 5U)) < 0)
                 {
                     LOG_E("%s write pkt len %d error", full_path, (u16_FFFE_Encode_length + 5U));
@@ -902,11 +911,12 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info, uint8
                 u8_Gonggongxinxi_Flag = 1U;
 
             } /* end if */
+
             /* 初始化write buf */
-            last_off_line_fie_index = s_File_Directory.off_line_fie_index;
             memset(&write_buf, 0u, sizeof(WRITE_BUF));
+
+            save_file_id = s_File_Directory.file_id;
             memset(&s_File_Directory, 0, sizeof(SFile_Directory));
-            s_File_Directory.off_line_fie_index = last_off_line_fie_index;
 
             Create_Flag = 1u;
             CheCi_Count1 = 0u;
@@ -915,6 +925,7 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info, uint8
             rt_memcpy (s_File_Directory.ch_checikuochong, &CHECIKUOCHONG, 4u);
             rt_memcpy (s_File_Directory.ch_siji, &SIJI1, 3u);
             rt_memcpy (s_File_Directory.ch_benbuzhuangtai, &LIECHESHUXING, 1u);
+            s_File_Directory.file_id = save_file_id;
         } /* end if */
     }
     /* 继续上一个文件记录 */
@@ -1032,7 +1043,11 @@ static void Update_FileHead(void)
         if ((0x01 == BENXIZHUANGTAI) || (0x03 == BENXIZHUANGTAI))
             s_file_head.ch_shebeizhuangtai[0] |= 0x02;
     }
+#if JL_JCK_VERSION == 15
     s_file_head.ch_shebeizhuangtai[0] |= 0x04;
+#elif JL_JCK_VERSION == 20
+    s_file_head.ch_shebeizhuangtai[0] |= 0x08;
+#endif
 //    LOG_I("获取文件头设备状态：%x",s_file_head.ch_shebeizhuangtai[0]);
     switch (GONGZUOZHUANGTAI)
     {
@@ -1182,7 +1197,13 @@ static void Get_Gonggongxinxi(void)
     }
 #endif
     rt_memcpy (s_file_public.ch_xiansu, &XIANSU, 2u);
+#if RECORD_FILE_NO_USED_BEI_YONG
+    C_Lkjsudu_temp[0] = (LKJSUDU & 0xff);
+    C_Lkjsudu_temp[1] = ((*(&LKJSUDU + 1)) & 0x01);
+    rt_memcpy (s_file_public.ch_LKJsudu, C_Lkjsudu_temp, 2u);
+#else
     rt_memcpy (s_file_public.ch_LKJsudu, &LKJSUDU, 2u);
+#endif
     /* 工作状态 */
     switch (GONGZUOZHUANGTAI)
     {
@@ -1415,7 +1436,14 @@ static void Update_gongyoucanshu(void)
 {
     /* 更新记录事项中共有参数 */
     rt_memcpy (C_Lkjxiansu, &XIANSU, 2u);
+
+#if RECORD_FILE_NO_USED_BEI_YONG
+    C_Lkjsudu_temp[0] = (LKJSUDU & 0xff);
+    C_Lkjsudu_temp[1] = ((*(&LKJSUDU + 1)) & 0x01);
+    rt_memcpy (C_Lkjsudu, C_Lkjsudu_temp, 2u);
+#else
     rt_memcpy (C_Lkjsudu, &LKJSUDU, 2u);
+#endif
 
     switch (GONGZUOZHUANGTAI)
     {
@@ -1532,7 +1560,7 @@ void WriteFileContantPkt(uint8_t num1, uint8_t num2, uint8_t device_code, uint8_
     static uint32_t rest_size = 255u;
     uint8_t contant_size = 0u;
     char file_contant[204u];
-    char full_path[PATH_NAME_MAX_LEN] = { 0 };
+    char full_path[TEMP_PATH_NAME_MAX_LEN] = { 0 };
     struct stat stat_l;
     int32_t ret = 0;
 
@@ -1541,7 +1569,7 @@ void WriteFileContantPkt(uint8_t num1, uint8_t num2, uint8_t device_code, uint8_
     file_contant[2u] = lenth;
     file_contant[3u] = device_code;
 
-    LOG_I("记录事项代码：%x %x", num1, num2);
+    // LOG_I("记录事项代码：%x %x", num1, num2);
     rt_memcpy (file_contant + 4U, contant, lenth);
 
     /* 放入缓冲区 */
@@ -1555,7 +1583,6 @@ void WriteFileContantPkt(uint8_t num1, uint8_t num2, uint8_t device_code, uint8_
         if (rest_size >= contant_size)
         {
             rt_memcpy (&(write_buf.buf[write_buf.pos]), &file_contant[lenth + 4U - contant_size], contant_size);
-//            LOG_I("写记录事项位置：%d", write_buf.pos);
             write_buf.pos += contant_size;
             rest_size -= contant_size;
 
@@ -1565,13 +1592,13 @@ void WriteFileContantPkt(uint8_t num1, uint8_t num2, uint8_t device_code, uint8_
             }
             else
             {
-                snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_TEMP_FILE_PATH_NAME, file_manager.latest_tmp_file_info.file_name);
+                rt_snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_TEMP_FILE_PATH_NAME, file_manager.latest_tmp_file_info.file_name);
                 if(FMWriteTmpFile(&file_manager, full_path, (const void *)&write_buf, sizeof(WRITE_BUF)) < 0)
                 {
                     LOG_E("write record pos %d", write_buf.pos);
                 }
             }
-            LOG_I("写记录事项位置：%d 剩余空间：%d 内容长度：%d", write_buf.pos, rest_size, contant_size);
+            LOG_D("write record items：%d free space：%d data size：%d", write_buf.pos, rest_size, contant_size);
             break;
         }
         else /* 缓存区存满 */
@@ -1595,7 +1622,7 @@ void WriteFileContantPkt(uint8_t num1, uint8_t num2, uint8_t device_code, uint8_
             write_buf.buf[u16_FFFE_Encode_length + 4U] = 0xFD;
 //            LOG_I("FFFE_Encode_length： %d", u16_FFFE_Encode_length);
 
-            snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, s_File_Directory.ch_file_name);
+            rt_snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, s_File_Directory.ch_file_name);
             if (FMAppendWrite(full_path, (const void *) write_buf.buf, (u16_FFFE_Encode_length + 5U)) < 0)
             {
                 LOG_E("%s write pkt len %d error", full_path, (u16_FFFE_Encode_length + 5U));
@@ -1705,23 +1732,11 @@ static void Get_FileContant(void)
     } /* end if */
 }
 
-
-static void FileCreatUpdateFileName(SFile_Directory *directory, const char *name)
-{
-
-    /* 设置目录文件名 */
-    snprintf(file_manager.latest_dir_file_info.file_name, FILE_NAME_MAX_NUM, "%s_dir", name);
-    /* 设置最新的目录文件名 */
-    rt_memcpy (directory->ch_dir_name, file_manager.latest_dir_file_info.file_name, FILE_NAME_MAX_NUM);
-
-    /* 最新的记录文件名 */
-    snprintf(directory->ch_file_name, FILE_NAME_MAX_NUM, "%s.DSW", name);
-}
-
 /**********************************************
 功能：获取文件名
 参数：directory  -->  文件目录结构体信息
 返回：无
+文件名格式：车次头扩充+车次+司机号.日期
 ***********************************************/
 static void Get_FileNameByLKJ(SFile_Directory *directory)
 {
@@ -1838,79 +1853,66 @@ static void Get_FileNameByLKJ(SFile_Directory *directory)
     directory->ch_file_name[ j ] = LIECHESHUXING << 1U;
 #else
     directory->ch_file_name[j] = (directory->ch_benbuzhuangtai[0] & 0x03) << 1U;
-//    LOG_I("num1:%s  %d", directory->ch_benbuzhuangtai, directory->ch_benbuzhuangtai);
-//    LOG_I("num2:%s  %d", (directory->ch_benbuzhuangtai[0] & 0x03), (directory->ch_benbuzhuangtai[0] & 0x03));
-//    LOG_I("num3:%s", directory->ch_file_name);
 #endif
 #endif
 
+    tmp_file_name[j++] = '.';
     tmp_file_name[j++] = directory->ch_date[0u] / 10u + 48u;
     tmp_file_name[j++] = directory->ch_date[0u] % 10u + 48u;
     tmp_file_name[j++] = directory->ch_date[1u] / 10u + 48u;
     tmp_file_name[j++] = directory->ch_date[1u] % 10u + 48u;
     tmp_file_name[j++] = directory->ch_date[2u] / 10u + 48u;
     tmp_file_name[j++] = directory->ch_date[2u] % 10u + 48u;
+    tmp_file_name[j++] = '_';
+    tmp_file_name[j++] = directory->file_id / 10u + 48u;
+    tmp_file_name[j++] = directory->file_id % 10u + 48u;
+    tmp_file_name[j++] = '\0';
 
-    /* 文件id */
-    snprintf(&tmp_file_name[j], FILE_NAME_MAX_NUM, "_%d", directory->file_id);
     /* latest_dir_file文件中记录最新的目录文件名 */
-    snprintf(file_manager.latest_dir_file_info.file_name, FILE_NAME_MAX_NUM, "%s_dir", tmp_file_name);
+    rt_snprintf(file_manager.latest_dir_file_info.file_name, sizeof(file_manager.latest_dir_file_info.file_name), "%s_dir", tmp_file_name);
     /* 设置最新的目录文件名 */
-    rt_memcpy (directory->ch_dir_name, file_manager.latest_dir_file_info.file_name, FILE_NAME_MAX_NUM);
-
+    rt_memcpy (directory->ch_dir_name, file_manager.latest_dir_file_info.file_name, sizeof(directory->ch_dir_name));
     /* 最新的文件名 */
-    snprintf(directory->ch_file_name, FILE_NAME_MAX_NUM, "%s.DSW", tmp_file_name);
+    rt_snprintf(directory->ch_file_name, sizeof(directory->ch_file_name), "%s", tmp_file_name);
 
     /* 打印记录文件名与目录文件名 */
     LOG_I("on line file：%s dir: %s", directory->ch_file_name, file_manager.latest_dir_file_info.file_name);
 }
 
-static rt_err_t Get_FileNameNOLKJ(SFile_Directory *directory)
+static rt_err_t Get_FileNameNOLKJ(S_FILE_MANAGER *p_file_manager)
 {
-    struct stat stat_l;
-    char full_path[PATH_NAME_MAX_LEN] = { 0 };
-    sint32_t ret = -1;
+    SFile_Directory *directory = p_file_manager->current_info->file_dir;
+    char tmp_file_name[FILE_NAME_MAX_NUM];
+    uint32_t j = 0;
 
-    if(directory->off_line_fie_index == 0)
+    if(RT_NULL == directory)
     {
-        FileCreatUpdateFileName(directory, OFF_LINE_FILE_1_NAME);
-        directory->off_line_fie_index = 1;
+        return -RT_EEMPTY;
     }
-    else if(directory->off_line_fie_index == 1)
-    {
-        snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, OFF_LINE_FILE_2_NAME);
-        if(stat(full_path, &stat_l) >= 0)
-        {
-            /* 文件存在则先删除 */
-            ret = unlink(full_path);
-            if(ret < 0)
-            {
-                LOG_E("delete %s error", full_path);
-                return -RT_ERROR;
-            }
-        }
 
-        FileCreatUpdateFileName(directory, OFF_LINE_FILE_2_NAME);
+    tmp_file_name[j++] = 'N';
+    tmp_file_name[j++] = 'O';
+    tmp_file_name[j++] = 'L';
+    tmp_file_name[j++] = 'K';
+    tmp_file_name[j++] = 'J';
+    tmp_file_name[j++] = '.';
+    tmp_file_name[j++] = directory->ch_date[0u] / 10u + 48u;
+    tmp_file_name[j++] = directory->ch_date[0u] % 10u + 48u;
+    tmp_file_name[j++] = directory->ch_date[1u] / 10u + 48u;
+    tmp_file_name[j++] = directory->ch_date[1u] % 10u + 48u;
+    tmp_file_name[j++] = directory->ch_date[2u] / 10u + 48u;
+    tmp_file_name[j++] = directory->ch_date[2u] % 10u + 48u;
+    tmp_file_name[j++] = '_';
+    tmp_file_name[j++] = directory->file_id / 10u + 48u;
+    tmp_file_name[j++] = directory->file_id % 10u + 48u;
+    tmp_file_name[j++] = '\0';
 
-        directory->off_line_fie_index = 2;
-    }
-    else if(directory->off_line_fie_index == 2)
-    {
-        snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, OFF_LINE_FILE_1_NAME);
-        if(stat(full_path, &stat_l) >= 0)
-        {
-            /* 文件存在则先删除 */
-            ret = unlink(full_path);
-            if(ret < 0)
-            {
-                LOG_E("delete %s error", full_path);
-                return -RT_ERROR;
-            }
-        }
-
-        FileCreatUpdateFileName(directory, OFF_LINE_FILE_1_NAME);
-        directory->off_line_fie_index = 1;
-    }
+    /* latest_dir_file文件中记录最新的目录文件名 */
+    rt_snprintf(file_manager.latest_dir_file_info.file_name, sizeof(file_manager.latest_dir_file_info.file_name), "%s_dir", tmp_file_name);
+    /* 设置最新的目录文件名 */
+    rt_memcpy (directory->ch_dir_name, file_manager.latest_dir_file_info.file_name, sizeof(directory->ch_dir_name));
+    /* 最新的文件名 */
+    rt_snprintf(directory->ch_file_name, sizeof(directory->ch_file_name), "%s", tmp_file_name);
 
     /* 打印记录文件名与目录文件名 */
     LOG_I("off line file：%s dir: %s", directory->ch_file_name, file_manager.latest_dir_file_info.file_name);
@@ -2023,14 +2025,14 @@ void RecordingLLevelMessage(void)
 ***********************************************/
 void RecordingSpeedDownMessage( void )
 {
-  static uint8_t C_Suduxiafuzhi[2] = { 0U };
+    static uint8_t C_Suduxiafuzhi[2] = { 0U };
 
-  if( C_Suduxiafuzhi[1] != SUDUXIAFUZHI )
-  {
-    C_Suduxiafuzhi[0] = SUDUXIAFUZHI;
-    WriteFileContantPkt( 0xA0, 0x04, g_ZK_DevCode, C_Suduxiafuzhi, 2U );
-    C_Suduxiafuzhi[1] = SUDUXIAFUZHI;    
-  } 
+    if( C_Suduxiafuzhi[1] != SUDUXIAFUZHI )
+    {
+        C_Suduxiafuzhi[0] = SUDUXIAFUZHI;
+        WriteFileContantPkt( 0xA0, 0x04, g_ZK_DevCode, C_Suduxiafuzhi, 2U );
+        C_Suduxiafuzhi[1] = SUDUXIAFUZHI;
+    }
 } /* end function RecordingSpeedDownMessage */
 
 /**********************************************
@@ -2876,30 +2878,30 @@ static void RecordingForcePumpAirMessage(void)
 ***********************************************/
 static void RecordingLocoBrakeMessage( void )
 {
-  /* 获取列车管压力信息 */
-  RecordingTrainPipePressureMessage();
-  /* 获取制动缸压力信息 */
-  RecordingBrakeCylinderPressureMessage();
-  /* 获取总风缸压力信息 */
-  RecordingMainAirPressureMessage();
-  /* 获取均缸压力信息 */
-  RecordingEqualizReservoirPressureMessage();
-  /* 获取制动手柄信息 */
-  RecordingBrakeHandleMessage();
-  /* 获取充风流量信息 */
-  RecordingChargingFlowMessage();
-  /* 获取BCU状态信息 */
-  RecordingBCUStateMessage();
-  /* 获取惩罚制动信息 */
-  RecordingPenaltyBrakeMessage();
-  /* 获取BCU辅助驾驶信息 */
-  RecordingBCUAssistedDriveMessage();
-  /* 获取BCU允许条件信息 */
-  RecordingBCUPermitConditionMessage();
-  /* 获取BCU厂家信息*/
-  RecordingBCUManufacturerMessage();
-  /* 获取BCU故障信息 */
-  RecordingBCUErrorCodeMessage();
+    /* 获取列车管压力信息 */
+    RecordingTrainPipePressureMessage();
+    /* 获取制动缸压力信息 */
+    RecordingBrakeCylinderPressureMessage();
+    /* 获取总风缸压力信息 */
+    RecordingMainAirPressureMessage();
+    /* 获取均缸压力信息 */
+    RecordingEqualizReservoirPressureMessage();
+    /* 获取制动手柄信息 */
+    RecordingBrakeHandleMessage();
+    /* 获取充风流量信息 */
+    RecordingChargingFlowMessage();
+    /* 获取BCU状态信息 */
+    RecordingBCUStateMessage();
+    /* 获取惩罚制动信息 */
+    RecordingPenaltyBrakeMessage();
+    /* 获取BCU辅助驾驶信息 */
+    RecordingBCUAssistedDriveMessage();
+    /* 获取BCU允许条件信息 */
+    RecordingBCUPermitConditionMessage();
+    /* 获取BCU厂家信息*/
+    RecordingBCUManufacturerMessage();
+    /* 获取BCU故障信息 */
+    RecordingBCUErrorCodeMessage();
 } /* end function RecordingLocomotiveBrakeMessage */
 
 /**********************************************
@@ -3276,44 +3278,47 @@ static void RecordingIsolationMotorMessage(void)
 ***********************************************/
 static void RecordingLocoExertionMessage(void)
 {
-//  static uint8_t C_jichefahuili[6]  = { 0U };
-//  static uint16_t C_gezhouheli_New = 0U, C_gezhouheli_Old = 0U;
-//	
-//	if( 1u == CHONGLIANCHE)    //单机
-//	{
-//	  C_gezhouheli_New = (uint16_t)(ZHOU1LI & 0x7F) + (uint16_t)(ZHOU2LI & 0x7F) + (uint16_t)(ZHOU3LI & 0x7F)\
-//	                   + (uint16_t)(ZHOU4LI & 0x7F) + (uint16_t)(ZHOU5LI & 0x7F) + (uint16_t)(ZHOU6LI & 0x7F);
-//		C_gezhouheli_New = ( C_gezhouheli_New * JICHELIKEYONGBILI ) / 100.0;
-//	}
-//	else if(2u == CHONGLIANCHE)    //重联
-//	{
-//	  C_gezhouheli_New = (( (uint16_t)(ZHOU1LI & 0x7F) + (uint16_t)(ZHOU2LI & 0x7F) + (uint16_t)(ZHOU3LI & 0x7F)\
-//	                      + (uint16_t)(ZHOU4LI & 0x7F) + (uint16_t)(ZHOU5LI & 0x7F) + (uint16_t)(ZHOU6LI & 0x7F))\
-//		                     * JICHELIKEYONGBILI  / 100.0 )
-//		                 + (( (uint16_t)(axle1_CLjicheli_T75 & 0x7F) + (uint16_t)(axle2_CLjicheli_T76 & 0x7F) + (uint16_t)(axle3_CLjicheli_T77 & 0x7F)\
-//	                      + (uint16_t)(axle4_CLjicheli_T78 & 0x7F) + (uint16_t)(axle5_CLjicheli_T79 & 0x7F) + (uint16_t)(axle6_CLjicheli_T80 & 0x7F))\
-//		                     * CLJICHELIKEYONGBILI  / 100.0 );	
-//	}
-//	else
-//	{
-//		C_gezhouheli_New = 0U;
-//	}
-//	
-//	if ( 50U <= abs( C_gezhouheli_New  - C_gezhouheli_Old ) )
-//  {
-//		printf("机车发挥力：%d---%d\r\n",C_gezhouheli_Old,C_gezhouheli_New);
-//		C_gezhouheli_Old = C_gezhouheli_New;
-//		
-//		C_jichefahuili[0] = ZHOU1LI;
-//    C_jichefahuili[1] = ZHOU2LI;
-//    C_jichefahuili[2] = ZHOU3LI;
-//    C_jichefahuili[3] = ZHOU4LI;
-//    C_jichefahuili[4] = ZHOU5LI;
-//    C_jichefahuili[5] = ZHOU6LI;
-//  
-//		WriteFileContantPkt( 0xA3, 0x04, g_JK_DevCode, C_jichefahuili, 6u ); 
-//	} /* end if */
-  
+#if 0//TODO(mingzhao)
+    static uint8_t C_jichefahuili[6] =
+    {   0U};
+    static uint16_t C_gezhouheli_New = 0U, C_gezhouheli_Old = 0U;
+
+    if( 1u == CHONGLIANCHE)    //单机
+    {
+        C_gezhouheli_New = (uint16_t)(ZHOU1LI & 0x7F) + (uint16_t)(ZHOU2LI & 0x7F) + (uint16_t)(ZHOU3LI & 0x7F)
+        + (uint16_t)(ZHOU4LI & 0x7F) + (uint16_t)(ZHOU5LI & 0x7F) + (uint16_t)(ZHOU6LI & 0x7F);
+        C_gezhouheli_New = ( C_gezhouheli_New * JICHELIKEYONGBILI ) / 100.0;
+    }
+    else if(2u == CHONGLIANCHE)    //重联
+    {
+        C_gezhouheli_New = (( (uint16_t)(ZHOU1LI & 0x7F) + (uint16_t)(ZHOU2LI & 0x7F) + (uint16_t)(ZHOU3LI & 0x7F)
+                        + (uint16_t)(ZHOU4LI & 0x7F) + (uint16_t)(ZHOU5LI & 0x7F) + (uint16_t)(ZHOU6LI & 0x7F))
+                * JICHELIKEYONGBILI / 100.0 )
+        + (( (uint16_t)(axle1_CLjicheli_T75 & 0x7F) + (uint16_t)(axle2_CLjicheli_T76 & 0x7F) + (uint16_t)(axle3_CLjicheli_T77 & 0x7F)
+                        + (uint16_t)(axle4_CLjicheli_T78 & 0x7F) + (uint16_t)(axle5_CLjicheli_T79 & 0x7F) + (uint16_t)(axle6_CLjicheli_T80 & 0x7F))
+                * CLJICHELIKEYONGBILI / 100.0 );
+    }
+    else
+    {
+        C_gezhouheli_New = 0U;
+    }
+
+    if ( 50U <= abs( C_gezhouheli_New - C_gezhouheli_Old ) )
+    {
+        printf("机车发挥力：%d---%d\r\n",C_gezhouheli_Old,C_gezhouheli_New);
+        C_gezhouheli_Old = C_gezhouheli_New;
+
+        C_jichefahuili[0] = ZHOU1LI;
+        C_jichefahuili[1] = ZHOU2LI;
+        C_jichefahuili[2] = ZHOU3LI;
+        C_jichefahuili[3] = ZHOU4LI;
+        C_jichefahuili[4] = ZHOU5LI;
+        C_jichefahuili[5] = ZHOU6LI;
+
+        WriteFileContantPkt( 0xA3, 0x04, g_JK_DevCode, C_jichefahuili, 6u );
+    } /* end if */
+#endif
+
 } /* end function RecordingLocoExertionMessage */
 
 /**********************************************
@@ -3628,42 +3633,42 @@ static void RecordingElectricKeyMessage(void)
 ***********************************************/
 static void RecordingLKJSystemMessage( void )
 {
-/* 获取申请揭示信息 */
-  RecordingApplyRevealMessage();
-/* 获取接收揭示信息 */
-  RecordingReceiveRevealMessage();
-/* 获取揭示内容信息 */
-  RecordingRevealContentMessage();
-/* 获取司机号1变化信息 */
-  RecordingDriverNum1Message();
-/* 获取司机号2变化信息 */
-  RecordingDriverNum2Message();
-/* 获取运行路径变化信息 */
-  RecordingRunPathMessage();
-/* 获取LKJ发车方向信息 */
-  RecordingLKJDepartDirectionMessage();
-/* 获取总重信息 */
-  RecordingTotalWeightMessage();
-/* 获取计长信息 */
-  RecordingTotalLengthMessage();
-/* 获取辆数信息 */
-  RecordingVehiclesNumMessage();
-/* 获取载重信息 */
-  RecordingLoadMessage();
-/* 获取客车信息 */
-  RecordingPassengerTrainMessage();
-/* 获取重车信息 */
-  RecordingHeavyTrainMessage();
-/* 获取空车信息 */
-  RecordingEmptyTrainMessage();
-/* 获取非运用车信息*/
-  RecordingNonTrafficTrainMessage();
-/* 获取代客车信息 */
-  RecordingSubstituteTrainMessage();
-/* 获取守车信息 */
-  RecordingCabooseTrainMessage();
-/* 获取车速等级信息*/
-  RecordingSpeedGradeMessage();		
+    /* 获取申请揭示信息 */
+    RecordingApplyRevealMessage();
+    /* 获取接收揭示信息 */
+    RecordingReceiveRevealMessage();
+    /* 获取揭示内容信息 */
+    RecordingRevealContentMessage();
+    /* 获取司机号1变化信息 */
+    RecordingDriverNum1Message();
+    /* 获取司机号2变化信息 */
+    RecordingDriverNum2Message();
+    /* 获取运行路径变化信息 */
+    RecordingRunPathMessage();
+    /* 获取LKJ发车方向信息 */
+    RecordingLKJDepartDirectionMessage();
+    /* 获取总重信息 */
+    RecordingTotalWeightMessage();
+    /* 获取计长信息 */
+    RecordingTotalLengthMessage();
+    /* 获取辆数信息 */
+    RecordingVehiclesNumMessage();
+    /* 获取载重信息 */
+    RecordingLoadMessage();
+    /* 获取客车信息 */
+    RecordingPassengerTrainMessage();
+    /* 获取重车信息 */
+    RecordingHeavyTrainMessage();
+    /* 获取空车信息 */
+    RecordingEmptyTrainMessage();
+    /* 获取非运用车信息*/
+    RecordingNonTrafficTrainMessage();
+    /* 获取代客车信息 */
+    RecordingSubstituteTrainMessage();
+    /* 获取守车信息 */
+    RecordingCabooseTrainMessage();
+    /* 获取车速等级信息*/
+    RecordingSpeedGradeMessage();
 } /* end function RecordingLKJSystemMessage */
 
 /**********************************************
@@ -3984,32 +3989,32 @@ static void RecordingSpeedGradeMessage(void)
 ***********************************************/
 static void RecordingTrainOperationMessage( void )
 {
-  /* 获取过站中心信息 */
-  RecordingRransitCenterMessage();
-  /* 获取LKJ工作模式信息 */
-  RecordingLKJModeMessage();
-  /* 获取开车对标信息 */
-  RecordingBenchmarkingMessage();
-  /* 获取支线选择信息 */
-  RecordingBranchLineSelectMessage();
-  /* 获取侧线选择信息 */
-  RecordingSideLineSelectMessage();
-  /* 获取LKJ制动输出信息 */
-  RecordingLKJBrakeOutputMessage();
-  /* 获取过信号机信息 */
-  RecordingPassingSignalMessage();
-  /* 获取机车信号变化信息 */
-  RecordingCabSignalChangeMessage();
-  /* 获取速度信息 */
-  RecordingSpeedMessage();
-  /* 获取限速信息 */
-  RecordingLimitSpeedMessage();
-  /* 获取过分相信息 */
-  RecordingPassingNeutralSectionMessage();
-  /* 获取线路数据终止信息 */
-  RecordingLineDataTerminationMessage();
-  /* 获取数据故障信息 */
-  RecordingDataErrorMessage();
+    /* 获取过站中心信息 */
+    RecordingRransitCenterMessage();
+    /* 获取LKJ工作模式信息 */
+    RecordingLKJModeMessage();
+    /* 获取开车对标信息 */
+    RecordingBenchmarkingMessage();
+    /* 获取支线选择信息 */
+    RecordingBranchLineSelectMessage();
+    /* 获取侧线选择信息 */
+    RecordingSideLineSelectMessage();
+    /* 获取LKJ制动输出信息 */
+    RecordingLKJBrakeOutputMessage();
+    /* 获取过信号机信息 */
+    RecordingPassingSignalMessage();
+    /* 获取机车信号变化信息 */
+    RecordingCabSignalChangeMessage();
+    /* 获取速度信息 */
+    RecordingSpeedMessage();
+    /* 获取限速信息 */
+    RecordingLimitSpeedMessage();
+    /* 获取过分相信息 */
+    RecordingPassingNeutralSectionMessage();
+    /* 获取线路数据终止信息 */
+    RecordingLineDataTerminationMessage();
+    /* 获取数据故障信息 */
+    RecordingDataErrorMessage();
 } /* end function RecordingTrainOperationMessage */
 
 /**********************************************
@@ -4236,16 +4241,51 @@ static void RecordingSpeedMessage( void )
 // static uint8_t C_Lkjsudu[2]  = { 0x00U, 0x00U };
     uint16_t lkjsudu_New = 0u, lkjsudu_Old = 0u;
 
-    lkjsudu_New = (uint16_t) LKJSUDU + (uint16_t) ((*(&LKJSUDU + 1)) << 8);
-    lkjsudu_Old = (uint16_t) C_Lkjsudu[0] + (uint16_t) (C_Lkjsudu[1] << 8);
+#if !RECORD_FILE_NO_USED_BEI_YONG
+
+#if ENABLE_LKF_FACTORY
+    if(S_LKF_FACTORY_ZHU_SUO == LKJCHANGJIA)
+    {
+        lkjsudu_New = (uint16_t) (LKJSUDU & 0xff) + (uint16_t) (((*(&LKJSUDU + 1)) & 0x01) << 8);
+        lkjsudu_Old = (uint16_t) (C_Lkjsudu[0] & 0xff) + (uint16_t) ((C_Lkjsudu[1] & 0x01) << 8);
+    }
+    else
+    {
+        /* 默认按思维的LKJ处理 */
+        lkjsudu_New = (uint16_t) LKJSUDU + (uint16_t) ((*(&LKJSUDU + 1)) << 8);
+        lkjsudu_Old = (uint16_t) C_Lkjsudu[0] + (uint16_t) (C_Lkjsudu[1] << 8);
+    }
+#else
+    /* 过滤备用位 */
+    lkjsudu_New = (uint16_t) (LKJSUDU & 0xff) + (uint16_t) (((*(&LKJSUDU + 1)) & 0x01) << 8);
+    lkjsudu_Old = (uint16_t) (C_Lkjsudu[0] & 0xff) + (uint16_t) ((C_Lkjsudu[1] & 0x01) << 8);
+#endif
+
     /* 速度变化大于等于1Km/h */
-//    LOG_I("\r\nLKJ速度：%d", lkjsudu_New);
     if (1U <= abs(lkjsudu_New - lkjsudu_Old))
     {
         rt_memcpy (C_Lkjsudu, &LKJSUDU, 2U);
 //        LOG_I("\r\nLKJ速度：%d", lkjsudu_New);
         WriteFileContantPkt(0xA4, 0x58, g_ZK_DevCode, C_Lkjsudu, 0u);
     } /* end if */
+
+#else
+
+    lkjsudu_New = (uint16_t) (LKJSUDU & 0xff) + (uint16_t) (((*(&LKJSUDU + 1)) & 0x01) << 8);
+    lkjsudu_Old = (uint16_t) (C_Lkjsudu[0] & 0xff) + (uint16_t) ((C_Lkjsudu[1] & 0x01) << 8);
+
+    /* 速度变化大于等于1Km/h */
+    if (1U <= abs(lkjsudu_New - lkjsudu_Old))
+    {
+        C_Lkjsudu_temp[0] = (LKJSUDU & 0xff);
+        C_Lkjsudu_temp[1] = ((*(&LKJSUDU + 1)) & 0x01);
+
+        rt_memcpy (C_Lkjsudu,C_Lkjsudu_temp, 2U);
+//        LOG_I("\r\nLKJ速度：%d", lkjsudu_New);
+        WriteFileContantPkt(0xA4, 0x58, g_ZK_DevCode, C_Lkjsudu, 0u);
+    } /* end if */
+
+#endif /* RECORD_FILE_NO_USED_BEI_YONG */
 } /* end function RecordingSpeedMessage */
 
 /**********************************************
@@ -4258,8 +4298,23 @@ static void RecordingLimitSpeedMessage(void)
 // static uint8_t C_Lkjxiansu[2]  = { 0x00U, 0x00U };
     uint16_t lkjxiansu_New = 0u, lkjxiansu_Old = 0u;
 
-    lkjxiansu_New = (uint16_t) LKJXIANSU + (uint16_t) ((*(&LKJXIANSU + 1)) << 8);
-    lkjxiansu_Old = (uint16_t) C_Lkjxiansu[0] + (uint16_t) (C_Lkjxiansu[1] << 8);
+#if ENABLE_LKF_FACTORY
+    if(S_LKF_FACTORY_ZHU_SUO == LKJCHANGJIA)
+    {
+        lkjxiansu_New = (uint16_t) (LKJXIANSU & 0xff) + (uint16_t) (((*(&LKJXIANSU + 1)) & 0x01) << 8);
+        lkjxiansu_Old = (uint16_t) (C_Lkjxiansu[0] & 0xff) + (uint16_t) ((C_Lkjxiansu[1] & 0x01) << 8);
+    }
+    else
+    {
+        /* 默认按思维的LKJ处理 */
+        lkjxiansu_New = (uint16_t) LKJXIANSU + (uint16_t) ((*(&LKJXIANSU + 1)) << 8);
+        lkjxiansu_Old = (uint16_t) C_Lkjxiansu[0] + (uint16_t) (C_Lkjxiansu[1] << 8);
+    }
+#else
+    /* 过滤备用位 */
+    lkjxiansu_New = (uint16_t) (LKJXIANSU & 0xff) + (uint16_t) (((*(&LKJXIANSU + 1)) & 0x01) << 8);
+    lkjxiansu_Old = (uint16_t) (C_Lkjxiansu[0] & 0xff) + (uint16_t) ((C_Lkjxiansu[1] & 0x01) << 8);
+#endif
     /* 速度变化大于等于1Km/h */
     if (1U <= abs(lkjxiansu_New - lkjxiansu_Old))
     {
@@ -4323,20 +4378,20 @@ static void RecordingDataErrorMessage(void)
 ***********************************************/
 static void RecordingVersionMessage( void )
 {
-  /* 获取插件软件版本信息 */
-  RecordingSoftwareVersionMessage();
-  /* 获取软件版本不一致信息 */
-  RecordingSoftwareVersionInconsistMessage();
-  /* 获取软件版本不匹配信息 */
-  RecordingSoftwareVersionMismatchMessage();
-  /* 获取STO基础数据版本信息 */
-  RecordingSTOBasicDataVersionMessage();
-  /* 获取STO基础数据不一致信息 */
-  RecordingSTOBasicDataInconsistMessage();
-  /* 获取STO基础数据不匹配信息 */
-  RecordingSTOBasicDataMismatchMessage();
-  /* 获取LKJ基础数据版本信息 */
-  RecordingLKJBasicDataVersionMessage();	
+    /* 获取插件软件版本信息 */
+    RecordingSoftwareVersionMessage();
+    /* 获取软件版本不一致信息 */
+    RecordingSoftwareVersionInconsistMessage();
+    /* 获取软件版本不匹配信息 */
+    RecordingSoftwareVersionMismatchMessage();
+    /* 获取STO基础数据版本信息 */
+    RecordingSTOBasicDataVersionMessage();
+    /* 获取STO基础数据不一致信息 */
+    RecordingSTOBasicDataInconsistMessage();
+    /* 获取STO基础数据不匹配信息 */
+    RecordingSTOBasicDataMismatchMessage();
+    /* 获取LKJ基础数据版本信息 */
+    RecordingLKJBasicDataVersionMessage();
 } /* end function RecordingVersionMessage */
 
 /**********************************************
@@ -4352,8 +4407,18 @@ static void RecordingSoftwareVersionMessage(void)
     static uint8_t C_zk_II_B_bb[9] = { 0x14U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
     static uint8_t C_xsq_I_bb[9] = { 0x21U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
     static uint8_t C_xsq_II_bb[9] = { 0x22U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
-    static uint8_t C_tx_I_bb[9] = { 0x31U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
-    static uint8_t C_tx_II_bb[9] = { 0x32U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+
+    uint8_t i_ii_type = 0;
+    uint8_t board_type = 0;
+    static uint8_t C_tx_1_I_load_bb[9] = { 0x31U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+    static uint8_t C_tx_1_II_load_bb[9] = { 0x32U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+    static uint8_t C_tx_1_I_child_bb[9] = { 0x33U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+    static uint8_t C_tx_1_II_child_bb[9] = { 0x34U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+
+    static uint8_t C_tx_2_I_load_bb[9] = { 0x41U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+    static uint8_t C_tx_2_II_load_bb[9] = { 0x42U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+    static uint8_t C_tx_2_I_child_bb[9] = { 0x43U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
+    static uint8_t C_tx_2_II_child_bb[9] = { 0x44U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
 
     static uint8_t C_wjjk_I_bb[9] = { 0x51U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
     static uint8_t C_wjjk_II_bb[9] = { 0x52U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
@@ -4368,20 +4433,6 @@ static void RecordingSoftwareVersionMessage(void)
 
     if (CPU_A == Get_CPU_Type())
     {
-        /* 主控插件版本 */
-        if (memcmp(&C_zk_I_A_bb[1], &ZK_I_A_BB, 4u))
-        {
-            rt_memcpy (&C_zk_I_A_bb[5], &C_zk_I_A_bb[1], 4u);
-            rt_memcpy (&C_zk_I_A_bb[1], &ZK_I_A_BB, 4u);
-            WriteFileContantPkt(0xA5, 0x01, 0x11, C_zk_I_A_bb, 9u);
-        } /* end if */
-        if (memcmp(&C_zk_I_B_bb[1], &ZK_I_B_BB, 4u))
-        {
-            rt_memcpy (&C_zk_I_B_bb[5], &C_zk_I_B_bb[1], 4u);
-            rt_memcpy (&C_zk_I_B_bb[1], &ZK_I_B_BB, 4u);
-            WriteFileContantPkt(0xA5, 0x01, 0x12, C_zk_I_B_bb, 9u);
-        } /* end if */
-
         /* 微机接口版本 */
         if (memcmp(&C_wjjk_I_bb[1], &WJJK_I_BB, 4u))
         {
@@ -4389,30 +4440,10 @@ static void RecordingSoftwareVersionMessage(void)
             rt_memcpy (&C_wjjk_I_bb[1], &WJJK_I_BB, 4u);
             WriteFileContantPkt(0xA5, 0x01, 0x51, C_wjjk_I_bb, 9u);
         } /* end if */
-        /* 通信插件版本 */
-        if (memcmp(&C_tx_I_bb[1], &TX_I_BB, 4u))
-        {
-            rt_memcpy (&C_tx_I_bb[5], &C_tx_I_bb[1], 4u);
-            rt_memcpy (&C_tx_I_bb[1], &TX_I_BB, 4u);
-            WriteFileContantPkt(0xA5, 0x01, 0x31, C_tx_I_bb, 9u);
-        } /* end if */
     }
+
     if (CPU_B == Get_CPU_Type())
     {
-        /* 主控插件版本 */
-        if (memcmp(&C_zk_II_A_bb[1], &ZK_II_A_BB, 4u))
-        {
-            rt_memcpy (&C_zk_II_A_bb[5], &C_zk_II_A_bb[1], 4u);
-            rt_memcpy (&C_zk_II_A_bb[1], &ZK_II_A_BB, 4u);
-            WriteFileContantPkt(0xA5, 0x01, 0x13, C_zk_II_A_bb, 9u);
-        } /* end if */
-        if (memcmp(&C_zk_II_B_bb[1], &ZK_II_B_BB, 4u))
-        {
-            rt_memcpy (&C_zk_II_B_bb[5], &C_zk_II_B_bb[1], 4u);
-            rt_memcpy (&C_zk_II_B_bb[1], &ZK_II_B_BB, 4u);
-            WriteFileContantPkt(0xA5, 0x01, 0x14, C_zk_II_B_bb, 9u);
-        } /* end if */
-
         /* 微机接口版本 */
         if (memcmp(&C_wjjk_II_bb[1], &WJJK_II_BB, 4u))
         {
@@ -4420,13 +4451,144 @@ static void RecordingSoftwareVersionMessage(void)
             rt_memcpy (&C_wjjk_II_bb[1], &WJJK_II_BB, 4u);
             WriteFileContantPkt(0xA5, 0x01, 0x52, C_wjjk_II_bb, 9u);
         } /* end if */
-        /* 通信插件版本 */
-        if (memcmp(&C_tx_II_bb[1], &TX_II_BB, 4u))
+    }
+
+    /* 主控插件版本 I系 A模 */
+    if (memcmp(&C_zk_I_A_bb[1], &ZK_I_A_BB, 4u))
+    {
+//        LOG_I("ZK_BB I_A %d %d %d %d", ZK_I_A_BB, *(&ZK_I_A_BB + 1), *(&ZK_I_A_BB + 2), *(&ZK_I_A_BB + 3));
+        rt_memcpy (&C_zk_I_A_bb[5], &C_zk_I_A_bb[1], 4u);
+        rt_memcpy (&C_zk_I_A_bb[1], &ZK_I_A_BB, 4u);
+        WriteFileContantPkt(0xA5, 0x01, 0x11, C_zk_I_A_bb, 9u);
+    } /* end if */
+
+    /* 主控插件版本 I系 B模 */
+    if (memcmp(&C_zk_I_B_bb[1], &ZK_I_B_BB, 4u))
+    {
+//        LOG_I("ZK_BB I_B %d %d %d %d", ZK_I_B_BB, *(&ZK_I_B_BB + 1), *(&ZK_I_B_BB + 2), *(&ZK_I_B_BB + 3));
+        rt_memcpy (&C_zk_I_B_bb[5], &C_zk_I_B_bb[1], 4u);
+        rt_memcpy (&C_zk_I_B_bb[1], &ZK_I_B_BB, 4u);
+        WriteFileContantPkt(0xA5, 0x01, 0x12, C_zk_I_B_bb, 9u);
+    } /* end if */
+
+    /* 主控插件版本 II系 A模 */
+    if (memcmp(&C_zk_II_A_bb[1], &ZK_II_A_BB, 4u))
+    {
+//        LOG_I("ZK_BB II_A %d %d %d %d", ZK_II_A_BB, *(&ZK_II_A_BB + 1), *(&ZK_II_A_BB + 2), *(&ZK_II_A_BB + 3));
+        rt_memcpy (&C_zk_II_A_bb[5], &C_zk_II_A_bb[1], 4u);
+        rt_memcpy (&C_zk_II_A_bb[1], &ZK_II_A_BB, 4u);
+        WriteFileContantPkt(0xA5, 0x01, 0x13, C_zk_II_A_bb, 9u);
+    } /* end if */
+
+    /* 主控插件版本 II系 B模 */
+    if (memcmp(&C_zk_II_B_bb[1], &ZK_II_B_BB, 4u))
+    {
+//        LOG_I("ZK_BB II_B %d %d %d %d", ZK_II_B_BB, *(&ZK_II_B_BB + 1), *(&ZK_II_B_BB + 2), *(&ZK_II_B_BB + 3));
+        rt_memcpy (&C_zk_II_B_bb[5], &C_zk_II_B_bb[1], 4u);
+        rt_memcpy (&C_zk_II_B_bb[1], &ZK_II_B_BB, 4u);
+        WriteFileContantPkt(0xA5, 0x01, 0x14, C_zk_II_B_bb, 9u);
+    } /* end if */
+
+    /* 通信1插件版本 */
+    /* 获取板子类型 */
+    i_ii_type = ((*(&TX1_ZJ + 1) & 0x40) >> 6);
+    board_type = ((*(&TX1_ZJ + 1) & 0x80) >> 7);
+    if(0x00 == i_ii_type)  /* I系 */
+    {
+        if(0x00 == board_type)  /* 子板 */
         {
-            rt_memcpy (&C_tx_II_bb[5], &C_tx_II_bb[1], 4u);
-            rt_memcpy (&C_tx_II_bb[1], &TX_II_BB, 4u);
-            WriteFileContantPkt(0xA5, 0x01, 0x32, C_tx_II_bb, 9u);
-        } /* end if */
+            if (memcmp(&C_tx_1_I_child_bb[1], &TX_1_BB, 4u))
+            {
+//                LOG_I("TX_1 I child %d %d %d %d", TX_1_BB, *(&TX_1_BB + 1), *(&TX_1_BB + 2), *(&TX_1_BB + 3));
+                rt_memcpy (&C_tx_1_I_child_bb[5], &C_tx_1_I_child_bb[1], 4u);
+                rt_memcpy (&C_tx_1_I_child_bb[1], &TX_1_BB, 4u);
+                WriteFileContantPkt(0xA5, 0x01, 0x33, C_tx_1_I_child_bb, 9u);
+            }
+        }
+        else  /* 底板 */
+        {
+            if (memcmp(&C_tx_1_I_load_bb[1], &TX_1_BB, 4u))
+            {
+//                LOG_I("TX_1 I load %d %d %d %d", TX_1_BB, *(&TX_1_BB + 1), *(&TX_1_BB + 2), *(&TX_1_BB + 3));
+                rt_memcpy (&C_tx_1_I_load_bb[5], &C_tx_1_I_load_bb[1], 4u);
+                rt_memcpy (&C_tx_1_I_load_bb[1], &TX_1_BB, 4u);
+                WriteFileContantPkt(0xA5, 0x01, 0x31, C_tx_1_I_load_bb, 9u);
+            }
+        }
+    }
+    else  /* II系 */
+    {
+        if(0x00 == board_type)  /* 子板 */
+        {
+            if (memcmp(&C_tx_1_II_child_bb[1], &TX_1_BB, 4u))
+            {
+//                LOG_I("TX_1 II child %d %d %d %d", TX_1_BB, *(&TX_1_BB + 1), *(&TX_1_BB + 2), *(&TX_1_BB + 3));
+                rt_memcpy (&C_tx_1_II_child_bb[5], &C_tx_1_II_child_bb[1], 4u);
+                rt_memcpy (&C_tx_1_II_child_bb[1], &TX_1_BB, 4u);
+                WriteFileContantPkt(0xA5, 0x01, 0x34, C_tx_1_II_child_bb, 9u);
+            }
+        }
+        else  /* 底板 */
+        {
+            if (memcmp(&C_tx_1_II_load_bb[1], &TX_1_BB, 4u))
+            {
+//                LOG_I("TX_1 II load %d %d %d %d", TX_1_BB, *(&TX_1_BB + 1), *(&TX_1_BB + 2), *(&TX_1_BB + 3));
+                rt_memcpy (&C_tx_1_II_load_bb[5], &C_tx_1_II_load_bb[1], 4u);
+                rt_memcpy (&C_tx_1_II_load_bb[1], &TX_1_BB, 4u);
+                WriteFileContantPkt(0xA5, 0x01, 0x32, C_tx_1_II_load_bb, 9u);
+            }
+        }
+    }
+
+    /* 通信2插件版本 */
+    /* 获取板子类型 */
+    i_ii_type = ((*(&TX2_ZJ + 1) & 0x40) >> 6);
+    board_type = ((*(&TX2_ZJ + 1) & 0x80) >> 7);
+    if(0x00 == i_ii_type)  /* I系 */
+    {
+        if(0x00 == board_type)  /* 子板 */
+        {
+            if (memcmp(&C_tx_2_I_child_bb[1], &TX_2_BB, 4u))
+            {
+//                LOG_I("TX_2 I child %d %d %d %d", TX_2_BB, *(&TX_2_BB + 1), *(&TX_2_BB + 2), *(&TX_2_BB + 3));
+                rt_memcpy (&C_tx_2_I_child_bb[5], &C_tx_2_I_child_bb[1], 4u);
+                rt_memcpy (&C_tx_2_I_child_bb[1], &TX_2_BB, 4u);
+                WriteFileContantPkt(0xA5, 0x01, 0x43, C_tx_2_I_child_bb, 9u);
+            }
+        }
+        else  /* 底板 */
+        {
+            if (memcmp(&C_tx_2_I_load_bb[1], &TX_2_BB, 4u))
+            {
+//                LOG_I("TX_2 I load %d %d %d %d", TX_2_BB, *(&TX_2_BB + 1), *(&TX_2_BB + 2), *(&TX_2_BB + 3));
+                rt_memcpy (&C_tx_2_I_load_bb[5], &C_tx_2_I_load_bb[1], 4u);
+                rt_memcpy (&C_tx_2_I_load_bb[1], &TX_2_BB, 4u);
+                WriteFileContantPkt(0xA5, 0x01, 0x41, C_tx_2_I_load_bb, 9u);
+            }
+        }
+    }
+    else  /* II系 */
+    {
+        if(0x00 == board_type)  /* 子板 */
+        {
+            if (memcmp(&C_tx_2_II_child_bb[1], &TX_2_BB, 4u))
+            {
+//                LOG_I("TX_2 II child %d %d %d %d", TX_2_BB, *(&TX_2_BB + 1), *(&TX_2_BB + 2), *(&TX_2_BB + 3));
+                rt_memcpy (&C_tx_2_II_child_bb[5], &C_tx_2_II_child_bb[1], 4u);
+                rt_memcpy (&C_tx_2_II_child_bb[1], &TX_2_BB, 4u);
+                WriteFileContantPkt(0xA5, 0x01, 0x44, C_tx_2_II_child_bb, 9u);
+            }
+        }
+        else  /* 底板 */
+        {
+            if (memcmp(&C_tx_2_II_load_bb[1], &TX_2_BB, 4u))
+            {
+//                LOG_I("TX_2 II load %d %d %d %d", TX_2_BB, *(&TX_2_BB + 1), *(&TX_2_BB + 2), *(&TX_2_BB + 3));
+                rt_memcpy (&C_tx_2_II_load_bb[5], &C_tx_2_II_load_bb[1], 4u);
+                rt_memcpy (&C_tx_2_II_load_bb[1], &TX_2_BB, 4u);
+                WriteFileContantPkt(0xA5, 0x01, 0x42, C_tx_2_II_load_bb, 9u);
+            }
+        }
     }
 
     /* 记录插件版本 */
@@ -4642,36 +4804,36 @@ static void RecordingLKJBasicDataVersionMessage(void)
 ***********************************************/
 static void RecordingSelfCheckMessage( void )
 {
-  /* 获取主控插件自检信息 */
-  RecordingZKSelfCheckMessage();
-  /* 获取通信1插件自检信息 */
-  RecordingTX1SelfCheckMessage();
-  /* 获取通信2插件自检信息 */
-  RecordingTX2SelfCheckMessage();
-  /* 获取记录插件自检信息 */
-  RecordingJLSelfCheckMessage();
-  /* 获取无线通信插件自检信息 */
-  RecordingWXTXSelfCheckMessage();
-  /* 获取微机接口自检信息 */
-  RecordingWJJKSelfCheckMessage();
-  /* 获取显示器自检信息 */
-  RecordingDMISelfCheckMessage();
-//  /* 获取CEU自检信息 */
-//  RecordingCEUSelfCheckMessage();
-//  /* 获取ECU自检信息 */
-//  RecordingECUSelfCheckMessage();
-  /* 获取与LKJ通信状态信息 */
-  RecordingCommunicatWithLKJMessage();
-  /* 获取与CCU通信状态信息 */
-  RecordingCommunicatWithCCUMessage();
-  /* 获取与BCU通信状态信息 */
-  RecordingCommunicatWithBCUMessage();
-  /* 获取与CIR通信状态信息 */
-  RecordingCommunicatWithCIRMessage();
-//  /* 获取与CEU通信状态信息 */
-//  RecordingCommunicatWithCEUMessage();
-//  /* 获取与ECU通信状态信息 */
-//  RecordingCommunicatWithECUMessage();
+    /* 获取主控插件自检信息 */
+    RecordingZKSelfCheckMessage();
+    /* 获取通信1插件自检信息 */
+    RecordingTX1SelfCheckMessage();
+    /* 获取通信2插件自检信息 */
+    RecordingTX2SelfCheckMessage();
+    /* 获取记录插件自检信息 */
+    RecordingJLSelfCheckMessage();
+    /* 获取无线通信插件自检信息 */
+    RecordingWXTXSelfCheckMessage();
+    /* 获取微机接口自检信息 */
+    RecordingWJJKSelfCheckMessage();
+    /* 获取显示器自检信息 */
+    RecordingDMISelfCheckMessage();
+//    /* 获取CEU自检信息 */
+//    RecordingCEUSelfCheckMessage();
+//    /* 获取ECU自检信息 */
+//    RecordingECUSelfCheckMessage();
+    /* 获取与LKJ通信状态信息 */
+    RecordingCommunicatWithLKJMessage();
+    /* 获取与CCU通信状态信息 */
+    RecordingCommunicatWithCCUMessage();
+    /* 获取与BCU通信状态信息 */
+    RecordingCommunicatWithBCUMessage();
+    /* 获取与CIR通信状态信息 */
+    RecordingCommunicatWithCIRMessage();
+//    /* 获取与CEU通信状态信息 */
+//    RecordingCommunicatWithCEUMessage();
+//    /* 获取与ECU通信状态信息 */
+//    RecordingCommunicatWithECUMessage();
 } /* end function RecordingSelfCheckMessage */
 
 /**********************************************
@@ -4681,54 +4843,90 @@ static void RecordingSelfCheckMessage( void )
 ***********************************************/
 static void RecordingZKSelfCheckMessage(void)
 {
-    static uint8_t C_zkzj[3] = { 0x00U, 0x00U, 0x00U };
+    static uint8_t C_zk_i_a_zj[3] = { 0x01U, 0x00U, 0x00U };
+    static uint8_t C_zk_i_b_zj[3] = { 0x03U, 0x00U, 0x00U };
+    static uint8_t C_zk_ii_a_zj[3] = { 0x02U, 0x00U, 0x00U };
+    static uint8_t C_zk_ii_b_zj[3] = { 0x04U, 0x00U, 0x00U };
+
+    uint8_t zk_i_a_zj_tmp[2] = { 0x00U, 0x00U };
+    uint8_t zk_i_b_zj_tmp[2] = { 0x00U, 0x00U };
+    uint8_t zk_ii_a_zj_tmp[2] = { 0x00U, 0x00U };
+    uint8_t zk_ii_b_zj_tmp[2] = { 0x00U, 0x00U };
+
+    /* D0-D11为有效位   D12-D15为备用   这里过滤 */
+    zk_i_a_zj_tmp[0] = ZK_I_A_ZJ;
+    zk_i_a_zj_tmp[0] = (*(&ZK_I_A_ZJ + 1)) & 0x0f;
+
+    zk_i_b_zj_tmp[0] = ZK_I_B_ZJ;
+    zk_i_b_zj_tmp[0] = (*(&ZK_I_B_ZJ + 1)) & 0x0f;
+
+    zk_ii_a_zj_tmp[0] = ZK_II_A_ZJ;
+    zk_ii_a_zj_tmp[0] = (*(&ZK_II_A_ZJ + 1)) & 0x0f;
+
+    zk_ii_b_zj_tmp[0] = ZK_II_B_ZJ;
+    zk_ii_b_zj_tmp[0] = (*(&ZK_II_B_ZJ + 1)) & 0x0f;
 
     /* 判断自检状态是否发生变化 */
-    if (memcmp(&C_zkzj[1], &ZK_ZJ, 2U))
+    if (memcmp(&C_zk_i_a_zj[1], zk_i_a_zj_tmp, 2U))
     {
-        rt_memcpy (&C_zkzj[1], &ZK_ZJ, 2U);
+        rt_memcpy (&C_zk_i_a_zj[1], zk_i_a_zj_tmp, 2U);
 
         /* 判断自检为正常或异常 */
-        if (NORMAL == ZK_ZJ)
+        if (NORMAL == zk_i_a_zj_tmp[0] && NORMAL == zk_i_a_zj_tmp[1])
         {
-            if (CPU_A == Get_CPU_Type())  //I系
-            {
-                if (g_ZK_DevCode == 0x11)  //A模
-                    C_zkzj[0] = 0x01;
-                else
-                    C_zkzj[0] = 0x03;
-            }
-            else if (CPU_B == Get_CPU_Type())  //II系
-            {
-                if (g_ZK_DevCode == 0x11)  //A模
-                    C_zkzj[0] = 0x02;
-                else
-                    C_zkzj[0] = 0x04;
-            }
-            else
-                C_zkzj[0] = 0x0;
-
-            WriteFileContantPkt(0xA6u, 0x10u, g_ZK_DevCode, C_zkzj, 3u);
+            WriteFileContantPkt(0xA6u, 0x10u, 0x11, C_zk_i_a_zj, 3u);
         }
         else
         {
-            if (CPU_A == Get_CPU_Type())  //I系
-            {
-                if (g_ZK_DevCode == 0x11)  //A模
-                    C_zkzj[0] = 0x01;
-                else
-                    C_zkzj[0] = 0x03;
-            }
-            else if (CPU_B == Get_CPU_Type())  //II系
-            {
-                if (g_ZK_DevCode == 0x11)  //A模
-                    C_zkzj[0] = 0x02;
-                else
-                    C_zkzj[0] = 0x04;
-            }
-            else
-                C_zkzj[0] = 0x0;
-            WriteFileContantPkt(0xA6u, 0x01u, g_ZK_DevCode, C_zkzj, 3u);
+            WriteFileContantPkt(0xA6u, 0x01u, 0x11, C_zk_i_a_zj, 3u);
+        }
+    } /* end if */
+
+    /* 判断自检状态是否发生变化 */
+    if (memcmp(&C_zk_i_b_zj[1], zk_i_b_zj_tmp, 2U))
+    {
+        rt_memcpy (&C_zk_i_b_zj[1], zk_i_b_zj_tmp, 2U);
+
+        /* 判断自检为正常或异常 */
+        if (NORMAL == zk_i_b_zj_tmp[0] && NORMAL == zk_i_b_zj_tmp[1])
+        {
+            WriteFileContantPkt(0xA6u, 0x10u, 0x12, C_zk_i_b_zj, 3u);
+        }
+        else
+        {
+            WriteFileContantPkt(0xA6u, 0x01u, 0x12, C_zk_i_b_zj, 3u);
+        }
+    } /* end if */
+
+    /* 判断自检状态是否发生变化 */
+    if (memcmp(&C_zk_ii_a_zj[1], zk_ii_a_zj_tmp, 2U))
+    {
+        rt_memcpy (&C_zk_ii_a_zj[1], zk_ii_a_zj_tmp, 2U);
+
+        /* 判断自检为正常或异常 */
+        if (NORMAL == zk_ii_a_zj_tmp[0] && NORMAL == zk_ii_a_zj_tmp[1])
+        {
+            WriteFileContantPkt(0xA6u, 0x10u, 0x13, C_zk_ii_a_zj, 3u);
+        }
+        else
+        {
+            WriteFileContantPkt(0xA6u, 0x01u, 0x13, C_zk_ii_a_zj, 3u);
+        }
+    } /* end if */
+
+    /* 判断自检状态是否发生变化 */
+    if (memcmp(&C_zk_ii_b_zj[1], zk_ii_b_zj_tmp, 2U))
+    {
+        rt_memcpy (&C_zk_ii_b_zj[1], zk_ii_b_zj_tmp, 2U);
+
+        /* 判断自检为正常或异常 */
+        if (NORMAL == zk_ii_b_zj_tmp[0] && NORMAL == zk_ii_b_zj_tmp[1])
+        {
+            WriteFileContantPkt(0xA6u, 0x10u, 0x14, C_zk_ii_b_zj, 3u);
+        }
+        else
+        {
+            WriteFileContantPkt(0xA6u, 0x01u, 0x14, C_zk_ii_b_zj, 3u);
         }
     } /* end if */
 } /* end function RecordingZKSelfCheckMessage */
@@ -4741,44 +4939,92 @@ static void RecordingZKSelfCheckMessage(void)
 static void RecordingTX1SelfCheckMessage(void)
 {
     static uint8_t C_tx1zj[3] = { 0x02U, 0x00U, 0x00U };
+    uint8_t tx1zj_tmp[2] = {0x00, 0x00};
+    uint8_t tx1zj_last_h = 0, tx1zj_current_h = 0; /* 自检信息的高8位 D9-D15 */
+    uint8_t i_ii_type = 0;
+    uint8_t board_type = 0;
+
+    /* 过滤备用位 D9-D13  其中D14 D15为板子类型，这里保存 */
+    tx1zj_tmp[0] = TX1_ZJ;
+    tx1zj_tmp[1] = (*(&TX1_ZJ + 1)) & 0xc1;
+
+    /* 过滤备用位 D9-D13  其中D14 D15为板子类型，这里过滤 */
+    tx1zj_current_h = (*(&TX1_ZJ + 1)) & 0x01;
+    tx1zj_last_h = C_tx1zj[2] & 0x01;
 
     /* 判断自检状态是否发生变化 */
-    if (memcmp(&C_tx1zj[1], &TX1_ZJ, 2U))
+    if(C_tx1zj[1] != tx1zj_tmp[0] || tx1zj_last_h != tx1zj_current_h)
     {
-        rt_memcpy (&C_tx1zj[1], &TX1_ZJ, 2U);
+        rt_memcpy (&C_tx1zj[1], tx1zj_tmp, 2U);
 
-        /* 判断自检为正常或异常 */
-        if (NORMAL == TX1_ZJ)
+        /* 获取板子类型 */
+        i_ii_type = ((*(&TX1_ZJ + 1) & 0x40) >> 6);
+        board_type = ((*(&TX1_ZJ + 1) & 0x80) >> 7);
+
+        LOG_I("TX1_ZJ %d %d", i_ii_type, board_type);
+        if (NORMAL == tx1zj_tmp[0] && NORMAL == tx1zj_current_h)
         {
-            if (CPU_A == Get_CPU_Type())  //I系
+            if(0x00 == i_ii_type)  /* I系 */
             {
                 C_tx1zj[0] = 0x01;
-                WriteFileContantPkt(0xA6u, 0x11u, 0x31, C_tx1zj, 3u);
+                if(0x00 == board_type)  /* 子板 */
+                {
+                    LOG_I("TX1_ZJ I child normal");
+                    WriteFileContantPkt(0xA6u, 0x11u, 0x33, C_tx1zj, 3u);
+                }
+                else  /* 底板 */
+                {
+                    LOG_I("TX1_ZJ I board normal");
+                    WriteFileContantPkt(0xA6u, 0x11u, 0x31, C_tx1zj, 3u);
+                }
             }
-            else if (CPU_B == Get_CPU_Type())  //II系
+            else  /* II系 */
             {
                 C_tx1zj[0] = 0x02;
-                WriteFileContantPkt(0xA6u, 0x11u, 0x32, C_tx1zj, 3u);
+                if(0x00 == board_type)  /* 子板 */
+                {
+                    LOG_I("TX1_ZJ II child normal");
+                    WriteFileContantPkt(0xA6u, 0x11u, 0x34, C_tx1zj, 3u);
+                }
+                else  /* 底板 */
+                {
+                    LOG_I("TX1_ZJ II board normal");
+                    WriteFileContantPkt(0xA6u, 0x11u, 0x32, C_tx1zj, 3u);
+                }
             }
-            else
-                C_tx1zj[0] = 0x00;
         }
         else
         {
-            if (CPU_A == Get_CPU_Type())  //I系
+            if(0x00 == i_ii_type)  /* I系 */
             {
                 C_tx1zj[0] = 0x01;
-                WriteFileContantPkt(0xA6u, 0x02u, 0x31, C_tx1zj, 3u);
+                if(0x00 == board_type)  /* 子板 */
+                {
+                    LOG_I("TX1_ZJ I child err");
+                    WriteFileContantPkt(0xA6u, 0x02u, 0x33, C_tx1zj, 3u);
+                }
+                else  /* 底板 */
+                {
+                    LOG_I("TX1_ZJ I board err");
+                    WriteFileContantPkt(0xA6u, 0x02u, 0x31, C_tx1zj, 3u);
+                }
             }
-            else if (CPU_B == Get_CPU_Type())  //II系
+            else  /* II系 */
             {
                 C_tx1zj[0] = 0x02;
-                WriteFileContantPkt(0xA6u, 0x02u, 0x32, C_tx1zj, 3u);
+                if(0x00 == board_type)  /* 子板 */
+                {
+                    LOG_I("TX1_ZJ II child err");
+                    WriteFileContantPkt(0xA6u, 0x02u, 0x34, C_tx1zj, 3u);
+                }
+                else  /* 底板 */
+                {
+                    LOG_I("TX1_ZJ II board err");
+                    WriteFileContantPkt(0xA6u, 0x02u, 0x32, C_tx1zj, 3u);
+                }
             }
-            else
-                C_tx1zj[0] = 0x00;
         }
-    } /* end if */
+    }
 } /* end function RecordingTX1SelfCheckMessage */
 
 /**********************************************
@@ -4788,7 +5034,93 @@ static void RecordingTX1SelfCheckMessage(void)
 ***********************************************/
 static void RecordingTX2SelfCheckMessage(void)
 {
+    static uint8_t C_tx2zj[3] = { 0x02U, 0x00U, 0x00U };
+    uint8_t tx2zj_tmp[2] = {0x00, 0x00};
+    uint8_t tx2zj_last_h = 0, tx2zj_current_h = 0; /* 自检信息的高8位 D9-D15 */
+    uint8_t i_ii_type = 0;
+    uint8_t board_type = 0;
 
+    /* 过滤备用位 D9-D13  其中D14 D15为板子类型，这里保存 */
+    tx2zj_tmp[0] = TX2_ZJ;
+    tx2zj_tmp[1] = (*(&TX2_ZJ + 1)) & 0xc1;
+
+    /* 过滤备用位 D9-D13  其中D14 D15为板子类型，这里过滤 */
+    tx2zj_current_h = (*(&TX2_ZJ + 1)) & 0x01;
+    tx2zj_last_h = C_tx2zj[2] & 0x01;
+
+    /* 判断自检状态是否发生变化 */
+    if(C_tx2zj[1] != tx2zj_tmp[0] || tx2zj_last_h != tx2zj_current_h)
+    {
+        rt_memcpy (&C_tx2zj[1], tx2zj_tmp, 2U);
+
+        /* 获取板子类型 */
+        i_ii_type = ((*(&TX2_ZJ + 1) & 0x40) >> 6);
+        board_type = ((*(&TX2_ZJ + 1) & 0x80) >> 7);
+
+        LOG_I("TX2_ZJ %d %d", i_ii_type, board_type);
+        if (NORMAL == tx2zj_tmp[0] && NORMAL == tx2zj_current_h)
+        {
+            if(0x00 == i_ii_type)  /* I系 */
+            {
+                C_tx2zj[0] = 0x01;
+                if(0x00 == board_type)  /* 子板 */
+                {
+                    LOG_I("TX2_ZJ I child normal");
+                    WriteFileContantPkt(0xA6u, 0x11u, 0x43, C_tx2zj, 3u);
+                }
+                else  /* 底板 */
+                {
+                    LOG_I("TX2_ZJ I board normal");
+                    WriteFileContantPkt(0xA6u, 0x11u, 0x41, C_tx2zj, 3u);
+                }
+            }
+            else  /* II系 */
+            {
+                C_tx2zj[0] = 0x02;
+                if(0x00 == board_type)  /* 子板 */
+                {
+                    LOG_I("TX2_ZJ II child normal");
+                    WriteFileContantPkt(0xA6u, 0x11u, 0x44, C_tx2zj, 3u);
+                }
+                else  /* 底板 */
+                {
+                    LOG_I("TX2_ZJ II board normal");
+                    WriteFileContantPkt(0xA6u, 0x11u, 0x42, C_tx2zj, 3u);
+                }
+            }
+        }
+        else
+        {
+            if(0x00 == i_ii_type)  /* I系 */
+            {
+                C_tx2zj[0] = 0x01;
+                if(0x00 == board_type)  /* 子板 */
+                {
+                    LOG_I("TX2_ZJ I child err");
+                    WriteFileContantPkt(0xA6u, 0x02u, 0x43, C_tx2zj, 3u);
+                }
+                else  /* 底板 */
+                {
+                    LOG_I("TX2_ZJ I board err");
+                    WriteFileContantPkt(0xA6u, 0x02u, 0x41, C_tx2zj, 3u);
+                }
+            }
+            else  /* II系 */
+            {
+                C_tx2zj[0] = 0x02;
+                if(0x00 == board_type)  /* 子板 */
+                {
+                    LOG_I("TX2_ZJ II child err");
+                    WriteFileContantPkt(0xA6u, 0x02u, 0x44, C_tx2zj, 3u);
+                }
+                else  /* 底板 */
+                {
+                    LOG_I("TX2_ZJ II board err");
+                    WriteFileContantPkt(0xA6u, 0x02u, 0x42, C_tx2zj, 3u);
+                }
+            }
+        }
+    }
 } /* end function RecordingTX2SelfCheckMessage */
 
 /**********************************************
@@ -5665,7 +5997,7 @@ uint16_t FFFEEncode(uint8_t *u8p_SrcData, uint16_t u16_SrcLen, uint8_t *u8p_DstD
 static sint32_t fm_write_record_file_head(S_CURRENT_FILE_INFO *current_file_info)
 {
     sint32_t ret, fd;
-    char full_path[PATH_NAME_MAX_LEN] = { 0 };
+    char full_path[TEMP_PATH_NAME_MAX_LEN] = { 0 };
 
     if (NULL == current_file_info || NULL == current_file_info->file_head)
     {
@@ -5673,11 +6005,9 @@ static sint32_t fm_write_record_file_head(S_CURRENT_FILE_INFO *current_file_info
     }
 
     Update_FileHead();
-    LOG_I("fm_write_record_file_head");
-
 //    LOG_I("file dir: %s, %s. addr %d, %d",
 //            current_file_info->file_dir->ch_file_name, s_File_Directory.ch_file_name, &current_file_info->file_dir->ch_file_name, &s_File_Directory.ch_file_name);
-    snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME,
+    rt_snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME,
             current_file_info->file_dir->ch_file_name);
 
     fd = open(full_path, O_RDWR);
@@ -5713,7 +6043,7 @@ static sint32_t fm_modify_record_file_head(S_CURRENT_FILE_INFO *current_file_inf
 {
     sint32_t fd = 0;
     sint32_t ret = -1;
-    char full_path[PATH_NAME_MAX_LEN] = { 0 };
+    char full_path[TEMP_PATH_NAME_MAX_LEN] = { 0 };
 
     Update_FileHead();
 
@@ -5722,7 +6052,7 @@ static sint32_t fm_modify_record_file_head(S_CURRENT_FILE_INFO *current_file_inf
         return -1;
     }
 
-    snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME,
+    rt_snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME,
             current_file_info->file_dir->ch_file_name);
 
     LOG_I("modify head");
@@ -5744,55 +6074,3 @@ static sint32_t fm_modify_record_file_head(S_CURRENT_FILE_INFO *current_file_inf
     }
     return 0;
 }
-
-#if 1  //打印
-static void FileCreatInfo(int argc, char **argv)
-{
-//    static char che_ci[4];
-//    static char si_ji[4];
-    S_CURRENT_FILE_INFO *current_file_info = file_manager.current_info;
-    sint32_t ret = 0;
-
-    if (argc != 2 && argc != 3)
-    {
-        rt_kprintf("Usage: fileinfo [cmd]\n");
-        rt_kprintf("       fileinfo --pos\n");
-        rt_kprintf("       fileinfo --flag\n");
-        rt_kprintf("       fileinfo --head\n");
-    }
-    else
-    {
-        if (rt_strcmp(argv[1], "--pos") == 0)
-        {
-            LOG_I("pos %d", write_buf.pos);
-        }
-        else if(rt_strcmp(argv[1], "--flag") == 0)
-        {
-            LOG_I("SoftWare_Cycle_Flag %d", SoftWare_Cycle_Flag);
-        }
-        else if(rt_strcmp(argv[1], "--head") == 0)
-        {
-            LOG_I("change head");
-
-            ret = fm_modify_record_file_head( current_file_info);
-            if (ret < 0)
-            {
-                LOG_E("fm_modify_record_file_head error");
-            }
-        }
-        else
-        {
-            rt_kprintf("Usage: fileinfo [cmd]\n");
-            rt_kprintf("       fileinfo --pos\n");
-            rt_kprintf("       fileinfo --flag\n");
-            rt_kprintf("       fileinfo --head\n");
-        }
-    }
-}
-
-#ifdef RT_USING_FINSH
-#include <finsh.h>
-    MSH_CMD_EXPORT_ALIAS(FileCreatInfo, fileinfo, File Info);
-#endif /* RT_USING_FINSH */
-#endif
-

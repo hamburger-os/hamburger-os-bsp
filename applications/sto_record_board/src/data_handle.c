@@ -56,7 +56,6 @@ rt_err_t DataHandleInit(S_DATA_HANDLE *p_data_handle)
 /*
 以太网协议转CAN协议
  */
-//static uint32_t send_ok_num;
 void ETHToCanDataHandle(S_DATA_HANDLE *p_data_handle, uint8_t *pbuf, uint16_t data_len)
 {
     rt_err_t ret = -RT_ERROR;
@@ -69,19 +68,7 @@ void ETHToCanDataHandle(S_DATA_HANDLE *p_data_handle, uint8_t *pbuf, uint16_t da
     S_ETH_CAN_FRAME *s_can_frame = NULL;
     S_APP_INETH_PACK *p_can_PACK = (S_APP_INETH_PACK*) pbuf;
     uint16_t send_len = 0;
-//    static uint8_t eth_start_flag = 0;
 
-//    LKJ2K_CAN1_RxFcnt = (uint32_t) (p_can_PACK->frameNum);      //本包的数据帧个数
-//    LKJ2K_CAN1_Rxcnt = p_can_PACK->frameAllNum;                 //从上电到目前所发的数据帧个数
-//    if (eth_start_flag)
-//    {
-//        LKJ2K_CAN1_localcnt += LKJ2K_CAN1_RxFcnt;
-//    }
-//    else
-//    {
-//        eth_start_flag = 1;
-//        LKJ2K_CAN1_localcnt = LKJ2K_CAN1_Rxcnt;
-//    }
 #if 0
     LOG_I("rx size %d", data_len);
     LOG_I("des mac %x %x %x %x %x %x ",
@@ -256,20 +243,35 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
 
         case CANPRI_KONGCHEA:
         case CANPRI_KONGCHEB:
-            CAN_KONGCHE(can_tmp.no_u8) = can_tmp;
+            if((40 + 4 + can_tmp.no_u8) < RECORD_CAN_BUFFER_SIZE)
+            {
+                CAN_KONGCHE(can_tmp.no_u8) = can_tmp;
 
-            if (can_tmp.priority_u8 == CANPRI_KONGCHEA)
-                g_ZK_DevCode = 0x11;
-            else if (can_tmp.priority_u8 == CANPRI_KONGCHEB)
-                g_ZK_DevCode = 0x12;
+                if (can_tmp.priority_u8 == CANPRI_KONGCHEA)
+                    g_ZK_DevCode = 0x11;
+                else if (can_tmp.priority_u8 == CANPRI_KONGCHEB)
+                    g_ZK_DevCode = 0x12;
+                else
+                    g_ZK_DevCode = 0x11;
+            }
             else
-                g_ZK_DevCode = 0x11;
+            {
+                LOG_E("40 + 4 + can_tmp.no_u8 > size %d", (40 + 4 + can_tmp.no_u8));
+            }
 
             break;
 
         case CANPRI_XSQCMD1:
             XSQ1ZJ_time = rt_tick_get();
-            CAN_0X45_(can_tmp.no_u8) = can_tmp;
+
+            if((16 + can_tmp.no_u8) < RECORD_CAN_BUFFER_SIZE)
+            {
+                CAN_0X45_(can_tmp.no_u8) = can_tmp;
+            }
+            else
+            {
+                LOG_E("16 + can_tmp.no_u8 > size %d", (16 + can_tmp.no_u8));
+            }
 
             g_XSQ_DevCode = 0x21;
 
@@ -287,7 +289,16 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
 
         case CANPRI_XSQCMD2:
             XSQ2ZJ_time = rt_tick_get();
-            CAN_0X46_(can_tmp.no_u8) = can_tmp;
+
+
+            if((20 + 2 + can_tmp.no_u8) < RECORD_CAN_BUFFER_SIZE)
+            {
+                CAN_0X46_(can_tmp.no_u8) = can_tmp;
+            }
+            else
+            {
+                LOG_E("20 + 2 + can_tmp.no_u8 > size %d", (20 + 2 + can_tmp.no_u8));
+            }
 
             g_XSQ_DevCode = 0x22;
 
@@ -305,7 +316,15 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
 
         case CANPRI_TXZJ:
             JCTXZJ_time = rt_tick_get();
-            CAN_0X50_(can_tmp.no_u8) = can_tmp;
+
+            if((32 + 4 + can_tmp.no_u8) < RECORD_CAN_BUFFER_SIZE)
+            {
+                CAN_0X50_(can_tmp.no_u8) = can_tmp;
+            }
+            else
+            {
+                LOG_E("32 + 4 + can_tmp.no_u8 > size %d", (32 + 4 + can_tmp.no_u8));
+            }
             /* 28-September-2018, by Liang Zhen. */
             if (0x00U == can_tmp.no_u8)
             {
@@ -315,9 +334,16 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
 
         case CANPRI_ZKZJA:
             ZK1ZJ_time = rt_tick_get();
-            CAN_0X63_(can_tmp.no_u8) = can_tmp;
 
-            g_ZK_DevCode = 0x11;
+            if((24 + 4 + can_tmp.no_u8) < RECORD_CAN_BUFFER_SIZE)
+            {
+                CAN_0X63_(can_tmp.no_u8) = can_tmp;
+                g_ZK_DevCode = 0x11;
+            }
+            else
+            {
+                LOG_E("24 + 4 + can_tmp.no_u8 > size %d", (24 + 4 + can_tmp.no_u8));
+            }
 
             /* 28-September-2018, by Liang Zhen. */
             if (0x00U == can_tmp.no_u8)
@@ -328,7 +354,15 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
 
         case CANPRI_ZKZJB:
             ZK2ZJ_time = rt_tick_get();
-            CAN_0X73_(can_tmp.no_u8) = can_tmp;
+
+            if((28 + 4 + can_tmp.no_u8) < RECORD_CAN_BUFFER_SIZE)
+            {
+                CAN_0X73_(can_tmp.no_u8) = can_tmp;
+            }
+            else
+            {
+                LOG_E("28 + 4 + can_tmp.no_u8 > size %d", (28 + 4 + can_tmp.no_u8));
+            }
 
             g_ZK_DevCode = 0x12;
 
@@ -342,7 +376,16 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
         case CANPRI_JCJKZJ:
         case CAN_PRI_HIB_B:
             JCJKZJ_time = rt_tick_get();
-            CAN_0X90_(can_tmp.no_u8) = can_tmp;
+
+            if((34 + 4 + can_tmp.no_u8) < RECORD_CAN_BUFFER_SIZE)
+            {
+                CAN_0X90_(can_tmp.no_u8) = can_tmp;
+            }
+            else
+            {
+                LOG_E("34 + 4 + can_tmp.no_u8 > size %d", (34 + 4 + can_tmp.no_u8));
+            }
+
             /* 28-September-2018, by Liang Zhen. */
             if (0x00U == can_tmp.no_u8)
             {
@@ -384,14 +427,31 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
 
             /* 13-June-2018, by Liang Zhen. */
         case EBV_WC_IBV:
-            CAN_0x76(can_tmp.no_u8) = can_tmp;
-            Processing_IBV_WorkingCondition(can_tmp.no_u8, can_tmp.data_u8 + 1U);
+
+            if((79 + 2 + can_tmp.no_u8) < RECORD_CAN_BUFFER_SIZE)
+            {
+                CAN_0x76(can_tmp.no_u8) = can_tmp;
+                Processing_IBV_WorkingCondition(can_tmp.no_u8, can_tmp.data_u8 + 1U);
+            }
+            else
+            {
+                LOG_E("79 + 2 + can_tmp.no_u8 > size %d", (79 + 2 + can_tmp.no_u8));
+            }
+
             break;
 
             /* 14-June-2018, by Liang Zhen. */
         case LKJ_LLRT_MSG:
-            CAN_0x68(can_tmp.no_u8) = can_tmp;
-            Processing_LKJ_LLRT_Message(can_tmp.no_u8, can_tmp.data_u8);
+
+            if((54 + 4 + can_tmp.no_u8) < RECORD_CAN_BUFFER_SIZE)
+            {
+                CAN_0x68(can_tmp.no_u8) = can_tmp;
+                Processing_LKJ_LLRT_Message(can_tmp.no_u8, can_tmp.data_u8);
+            }
+            else
+            {
+                LOG_E("54 + 4 + can_tmp.no_u8 > size %d", (54 + 4 + can_tmp.no_u8));
+            }
 //            LOG_I("68_no %d data %d %d %d %d %d %d %d %d", can_tmp.no_u8,
 //                               can_tmp.data_u8[0], can_tmp.data_u8[1], can_tmp.data_u8[2], can_tmp.data_u8[3],
 //                               can_tmp.data_u8[4], can_tmp.data_u8[5], can_tmp.data_u8[6], can_tmp.data_u8[7]);
@@ -406,11 +466,26 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
 //            LOG_I("no %d data %d %d %d %d %d %d %d %d", can_tmp.no_u8,
 //                               can_tmp.data_u8[0], can_tmp.data_u8[1], can_tmp.data_u8[2], can_tmp.data_u8[3],
 //                               can_tmp.data_u8[4], can_tmp.data_u8[5], can_tmp.data_u8[6], can_tmp.data_u8[7]);
-            CAN_0x66(can_tmp.no_u8) = can_tmp;
+
+            if((41 + 4 + can_tmp.no_u8) < RECORD_CAN_BUFFER_SIZE)
+            {
+                CAN_0x66(can_tmp.no_u8) = can_tmp;
+            }
+            else
+            {
+                LOG_E("41 + 4 + can_tmp.no_u8 > size %d", (41 + 4 + can_tmp.no_u8));
+            }
             break;
             /* 06-July-2020, by DuYanPo. */
         case CANPRI_ZKRSSTC1:
-            CAN_0x67(can_tmp.no_u8) = can_tmp;
+            if((46 + 4 + can_tmp.no_u8) < RECORD_CAN_BUFFER_SIZE)
+            {
+                CAN_0x67(can_tmp.no_u8) = can_tmp;
+            }
+            else
+            {
+                LOG_E("46 + 4 + can_tmp.no_u8 > size %d", (46 + 4 + can_tmp.no_u8));
+            }
             break;
             /* 06-July-2020, by DuYanPo. */
         case CANPRI_DMIXSCX1:
@@ -422,36 +497,99 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
             else
                 g_ZK_DevCode = 0x11;
 
-            CAN_0x6A(can_tmp.no_u8) = can_tmp;
+            if((56 + 4 + can_tmp.no_u8) < RECORD_CAN_BUFFER_SIZE)
+            {
+                CAN_0x6A(can_tmp.no_u8) = can_tmp;
+            }
+            else
+            {
+                LOG_E("56 + 4 + can_tmp.no_u8 > size %d", (56 + 4 + can_tmp.no_u8));
+            }
 
             break;
             /* 06-July-2020, by DuYanPo. */
         case CANPRI_WJSJ:
-            CAN_0x81(can_tmp.no_u8) = can_tmp;
+
+            if((69 + 2 + can_tmp.no_u8) < RECORD_CAN_BUFFER_SIZE)
+            {
+                CAN_0x81(can_tmp.no_u8) = can_tmp;
+            }
+            else
+            {
+                LOG_E("69 + 2 + can_tmp.no_u8 > size %d", (69 + 2 + can_tmp.no_u8));
+            }
             break;
             /* 06-July-2020, by DuYanPo. */
         case CANPRI_WJJKZJ:
-            CAN_0x82(can_tmp.no_u8) = can_tmp;
+
+            if((64 + 2 + can_tmp.no_u8) < RECORD_CAN_BUFFER_SIZE)
+            {
+                CAN_0x82(can_tmp.no_u8) = can_tmp;
+            }
+            else
+            {
+                LOG_E("64 + 2 + can_tmp.no_u8 > size %d", (64 + 2 + can_tmp.no_u8));
+            }
             break;
             /* 07-10-2020, by DuYanPo. */
         case CANPRI_ZKWJSJ1:
-            CAN_0x30(can_tmp.no_u8) = can_tmp;
+
+            if((83 + 2 + can_tmp.no_u8) < RECORD_CAN_BUFFER_SIZE)
+            {
+                CAN_0x30(can_tmp.no_u8) = can_tmp;
+            }
+            else
+            {
+                LOG_E("83 + 2 + can_tmp.no_u8 > size %d", (83 + 2 + can_tmp.no_u8));
+            }
             break;
             /* 07-10-2020, by DuYanPo. */
         case CANPRI_ZKWJSJ2:
-            CAN_0x31(can_tmp.no_u8) = can_tmp;
+
+            if((91 + 2 + can_tmp.no_u8) < RECORD_CAN_BUFFER_SIZE)
+            {
+                CAN_0x31(can_tmp.no_u8) = can_tmp;
+            }
+            else
+            {
+                LOG_E("91 + 2 + can_tmp.no_u8 > size %d", (91 + 2 + can_tmp.no_u8));
+            }
             break;
             /* 07-10-2020, by DuYanPo. */
         case CANPRI_WJZKSJ1:
-            CAN_0x32(can_tmp.no_u8) = can_tmp;
+
+            if((99 + 2 + can_tmp.no_u8) < RECORD_CAN_BUFFER_SIZE)
+            {
+                CAN_0x32(can_tmp.no_u8) = can_tmp;
+            }
+            else
+            {
+                LOG_E("99 + 2 + can_tmp.no_u8 > size %d", (99 + 2 + can_tmp.no_u8));
+            }
             break;
             /* 07-10-2020, by DuYanPo. */
         case CANPRI_WJZKSJ2:
-            CAN_0x33(can_tmp.no_u8) = can_tmp;
+
+            if((107 + 2 + can_tmp.no_u8) < RECORD_CAN_BUFFER_SIZE)
+            {
+                CAN_0x33(can_tmp.no_u8) = can_tmp;
+            }
+            else
+            {
+                LOG_E("107 + 2 + can_tmp.no_u8 > size %d", (107 + 2 + can_tmp.no_u8));
+            }
             break;
             /* 19-10-2020, by DuYanPo. */
         case CANPRI_JCJKSTAT:
-            CAN_0x91(can_tmp.no_u8) = can_tmp;
+
+            if((115 + 2 + can_tmp.no_u8) < RECORD_CAN_BUFFER_SIZE)
+            {
+                CAN_0x91(can_tmp.no_u8) = can_tmp;
+            }
+            else
+            {
+                LOG_E("115 + 2 + can_tmp.no_u8 > size %d", (115 + 2 + can_tmp.no_u8));
+            }
 
         default:
             break;
@@ -461,7 +599,7 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
 
 uint8_t DataHandleLKJIsOnline(void)
 {
-    if(read_time_flag > 0 || file_manager.latest_dir_file_info.dir_num != 0)
+    if(read_time_flag > 0)
     {
         return 1;
     }
