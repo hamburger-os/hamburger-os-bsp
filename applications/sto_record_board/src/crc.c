@@ -295,17 +295,17 @@ uint16_t Crc16TabCCITT(unsigned char* data, unsigned int length)
 
     for(i=0; i<length; i++)
     {
-        crc = (crc>>8)^crctab16[crc&0xFF^*data];
+        crc = (crc>>8)^crctab16[(crc&0xFF)^*data];
         data++;
     }
 
     return crc;
 }
 
-/* 出栈 */
-#pragma push
-/* 优化等级 3 */
-#pragma O3
+///* 出栈 */
+//#pragma push
+///* 优化等级 3 */
+//#pragma O3
 /**
  * 生成CRC32校验码
  * 
@@ -439,7 +439,7 @@ uint32_t crc32_create(const uint8_t * p_dat_u8, uint16_t len, uint32_t crc)
   return crc;
 } 
 /* enter */
-#pragma pop
+//#pragma pop
 
 
 

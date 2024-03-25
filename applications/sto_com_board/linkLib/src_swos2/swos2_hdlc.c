@@ -21,8 +21,7 @@
 #include "if_gpio.h"
 
 #define SWOS2_HDLC_SIZE_MQ_NUM   (20)
-//#define SWOS2_HDLC_MSG_MQ_NUM    (20)
-#define SWOS2_HDLC_MSG_MQ_NUM    (300)
+#define SWOS2_HDLC_MSG_MQ_NUM    (20)
 #define SWOS2_HDLC_FRAME_BUF_SIZE   (256)
 
 /* 单字节对齐 */
@@ -53,6 +52,7 @@ static rt_err_t swos2_rx_ind(rt_device_t dev, rt_size_t size)
     uint32_t read_size;
 
     read_size = size;
+
     result = rt_mq_send(p_dev->size_mq, &read_size, sizeof(uint32_t));
     if (result != RT_EOK)
     {
@@ -76,24 +76,66 @@ static void swos2_hdlc_rx_thread_entry(void *param)
 
     while(1)
     {
-        if(RT_EOK == rt_mq_recv(dev->size_mq, &read_size, sizeof(uint32_t), 0))
+        if(RT_EOK == rt_mq_recv(dev->size_mq, &read_size, sizeof(uint32_t), (rt_int32_t)RT_WAITING_FOREVER))
         {
             if(read_size > 0)
             {
                 rt_memset(hdlc_rx_msg.buf, 0, SWOS2_HDLC_FRAME_BUF_SIZE);
                 hdlc_rx_msg.len = rt_device_read(dev->dev, 0, hdlc_rx_msg.buf, read_size);
+
                 if(hdlc_rx_msg.len == read_size)
                 {
-//                    rt_kprintf("read %x, len %d\r\n", hdlc_rx_msg.buf[0], read_size);
+#if 1
                     result = rt_mq_send(dev->msg_mq, &hdlc_rx_msg, sizeof(S_SWOS2_HDLC_FRAME));
                     if (result != RT_EOK)
                     {
                         LOG_E("msg mq send error %d", result);
                     }
+#else
+                    uint32 size = 0;
+#if 0
+                    S_SWOS2_HDLC_FRAME expect_hdlc_frame;
+                    static uint8 expect_index = 0;
+                    static uint8 first_recv = 0;
+
+                    memset(expect_hdlc_frame.buf, 0xAA, 143);
+                    if(memcmp(&expect_hdlc_frame.buf[1], &hdlc_rx_msg.buf[1], (int)141) == 0)
+                    {
+                      if(expect_index == hdlc_rx_msg.buf[0])
+                      {
+                          rt_kprintf("hdlc %d\r\n", hdlc_rx_msg.buf[0]);
+                      }
+                      else
+                      {
+                          rt_kprintf("----hdlc recv index error %d %d\r\n", hdlc_rx_msg.buf[0], expect_index);
+                          if(first_recv == 0)  /* 第一次收到数据时，期望值根据接收到的数据设置 */
+                          {
+                              first_recv = 1;
+                              expect_index = hdlc_rx_msg.buf[0];
+                          }
+                      }
+                      expect_index++;
+                      if(expect_index > 255)
+                      {
+                        expect_index = 0;
+                      }
+                    }
+                    else
+                    {
+                        rt_kprintf("----hdlc recv error %d\r\n", hdlc_rx_msg.buf[0]);
+                    }
+#else
+                    size = rt_device_write(dev->dev, 0, (const void*)hdlc_rx_msg.buf, hdlc_rx_msg.len);
+                    if(size != hdlc_rx_msg.len)
+                    {
+                        rt_kprintf("----hdlc send\r\n");
+                    }
+#endif
+
+#endif
                 }
             }
         }
-        rt_thread_mdelay(1);
     }
 }
 
@@ -111,7 +153,7 @@ BOOL if_hdlc_init(void)
     }
 
     /* 2.查找并打开设备 */
-    swos2_hdlc_dev.dev = rt_device_find("z8523l16");
+    swos2_hdlc_dev.dev = rt_device_find("hdlc");
     if(RT_NULL == swos2_hdlc_dev.dev)
     {
         LOG_E("find z8523l16 error");
@@ -143,7 +185,6 @@ BOOL if_hdlc_init(void)
     }
 
     /* 4.创建，启动接收线程 */
-//    tid = rt_thread_create("if hdlc rx", swos2_hdlc_rx_thread_entry, &swos2_hdlc_dev, 2048, 12, 5);
     tid = rt_thread_create("if hdlc rx", swos2_hdlc_rx_thread_entry, &swos2_hdlc_dev, 2048, 20, 5);
     if (tid == RT_NULL)
     {

@@ -69,18 +69,18 @@ static S_SWOS2_ETH_DEV swos2_eth_dev;
 
 static S_SWOS2_ETH swos2_eth[] =
 {
-    {
-        .name = "e0",
-        .mq_name = "e0 mq",
-    },
-    {
-        .name = "e1",
-        .mq_name = "e1 mq",
-    },
-    {
-        .name = "e",
-        .mq_name = "e mq",
-    },
+        {
+                .name = "e0",
+                .mq_name = "e0 mq",
+        },
+        {
+                .name = "e1",
+                .mq_name = "e1 mq",
+        },
+        {
+                .name = "e",
+                .mq_name = "e mq",
+        },
 };
 
 /* 通信1底板I系mac配置 */
@@ -267,6 +267,7 @@ static void sw_ethrx_thread_entry(void *param)
     rt_uint32_t mbval;
     rt_err_t ret;
 
+    static rt_uint32_t nocnt = 0U;
     while (1)
     {
         ret = rt_mb_recv(&swos2_eth_dev.mailbox, &mbval, RT_WAITING_FOREVER);
@@ -277,20 +278,57 @@ static void sw_ethrx_thread_entry(void *param)
 
             if(rt_device_read(swos2_eth_dev.dev[info->channel]->dev, 0, (void *)swos2_eth_dev.dev[info->channel]->rx_buf.data_u8, info->len) == info->len)
             {
+                //MY_Printf("rt_device_read len:%d !!!\r\n", info->len);
+                if( 800 < info->len)
+                {
+                    //MY_Printf("rt_device_read len:%d !!!\r\n", info->len);
+
+#if 0
+
+                MY_Printf("ETHdata_no :%d\r\n",nocnt);
+                nocnt++;
+                MY_Printf("rt_device_read len:%d !!!\r\n", info->len);
+                MY_Printf("ETHT data:\r\n");
+                for(uint16 i=0; i<info->len; i++)
+                {
+                    if( ( i > 27U ) && ( i <= 31U ) )
+                    {
+                        MY_Printf("%d ",swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[i]);
+                    }
+                    else
+                    {
+                        MY_Printf("%.2x ",swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[i]);
+                    }
+
+                    if ((13U == i) || (27U == i) || (31U == i )||(39U == i )||(46U == i ))
+                    {
+                        MY_Printf("\r\n");
+                    }
+                    else if( i > 46U )
+                    {
+                        if( 0U == (i+1+46-2) % 13 )
+                            MY_Printf("\r\n");
+                    }
+                }
+                MY_Printf("\r\n");
+
+#endif
+                }
                 /* 目的地址与广播地址判断 */
                 if((swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[0] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[6] && \
-                    swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[1] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[7] && \
-                    swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[2] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[8] && \
-                    swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[3] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[9] && \
-                    swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[4] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[10] && \
-                    swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[5] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[11]) || \
-                    (swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[0] == 0xff && \
-                    swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[1] == 0xff && \
-                    swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[2] == 0xff && \
-                    swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[3] == 0xff && \
-                    swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[4] == 0xff && \
-                    swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[5] == 0xff))
+                        swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[1] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[7] && \
+                        swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[2] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[8] && \
+                        swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[3] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[9] && \
+                        swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[4] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[10] && \
+                        swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[5] == swos2_eth_dev.dev[info->channel]->tx_buf.data_u8[11]) || \
+                        (swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[0] == 0xff && \
+                        swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[1] == 0xff && \
+                        swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[2] == 0xff && \
+                        swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[3] == 0xff && \
+                        swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[4] == 0xff && \
+                        swos2_eth_dev.dev[info->channel]->rx_buf.data_u8[5] == 0xff))
                 {
+
                     swos2_eth_dev.dev[info->channel]->rx_buf.len = info->len;
                     ret = rt_mq_send(swos2_eth_dev.dev[info->channel]->eth_rx_mq,
                                     (const void *)&swos2_eth_dev.dev[info->channel]->rx_buf, sizeof(S_SW_ETH_BUF));
@@ -298,6 +336,8 @@ static void sw_ethrx_thread_entry(void *param)
                     {
                         LOG_E("eth %d mq send error", info->channel);
                     }
+
+
                 }
 //                else
 //                {
@@ -450,7 +490,6 @@ BOOL if_eth_init(void)
     }
 
     /* 4.创建，启动接收线程 */
-//    tid = rt_thread_create("if eth rx", sw_ethrx_thread_entry, RT_NULL, 2048, 12, 5);
     tid = rt_thread_create("if eth rx", sw_ethrx_thread_entry, RT_NULL, 2048, 20, 5);
     if (tid == RT_NULL)
     {
@@ -536,16 +575,31 @@ BOOL if_eth_send(E_ETH_CH ch, uint8 *pdata, uint16 len)
     swos2_eth_dev.dev[ch]->tx_buf.len = len + SW_ETH_LINK_LAYER_MAC_LENTH + 2;
 
     //长度
-    swos2_eth_dev.dev[ch]->tx_buf.data_u8[SW_ETH_LINK_LAYER_MAC_LENTH + 0] = (uint8_t)(swos2_eth_dev.dev[ch]->tx_buf.len & 0xFF);
-    swos2_eth_dev.dev[ch]->tx_buf.data_u8[SW_ETH_LINK_LAYER_MAC_LENTH + 1] = swos2_eth_dev.dev[ch]->tx_buf.len >> 8;
+    swos2_eth_dev.dev[ch]->tx_buf.data_u8[SW_ETH_LINK_LAYER_MAC_LENTH + 0] = swos2_eth_dev.dev[ch]->tx_buf.len >> 8;
+    swos2_eth_dev.dev[ch]->tx_buf.data_u8[SW_ETH_LINK_LAYER_MAC_LENTH + 1] = (uint8_t)(swos2_eth_dev.dev[ch]->tx_buf.len & 0xFF);
 
     rt_memcpy(&swos2_eth_dev.dev[ch]->tx_buf.data_u8[SW_ETH_LINK_LAYER_MAC_LENTH + 2], (const void *)pdata, len);
-
+    
     if(rt_device_write(swos2_eth_dev.dev[ch]->dev, 0, (const void *)swos2_eth_dev.dev[ch]->tx_buf.data_u8, swos2_eth_dev.dev[ch]->tx_buf.len)
             != swos2_eth_dev.dev[ch]->tx_buf.len)
     {
         return FALSE;
     }
+    //MY_Printf("swos2_eth_dev eth data len is legal, len:%d !!!\r\n",swos2_eth_dev.dev[ch]->tx_buf.len);
+#if 0
+    if( 0U != swos2_eth_dev.dev[ch]->tx_buf.len )
+    {
+
+        MY_Printf("swos2_eth_dev eth data len is legal, len:%d !!!\r\n",swos2_eth_dev.dev[ch]->tx_buf.len);
+        MY_Printf("data:");
+        for(uint16 i=0;i<swos2_eth_dev.dev[ch]->tx_buf.len;i++)
+        {
+            MY_Printf("%.2x ",swos2_eth_dev.dev[ch]->tx_buf.data_u8[i]);
+        }
+        MY_Printf("\r\n");
+    }
+#endif
+
     return TRUE;
 }
 
@@ -558,8 +612,19 @@ uint16 if_eth_get(E_ETH_CH ch, uint8 *pdata, uint16 len)
     ret = rt_mq_recv(swos2_eth_dev.dev[ch]->eth_rx_mq, (void *) &rx_buf, sizeof(S_SW_ETH_BUF), RT_WAITING_NO);
     if (RT_EOK == ret)
     {
+        // read_len = rx_buf.len - SW_ETH_LINK_LAYER_MAC_LENTH - 2;
+        // rt_memcpy(pdata, &rx_buf.data_u8[SW_ETH_LINK_LAYER_MAC_LENTH + 2], read_len);
+
         read_len = rx_buf.len - SW_ETH_LINK_LAYER_MAC_LENTH - 2;
-        rt_memcpy(pdata, &rx_buf.data_u8[SW_ETH_LINK_LAYER_MAC_LENTH + 2], read_len);
+        if(read_len <= len)
+        {
+            rt_memcpy(pdata, &rx_buf.data_u8[SW_ETH_LINK_LAYER_MAC_LENTH + 2], read_len);
+        }
+        else
+        {
+            read_len = 0;
+        }
+
         return read_len;
     }
     else

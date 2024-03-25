@@ -23,9 +23,11 @@
 #endif
 #include <sys/socket.h> /* socket.h header file is needed when using BSD socket */ /* 使用BSD socket，需要包含socket.h头文件 */
 #include "netdb.h"
+#include "record_ota.h"
+#include "Record_FileDown.h"
 
 #define UDP_RCV_THREAD_STACK_SIZE   (1024 * 2)
-#define UDP_RCV_THREAD_PRIORITY     (15)
+#define UDP_RCV_THREAD_PRIORITY     (22)//(14)
 #define UDP_RCV_THREAD_TIMESLICE    (20)
 
 //#define UDP_SERVER_PORT    (8090U)
@@ -34,11 +36,7 @@
 
 #define UDP_RCV_MQ_NUM     (10)
 
-
-
 uint8_t udp_recv_buffer[UDP_RCV_BUFSZ];
-extern uint32_t GetNewDatagram( uint8_t dgm[], uint32_t len );
-extern uint32_t GetDownloadDatagram( uint8_t dgm[], uint32_t size );
 
 typedef struct {
     int sock;
@@ -53,6 +51,11 @@ typedef struct {
 
 static S_UDP_SERVER udp_server_dev;
 
+void udp_send_datagram(void *data, size_t size)
+{
+
+}
+
 void UDPServerSendData(const void *data, size_t size)
 {
     S_UDP_SERVER *dev = &udp_server_dev;
@@ -64,11 +67,11 @@ void UDPServerSendData(const void *data, size_t size)
     {
         LOG_E("ret error");
     }
-//    rt_thread_mdelay(1000);
 }
 
-static rt_err_t UDPServerInit(S_UDP_SERVER *dev)
+rt_err_t UDPServerInit(void)
 {
+    S_UDP_SERVER *dev = &udp_server_dev;
 
     memset(dev, 0, sizeof(S_UDP_SERVER));
 
@@ -84,7 +87,7 @@ static rt_err_t UDPServerInit(S_UDP_SERVER *dev)
     if (RT_NULL == dev->mutex)
     {
         LOG_E("create udp mutex failed");
-        return -1;
+        return -RT_ERROR;
     }
 
     /* Allocate space for recv_data */
@@ -125,12 +128,6 @@ static void UDPServerRcvThreadEntry(void *paramemter)
 
     S_UDP_SERVER *dev = &udp_server_dev;
 
-    if(UDPServerInit(dev) !=RT_EOK)
-    {
-        LOG_E("UDPServerInit(&udp_server_dev) error");
-        goto __exit;
-    }
-
     /* Create a socket and set it to SOCK_DGRAM(UDP) */
     /* 创建一个socket，类型是SOCK_DGRAM，UDP类型 */
     if ((dev->sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
@@ -157,7 +154,6 @@ static void UDPServerRcvThreadEntry(void *paramemter)
 
     while (1)
     {
-
         FD_ZERO(&readset);
         FD_SET(dev->sock, &readset);
 
@@ -186,7 +182,7 @@ static void UDPServerRcvThreadEntry(void *paramemter)
             dev->recv_data[bytes_read] = '\0'; /* Append '\0' at the end of message *//* 把末端清零 */
             /* Output received message */
             /* 输出接收的数据 */
-            LOG_D("Received data = %s size = %d", dev->recv_data, bytes_read);
+//            LOG_D("Received data = %s size = %d", dev->recv_data, bytes_read);
 //            UDPServerSendData(dev->recv_data, rt_strlen(dev->recv_data));
 
 
@@ -200,6 +196,7 @@ static void UDPServerRcvThreadEntry(void *paramemter)
                 LOG_E("udp mq send error %d", ret);
             }
         }
+        rt_thread_mdelay(1);
     }
 __exit:
     if (dev->recv_data)

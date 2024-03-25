@@ -14,7 +14,7 @@
 /*******************************************************************************************
  *        Local definitions
  *******************************************************************************************/
-#define LIST_BUF_TOTALLENGTH   ( 100*1024 )      /* 缓冲区总size */
+#define LIST_BUF_TOTALLENGTH   ( 200*1024 )      /* 缓冲区总size */
 #define MAX_LISTARRY_COUNT     ( 2048U )         /* 最大队列计数 */
 
 /* 列表管理控制 */
@@ -107,7 +107,7 @@ extern S_ArrayList * support_arraylistCreate(const char *p_ch_namePara, uint16 u
     p_arList->u16_itemMaxSize = u16_itemSizePara;
 
     /* 4.拷贝数据 */
-    memset(p_arList->a_ch_name, 0, sizeof(MAX_LISTARRAY_NAMESIZE + 1U));
+    memset(p_arList->a_ch_name, 0, MAX_LISTARRAY_NAMESIZE + 1U);
     memcpy(p_arList->a_ch_name, p_ch_namePara, strlen(p_ch_namePara));
 
     return p_arList;
@@ -129,6 +129,7 @@ extern BOOL support_arraylistAdd(S_ArrayList * p_arListPara, uint8 * p_u8_dataPa
     /* 1.1.检查队列管理指针, 数据指针*/
     if ((NULL == p_arListPara) || (NULL == p_u8_dataPara))
     {
+        MY_Printf("NULL == p_arListPara) || (NULL == p_u8_dataPara \r\n");
         return FALSE;
     }
     else
@@ -138,6 +139,7 @@ extern BOOL support_arraylistAdd(S_ArrayList * p_arListPara, uint8 * p_u8_dataPa
     /* 1.2.检查数据长度 */
     if (u16_lenPara > p_arListPara->u16_itemMaxSize)
     {
+        MY_Printf("u16_lenPara > p_arListPara->u16_itemMaxSize \r\n");
         return FALSE;
     }
     else
@@ -149,6 +151,7 @@ extern BOOL support_arraylistAdd(S_ArrayList * p_arListPara, uint8 * p_u8_dataPa
     u16_nextWrIdx = (p_arListPara->u16_wIdx + 1U) % p_arListPara->u16_itemCount;
     if (u16_nextWrIdx == p_arListPara->u16_rIdx)
     {
+        MY_Printf("liblist is full \r\n");
         return FALSE; /* 队列满 */
     }
     else
@@ -237,6 +240,7 @@ extern sint32 support_arraylistGet(S_ArrayList * p_arListPara, uint8 * p_u8_data
 
     /* 7.数组下标调整 */
     p_arListPara->u16_rIdx = (p_arListPara->u16_rIdx + 1U) % p_arListPara->u16_itemCount;
+
 
     return (sint32) u16_len;
 }

@@ -13,6 +13,8 @@
 #include "udp_comm.h"
 #include "sto_record_board.h"
 #include "utils.h"
+#include "crc.h"
+#include "record_ota.h"
 
 #define ENABLE_FILE_DOWN 0
 
@@ -20,17 +22,6 @@
 volatile uint8_t Socket_Connect_Flag = 0u;
 volatile uint8_t Socket_Closed_Flag  = 1u;
 volatile uint8_t Socket_Receive_Flag = 0u;
-
-enum APPLY_CMD ApplyCmd = NONECMD;
-
-static void Read_File(SFile_Directory directory, uint8_t ID );
-static void Send_File( void );
-#if 0
-static void Get_FileName(SFile_Directory directory,uint8_t *file_name);
-#endif
-static void Send_FileDirectory( void );
-static void ETH_RecProc( void );
-
 
 /* 13-November-2018, by Liang Zhen. */
 /* private macro definition -------------------------------------------------------------------- */
@@ -49,6 +40,9 @@ static void ETH_RecProc( void );
 #define DOWN_CMD_ACKR       ( "ACKR" )
 #define DOWN_CMD_UPRB       ( "UPRB" )
 #define DOWN_CMD_UPRF       ( "UPRF" )
+
+//#define OTA_CMD_ROTA_START  (0x55)
+//#define OTA_CMD_ROTA_STOP   (0xAA)
 
 
 /* private type definition --------------------------------------------------------------------- */
@@ -73,6 +67,9 @@ typedef enum
     DW_SM_ACK_BRIEF,
     /* Ack of file. */
     DW_SM_ACK_FILE,
+
+    /* RECORD OTA */
+    DW_SM_OTA_MODE,
 
     /* Exception. */
     DW_SM_EXCEPTION,
@@ -107,6 +104,9 @@ typedef struct tagDownloadFileStruct
     uint32_t DGM_Amount;
     /* Datagram number of file. */
     uint32_t DGM_Num;
+
+//    RecordOTAMode ota_mode;      /* 0x55启动升级；0xaa关闭升级 */
+    uint32_t ota_ack_index;  /* 报文序号 */
 } DownloadFileStruct, *pDownloadFileStruct;
 
 
@@ -138,476 +138,11 @@ static uint32_t AssertAckBrief( DownloadFileStruct *dwf );
 static uint32_t Processing_DW_SM_ACK_FILE( uint32_t status, DownloadFileStruct *dwf );
 static uint32_t AssertAckFile( DownloadFileStruct *dwf );
 static uint32_t Processing_DW_SM_EXCEPTION( DownloadFileStruct *dwf );
+static void Processing_DW_ACK_OTA( DownloadFileStruct *dwf );
+static uint32_t Processing_DW_SM_OTA( DownloadFileStruct *dwf );
 
 
-#if ENABLE_FILE_DOWN
-/********************************************************************************************
-** @brief: RecordBoard_DownFile
-** @param: null
-********************************************************************************************/
-extern void RecordBoard_FileDown( void )
-{
-    if ( Socket_Receive_Flag )
-    {
-        Socket_Receive_Flag = 0u;
-        ETH_RecProc();
-    } /*  end if */
 
-    if ( !Socket_Closed_Flag && ApplyCmd == DIRECTORYCMD )
-    {
-        LOG_I( "A connect success" );
-        ApplyCmd = NONECMD;
-        Send_FileDirectory();
-    }
-    else if ( !Socket_Closed_Flag && ApplyCmd == FILECMD )
-    {
-        ApplyCmd = NONECMD;
-        Send_File();
-    }
-    else if ( Socket_Closed_Flag )
-    {
-        LOG_I( "tcp close" );
-        Socket_Closed_Flag = 0u;
-        ApplyCmd = NONECMD;
-    }
-    else
-    {
-    } /* end if...else if......else */
-
-    if ( Socket_Connect_Flag )
-    {
-        Socket_Connect_Flag = 0u;
-        LOG_I( "Connected ack" );
-        char ack_buf[5] = { 0x55u, 0xaau, 'A', 'C', 'K' };
-        ETH_send( ack_buf, 5u );
-    }
-    else
-    {
-    } /* end if...else */
-}
-
-
-/********************************************************************************************
-** @brief: Send_File
-** @param: null
-********************************************************************************************/
-
-static void Send_File( void )
-{
-    ETH_REC *p;
-    uint32_t i;
-    SFile_Directory directory;
-    S_FILE_MANAGER *fm = &file_manager;
-
-    p = (ETH_REC *)UDPServerGetRcvDataBuf();
-
-    file_info_t *p_file_list_head = NULL, *p_file = NULL;
-    p_file_list_head = get_org_file_info(DIR_FILE_PATH_NAME);
-    if(p_file_list_head != NULL)
-    {
-        p_file_list_head = sort_link(p_file_list_head, SORT_UP); /* 按照文件序号,由小到大排序 */
-        p_file = p_file_list_head;
-    }
-    else
-    {
-        LOG_W("p_file_list_head = NULL line %d", __LINE__);
-        return;
-    }
-
-    for ( i = 0u; i < p->file_count; i++ )
-    {
-        /* 无效ID */
-        if ( p->ID[i] >= fm->latest_dir_file_info.dir_num )
-        {
-            return;
-        } /* end if */
-
-        /* 查找对应的目录 */
-        while (p_file)
-        {
-            if(p_file->file_id == p->ID[i])
-            {
-                break;
-            }
-            p_file = p_file->next;
-        }
-        if(p_file != NULL)
-        {
-            /* 读目录信息 */
-            FMReadDirFile(fm, p_file->dir_name, (void *)&directory, p_file->dir_file_size);  //size = sizeof( SFile_Directory )
-
-            Read_File(directory, p->ID[i] );
-        }
-        else
-        {
-            LOG_E("can not find id %d dir file %d", p->ID[i], __LINE__);
-            free_link(p_file_list_head);
-            return;
-        }
-    } /* end for */
-    free_link(p_file_list_head);
-}
-
-/********************************************************************************************
-** @brief: copy_head_to_buf
-** @param: null
-********************************************************************************************/
-static void copy_head_to_buf( char buf[], PACKAGE_HEAD *p_head )
-{
-    if ( ( NULL != buf ) && ( NULL != p_head ) )
-    {
-        buf[0] = p_head->file_num;
-        buf[1] = p_head->file_count;
-        buf[2] = p_head->lenth;
-
-        memcpy( &buf[3],  ( char * )&p_head->total_package, 4u );
-        memcpy( &buf[7],  ( char * )&p_head->current_package, 4u );
-        memcpy( &buf[11], ( char * )&p_head->crc, 2u );
-        memcpy( &buf[13], ( char * )&p_head->file_name[0], 24u );
-        buf[37] = 0x00u;
-    }
-}
-
-
-/********************************************************************************************
-** @brief: Send_File
-** @param: null
-********************************************************************************************/
-static void Read_File(SFile_Directory directory, uint8_t ID )
-{
-    ETH_REC *p;
-
-    uint32_t i = 0u, page_count = 0u;
-    PACKAGE_HEAD package_head = { 0u };
-    S_FILE_MANAGER *fm = &file_manager;
-    char full_path[PATH_NAME_MAX_LEN] = { 0 };
-
-    p = (ETH_REC *)UDPServerGetRcvDataBuf();
-    /* 生成包头信息 */
-    package_head.file_num   = ID;
-    package_head.file_count = p->file_count;
-    /*如果是当前记录文件,发送最后缓冲区数据 */
-    if ( directory.u32_over_flag == 0u )
-    {
-        directory.u32_file_size += write_buf.pos;
-        /*directory.page_count+=1;*/
-    } /* end if */
-
-    package_head.total_package = directory.u32_file_size / 100u\
-                                    + ( ( directory.u32_file_size % 100u ) ? 1u : 0u );
-
-    package_head.current_package = 0u;
-    memcpy( package_head.file_name, directory.ch_file_name, FILE_NAME_MAX_NUM);
-
-    LOG_I( "file name is %s", directory.ch_file_name );
-	
-//	uint32_t addr = directory.u32_start_addr;
-	uint32_t addr = 0; //文件开始位置
-	char read_buf[ 256u ] = { 0u }, send_buf[ 128u ] = { 0u };
-	uint32_t SendBuf_pos = 28u, SendRest_size = 100u, ReadBuf_size = 0u, ReadRest_size = 0u;
-
-	LOG_I( "read file" );
-  
-	page_count = directory.u32_file_size / 256u + ( ( directory.u32_file_size % 256u ) ? 1u : 0u );
-  
-    for ( i = 0u; i < page_count; i++ )
-    {
-        memset( read_buf, 0u, 256u );
-
-        if ( ( i == page_count - 1u ) && ( directory.u32_over_flag == 0u ) )
-        {
-            memcpy( read_buf, write_buf.buf, 256u );
-            ReadBuf_size = directory.u32_file_size % 256u;
-            if ( ReadBuf_size == 0u )
-            {
-                ReadBuf_size = 256u;
-            } /* end if */
-        }
-        else if ( i == page_count - 1u )
-        {
-//            /* 10-May-2018, by Liang Zhen. */  TODO(mingzhao)
-//            #if 0
-//            S25FL1D_Read( ( uint32_t * )&read_buf, sizeof( read_buf ), addr );
-//            #else
-//            S25FL256S_Read( ( uint32_t * )&read_buf, sizeof( read_buf ), addr );
-//            #endif
-
-            snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, directory.ch_file_name);
-            if(FMReadFile(fm, full_path, addr, (void *)&read_buf, sizeof( read_buf )) < 0)
-            {
-                LOG_E("read %s error", full_path);
-                return;
-            }
-
-            ReadBuf_size = directory.u32_file_size % 256u;
-            if ( ReadBuf_size == 0u )
-            {
-                ReadBuf_size = 256u;
-            } /* end if */
-        }
-        else
-        {
-//            /* 10-May-2018, by Liang Zhen. */   TODO(mingzhao)
-//            #if 0
-//            S25FL1D_Read( ( uint32_t * )&read_buf, sizeof( read_buf ), addr );
-//            #else
-//            S25FL256S_Read( ( uint32_t * )&read_buf, sizeof( read_buf ), addr );
-//            #endif
-
-            snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, directory.ch_file_name);
-            if(FMReadFile(fm, full_path, addr, (void *)&read_buf, sizeof( read_buf )) < 0)
-            {
-                LOG_E("read %s error", full_path);
-                return;
-            }
-
-            ReadBuf_size = 256u;
-        } /* end if...else if...else */
-
-        ReadRest_size = ReadBuf_size;
-        /* 放入缓冲区 */
-        /*
-        SendRest_size=128-SendBuf_pos;
-        printf("send rest size is %d,send pos is %d\r\n",SendRest_size,SendBuf_pos);
-        */
-        
-        /* 17-August-2018, by Liang Zhen. */
-//        static unsigned int uart_sync = 0U;
-        
-        while ( 1u )
-        {
-            if ( SendRest_size > ReadRest_size )
-            {
-                memcpy( &send_buf[ SendBuf_pos ],\
-                        &read_buf[ ReadBuf_size - ReadRest_size ],\
-                        ReadRest_size );
-
-                SendBuf_pos   += ReadRest_size;
-                SendRest_size -= ReadRest_size;
-                memset( &send_buf[ SendBuf_pos ], 0u, SendRest_size );
-
-                break;
-            }
-            else
-            {
-                memcpy( &send_buf[ SendBuf_pos ],\
-                        &read_buf[ ReadBuf_size - ReadRest_size ],\
-                        SendRest_size );
-
-                /* 网口发送 */
-                package_head.lenth = 100u;
-                copy_head_to_buf( send_buf, &package_head );
-                LOG_I( "package num is %d", package_head.current_package );
-                ETH_send( send_buf, 128u );
-                package_head.current_package += 1u;
-                SendBuf_pos    = 28u;
-                ReadRest_size -= SendRest_size;
-                SendRest_size  = 100u;
-            } /* end if...else */
-
-//            /* 17-August-2018, by Liang Zhen. */  //TODO(mingzhao)
-//            if( Common_BeTimeOutMN( &uart_sync, 1000U ) )
-//            {
-//                if( CPU_A == Get_CPU_Type() )
-//                {
-//                    UART1_Send( 5U );
-//                    #if 0
-//                    printf( "\r\n--> %d\r\n", uart_sync );
-//                    #endif
-//                } /* end if */
-//            } /* end if */
-        } /* end while */
-        
-        addr += FILE_PAGE_SIZE;
-//        if ( addr == FLASH_RecordFile_MAX_ADDR )
-        if ( addr >= directory.u32_file_size )
-        {
-            addr = 0;   //该出去进行下一个文件了
-        } /* end if */
-    } /* end for */
-	
-    if ( SendBuf_pos != 28u )
-    {
-        LOG_I( "not full\r\n" );
-        /* 网口发送 */
-        package_head.lenth = SendBuf_pos - 28u;
-        copy_head_to_buf( send_buf, &package_head );
-        ETH_send( send_buf, 128u );
-        package_head.current_package += 1u;
-    } /*  end if */
-}
-
-static void Send_FileDirectory( void )
-{
-	ETH_SEND eth_buf = { 0u };
-    S_FILE_MANAGER *fm = &file_manager;
-
-
-    if ( 0u == fm->latest_dir_file_info.dir_num )
-    {
-        /* 组包头 */
-        eth_buf.flag[0]  = 0xeeU;
-        eth_buf.flag[1]  = 0xffU;
-        eth_buf.file_sum    = 0u;
-        eth_buf.package_sum = 0u;
-        ETH_send( ( void* )&eth_buf, 128u );
-    }
-    else
-    {
-        /* 发送目录，每包发送6个 */
-        uint8_t  package_sum = fm->latest_dir_file_info.dir_num / 6u + ( ( fm->latest_dir_file_info.dir_num % 6u ) ? 1u : 0u );
-        uint8_t  packageID   = 0u, fileID = 0u, i = 0u;
-        uint32_t addr = 0;
-        SFile_Directory directory;
-
-        /* 组包头 */
-        eth_buf.flag[0]  = 0xeeU;
-        eth_buf.flag[1]  = 0xffU;
-        eth_buf.file_sum    = fm->latest_dir_file_info.dir_num;
-        eth_buf.package_sum = package_sum;
-
-        /* 读取目录信息 */
-        file_info_t *p_file_list_head = NULL, *p_file = NULL;
-        p_file_list_head = get_org_file_info(DIR_FILE_PATH_NAME);
-        if(p_file_list_head != NULL)
-        {
-            p_file_list_head = sort_link(p_file_list_head, SORT_UP); /* 按照文件序号,由小到大排序 */
-            p_file = p_file_list_head;
-        }
-        else
-        {
-            LOG_W("p_file_list_head = NULL %d",  __LINE__);
-            return;
-        }
-
-        for ( packageID = 0u; packageID < package_sum; packageID++ )
-        {
-            if ( packageID < package_sum - 1u )
-            {
-                eth_buf.file_count = 6u;
-                eth_buf.packageID  = packageID;
-                for ( i = 0u; i < eth_buf.file_count; i++ )
-                {
-//                    FM25V05_Manage_ReadData( addr, ( uint8_t * )&directory, sizeof( SFile_Directory ) );
-//                    addr += sizeof( SFile_Directory );
-//                    if ( addr == FRAM_MAX_ADDR )
-//                    {
-//                        addr = FRAM_BASE_ADDR;
-//                    } /* end if */
-
-
-                    /* 查找对应的目录 */
-                    while (p_file)
-                    {
-                        if(p_file->file_id == fileID)
-                        {
-                            break;
-                        }
-                        p_file = p_file->next;
-                    }
-
-                    if(p_file != NULL)
-                    {
-                        /* 读目录信息 */
-                        FMReadDirFile(fm, p_file->dir_name, (void *)&directory, p_file->dir_file_size);  //size = sizeof( SFile_Directory )
-
-                        memcpy( eth_buf.contant[i].name, directory.ch_file_name,  24u );
-                        memcpy( eth_buf.contant[i].size, &directory.u32_file_size, 4u );
-                        eth_buf.contant[i].fileID = fileID;
-                        fileID++;
-                    }
-                    else
-                    {
-                        LOG_E("can not find id %d dir file %d", fileID, __LINE__);
-                        free_link(p_file_list_head);
-                        return;
-                    }
-                } /* end for */
-
-                ETH_send( ( void* )&eth_buf, 128u );
-            }
-            /* 最后一包 */
-            else
-            {
-                //*eth_buf.u32_file_count=Flash_State.u32_file_count%6;*/
-                /* chengt by chengt----20171108 */
-                eth_buf.file_count = ( fm->latest_dir_file_info.dir_num - packageID * 6u ) % 7u;
-
-                eth_buf.packageID  = packageID;
-                for ( i = 0u; i < eth_buf.file_count; i++ )
-                {
-//                    FM25V05_Manage_ReadData( addr, ( uint8_t * )&directory, sizeof( SFile_Directory ) );
-//                    addr += sizeof( SFile_Directory );
-//                    if ( addr == FRAM_MAX_ADDR )
-//                    {
-//                        addr = FRAM_BASE_ADDR;
-//                    } /*  end if */
-
-                    /* 查找对应的目录 */
-                    while (p_file)
-                    {
-                        if(p_file->file_id == fileID)
-                        {
-                            break;
-                        }
-                        p_file = p_file->next;
-                    }
-
-                    if(p_file != NULL)
-                    {
-                        /* 读目录信息 */
-                        FMReadDirFile(fm, p_file->dir_name, (void *)&directory, p_file->dir_file_size);  //size = sizeof( SFile_Directory )
-                        memcpy( eth_buf.contant[i].name, directory.ch_file_name, 24u );
-                        memcpy( eth_buf.contant[i].size, &directory.u32_file_size, 4u );
-                        eth_buf.contant[i].fileID = fileID;
-                        fileID++;
-                    }
-                    else
-                    {
-                        LOG_E("can not find id %d dir file %d", fileID, __LINE__);
-                        free_link(p_file_list_head);
-                        return;
-                    }
-
-                } /*  end for */
-
-                if ( i != 6u )
-                {
-                    memset( &eth_buf.contant[i], 0u, ( 6 - i ) * sizeof( NAME_ID ) );
-                } /* end if */
-
-                ETH_send( ( void* )&eth_buf, 128u );
-            } /*  end if...else */
-        } /* end for */
-        free_link(p_file_list_head);
-    } /* end if...else */
-}
-
-static void ETH_RecProc( void )
-{
-    ETH_REC *p;
-
-    p = (ETH_REC *)UDPServerGetRcvDataBuf();
-
-    /* 28-September-2018, by Liang Zhen. */
-//    GetNewDatagram( tcp_server_recvbuf, TCP_SERVER_RX_BUFSIZE );  //TODO(mingzhao)
-
-    if ( p->flag[0] != 0xeeU && p->flag[1] != 0xffU )
-    {
-        return;
-    } /* end if */
-
-    if ( p->file_count == 0u )
-    {
-        ApplyCmd = DIRECTORYCMD;
-    }
-    else
-    {
-        ApplyCmd = FILECMD;
-    } /* end if...else */
-}
-
-#endif
 /**************************************************************************************************
 (^_^) Function Name : ThreadFileDownload.
 (^_^) Brief         : The thread of downloading recording file.
@@ -677,6 +212,9 @@ void ThreadFileDownload( void )
             Processing_DW_SM_EXCEPTION( &downloadFileInst );
             break;
 
+        case DW_SM_OTA_MODE:
+            Processing_DW_SM_OTA(&downloadFileInst);
+            break;
         default :
 //            LOG_I("default");
             downloadFileInst.smDownload = DW_SM_IDLE;
@@ -752,7 +290,6 @@ uint32_t GetDownloadDatagram( uint8_t dgm[], uint32_t size )
             memcpy( downloadFileInst.RX_Buffer, dgm, size );
 
             downloadFileInst.udp_recv = UDP_RECV_NOTEMPTY;
-//            LOG_I("UDP_RECV_NOTEMPTY");
         } /* end if...else */
     } /* end if...else if...else */
 
@@ -855,14 +392,45 @@ static uint32_t Processing_DW_SM_IDLE( uint32_t status, DownloadFileStruct *dwf 
         else
         {
             uint32_t sign = strncmp( HS_RB, ( const char * )&dwf->RX_Buffer[16], 2U );
-
+            LOG_I("IDLE udp %c %c", dwf->RX_Buffer[16], dwf->RX_Buffer[17]);
             if ( sign )
             {
                 sign = strncmp( HS_RF, ( const char * )&dwf->RX_Buffer[16], 2U );
 
                 if ( sign )
                 {
-                    exit_code = 4U;
+                    sign = strncmp( HS_APP, ( const char * )&dwf->RX_Buffer[16], 2U );
+                    if(sign)
+                    {
+                        exit_code = 4U;
+                    }
+                    else
+                    {
+                        dwf->smDownload = DW_SM_OTA_MODE;
+                        exit_code = 0U;
+
+                        if(PC_OTA_START_I == dwf->RX_Buffer[14] && PC_OTA_START_II == dwf->RX_Buffer[15])
+                        {
+//                            dwf->ota_mode = RecordOTAModeUpdata;
+                            RecordOTASetMode(RecordOTAModeUpdata);
+                            Processing_DW_ACK_OTA(dwf);
+//                            LOG_I("1-start ota");
+                        }
+                        else if(PC_OTA_OVER_I == dwf->RX_Buffer[14] && PC_OTA_OVER_II == dwf->RX_Buffer[15])
+                        {
+//                            dwf->ota_mode = RecordOTAModeNormal;
+                            RecordOTASetMode(RecordOTAModeNormal);
+                            Processing_DW_ACK_OTA(dwf);
+//                            LOG_I("1-stop ota");
+                        }
+                        else
+                        {
+                            dwf->smDownload = DW_SM_EXCEPTION;
+//                            dwf->ota_mode = RecordOTAModeNormal;
+                            RecordOTASetMode(RecordOTAModeNormal);
+                            exit_code = 5U;
+                        }
+                    }
                 }
                 else
                 {
@@ -973,12 +541,6 @@ static uint32_t Processing_DW_SM_ASSERT_FILE( DownloadFileStruct *dwf )
         }
         else
         {
-//            uint32_t dir_addr = Flash_State.u32_fram_start_addr\
-//                                    + ( ( uint32_t )dwf->FileNum - 1U ) * sizeof( SFile_Directory );
-//            SFile_Directory dir;
-//
-//            FM25V05_Manage_ReadData( dir_addr, ( uint8_t * )&dir, sizeof( SFile_Directory ) );
-
             SFile_Directory dir;
             /* 读取目录信息 */
             file_info_t *p_file_list_head = NULL, *p_file = NULL;
@@ -990,15 +552,16 @@ static uint32_t Processing_DW_SM_ASSERT_FILE( DownloadFileStruct *dwf )
             }
             else
             {
+                exit_code = 2U;
                 LOG_W("p_file_list_head = NULL %d",  __LINE__);
-                return;
+                return exit_code;
             }
 
             /* 查找对应的目录 */
             while (p_file)
             {
 //                if(p_file->file_id == ( ( uint32_t )dwf->FileNum - 1U ))
-                    if(p_file->file_id == ( ( uint32_t )dwf->FileNum))
+                if(p_file->file_id == ( ( uint32_t )dwf->FileNum))
                 {
                     break;
                 }
@@ -1011,9 +574,10 @@ static uint32_t Processing_DW_SM_ASSERT_FILE( DownloadFileStruct *dwf )
             }
             else
             {
+                exit_code = 4U;
                 LOG_E("can not find id %d dir file %d", ( ( uint32_t )dwf->FileNum), __LINE__);
                 free_link(p_file_list_head);
-                return;
+                return exit_code;
             }
 
             free_link(p_file_list_head);
@@ -1191,7 +755,8 @@ static uint32_t Processing_DW_SM_SEND_BRIEF( DownloadFileStruct *dwf )
 **************************************************************************************************/
 static uint32_t Processing_DW_SM_SEND_FILE( DownloadFileStruct *dwf )
 {
-  uint32_t exit_code = 0U;
+    uint32_t exit_code = 0U;
+    char full_path[TEMP_PATH_NAME_MAX_LEN] = { 0 };
   
     /* 1. Assert argument. */
     if ( NULL == dwf )
@@ -1261,13 +826,12 @@ static uint32_t Processing_DW_SM_SEND_FILE( DownloadFileStruct *dwf )
                 }
             }
 
-            char full_path[PATH_NAME_MAX_LEN] = { 0 };
-
-            snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, dir_info.ch_file_name);
+            rt_snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, dir_info.ch_file_name);
             if(FMReadFile(fm, full_path, dwf->FileAddr, (void *)&dwf->TX_Buffer[18], len) < 0)
             {
+                exit_code =4U;
                 LOG_E("read %s error line %d", full_path, __LINE__);
-                return;
+                return exit_code;
             }
 
             /* 2.8 Loading CRC-16. */
@@ -1723,6 +1287,126 @@ static uint32_t Processing_DW_SM_EXCEPTION( DownloadFileStruct *dwf )
     return exit_code;
 } /* end function Processing_DW_SM_EXCEPTION */
 
+
+static void Processing_DW_ACK_OTA( DownloadFileStruct *dwf )
+{
+    uint32_t expectation_index = 0;
+    RecordOTAMode current_ota_mode = RecordOTAModeNormal;
+
+    memset( dwf->TX_Buffer, 0U, PROTOCOL_LENGTH );
+    memcpy( dwf->TX_Buffer, DOWN_CMD_ACKR, 4U );
+
+    /* 报文总数 */
+    dwf->BriefAmount = 1;
+    dwf->TX_Buffer[4] = ( uint8_t )( dwf->BriefAmount >> 24U );
+    dwf->TX_Buffer[5] = ( uint8_t )( dwf->BriefAmount >> 16U );
+    dwf->TX_Buffer[6] = ( uint8_t )( dwf->BriefAmount >> 8U );
+    dwf->TX_Buffer[7] = ( uint8_t )( dwf->BriefAmount >> 0U );
+
+    /* 报文序号 */
+    dwf->BriefAmount = 1;
+    dwf->TX_Buffer[8] = ( uint8_t )( dwf->BriefNum >> 24U );
+    dwf->TX_Buffer[9] = ( uint8_t )( dwf->BriefNum >> 16U );
+    dwf->TX_Buffer[10] = ( uint8_t )( dwf->BriefNum >> 8U );
+    dwf->TX_Buffer[11] = ( uint8_t )( dwf->BriefNum >> 0U );
+
+    /* 报文长度 */
+    dwf->TX_Buffer[12] = 0x00U;
+    dwf->TX_Buffer[13] = 0x0EU;
+
+    /* 报文内容 */
+    dwf->TX_Buffer[14] = 0;
+    dwf->TX_Buffer[15] = 0;
+
+    current_ota_mode = RecordOTAGetMode();
+
+//    if(RecordOTAModeUpdata == dwf->ota_mode || RecordOTAModeUpdataAgain == dwf->ota_mode)
+    if(RecordOTAModeUpdata == current_ota_mode || RecordOTAModeUpdataAgain == current_ota_mode)
+    {
+        dwf->TX_Buffer[14] = PC_OTA_START_I;
+        dwf->TX_Buffer[15] = PC_OTA_START_II;
+    }
+    else
+    {
+        dwf->TX_Buffer[14] = PC_OTA_OVER_I;
+        dwf->TX_Buffer[15] = PC_OTA_OVER_II;
+    }
+
+    memcpy( &dwf->TX_Buffer[16], ACK_RS, 2U );//16 17
+
+    memcpy( &dwf->TX_Buffer[18], HS_APP, 2U );//18 19
+
+    /*  */
+    dwf->ota_ack_index += 1;
+    memcpy( &dwf->TX_Buffer[20], &dwf->ota_ack_index, 4U );//20 23
+
+    expectation_index = dwf->ota_ack_index + 1;
+    memcpy( &dwf->TX_Buffer[24], &expectation_index, 4U );//24 27
+
+    /* crc */
+    uint16_t crc = Common_CRC16( dwf->TX_Buffer, 28U );
+    dwf->TX_Buffer[28] = ( uint8_t )( ( uint32_t )crc >> 8U );
+    dwf->TX_Buffer[29] = ( uint8_t )( ( uint32_t )crc >> 0U );
+
+//    LOG_HEX("udp ack", 16, dwf->TX_Buffer, 30);
+    /* 应答报文 */
+    UDPServerSendData( ( const void * )dwf->TX_Buffer, 30 );
+}
+
+static uint32_t Processing_DW_SM_OTA( DownloadFileStruct *dwf )
+{
+    uint32_t sign = 0;
+
+//    RecordOTASetMode(dwf->ota_mode);
+//    if(RecordOTAModeNormal == dwf->ota_mode)
+//    {
+//        dwf->smDownload = DW_SM_IDLE;
+//    }
+
+    if(RecordOTAGetMode() == RecordOTAModeNormal)
+    {
+        dwf->smDownload = DW_SM_IDLE;
+    }
+
+    sign = strncmp( HS_APP, ( const char * )&dwf->RX_Buffer[16], 2U );
+    if(0 == sign)
+    {
+        dwf->smDownload = DW_SM_OTA_MODE;
+
+        if(PC_OTA_START_I == dwf->RX_Buffer[14] && PC_OTA_START_II == dwf->RX_Buffer[15])
+        {
+//            dwf->ota_mode = RecordOTAModeUpdataAgain;
+            RecordOTASetMode(RecordOTAModeUpdataAgain);
+
+            memset( dwf->RX_Buffer, 0, RX_BUFFER_SIZE );
+            dwf->udp_recv = UDP_RECV_EMPTY;
+            Processing_DW_ACK_OTA(dwf);
+//            LOG_I("2-start ota");
+        }
+        else if(PC_OTA_OVER_I == dwf->RX_Buffer[14] && PC_OTA_OVER_II == dwf->RX_Buffer[15])
+        {
+//            dwf->ota_mode = RecordOTAModeNormal;
+            RecordOTASetMode(RecordOTAModeNormal);
+
+            memset( dwf->RX_Buffer, 0, RX_BUFFER_SIZE );
+            dwf->udp_recv = UDP_RECV_EMPTY;
+            Processing_DW_ACK_OTA(dwf);
+//            LOG_I("2-stop ota");
+        }
+        else
+        {
+            dwf->smDownload = DW_SM_EXCEPTION;
+
+            memset( dwf->RX_Buffer, 0, RX_BUFFER_SIZE );
+            dwf->udp_recv = UDP_RECV_EMPTY;
+
+//            dwf->ota_mode = RecordOTAModeNormal;
+            RecordOTASetMode(RecordOTAModeNormal);
+        }
+    }
+
+    return 0;
+}
 
 /**************************************************************************************************
 (^_^) Function Name : 

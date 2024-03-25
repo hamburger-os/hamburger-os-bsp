@@ -24,6 +24,7 @@
 
 /* public macro definition --------------------------------------------------------------------- */
 
+#define ENABLE_RECORD_ERROR_CODE 0
 
 /* public type definition ---------------------------------------------------------------------- */
 /* Locker. */
@@ -88,6 +89,10 @@ typedef enum
 #define DMI_SIGN_II        ( 0x20U )
 #define WLUP_SIGN          ( 'W' )
 #define WLUP_DUMMY         ( 0x00U )
+#define PC_OTA_START_I        ('P')
+#define PC_OTA_START_II       ('S')
+#define PC_OTA_OVER_I         ('P')
+#define PC_OTA_OVER_II        ('O')
 
 /* Handshake sign. */
 #define HS_2KDATA          ( "2K" )
@@ -108,9 +113,11 @@ typedef enum
 /****************************/
 
 /* public function declaration ----------------------------------------------------------------- */
+#if ENABLE_RECORD_ERROR_CODE //TODO(mingzhao)
 void ThreadErrorCode( void );
 
 void ErrorCodeInit( const char *dprt );
+#endif
 
 uint32_t UpdateErrorCodeDate( uint8_t date[] );
 uint32_t UpdateErrorCodeTime( uint8_t time[] );

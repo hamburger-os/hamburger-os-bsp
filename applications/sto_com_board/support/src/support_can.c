@@ -9,6 +9,7 @@
 #include "if_can.h"
 #include "support_libPub.h"
 #include "support_can.h"
+#include "support_timer.h"
 /*******************************************************************************************
  *        Local definitions
  *******************************************************************************************/
@@ -76,6 +77,9 @@ extern E_CAN_STATE support_can_init(E_CAN_ID id)
  *******************************************************************************************/
 extern E_CAN_STATE support_can_sendData(E_CAN_ID id, S_CAN_FRAME *p_can_frame)
 {
+    //uint32 timer_tick = 0U;
+    //uint32 timer_tick_diff = 0U;
+
     E_CAN_STATE valid_ret = E_CAN_OK;
     E_CAN_CH ch = E_CAN_CH_MAX;
     S_CAN_MSG msg = { 0U };
@@ -105,6 +109,7 @@ extern E_CAN_STATE support_can_sendData(E_CAN_ID id, S_CAN_FRAME *p_can_frame)
     }
     support_memcpy(msg.data_u8, p_can_frame->data_u8, p_can_frame->length_u8);
 
+    //timer_tick = support_timer_getTick();
     /* 3.发送数据 */
     if ( TRUE == if_can_send(ch, &msg))
     {
@@ -114,7 +119,8 @@ extern E_CAN_STATE support_can_sendData(E_CAN_ID id, S_CAN_FRAME *p_can_frame)
     {
         valid_ret = E_CAN_ERR;
     }
-
+    //timer_tick_diff = support_timer_getTick() - timer_tick;
+    //MY_Printf("SUPPORT_CAN_timer_tick_diff: %d !!!\r\n",timer_tick_diff);
     return valid_ret;
 }
 
@@ -124,6 +130,7 @@ extern E_CAN_STATE support_can_sendData(E_CAN_ID id, S_CAN_FRAME *p_can_frame)
  *******************************************************************************************/
 extern E_CAN_STATE supprot_can_getData(E_CAN_ID id, S_CAN_FRAME *p_can_frame)
 {
+
     E_CAN_STATE valid_ret = E_CAN_OK;
     E_CAN_CH ch = E_CAN_CH_MAX;
     S_CAN_MSG msg = { 0U };
@@ -137,6 +144,8 @@ extern E_CAN_STATE supprot_can_getData(E_CAN_ID id, S_CAN_FRAME *p_can_frame)
     }
 
     /* 3.发送数据 */
+
+
     if ( TRUE == if_can_get(ch, &msg))
     {
 //        MY_Printf("id %x, len %d\r\n", msg.id_u32, msg.len_u8);
@@ -150,6 +159,7 @@ extern E_CAN_STATE supprot_can_getData(E_CAN_ID id, S_CAN_FRAME *p_can_frame)
     {
         valid_ret = E_CAN_ERR;
     }
+
 
     return valid_ret;
 }

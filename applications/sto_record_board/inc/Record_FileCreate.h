@@ -18,7 +18,12 @@
 #include "type.h"
 #include "file_manager.h"
 
-extern CAN_FRAME  Record_CanBuffer[150];
+#define RECORD_FILE_NO_USED_BEI_YONG (1)  //记录文件不记录备用位
+
+#define RECORD_CAN_BUFFER_SIZE (200U)
+#define FRAM_WRITE_BUF_SIZE    (256U)
+
+extern CAN_FRAME  Record_CanBuffer[RECORD_CAN_BUFFER_SIZE];
 
 extern uint8_t g_ZK_DevCode;
 extern uint8_t g_XSQ_DevCode;
@@ -39,50 +44,49 @@ extern uint8_t g_ECU_DevCode;
 /* 0x45显示器1自检 */
 #define CAN_0X45_(N)   Record_CanBuffer[16 + N]
 /* 0x46显示器2自检 */
-#define CAN_0X46_(N)   Record_CanBuffer[20 + 2 + N]
+#define CAN_0X46_(N)   Record_CanBuffer[24 + N]
 /* 主控1自检 */
-#define CAN_0X63_(N)   Record_CanBuffer[24 + 4 + N]
+#define CAN_0X63_(N)   Record_CanBuffer[32 + N]
 /* 主控2自检 */
-#define CAN_0X73_(N)   Record_CanBuffer[28 + 4 + N]
+#define CAN_0X73_(N)   Record_CanBuffer[40 + N]
 /* 通信自检 */
-#define CAN_0X50_(N)   Record_CanBuffer[32 + 4 + N]
+#define CAN_0X50_(N)   Record_CanBuffer[48 + N]
 /* 机车接口自检 */
-#define CAN_0X90_(N)   Record_CanBuffer[34 + 4 + N]
+#define CAN_0X90_(N)   Record_CanBuffer[56 + N]
 /* 主控控车信息 */
-#define CAN_KONGCHE(N) Record_CanBuffer[40 + 4 + N]
+#define CAN_KONGCHE(N) Record_CanBuffer[64 + N]
 /* LKJ强实时信息透传 */
-#define CAN_0x66(N)    Record_CanBuffer[41 + 4 + N]     //增加CAN协议内容
+#define CAN_0x66(N)    Record_CanBuffer[72 + N]     //增加CAN协议内容
 /* LKJ弱实时信息1透传 */
-#define CAN_0x67(N)    Record_CanBuffer[46 + 4 + N]     //增加CAN协议内容
+#define CAN_0x67(N)    Record_CanBuffer[80 + N]     //增加CAN协议内容
 /* LKJ弱实时信息2透传 */
-#define CAN_0x68(N)    Record_CanBuffer[54 + 4 + N]     //增加CAN协议内容
+#define CAN_0x68(N)    Record_CanBuffer[88 + N]     //增加CAN协议内容
 /* 主控板发送DMI查询状态信息 */
-#define CAN_0x6A(N)    Record_CanBuffer[56 + 4 + N]     //增加CAN协议内容
+#define CAN_0x6A(N)    Record_CanBuffer[96 + N]     //增加CAN协议内容
 /* 微机接口板自检信息 */
-#define CAN_0x82(N)    Record_CanBuffer[64 + 2 + N]     //增加CAN协议内容
+#define CAN_0x82(N)    Record_CanBuffer[104 + N]     //增加CAN协议内容
 /* 司控盒发送信息 */
-#define CAN_0x28(N)    Record_CanBuffer[65 + 2 + N]     //增加CAN协议内容
+#define CAN_0x28(N)    Record_CanBuffer[112 + N]     //增加CAN协议内容
 /* 微机数据信息 */
-#define CAN_0x81(N)    Record_CanBuffer[69 + 2 + N]     //增加CAN协议内容
+#define CAN_0x81(N)    Record_CanBuffer[120 + N]     //增加CAN协议内容
 /* 大闸监控信息 */
-#define CAN_0x75(N)    Record_CanBuffer[75 + 2 + N]     //增加CAN协议内容
+#define CAN_0x75(N)    Record_CanBuffer[128 + N]     //增加CAN协议内容
 /* 小闸监控信息 */
-#define CAN_0x76(N)    Record_CanBuffer[79 + 2 + N]     //增加CAN协议内容
+#define CAN_0x76(N)    Record_CanBuffer[136 + N]     //增加CAN协议内容
 /* 主控发送微机信息1 */
-#define CAN_0x30(N)    Record_CanBuffer[83 + 2 + N]     //增加CAN协议内容
+#define CAN_0x30(N)    Record_CanBuffer[144 + N]     //增加CAN协议内容
 /* 主控发送微机信息2 */
-#define CAN_0x31(N)    Record_CanBuffer[91 + 2 + N]     //增加CAN协议内容
+#define CAN_0x31(N)    Record_CanBuffer[152 + N]     //增加CAN协议内容
 /* 微机发送主控信息1 */
-#define CAN_0x32(N)    Record_CanBuffer[99 + 2 + N]     //增加CAN协议内容
+#define CAN_0x32(N)    Record_CanBuffer[160 + N]     //增加CAN协议内容
 /* 微机发送主控信息2 */
-#define CAN_0x33(N)    Record_CanBuffer[107 + 2 + N]     //增加CAN协议内容
+#define CAN_0x33(N)    Record_CanBuffer[168 + N]     //增加CAN协议内容
 /* 机车接口板发送状态信息 */
-#define CAN_0x91(N)    Record_CanBuffer[115 + 2 + N]     //增加CAN协议内容
-
+#define CAN_0x91(N)    Record_CanBuffer[176 + N]     //增加CAN协议内容
 
 /* 协议解析文件头 */
 #if 0
-#define TIME_SFM  			          ( CAN_0x66( 0u ).data_u8[4] )
+#define TIME_SFM                      ( CAN_0x66( 0u ).data_u8[4] )
 #define TIME_NYR                      ( RSS_( 2u ).data_u8[4] )
 #else
 #define TIME_NYR                      ( RSS_( 2u ).data_u8[4] )
@@ -95,30 +99,30 @@ extern uint8_t g_ECU_DevCode;
 #define TIME_M                        ( QSS_( 0u ).data_u8[6] )
 #endif
 #define CHECIKUOCHONG  	              ( RSS_( 3u ).data_u8[3] )
-#define CHECI  					      ( RSS_( 3u ).data_u8[0] )
-#define SIJI1  					      ( RSS_( 0u ).data_u8[0] )
-#define SIJI2  					      ( RSS_( 0u ).data_u8[3] )
-#define SHUJUJIAOLU  		          ( RSS_( 4u ).data_u8[1] )
+#define CHECI  	                      ( RSS_( 3u ).data_u8[0] )
+#define SIJI1  	                      ( RSS_( 0u ).data_u8[0] )
+#define SIJI2  	                      ( RSS_( 0u ).data_u8[3] )
+#define SHUJUJIAOLU                   ( CAN_0x67(1u).data_u8[7] )
 #define JIANKONGJIAOLU 	              ( RSS_( 4u ).data_u8[0] )
-#define CHEZHANHAO  		          ( RSS_( 4u ).data_u8[2] )
-#define ZONGZHONG 	 		          ( RSS_( 1u ).data_u8[0] )
-#define HUANCHANG  			          ( RSS_( 1u ).data_u8[2] )
-#define LIANGSHU  			          ( RSS_( 1u ).data_u8[4] )
-#define CHESUDENGJI  		          ( RSS_( 0u ).data_u8[6] )
-#define JICHEXINGHAO  	              ( RSS_( 2u ).data_u8[2] )
-#define JICHEHAO 	 			      ( RSS_( 2u ).data_u8[0] )
-#define JICHEZHONGLEI		          ( RSS_( 3u ).data_u8[7] )
+#define CHEZHANHAO 	                  ( CAN_0x67(1u).data_u8[1] )
+#define ZONGZHONG                     ( RSS_( 1u ).data_u8[0] )
+#define HUANCHANG                     ( RSS_( 1u ).data_u8[2] )
+#define LIANGSHU                      ( RSS_( 1u ).data_u8[4] )
+#define CHESUDENGJI                   ( RSS_( 0u ).data_u8[6] )
+#define JICHEXINGHAO                  ( RSS_( 2u ).data_u8[2] )
+#define JICHEHAO                      ( RSS_( 2u ).data_u8[0] )
+#define JICHEZHONGLEI                 ( RSS_( 3u ).data_u8[7] )
 
 /* 运行状态信息 */
 /* 新协议标准 */
-#define JIANKONGSTATE		          ( QSS_( 4u ).data_u8[7] )
+#define JIANKONGSTATE                 ( QSS_( 4u ).data_u8[7] )
 
 /* TCMS采集信息 */
 
 #define ato_jiwei_T54                 ( CAN_0x32( 6u ).data_u8[5] )
 #define ato_gk_T55                    ( CAN_0x32( 6u ).data_u8[6] )
-#define TCMSJIWEI				      ato_jiwei_T54
-#define TCMSGONGKUANG		          ( ato_gk_T55 & 0x07 )
+#define TCMSJIWEI                     ( ato_jiwei_T54 )
+#define TCMSGONGKUANG                 ( ato_gk_T55 & 0x07 )
 
 /* 指导信息 */
 #if 0  //TODO(mingzhao)
@@ -126,24 +130,24 @@ extern uint8_t g_ECU_DevCode;
 #else
 #define Sto_CurSpeed_S13              ( QSS_( 5u ).data_u8[0] )
 #endif
-#define ZHIDAOJIWEI			          ( QSS_( 5u ).data_u8[2] )
-#define ZHIDAOSUDU			          Sto_CurSpeed_S13
+#define ZHIDAOJIWEI                   ( QSS_( 5u ).data_u8[2] )
+#define ZHIDAOSUDU                    Sto_CurSpeed_S13
 #define ZHIDAOGONGKUANG               ( QSS_( 5u ).data_u8[7] )
 #define STOXIANSU                     ( QSS_( 7u ).data_u8[0] )      //增加CAN协议内容
 
 /* 控车信息 */
-#define KONGZHIMOSHI			    ( QSS_( 2u ).data_u8[6] )
-#define YOUHUAMOSHI				    ( QSS_( 3u ).data_u8[7] )
-#define YOUHUADENGXINHAO	        ( QSS_( 5u ).data_u8[6] )
-#define SKHYOUQUANDUAN		        ( QSS_( 3u ).data_u8[6] )
+#define KONGZHIMOSHI                ( QSS_( 2u ).data_u8[6] )
+#define YOUHUAMOSHI                 ( QSS_( 3u ).data_u8[7] )
+#define YOUHUADENGXINHAO            ( QSS_( 5u ).data_u8[6] )
+#define SKHYOUQUANDUAN              ( QSS_( 3u ).data_u8[6] )
 #if 0 //TODO(mingzhao)
-#define	KONGZHIGONGKUANG	        ( CAN_KONGCHE( 0u ).data_u8[1] )
-#define KONGZHIJIWEI			    ( CAN_KONGCHE( 0u ).data_u8[2] )
+#define	KONGZHIGONGKUANG            ( CAN_KONGCHE( 0u ).data_u8[1] )
+#define KONGZHIJIWEI                ( CAN_KONGCHE( 0u ).data_u8[2] )
 #else
 #define KONGZHIGONGKUANG            ( QSS_( 2u ).data_u8[7] )
 #define KONGZHIJIWEI                ( QSS_( 2u ).data_u8[5] )
 #endif
-#define SHOUBINGHUILING		        ( QSS_( 6u ).data_u8[ 6u ] )
+#define SHOUBINGHUILING             ( QSS_( 6u ).data_u8[ 6u ] )
 /* 12-June-2018, by Liang Zhen. */
 #define ABV_CTRL_MSG                ( CAN_KONGCHE( 0u ).data_u8[1] )
 
@@ -167,20 +171,6 @@ extern uint8_t g_ECU_DevCode;
 #define GONGLIBIAO            ( QSS_( 1u ).data_u8[4] )
 #define JINGGAOBIAOZHI        ( QSS_( 6u ).data_u8[0] )
 
-/* 板间自检信息 */
-#define ZK1_ZJ	              ( CAN_0X63_( 0u ).data_u8[0] )
-#define ZK2_ZJ	              ( CAN_0X73_( 0u ).data_u8[0] )
-#define	JCTX_ZJ	              ( CAN_0X50_( 0u ).data_u8[0] )
-#define JCJK_ZJ	              ( CAN_0X90_( 0u ).data_u8[0] )
-#define XSQ1_ZJ               ( CAN_0X45_( 0u ).data_u8[2] )
-#define XSQ2_ZJ               ( CAN_0X46_( 0u ).data_u8[2] )
-
-/* 版本信息 */
-#define ZK1_BB	              ( CAN_0X63_( 0u ).data_u8[2] )
-#define ZK2_BB	              ( CAN_0X73_( 0u ).data_u8[2] )
-#define JCTX_BB	              ( CAN_0X50_( 0u ).data_u8[2] )
-#define JCJK_BB	              ( CAN_0X90_( 0u ).data_u8[2] )
-
 /********************************************************************************************/
 
 /* 协议解析文件头 */
@@ -190,9 +180,9 @@ extern uint8_t g_ECU_DevCode;
 #define LKJCHANGJIA               ( CAN_0x6A( 0u ).data_u8[7] )
 //#define TIME_NYR                                      //CAN协议已有，名称一致
 //#define TIME_SFM                                      //CAN协议已有，名称一致
-#define YUNXINGJINGLUHAO	       ( SHUJUJIAOLU<<8 + JIANKONGJIAOLU )
-#define LKJFACHEFANGXIANG	       CHEZHANHAO
-#define QIANGZHIBENGFENG           (s_packet_gradeInfo.received_data_u8[23] & 0x10)
+#define YUNXINGJINGLUHAO           ( SHUJUJIAOLU<<8 + JIANKONGJIAOLU )
+#define LKJFACHEFANGXIANG          CHEZHANHAO
+//#define QIANGZHIBENGFENG           (s_packet_gradeInfo.received_data_u8[23] & 0x10)
 #define CHEZHANMING                ETH_DAT[1]           //CAN协议没有定义
 //#define JICHEXINGHAO                                  //CAN协议已有，名称一致
 #define XITONGKONGZHI              ( CAN_0x67( 5u ).data_u8[4] )
@@ -205,10 +195,10 @@ extern uint8_t g_ECU_DevCode;
 #define SIJIHAO1                   SIJI1
 #define SIJIHAO2                   SIJI2
 #define BENXIZHUANGTAI             ( CAN_0x91( 1u ).data_u8[1] )
-#define GONGZUOZHUANGTAI	       KONGZHIMOSHI
+#define GONGZUOZHUANGTAI           KONGZHIMOSHI
 
-#define AJIKONGZHIRUANJIANBANBEN	    ( CAN_0X63_( 0u ).data_u8[2] )
-#define BJIKONGZHIRUANJIANBANBEN	    ( CAN_0X73_( 0u ).data_u8[2] )
+#define AJIKONGZHIRUANJIANBANBEN        ( CAN_0X63_( 0u ).data_u8[2] )
+#define BJIKONGZHIRUANJIANBANBEN        ( CAN_0X73_( 0u ).data_u8[2] )
 #define AJISTOJICHUSHUJUBANBENRIQI      ( CAN_0X63_( 1u ).data_u8[0] )
 #define BJISTOJICHUSHUJUBANBENRIQI      ( CAN_0X73_( 1u ).data_u8[0] )
 #define AJISTOJICHUSHUJUBIANYIRIQI      ( CAN_0X63_( 1u ).data_u8[2] )
@@ -253,10 +243,18 @@ extern uint8_t g_ECU_DevCode;
 #define JUNFENGGANGYALI            JUNGANG1YALI   
 #define CHAIZHUANDIANLIU           CHAIYOUJIZHUANSU 
 
-
 /* 板间自检信息 */
-#define ZK_ZJ	                 ZK1_ZJ
-#define	TX1_ZJ	                 JCTX_ZJ
+#define ZK_I_A_ZJ             ( CAN_0X63_( 0u ).data_u8[0] )
+#define ZK_I_B_ZJ             ( CAN_0X73_( 0u ).data_u8[0] )
+#define ZK_II_A_ZJ            ( CAN_0X63_( 4u ).data_u8[0] )
+#define ZK_II_B_ZJ            ( CAN_0X73_( 4u ).data_u8[0] )
+#define JCTX_ZJ               ( CAN_0X50_( 0u ).data_u8[0] )
+#define JCJK_ZJ               ( CAN_0X90_( 0u ).data_u8[0] )
+#define XSQ1_ZJ               ( CAN_0X45_( 0u ).data_u8[2] )
+#define XSQ2_ZJ               ( CAN_0X46_( 0u ).data_u8[2] )
+
+#define	TX1_ZJ                   JCJK_ZJ
+#define TX2_ZJ                   JCTX_ZJ
 #define JL_ZJ                    ERROR_FLAG
 #define WXTX_ZJ                  ETH_DAT[1]      //CAN协议没有定义
 #define	WJJK_ZJ	                 ( CAN_0x82( 0u ).data_u8[0] )
@@ -426,20 +424,21 @@ extern uint8_t g_ECU_DevCode;
 #define ATOYUNXUFUZHUTIAOJIAN           ( CAN_0x6A( 3u ).data_u8[1] )
 #define SHUJUGUZHANG                    ( ATOYUNXUFUZHUTIAOJIAN & 0x01 )
 
-
 /* 版本信息 */
-#define ZK_I_A_BB           ZK1_BB
-#define ZK_I_B_BB           ZK2_BB
-#define ZK_II_A_BB          ZK1_BB
-#define ZK_II_B_BB          ZK2_BB
+#define ZK_I_A_BB           ( CAN_0X63_( 0u ).data_u8[2] )
+#define ZK_I_B_BB           ( CAN_0X73_( 0u ).data_u8[2] )
+#define ZK_II_A_BB          ( CAN_0X63_( 4u ).data_u8[2] )
+#define ZK_II_B_BB          ( CAN_0X73_( 4u ).data_u8[2] )
+#define JCTX_BB             ( CAN_0X50_( 0u ).data_u8[2] )
+#define JCJK_BB             ( CAN_0X90_( 0u ).data_u8[2] )
 #define XSQ_I_BB            ( CAN_0X45_( 5u ).data_u8[2] )
 #define XSQ_II_BB           ( CAN_0X46_( 5u ).data_u8[2] )
-#define TX_I_BB             JCTX_BB
-#define TX_II_BB            JCTX_BB
+#define TX_1_BB             JCJK_BB
+#define TX_2_BB             JCTX_BB
 
 #define WJJK_I_BB           ( CAN_0x82( 0u ).data_u8[2] )
 #define WJJK_II_BB          ( CAN_0x82( 0u ).data_u8[2] )
-#define JL_BB               Version[0]      
+#define JL_BB               Version[0]
 #define WXTX_BB             ETH_DAT[1]      //CAN协议没有定义
 #define CEU_I_BB            ETH_DAT[1]      //CAN协议没有定义
 #define CEU_II_BB           ETH_DAT[1]      //CAN协议没有定义
@@ -451,6 +450,14 @@ extern uint8_t g_ECU_DevCode;
 #define RUANJIANBANBENBUYIZHI    ( WENBENTISHI & 0x01 )
 
 #define GANG_YA_PRESSURE_DVALUE  (160)  //压力差值，单位kPa  10 * 16  比例系数为16
+
+#define ENABLE_LKF_FACTORY (0)
+
+typedef enum {
+    S_LKF_FACTORY_NONE = 0,
+    S_LKF_FACTORY_SI_WEI = 1,   /* 思维LKJ */
+    S_LKF_FACTORY_ZHU_SUO = 2   /* 株所LKJ */
+} S_LKF_FACTORY;
 
 /* public type definition ---------------------------------------------------------------------- */
 
@@ -472,7 +479,6 @@ typedef struct __attribute__((packed)) _SFile_Directory /* 按照字节对齐*/ 
     char ch_reserve[3]; /* 预留 */
     uint8_t file_id;   /* 文件ID */  //TODO(mingzhao) 对接到文件链表中使用
     uint8_t is_save;     /* 是否转存过  1：转存 0：未转存 */
-    uint8_t off_line_fie_index;
 } SFile_Directory;
 
 
@@ -568,7 +574,7 @@ typedef struct __attribute__((packed))
 typedef struct __attribute__((packed))
 {
     uint8_t pos;
-    uint8_t buf[256];
+    uint8_t buf[FRAM_WRITE_BUF_SIZE];
 } WRITE_BUF;
 
 /* 插件自检状态 */

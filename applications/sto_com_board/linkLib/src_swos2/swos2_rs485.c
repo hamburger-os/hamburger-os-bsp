@@ -22,9 +22,12 @@
 #define SWOS2_RS_THREAD_PRIORITY   (20U)
 #define SWOS2_RS_THREAD_TICK       (5U)
 
-#define SWOS2_RS_MQ_NUM  (256U)
-#define SWOS2_RS_RX_BUFFER_MA_NUM  (256U)
-#define SWOS2_RS_UART_BUFFER_LEN   (512U)
+#define SWOS2_RS_MQ_NUM            (1024U)
+#define SWOS2_RS_RX_BUFFER_MA_NUM  (1024U)
+#define SWOS2_RS_UART_BUFFER_LEN   (2048U)
+
+#define SWOS2_485_PIN_DELAY        (5)
+#define SWOS2_422_PIN_DELAY        (5)
 
 typedef struct
 {
@@ -117,9 +120,9 @@ static void swos2_rs485_rx_set(void)
     S_RS_DEV *p_rs_dev = &s_rs_dev;
 
     rt_pin_write(p_rs_dev->cfg.re_pin_index, PIN_LOW);
-    rt_thread_mdelay(5);
+    rt_thread_mdelay(SWOS2_485_PIN_DELAY);
     rt_pin_write(p_rs_dev->cfg.de_pin_index, PIN_LOW);
-    rt_thread_mdelay(5);
+    rt_thread_mdelay(SWOS2_485_PIN_DELAY);
 }
 
 static void swos2_rs422_mode_set(void)
@@ -127,9 +130,9 @@ static void swos2_rs422_mode_set(void)
     S_RS_DEV *p_rs_dev = &s_rs_dev;
 
     rt_pin_write(p_rs_dev->cfg.re_pin_index, PIN_LOW);
-    rt_thread_mdelay(5);
-    rt_pin_write(p_rs_dev->cfg.de_pin_index, PIN_HIGH);
-    rt_thread_mdelay(5);
+    rt_thread_mdelay(SWOS2_422_PIN_DELAY);
+    rt_pin_write(p_rs_dev->cfg.de_pin_index, PIN_LOW);
+    rt_thread_mdelay(SWOS2_422_PIN_DELAY);
 }
 
 static void swos2_rs485_send_before(void)
@@ -254,13 +257,25 @@ static BOOL swos2_rs_init(S_RS_DEV *p_rs_dev)
     config.data_bits = DATA_BITS_8;               /** 数据位 8 */
     config.stop_bits = STOP_BITS_1;               /** 停止位 1 */
     config.parity    = PARITY_NONE;               /** 无奇偶校验位 */
+#ifdef RT_USING_SERIAL_V2
     config.rx_bufsz  = SWOS2_RS_UART_BUFFER_LEN;
     config.tx_bufsz  = SWOS2_RS_UART_BUFFER_LEN;
+#endif
+
+#ifdef RT_USING_SERIAL_V1
+    config.bufsz = SWOS2_RS_UART_BUFFER_LEN;
+#endif
 
     rt_device_control(p_rs_dev->dev, RT_DEVICE_CTRL_CONFIG, &config);
 
     /** 3.打开串口设备。以非阻塞接收和阻塞发送模式打开串口设备 */
+#ifdef RT_USING_SERIAL_V2
     if (rt_device_open(p_rs_dev->dev, RT_DEVICE_FLAG_RX_NON_BLOCKING | RT_DEVICE_FLAG_TX_BLOCKING) != RT_EOK)
+#endif
+
+#ifdef RT_USING_SERIAL_V1
+    if (rt_device_open(p_rs_dev->dev, RT_DEVICE_FLAG_DMA_RX) != RT_EOK)
+#endif
     {
         rt_device_close(p_rs_dev->dev);
         LOG_E("open %s error", p_rs_dev->cfg.usart_name);
@@ -319,7 +334,7 @@ static void swos2_rs_thread_entry(void *parameter)
 
         while(1)
         {
-            if(RT_EOK == rt_mq_recv(p_rs_dev->rs_mq, &read_size, sizeof(uint32_t), 0))
+            if(RT_EOK == rt_mq_recv(p_rs_dev->rs_mq, &read_size, sizeof(uint32_t), (rt_int32_t)RT_WAITING_FOREVER))
             {
                 if(read_size > 0)
                 {
@@ -335,7 +350,6 @@ static void swos2_rs_thread_entry(void *parameter)
                     }
                 }
             }
-            rt_thread_mdelay(5);
         }
     }
 }
@@ -420,8 +434,16 @@ uint16 if_rs485_get(E_RS485_CH ch, uint8 *pdata, uint16 len)
     ret = rt_mq_recv(p_rs_dev->msg_mq, (void *)&rx_msg, sizeof(S_RS_MSG), RT_WAITING_NO);
     if (RT_EOK == ret)
     {
-        rt_memcpy(pdata, &rx_msg.buffer, rx_msg.len);
-        return rx_msg.len;
+        if(rx_msg.len < SWOS2_RS_UART_BUFFER_LEN)
+        {
+            rt_memcpy(pdata, &rx_msg.buffer, rx_msg.len);
+            return rx_msg.len;
+        }
+        else
+        {
+            rt_memcpy(pdata, &rx_msg.buffer, SWOS2_RS_UART_BUFFER_LEN);
+            return SWOS2_RS_UART_BUFFER_LEN;
+        }
     }
     else
     {

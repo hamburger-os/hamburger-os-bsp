@@ -29,7 +29,7 @@ static void TaskHighThreadEntry(void *parameter)
         {
             g_appArchIf.app_polling_proc();
         }
-        if_OSTimeDly(10);
+        if_OSTimeDly(1);
     }
 }
 
@@ -55,7 +55,7 @@ static void TaskLowThreadEntry(void *parameter)
         {
             g_appArchIf.app_idle_proc();
         }
-        if_OSTimeDly(10);
+        if_OSTimeDly(5);
     }
 }
 

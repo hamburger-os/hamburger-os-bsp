@@ -41,7 +41,7 @@ extern void test_main_init(void);
 extern void com_app_main_init(void);
 void app_archInit(void)
 {
-#if 1
+#if 0
     support_osRunning(test_main_init);
 #else
     support_osRunning(com_app_main_init);

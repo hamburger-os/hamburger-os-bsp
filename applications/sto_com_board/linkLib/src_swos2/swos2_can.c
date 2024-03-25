@@ -21,17 +21,17 @@
 
 #include "if_gpio.h"
 
-#define CAN_RX_THREAD_PRIORITY         20//13
+#define CAN_RX_THREAD_PRIORITY         20
 #define CAN_RX_THREAD_STACK_SIZE       (1024 * 4)
 #define CAN_RX_THREAD_TIMESLICE        5
 
 #define CAN_MQ_NUM          (256)
 
-#define CAN_CH_RX_FLAG_1    (0x10000000)
-#define CAN_CH_RX_FLAG_2    (0x20000000)
-#define CAN_CH_RX_FLAG_3    (0x30000000)
-#define CAN_CH_RX_FLAG_4    (0x40000000)
-#define CAN_CH_RX_FLAG_5    (0x50000000)
+typedef struct
+{
+    rt_uint16_t channel;
+    rt_uint16_t len;
+} S_CAN_LEN_INFO;
 
 typedef struct
 {
@@ -39,6 +39,7 @@ typedef struct
     rt_device_t can_dev;
     rt_err_t (*rx_ind)(rt_device_t dev, rt_size_t size);
     rt_mq_t can_mq;
+    S_CAN_LEN_INFO info;
 } S_CAN_INFO;
 
 typedef struct
@@ -58,99 +59,122 @@ static char can_mb_pool[1024];
 static rt_err_t swos2_can_ch1_rx_call(rt_device_t dev, rt_size_t size)
 {
     /* CAN 接收到数据后产生中断，调用此回调函数，然后邮件 */
-    rt_uint32_t mb_data;
+    S_CAN_LEN_INFO *info = &can_dev.info[E_CAN_CH_1].info;
 
-    mb_data = CAN_CH_RX_FLAG_1 | size;
-
-    rt_mb_send(&can_dev.mailbox, mb_data);
+    if(size != 0)
+    {
+        info->channel = E_CAN_CH_1;
+        info->len = size;
+        rt_mb_send(&can_dev.mailbox, (rt_uint32_t)info);
+    }
     return RT_EOK;
 }
 
 static rt_err_t swos2_can_ch2_rx_call(rt_device_t dev, rt_size_t size)
 {
     /* CAN 接收到数据后产生中断，调用此回调函数，然后邮件 */
-    rt_uint32_t mb_data;
+    S_CAN_LEN_INFO *info = &can_dev.info[E_CAN_CH_2].info;
 
-    mb_data = CAN_CH_RX_FLAG_2 | size;
-
-    rt_mb_send(&can_dev.mailbox, mb_data);
+    if(size != 0)
+    {
+        info->channel = E_CAN_CH_2;
+        info->len = size;
+        rt_mb_send(&can_dev.mailbox, (rt_uint32_t)info);
+    }
     return RT_EOK;
 }
 
 static rt_err_t swos2_can_ch3_rx_call(rt_device_t dev, rt_size_t size)
 {
     /* CAN 接收到数据后产生中断，调用此回调函数，然后邮件 */
-    rt_uint32_t mb_data;
+    S_CAN_LEN_INFO *info = &can_dev.info[E_CAN_CH_3].info;
 
-    mb_data = CAN_CH_RX_FLAG_3 | size;
-
-    rt_mb_send(&can_dev.mailbox, mb_data);
+    if(size != 0)
+    {
+        info->channel = E_CAN_CH_3;
+        info->len = size;
+        rt_mb_send(&can_dev.mailbox, (rt_uint32_t)info);
+    }
     return RT_EOK;
 }
 
 static rt_err_t swos2_can_ch4_rx_call(rt_device_t dev, rt_size_t size)
 {
     /* CAN 接收到数据后产生中断，调用此回调函数，然后邮件 */
-    rt_uint32_t mb_data;
+    S_CAN_LEN_INFO *info = &can_dev.info[E_CAN_CH_4].info;
 
-    mb_data = CAN_CH_RX_FLAG_4 | size;
-
-    rt_mb_send(&can_dev.mailbox, mb_data);
+    if(size != 0)
+    {
+        info->channel = E_CAN_CH_4;
+        info->len = size;
+        rt_mb_send(&can_dev.mailbox, (rt_uint32_t)info);
+    }
     return RT_EOK;
 }
 
 static rt_err_t swos2_can_ch5_rx_call(rt_device_t dev, rt_size_t size)
 {
     /* CAN 接收到数据后产生中断，调用此回调函数，然后邮件 */
-    rt_uint32_t mb_data;
+    S_CAN_LEN_INFO *info = &can_dev.info[E_CAN_CH_5].info;
 
-    mb_data = CAN_CH_RX_FLAG_5 | size;
-
-    rt_mb_send(&can_dev.mailbox, mb_data);
+    if(size != 0)
+    {
+        info->channel = E_CAN_CH_5;
+        info->len = size;
+        rt_mb_send(&can_dev.mailbox, (rt_uint32_t)info);
+    }
     return RT_EOK;
 }
 
 static void CanRxThreadEntry(void *parameter)
 {
     S_CAN_DEV *p_can_dev = &can_dev;
-    rt_uint32_t mb_rcv_data;
-    uint8_t can_rx_ch;
-    uint32_t can_rx_size;
     rt_err_t ret = RT_EOK;
+    S_CAN_LEN_INFO *info = RT_NULL;
+    rt_uint32_t mbval;
 
     struct rt_can_msg rxmsg = { 0 };
 
     while (1)
     {
-        if (rt_mb_recv(&p_can_dev->mailbox, &mb_rcv_data, RT_WAITING_FOREVER) == RT_EOK)
+        ret = rt_mb_recv(&p_can_dev->mailbox, &mbval, RT_WAITING_FOREVER);
+        if (RT_EOK == ret)
         {
-            can_rx_ch = (mb_rcv_data & 0xF0000000) >> 28;
-            can_rx_size = mb_rcv_data & 0x0FFFFFFF;
+            info = (S_CAN_LEN_INFO *) mbval;
+            RT_ASSERT(info != RT_NULL);
 
-            if (can_rx_ch > (can_dev.ch_num + 1))
+            if ((info->channel + 1) > can_dev.ch_num)
             {
-                LOG_E("ch %d > can_dev.ch_num %d", can_rx_ch, (can_dev.ch_num + 1));
+                LOG_E("ch %d > can_dev.ch_num %d", info->channel, can_dev.ch_num);
                 continue;
             }
 
-            if (rt_device_read(can_dev.info[can_rx_ch - 1].can_dev, 0, &rxmsg, sizeof(rxmsg)) == sizeof(rxmsg))
+            if (rt_device_read(can_dev.info[info->channel].can_dev, 0, &rxmsg, sizeof(rxmsg)) == sizeof(rxmsg))
             {
-//                LOG_D("read %x %d %d %d", rxmsg.id, rxmsg.ide, rxmsg.rtr, rxmsg.len);
-//                LOG_HEX("read", 16, rxmsg.data, 8);
-
-                ret = rt_mq_send(can_dev.info[can_rx_ch - 1].can_mq, (const void *) &rxmsg, sizeof(rxmsg));
+#if 1
+                //LOG_D("read %x %d %d %d", rxmsg.id, rxmsg.ide, rxmsg.rtr, rxmsg.len);
+                //LOG_HEX("read", 16, rxmsg.data, 8);
+                //rt_kprintf("read %x \r\n", rxmsg.id);
+                ret = rt_mq_send(can_dev.info[info->channel].can_mq, (const void *) &rxmsg, sizeof(rxmsg));
                 if (ret != RT_EOK)
                 {
-                    LOG_E("can mq send error");
+                    LOG_E("can mq send error %d", info->channel);
                     continue;
                 }
+#else
+                if (rt_device_write(can_dev.info[info->channel].can_dev, 0, &rxmsg, sizeof(rxmsg)) != sizeof(rxmsg))
+                {
+                    LOG_E("can data send error %d", info->channel);
+                    continue;
+                }
+#endif
+
             }
             else
             {
                 LOG_E("read %x %d %d %d", rxmsg.id, rxmsg.ide, rxmsg.rtr, rxmsg.len);
             }
         }
-        rt_thread_mdelay(10);
     }
 }
 

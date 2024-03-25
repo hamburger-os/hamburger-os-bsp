@@ -16,6 +16,8 @@
 #include <rtthread.h>
 #include <rtdevice.h>
 
+#include "swos2_cfg_init.h"
+
 typedef enum
 {
     CPU_LOAD = 1,
@@ -219,10 +221,18 @@ E_SLOT_ID if_gpio_getSlotId(void)
                 slot_id = E_SLOT_ID_8; /* II系通信2 子板 */
             }
             break;
+
+
         default:
-            return E_SLOT_ID_3;
+            return E_SLOT_ID_MAX;
         }
     }
-    slot_id = E_SLOT_ID_3;
+    //MY_Printf("slot_id is %d\r\n",slot_id);
+
+    if(SWOS2CfgETHIP(slot_id) != SWOS2_CFG_OK)
+    {
+        LOG_E("swos2 cfg net info error");
+        return E_SLOT_ID_MAX;
+    }
     return slot_id;
 }

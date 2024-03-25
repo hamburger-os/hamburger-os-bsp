@@ -25,7 +25,7 @@
 
 #if FILE_MANAGER_TEST
 #define FILE_MAX_NUM               (3)             /* 最大文件个数 */
-#define RECORD_FILE_MAX_SIZE       (512)           /* 单个记录文件大小 单位 KB */
+#define RECORD_FILE_MAX_SIZE       (1)           /* 单个记录文件大小 单位 KB */
 #else
 #define FILE_MAX_NUM               (128)           /* 最大文件个数 */
 #define RECORD_FILE_MAX_SIZE       (20 * 1024)     /* 单个记录文件大小 单位 KB  20M */
@@ -36,8 +36,8 @@
 #define FRAM_RESERVE_SIZE          (100)   /* 单位KB */
 #define TMP_FILE_MAX_SIZE          (3)     /* 单位KB */
 #else
-#define FRAM_RESERVE_SIZE          (10)   /* 单位KB */
-#define TMP_FILE_MAX_SIZE          (50)   /* 单位KB */
+#define FRAM_RESERVE_SIZE          (88)   /* 单位KB */
+#define TMP_FILE_MAX_SIZE          (20)   /* 单位KB */
 #endif
 
 #define FIRST_LATEST_DIR_NAME_NULL "NO_LKJ"
@@ -66,9 +66,6 @@
 #define LOG_FILE_NAME_1 "/mnt/emmc/ulog/file_0.log"
 #define LOG_FILE_0_TARGET_NAME "/mnt/udisk/ud0p0/SW_RecordLog/file.log"     /* U盘中保存日志文件的路径 */
 #define LOG_FILE_1_TARGET_NAME "/mnt/udisk/ud0p0/SW_RecordLog/file_0.log"     /* U盘中保存日志文件的路径 */
-
-#define OFF_LINE_FILE_1_NAME "offline_file_1"
-#define OFF_LINE_FILE_2_NAME "offline_file_2"
 
 
 typedef struct _S_CURRENT_FILE_INFO S_CURRENT_FILE_INFO;
@@ -101,6 +98,7 @@ sint32_t fm_free_fram_space(S_FILE_MANAGER *fm);
 sint32_t FMWriteDirFile(S_FILE_MANAGER *fm, const char * dirname, const void *dir_file, size_t count);
 sint32_t FMReadDirFile(S_FILE_MANAGER *fm, const char * dirname, void *dir_file, size_t len);
 sint32_t fm_free_emmc_space(void);
+sint32_t fm_free_record_file(S_FILE_MANAGER *fm);
 
 sint32_t FMAppendWrite(const char *filename, const void *buffer, size_t count);
 sint32_t FMWriteLatestInfo(const char *pathname, const char *filename, const void *data, size_t size);

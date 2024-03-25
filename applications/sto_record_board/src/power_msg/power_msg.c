@@ -19,8 +19,9 @@
 
 #include "crc.h"
 #include "Record_FileCreate.h"
+#include "record_ota.h"
 
-#define POWER_MSG_THREAD_PRIORITY         12
+#define POWER_MSG_THREAD_PRIORITY         22//14
 #define POWER_MSG_THREAD_STACK_SIZE       (1024 * 6)
 #define POWER_MSG_THREAD_TIMESLICE        5
 
@@ -36,8 +37,10 @@ static rt_err_t PowerMsgCanRxCall(rt_device_t dev, rt_size_t size)
     return RT_EOK;
 }
 
-static rt_err_t PowerMsgInit(S_POWER_MSG *msg)
+rt_err_t PowerMsgInit(void)
 {
+    S_POWER_MSG *msg = &power_msg;
+
     if(RT_NULL == msg)
     {
         return -RT_ERROR;
@@ -109,7 +112,7 @@ static void RecordingPowerVoltageCurrentOneSelfCheckMessage(uint8_t record_num2,
         last_value[4] = (uint8_t)(a_new >> 8);
 
         WriteFileContantPkt(0xA6, record_num2, PWOER_MSG_DEV_CODE, last_value, 4u);
-        LOG_I("power ch %x, v %d, a %d", ch, v_new, a_new);
+        // LOG_I("power ch %x, v %d, a %d", ch, v_new, a_new);
     }
 }
 
@@ -179,7 +182,7 @@ static void RecordingPowerPowerOnCntSelfCheckMessage(void)
         last_value[1] = (uint8_t)(power_on_cnt_new >> 8);
 
         WriteFileContantPkt(0xA6, 0x6a, PWOER_MSG_DEV_CODE, last_value, 4u);
-        LOG_I("power_on_1 %d power_on_2 %d", power_on_cnt_new, power_on_cnt_old);
+        // LOG_I("power_on_1 %d power_on_2 %d", power_on_cnt_new, power_on_cnt_old);
     }
 }
 
@@ -207,7 +210,7 @@ static void RecordingPowerTempSelfCheckMessage(void)
         last_value[3] = (uint8_t)(temp2_new >> 8);
 
         WriteFileContantPkt(0xA6, 0x6b, PWOER_MSG_DEV_CODE, last_value, 4u);
-        LOG_I("power temp1 %d temp 2 %d", temp1_new, temp2_new);
+        // LOG_I("power temp1 %d temp 2 %d", temp1_new, temp2_new);
     }
 }
 
@@ -234,7 +237,7 @@ static void RecordingPowerSoftInfoMessage(void)
         last_value[3] = (uint8_t)(soft_new >> 24);
 
         WriteFileContantPkt(0xA5, 0x08, PWOER_MSG_DEV_CODE, last_value, 4u);
-        LOG_I("soft new %x, old %x", soft_new, soft_old);
+        // LOG_I("soft new %x, old %x", soft_new, soft_old);
     }
 }
 
@@ -277,7 +280,6 @@ static void PowerMsgCanDeal(struct rt_can_msg *can_msg)
 
 static void PowerMsgThreadEntry(void *parameter)
 {
-    rt_err_t result = RT_EOK;
     struct rt_can_msg rxmsg = {0};
     uint16_t read_crc = 0, msg_crc = 0;
 
@@ -290,28 +292,26 @@ static void PowerMsgThreadEntry(void *parameter)
 
     rt_memset(power_can_frame, 0, sizeof((sizeof(S_POWER_CAN_FRAME) * POWER_MSG_CAN_FRAME_NUM)));
 
-    if(PowerMsgInit(&power_msg) != RT_EOK)
-    {
-        LOG_E("power msg init error");
-        return;
-    }
 
     while(1)
     {
-        result = rt_sem_take(&power_msg.rx_sem, 1000);
-        /* 从 CAN 读取一帧数据 */
-        if (rt_device_read(power_msg.can_dev, 0, &rxmsg, sizeof(rxmsg)) == sizeof(rxmsg))
+        if(RecordOTAGetMode() == RecordOTAModeNormal)
         {
-            /* crc校验 */
-            msg_crc = Crc16TabCCITT(rxmsg.data, (POWER_MSG_CAN_DATA_NUM - 2));
-            read_crc = ((uint16_t) (rxmsg.data[7]) << 8u) + (uint16_t)rxmsg.data[6];
-            if(msg_crc == read_crc)
+            rt_sem_take(&power_msg.rx_sem, 1000);
+            /* 从 CAN 读取一帧数据 */
+            if (rt_device_read(power_msg.can_dev, 0, &rxmsg, sizeof(rxmsg)) == sizeof(rxmsg))
             {
-                PowerMsgCanDeal(&rxmsg);
-            }
-            else
-            {
-                LOG_E("%d crc error", rxmsg.id);
+                /* crc校验 */
+                msg_crc = Crc16TabCCITT(rxmsg.data, (POWER_MSG_CAN_DATA_NUM - 2));
+                read_crc = ((uint16_t) (rxmsg.data[7]) << 8u) + (uint16_t)rxmsg.data[6];
+                if(msg_crc == read_crc)
+                {
+                    PowerMsgCanDeal(&rxmsg);
+                }
+                else
+                {
+                    LOG_E("%d crc error", rxmsg.id);
+                }
             }
         }
         rt_thread_mdelay(10);

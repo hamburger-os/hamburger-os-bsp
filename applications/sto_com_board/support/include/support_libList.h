@@ -20,11 +20,11 @@ typedef struct /* 队列数组控制 */
 } S_ArrayList;
 
 /* 创建队列数组 */
-S_ArrayList * support_arraylistCreate(const char *p_ch_namePara, uint16 u16_itemSizePara, uint16 u16_itemCountPara);
+extern S_ArrayList * support_arraylistCreate(const char *p_ch_namePara, uint16 u16_itemSizePara, uint16 u16_itemCountPara);
 /* 队列数组中加入一条数据 */
-BOOL support_arraylistAdd(S_ArrayList * p_arListPara, uint8 * p_u8_dataPara, uint16 u16_lenPara);
+extern BOOL support_arraylistAdd(S_ArrayList * p_arListPara, uint8 * p_u8_dataPara, uint16 u16_lenPara);
 /* 从队列数组中读取数据 */
-sint32 support_arraylistGet(S_ArrayList * p_arListPara, uint8 * p_u8_dataPara, uint16 *p_u16_dataLenPara,
+extern sint32 support_arraylistGet(S_ArrayList * p_arListPara, uint8 * p_u8_dataPara, uint16 *p_u16_dataLenPara,
         uint16 u16_bufLenPara);
 
 #endif

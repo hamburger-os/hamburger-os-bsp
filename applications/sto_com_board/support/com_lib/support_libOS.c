@@ -215,7 +215,7 @@ extern BOOL support_SemCreate(uint8 *sem_id)
     if (size < EVENT_TABLE_SIZE)
     {
         *sem_id = size;
-        if ( OK == OSSemCreate(&g_Sem_Table.g_EVENT_TABLE[size]))
+        if ( OK == if_OSSemCreate(&g_Sem_Table.g_EVENT_TABLE[size]))
         {
             g_Sem_Table.sem_table_size++;
             retFlg = TRUE;
@@ -245,7 +245,7 @@ extern BOOL support_SemPend(uint8 sem_id)
     return TRUE;
 #endif
 
-    OSSemPend(&g_Sem_Table.g_EVENT_TABLE[sem_id], 0, &err);
+    if_OSSemPend(&g_Sem_Table.g_EVENT_TABLE[sem_id], 0, &err);
     return TRUE;
 }
 
@@ -259,7 +259,7 @@ extern BOOL support_SemPost(uint8 sem_id)
     return TRUE;
 #endif
 
-    OSSemPost(&g_Sem_Table.g_EVENT_TABLE[sem_id]);
+    if_OSSemPost(&g_Sem_Table.g_EVENT_TABLE[sem_id]);
     return TRUE;
 }
 

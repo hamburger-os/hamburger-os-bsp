@@ -29,6 +29,7 @@
 #include <pthread.h>
 #include <string.h>
 
+#include <board.h>
 #include <rtthread.h>
 #include <rtdevice.h>
 
@@ -37,6 +38,7 @@
 #include "led.h"
 #include "Record_FileCreate.h"
 #include "sto_record_board.h"
+#include "record_ota.h"
 
 #define USB_COPY_FILE_BUFF_MAX_SIZE  (4096)
 
@@ -138,29 +140,20 @@ static sint32_t store_file_func(file_info_t *p, const char *target)
 {
     sint32_t pathlen = 0;
     char *name = NULL;
-    char targetname[PATH_NAME_MAX_LEN]; /* 用于存放目标文件名 */
-    char full_path[PATH_NAME_MAX_LEN] = { 0 };
+    char targetname[TEMP_PATH_NAME_MAX_LEN]; /* 用于存放目标文件名 */
+    char full_path[TEMP_PATH_NAME_MAX_LEN] = { 0 };
     char buffer[SFILE_DIR_SIZE];
+    SFile_Directory *p_sfile_dir = NULL;
 
-    snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, p->record_name);
+    rt_snprintf(full_path, sizeof(full_path), "%s/%s", RECORD_FILE_PATH_NAME, p->record_name);
 
     LOG_I("copy '%s' to dir '%s'", full_path, target);
     name = get_sigle_file_name(full_path);
-    if (strstr(name, "DSW") == NULL) /* 没有找到DSW */
+
+    pathlen = rt_snprintf(targetname, sizeof(targetname), "%s/%s", target, name);
+    if (pathlen > sizeof(targetname))
     {
-        pathlen = snprintf(targetname, sizeof(targetname), "%s/%s.DSW", target, name);
-        if (pathlen > sizeof(targetname))
-        {
-            return -1;/* 缓冲区溢出, 字符串被截断了.*/
-        }
-    }
-    else
-    {
-        pathlen = snprintf(targetname, sizeof(targetname), "%s/%s", target, name);
-        if (pathlen > sizeof(targetname))
-        {
-            return -1;/* 缓冲区溢出, 字符串被截断了.*/
-        }
+        return -1;/* 缓冲区溢出, 字符串被截断了.*/
     }
 
     if (copy_file(full_path, targetname) < 0)
@@ -172,8 +165,16 @@ static sint32_t store_file_func(file_info_t *p, const char *target)
     /* 将拷贝成功的记录文件对应的目录内容设置为已转存 */
     if(FMReadDirFile(&file_manager, p->dir_name, (void *)buffer, sizeof(SFile_Directory)) == 0)
     {
-        ((SFile_Directory *)buffer)->is_save = 1;
-        if(FMWriteDirFile(&file_manager, p->dir_name, (const void *)buffer, sizeof(SFile_Directory)) < 0)
+        p_sfile_dir = (SFile_Directory *)buffer;
+        if(NULL != p_sfile_dir)
+        {
+            p_sfile_dir->is_save = 1;
+            if(FMWriteDirFile(&file_manager, p->dir_name, (const void *)buffer, sizeof(SFile_Directory)) < 0)
+            {
+                return -1;
+            }
+        }
+        else
         {
             return -1;
         }
@@ -188,11 +189,11 @@ static sint32_t store_file(const char *src, const char *target, E_CopyMode mode)
 
     if (mode == COPYMODE_ALL) /* 开始转储全部文件 */
     {
-        LOG_I("转储全部记录文件到U盘 ...");
+        LOG_I("save all file to udisk");
     }
     else /* 开始转储最新文件 */
     {
-        LOG_I("转储最新文件到U盘...");
+        LOG_I("save new file to udisk");
     }
 
     /* 获取文件列表 */
@@ -289,12 +290,12 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
     if (udisk_free_space < 0)
     {
         /* U盘转储失败 */
-        LOG_E("U盘转储失败");
+        LOG_E("udisk no free space");
         return (sint32_t)-1;
     }
     if (voice_size / 1024 > udisk_free_space)
     {
-        LOG_E("U盘空间不够! U盘剩余空间:%dK, 文件大小:%dKB",
+        LOG_E("udisk space not enough! udisk free space:%dK, file size:%dKB",
                   udisk_free_space, voice_size / 1024);
         /* U盘已满 */
         return (sint32_t)-1;
@@ -305,7 +306,7 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
     if (store_file(DIR_FILE_PATH_NAME, TARGET_DIR_NAME, mode) != 0)
     {
         /* 转储失败 */
-        LOG_E("转储失败");
+        LOG_E("usb save fail");
         return (sint32_t)-1;
     }
 
@@ -313,17 +314,17 @@ static sint32_t usb_auto_copy(E_CopyMode mode)
     create_dir(TARGET_LOG_DIR_NAME);
     if (access(LOG_FILE_NAME_0, F_OK) == 0)
     {
-        LOG_I("转储日志0");
+        LOG_I("save file 0");
         copy_file(LOG_FILE_NAME_0, LOG_FILE_0_TARGET_NAME);
     }
 
     if (access(LOG_FILE_NAME_1, F_OK) == 0)
     {
-        LOG_I("转储日志1");
+        LOG_I("save file 1");
         copy_file(LOG_FILE_NAME_1, LOG_FILE_1_TARGET_NAME);
     }
 
-    LOG_I("转储完成");
+    LOG_I("save file ok");
 
     return 0;
 }
@@ -345,73 +346,76 @@ static void usb_thread(void *args)
     LOG_I("usb thread start");
     while (1)
     {
-        switch (state)
+        if(RecordOTAGetMode() == RecordOTAModeNormal)
         {
-        case DUMP_STATE_INIT: /* 初始化状态 */
+            switch (state)
+            {
+                case DUMP_STATE_INIT: /* 初始化状态 */
 
-            /* 一直等待直至U盘插入 */
-            ret = stat(USB_UD0P0_PATH, &stat_l);
-            LOG_I("wait usb");
-            while (ret < 0)
-            {
-                /* 没有插入U盘, 休眠500ms. */
-                rt_thread_mdelay((uint32_t)500);
-                ret = stat(USB_UD0P0_PATH, &stat_l);
-            }
+                    /* 一直等待直至U盘插入 */
+                    ret = stat(USB_UD0P0_PATH, &stat_l);
+                    LOG_I("wait usb");
+                    while (ret < 0)
+                    {
+                        /* 没有插入U盘, 休眠500ms. */
+                        rt_thread_mdelay((rt_int32_t)500);
+                        ret = stat(USB_UD0P0_PATH, &stat_l);
+                    }
 
-            /* 等待系统识别U盘内部的数据.*/
-            rt_thread_mdelay((uint32_t)500);
+                    /* 等待系统识别U盘内部的数据.*/
+                    rt_thread_mdelay((rt_int32_t)500);
 
-            /* 表明插上U盘 */
-            LOG_I("have usb");
-            /* 如果存在升级文件, 则不进行转储. */
-            ret = stat(UPGRADE_FILE_NAME, &stat_l);
-            if (ret == 0)
-            {
-                rt_thread_mdelay((uint32_t)500);
-                break;
+                    /* 表明插上U盘 */
+                    LOG_I("have usb");
+                    /* 如果存在升级文件, 则不进行转储. */
+                    ret = stat(UPGRADE_FILE_NAME, &stat_l);
+                    if (ret == 0)
+                    {
+                        rt_thread_mdelay((uint32_t)500);
+                        break;
+                    }
+                    state = DUMP_STATE_DUMPING;
+                    break;
+                case DUMP_STATE_DUMPING: /* 转储文件中 */
+                    LOG_I("save file");
+                    LedCtrlON(USB_LED);
+                    /* 转储最新文件 */
+        //            ret = usb_auto_copy(COPYMODE_NEW);
+                    ret = usb_auto_copy(COPYMODE_ALL);
+                    if (ret < 0)
+                    {
+                        state = DUMP_STATE_FAIL;
+                        LOG_E("save error");
+                    }
+                    else
+                    {
+                        state = DUMP_STATE_SUCCESS;
+                        LOG_I("save ok");
+                    }
+                    break;
+                case DUMP_STATE_SUCCESS: /* 转储成功 */
+                    state = DUMP_STATE_EXIT;
+                    LedCtrlON(USB_LED);
+                    break;
+                case DUMP_STATE_FAIL: /* 转储失败 */
+                    LedCtrlON(USB_LED);
+                    state = DUMP_STATE_EXIT;
+                    break;
+                case DUMP_STATE_EXIT: /* USB操作已完成, 离开中 */
+                    ret = stat(USB_UD0P0_PATH, &stat_l);
+                    LOG_I("wait usb levae");
+                    LedCtrlOFF(USB_LED);
+                    while (ret == 0)
+                    {
+                        rt_thread_mdelay(1000);
+                        ret = stat(USB_UD0P0_PATH, &stat_l);
+                    }
+                    LOG_I("usb leave");
+                    state = DUMP_STATE_INIT;
+                    break;
+                default:
+                    break;
             }
-            state = DUMP_STATE_DUMPING;
-            break;
-        case DUMP_STATE_DUMPING: /* 转储文件中 */
-            LOG_I("save file");
-            LedCtrlON(USB_LED);
-            /* 转储最新文件 */
-//            ret = usb_auto_copy(COPYMODE_NEW);
-            ret = usb_auto_copy(COPYMODE_ALL);
-            if (ret < 0)
-            {
-                state = DUMP_STATE_FAIL;
-                LOG_E("save error");
-            }
-            else
-            {
-                state = DUMP_STATE_SUCCESS;
-                LOG_I("save ok");
-            }
-            break;
-        case DUMP_STATE_SUCCESS: /* 转储成功 */
-            state = DUMP_STATE_EXIT;
-            LedCtrlON(USB_LED);
-            break;
-        case DUMP_STATE_FAIL: /* 转储失败 */
-            LedCtrlON(USB_LED);
-            state = DUMP_STATE_EXIT;
-            break;
-        case DUMP_STATE_EXIT: /* USB操作已完成, 离开中 */
-            ret = stat(USB_UD0P0_PATH, &stat_l);
-            LOG_I("wait usb levae");
-            LedCtrlOFF(USB_LED);
-            while (ret == 0)
-            {
-                rt_thread_sleep(1);
-                ret = stat(USB_UD0P0_PATH, &stat_l);
-            }
-            LOG_I("usb leave");
-            state = DUMP_STATE_INIT;
-            break;
-        default:
-            break;
         }
     }
 }
@@ -432,7 +436,7 @@ sint32_t usb_init(void)
                                usb_thread,
                                RT_NULL,
                                1024 * 10,
-                               25,
+                               24,//19,
                                5);
     if (usb_tid != NULL)
     {
