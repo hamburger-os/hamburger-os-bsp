@@ -24,17 +24,22 @@
 #include "Record_FileCreate.h"
 #include "udp_comm.h"
 #include "Record_FileDown.h"
+#include "record_ota.h"
 
-#define FILE_THREAD_PRIORITY         15
-#define FILE_THREAD_STACK_SIZE       (1024 * 4)
+#define FILE_THREAD_PRIORITY         21
+#define FILE_THREAD_STACK_SIZE       (1024 * 8)
 #define FILE_THREAD_TIMESLICE        5
 
 static void FileThreadEntry(void *parameter)
 {
     while(1)
     {
-        CanDataHandle(&eth0_can_data_handle);
-        RecordBoard_FileCreate();
+        if(RecordOTAGetMode() == RecordOTAModeNormal)
+        {
+            CanDataHandle(&eth0_can_data_handle);
+            CanDataHandle(&eth1_can_data_handle);
+            RecordBoard_FileCreate();
+        }
         UDPServerRcvMQData();
         ThreadFileDownload();
         rt_thread_mdelay(1);

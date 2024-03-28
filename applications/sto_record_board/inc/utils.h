@@ -21,6 +21,8 @@
 
 /* 路径的最大长度 */
 #define PATH_NAME_MAX_LEN 256
+/* 临时文件路径增加长度 */
+#define TEMP_PATH_NAME_MAX_LEN (256 + 30)
 
 /* 文件操作的定义 */
 #ifndef SEEK_SET

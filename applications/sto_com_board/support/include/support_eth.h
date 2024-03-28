@@ -27,7 +27,7 @@ typedef enum
 } E_ETH_STATE;
 
 /******************eth frame******************/
-#define ETH_FRAME_SIZE_MAX    ( 1400u )      /* ETH单帧最大值  */
+#define ETH_FRAME_SIZE_MAX    ( 1500U )      /* ETH单帧最大值  */
 
 /* 单字节对齐 */
 #pragma pack(1)

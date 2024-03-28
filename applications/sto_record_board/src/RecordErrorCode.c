@@ -18,7 +18,6 @@
 #include "Record_FileCreate.h"
 #include <string.h>
 
-
 /* private macro definition -------------------------------------------------------------------- */
 /* The maximum size of datagram buffer. */
 /* 22-October-2018, by Liang Zhen. */
@@ -236,6 +235,7 @@ static ErrorCodeInitStruct ErrorCodeInitInst =\
 };
 
 
+#if ENABLE_RECORD_ERROR_CODE //TODO(mingzhao)
 /* private function declaration ---------------------------------------------------------------- */
 static uint32_t GetWriteAddress( uint32_t base, uint32_t end );
 static uint32_t AssertPage( uint8_t page[] );
@@ -363,7 +363,6 @@ void ThreadErrorCode( void )
   UploadErrorCode();
 } /* end function ThreadErrorCode */
 
-
 /**************************************************************************************************
 (^_^) Function Name : ErrorCodeInit.
 (^_^) Brief         : Initializing error code structure.
@@ -459,6 +458,7 @@ void ErrorCodeInit( const char *dprt )
 static uint32_t GetWriteAddress( uint32_t base, uint32_t end )
 {
   uint32_t addr = EC_BASE_ADDR;
+
   uint32_t b_addr = base;
   uint32_t e_addr = end;
   
@@ -517,7 +517,7 @@ static uint32_t GetWriteAddress( uint32_t base, uint32_t end )
       printf( "\r\nAll blocks are full, address = 0x%x\r\n", addr );
     #endif
   } /* end if */
-  
+
   return addr;
 } /* end function GetWriteAddress */
 
@@ -800,7 +800,7 @@ static void RecordErrorCode( void )
   ErrorCode_EBV();
 } /* end function RecordErrorCode */
 
-
+#endif
 /**************************************************************************************************
 (^_^) Function Name : UpdateErrorCodeDate.
 (^_^) Brief         : Updating the date of error code.
@@ -862,7 +862,7 @@ uint32_t UpdateErrorCodeTime( uint8_t time[] )
   return exit_code;
 } /* end function UpdateErrorCodeTime */
 
-
+#if ENABLE_RECORD_ERROR_CODE //TODO(mingzhao)
 /**********************************************
 功能：组织故障履历记录事件包并写入flash
 参数：error_stat --> 'F':false, 'T':true, others:invalid.
@@ -874,6 +874,7 @@ uint32_t UpdateErrorCodeTime( uint8_t time[] )
 static uint32_t WriteErrorCodeToFlash( char error_stat, uint8_t error_code, const char *error_spec )
 {
   uint32_t exit_code = 0U;
+
 //  uint8_t err_code_packet[EC_MAX_LEN] = {0U};
 	uint8_t err_code_packet[72] = {0U};
   uint8_t err_code_Date[EC_DatPkt_MAXLEN] = {0U};
@@ -991,7 +992,6 @@ static uint32_t WriteErrorCodeToFlash( char error_stat, uint8_t error_code, cons
       Wait( 500U );
     } /* end if */
     
-		uint32_t i;
 //    printf( "\r\n故障履历记录写入地址：0x%x\r\n", ErrorCodeInitInst.WriteAddr );
 //		printf( "\r\n故障履历:%s\r\n", err_code_packet );
 		
@@ -1005,7 +1005,6 @@ static uint32_t WriteErrorCodeToFlash( char error_stat, uint8_t error_code, cons
       ErrorCodeInitInst.WriteAddr = EC_BASE_ADDR;
     } /* end if */
   } /* end if...else if...else */
-  
   return exit_code;   
 } /* end function WriteErrorCodeToFlash */
 
@@ -1086,7 +1085,7 @@ static uint32_t ErrorCode_HMB( void )
   return exit_code;
 } /* end function ErrorCode_HMB */
 
-
+#endif
 /**************************************************************************************************
 (^_^) Function Name : UpdateErrorFlag_HMB.
 (^_^) Brief         : Updating the error flag of HMB.
@@ -1103,7 +1102,7 @@ static uint32_t ErrorCode_HMB( void )
 uint32_t UpdateErrorFlag_HMB( CPU_TYPE cpu, uint8_t err[] )
 {
   uint32_t exit_code = 0U;
-  
+#if ENABLE_RECORD_ERROR_CODE //TODO(mingzhao)
   if ( NULL == err )
   {
     exit_code = 1U;
@@ -1127,11 +1126,11 @@ uint32_t UpdateErrorFlag_HMB( CPU_TYPE cpu, uint8_t err[] )
         break;
     } /* end switch */
   } /* end if...else */
-  
+#endif
   return exit_code;
 } /* end function UpdateErrorFlag_HMB */
 
-
+#if ENABLE_RECORD_ERROR_CODE //TODO(mingzhao)
 /**************************************************************************************************
 (^_^) Function Name : ErrorCode_HMB_Processing.
 (^_^) Brief         : Processing the error code of HMB.
@@ -2195,6 +2194,7 @@ static uint32_t ErrorCode_HIB( void )
   return exit_code;
 } /* end function ErrorCode_HIB */
 
+#endif
 
 /**************************************************************************************************
 (^_^) Function Name : UpdateErrorFlag_HIB.
@@ -2226,7 +2226,7 @@ uint32_t UpdateErrorFlag_HIB( uint8_t err[] )
   return exit_code;
 } /* end function UpdateErrorFlag_HIB */
 
-
+#if ENABLE_RECORD_ERROR_CODE //TODO(mingzhao)
 /**************************************************************************************************
 (^_^) Function Name : ErrorCode_HIB_Processing.
 (^_^) Brief         : Processing the error code of HIB.
@@ -2815,7 +2815,7 @@ static uint32_t ErrorCode_HRB( void )
   
   return exit_code;
 } /* end function ErrorCode_HRB */
-
+#endif
 
 /**************************************************************************************************
 (^_^) Function Name : UpdateErrorFlag_HRB.
@@ -2836,7 +2836,7 @@ void UpdateErrorFlag_HRB( uint16_t err )
   #endif
 } /* end function UpdateErrorFlag_HRB */
 
-
+#if ENABLE_RECORD_ERROR_CODE //TODO(mingzhao)
 /**************************************************************************************************
 (^_^) Function Name : ErrorCode_HRB_Processing.
 (^_^) Brief         : Processing the error code of HRB.
@@ -3367,7 +3367,7 @@ static uint32_t ErrorCode_HCB( void )
   
   return exit_code;
 } /* end function ErrorCode_HCB */
-
+#endif
 
 /**************************************************************************************************
 (^_^) Function Name : UpdateErrorFlag_HCB.
@@ -3399,7 +3399,7 @@ uint32_t UpdateErrorFlag_HCB( uint8_t err[] )
   return exit_code;
 } /* end function UpdateErrorFlag_HCB */
 
-
+#if ENABLE_RECORD_ERROR_CODE //TODO(mingzhao)
 /**************************************************************************************************
 (^_^) Function Name : ErrorCode_HCB_Processing.
 (^_^) Brief         : Processing the error code of HCB.
@@ -4014,7 +4014,7 @@ static uint32_t ErrorCode_DMI( void )
   return exit_code;
 } /* end function ErrorCode_DMI */
 
-
+#endif
 /**************************************************************************************************
 (^_^) Function Name : UpdateErrorFlag_DMI.
 (^_^) Brief         : Updating the error flag of DMI.
@@ -4059,7 +4059,7 @@ uint32_t UpdateErrorFlag_DMI( DEVICE_SIDE side, uint8_t err[] )
   return exit_code;
 } /* end function UpdateErrorFlag_DMI */
 
-
+#if ENABLE_RECORD_ERROR_CODE //TODO(mingzhao)
 /**************************************************************************************************
 (^_^) Function Name : ErrorCode_DMI_Processing.
 (^_^) Brief         : Processing the error code of DMI.
@@ -4550,7 +4550,7 @@ static uint32_t ErrorCode_CEU( void )
   return exit_code;
 } /* end function ErrorCode_CEU */
 
-
+#endif
 /**************************************************************************************************
 (^_^) Function Name : UpdateErrorFlag_CEU.
 (^_^) Brief         : Updating the error flag of CEU.
@@ -4595,7 +4595,7 @@ uint32_t UpdateErrorFlag_CEU( DEVICE_SIDE side, uint8_t err[] )
   return exit_code;
 } /* end function UpdateErrorFlag_CEU */
 
-
+#if ENABLE_RECORD_ERROR_CODE //TODO(mingzhao)
 /**************************************************************************************************
 (^_^) Function Name : ErrorCode_CEU_Processing.
 (^_^) Brief         : Processing the error code of CEU.
@@ -5150,7 +5150,7 @@ static uint32_t ErrorCode_EBV( void )
   return exit_code;
 } /* end function ErrorCode_EBV */
 
-
+#endif
 /**************************************************************************************************
 (^_^) Function Name : UpdateErrorFlag_EBV.
 (^_^) Brief         : Updating the error flag of EBV.
@@ -5195,7 +5195,7 @@ uint32_t UpdateErrorFlag_EBV( DEVICE_SIDE side, uint8_t err[] )
   return exit_code;
 } /* end function UpdateErrorFlag_EBV */
 
-
+#if ENABLE_RECORD_ERROR_CODE //TODO(mingzhao)
 /**************************************************************************************************
 (^_^) Function Name : ErrorCode_EBV_Processing.
 (^_^) Brief         : Processing the error code of EBV.
@@ -5880,7 +5880,7 @@ static uint32_t UploadErrorCode( void )
   return exit_code;
 } /* end function UploadErrorCode */
 
-
+#endif
 /**************************************************************************************************
 (^_^) Function Name : GetNewDatagram.
 (^_^) Brief         : Get new datagram.
@@ -5924,7 +5924,7 @@ uint32_t GetNewDatagram( uint8_t dgm[], uint32_t len )
   return exit_code;
 } /* end function GetNewDatagram */
 
-
+#if ENABLE_RECORD_ERROR_CODE //TODO(mingzhao)
 /**************************************************************************************************
 (^_^) Function Name : AssertDatagram.
 (^_^) Brief         : Assert the datagram of error code.
@@ -6809,7 +6809,7 @@ static uint32_t GetDatagramTotalSize( uint32_t base )
   return size;
 } /* end function GetDatagramTotalSize */
 
-
+#endif
 /**************************************************************************************************
 (^_^) Function Name : 
 (^_^) Brief         : 

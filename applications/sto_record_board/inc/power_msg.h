@@ -66,7 +66,9 @@ extern S_POWER_CAN_FRAME *power_can_frame;
 #define POWER_MSG_VOLTAGE_CURRENT_CH5             (0x64)
 #define POWER_MSG_VOLTAGE_CURRENT_CH6             (0x65)
 
-#if 1
+#define POWER_MSG_CHANGE_TEST 0  /* 测试电源信息变化 调整变化阈值 */
+
+#if !POWER_MSG_CHANGE_TEST
 /* 通道不变 电压变化超过0.5V 或 电流变化超过0.01A 记录
       *   电压单位 0.01V, 电流单位0.001A */
 #define POWER_MSG_VOLTAGE_DIFF                    (50)
@@ -75,13 +77,13 @@ extern S_POWER_CAN_FRAME *power_can_frame;
 /* 温度单位为0.1摄氏度 所以变化超过2度才记录 */
 #define POWER_MSG_TEMP_DIFF                    (20)
 #else
-/* 通道不变 电压变化超过0.1V 或 电流变化超过0.001A 记录
+/* 通道不变 电压变化超过0.01V 或 电流变化超过0.001A 记录
       *   电压单位 0.01V, 电流单位0.001A */
-#define POWER_MSG_VOLTAGE_DIFF                    (10)
-#define POWER_MSG_CURRENT_DIFF                    (100)
+#define POWER_MSG_VOLTAGE_DIFF                    (1)
+#define POWER_MSG_CURRENT_DIFF                    (1)
 
 /* 温度单位为0.1摄氏度 所以变化超过1度才记录 */
-#define POWER_MSG_TEMP_DIFF                    (10)
+#define POWER_MSG_TEMP_DIFF                    (1)
 #endif
 
 /******************************** 按字节对齐 ********************************/
@@ -102,6 +104,7 @@ typedef struct {
     rt_mutex_t  mutex;
 } S_POWER_MSG;
 
+rt_err_t PowerMsgInit(void);
 rt_err_t PowerMsgThreadInit(void);
 void RecordingPowerPlugMessage(void);
 

@@ -13,14 +13,15 @@
 #include <rtthread.h>
 #include "can_common_def.h"
 
-/* 定义通道编号 */
-/*对系内通道*/
-#define IN_ETH_DEV              (0x01U)              /* 内网 */
-
 #define MAX_ETH_CAN_LEN         (1465U) /*应用层负载区数据最大为1476-exp_head(8)-pack_head(3)*/
-#define CAN_DATA_MQ_MAX_NUM     (MAX_ETH_CAN_LEN + 100)
+#define CAN_DATA_MQ_MAX_NUM     ((MAX_ETH_CAN_LEN + 100) * 2)//(MAX_ETH_CAN_LEN + 100)
 
 #define SET_RTC_CYCLE_MS        (600000UL)
+
+#define COMM_RBUF_SIZE       (1536)
+#define APP_LAYER_PLOADLEN   (1476) /*应用层负载区数据最大为1480-app_head(4)*/
+#define EXPORT_DATA_PLOADLEN (1468) /*应用层负载区数据最大为1476-exp_head(8)*/
+#define LIMIT_EXPORT_DATA_PLOADLEN  (1400) /*应用层负载区数据最大为1476-exp_head(8)-pack_head(3)*/
 
 extern S_CAN_PACKE_Grade s_packet_gradeInfo;
 
@@ -43,6 +44,22 @@ typedef struct
     uint8_t len;
     uint8_t Data[64];
 } S_ETH_CAN_FRAME;
+
+/* CAN数据打包缓存格式 */
+typedef struct
+{
+    uint8_t   chl;
+    uint32_t    FDFormat;
+    S_ETH_CAN_FRAME     frame_data;
+}S_ETH_CAN_BUF;
+
+typedef struct tag_comm_node {
+    uint8_t dev;
+    uint32_t tick;
+    uint32_t len;
+    uint8_t buf[COMM_RBUF_SIZE];
+} s_comm_node;
+
 
 /* CAN业务层数据在ETH中格式 */
 typedef struct
@@ -67,11 +84,23 @@ typedef struct
     uint8_t data_u8[64];         //数据
 } CAN_FRAME;
 
-
 typedef struct
 {
     rt_mq_t can_data_mq;  /* 存放以太网转换为CAN格式的消息队列 */
 } S_DATA_HANDLE;
+
+typedef struct exp_chanl {
+    uint8_t  channl_index; /*通道索引号*/
+    uint32_t time_print;   /*时间戳*/
+    uint16_t data_len;     /*数据长度*/
+    uint8_t buf[EXPORT_DATA_PLOADLEN];
+} r_exp_chanl;
+
+/*接收到外部接口数据组成一大包送到系内以太网*/
+typedef struct exp_I_II_eth {
+    int16_t data_len;     /*数据长度*/
+    uint8_t buf[APP_LAYER_PLOADLEN];
+} t_exp_I_II_eth;
 
 #pragma pack ()
 

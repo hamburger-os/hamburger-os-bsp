@@ -189,12 +189,12 @@ uint32_t file_size(char *name)
  *******************************************************/
 sint32_t dir_size(const char *dir_path)
 {
-    char path[PATH_NAME_MAX_LEN] = {0};
+    char path[TEMP_PATH_NAME_MAX_LEN] = {0};
     long total_size = 0;
     long ret = 0;
 
     /* 把目录路径存放在字符数组内 */
-    strcpy(path, dir_path);
+    strncpy(path, dir_path, (sizeof(path) - 1));
 
     /* 打开目录 */
     DIR *dir = opendir(path);
@@ -209,7 +209,7 @@ sint32_t dir_size(const char *dir_path)
     while (NULL != ent)
     {
         memset(path, 0, sizeof(path));
-        strcpy(path, dir_path);
+        strncpy(path, dir_path, (sizeof(path) - 1));
         strcat(path, "/");
         strcat(path, ent->d_name);
 
@@ -385,6 +385,7 @@ file_info_t *get_org_file_info(const char *path)
     file_info_t *p_list_head = NULL;
     file_info_t *p_cur_file_list = NULL;
     file_info_t *p_tmp_file_list = NULL;
+    SFile_Directory *p_sfile_dir = NULL;
 
     p_list_head = NULL;
     p_dir = opendir(path);
@@ -397,7 +398,7 @@ file_info_t *get_org_file_info(const char *path)
     /* 读取目录内文件名 */
     while ((next = readdir(p_dir)) != NULL)
     {
-        snprintf(full_path, sizeof(full_path), "%s/%s", path, next->d_name);
+        rt_snprintf(full_path, sizeof(full_path), "%s/%s", path, next->d_name);
 
         if (stat(full_path, &stat_l) == 0)
         {
@@ -427,12 +428,16 @@ file_info_t *get_org_file_info(const char *path)
                                 }
                                 p_cur_file_list = p_tmp_file_list;
                                 p_cur_file_list->next = NULL;
-                                p_cur_file_list->file_id = ((SFile_Directory *)buffer)->file_id;
-                                p_cur_file_list->dir_file_size = stat_l.st_size;
-                                p_cur_file_list->record_file_size = ((SFile_Directory *)buffer)->u32_file_size;
-                                strcpy(p_cur_file_list->dir_name, ((SFile_Directory *)buffer)->ch_dir_name);
-                                strcpy(p_cur_file_list->record_name, ((SFile_Directory *)buffer)->ch_file_name);
-                                p_cur_file_list->is_save = ((SFile_Directory *)buffer)->is_save;
+                                p_sfile_dir = (SFile_Directory *)buffer;
+                                if(p_sfile_dir != NULL)
+                                {
+                                    p_cur_file_list->file_id = p_sfile_dir->file_id;
+                                    p_cur_file_list->dir_file_size = stat_l.st_size;
+                                    p_cur_file_list->record_file_size = p_sfile_dir->u32_file_size;
+                                    strncpy(p_cur_file_list->dir_name, p_sfile_dir->ch_dir_name, sizeof(p_cur_file_list->dir_name));
+                                    strncpy(p_cur_file_list->record_name, p_sfile_dir->ch_file_name, sizeof(p_cur_file_list->record_name));
+                                    p_cur_file_list->is_save = p_sfile_dir->is_save;
+                                }
                             }
 //                        }
                     }
@@ -456,11 +461,11 @@ file_info_t *get_org_file_info(const char *path)
 
 sint32_t create_dir(const char *path)
 {
-    char dir_name[PATH_NAME_MAX_LEN];
+    char dir_name[TEMP_PATH_NAME_MAX_LEN];
     sint32_t i, len;
 
     memset(dir_name, 0, sizeof(dir_name));
-    strcpy(dir_name, path);
+    strncpy(dir_name, path, (sizeof(dir_name) - 1));
     len = strlen(dir_name);
 
     for (i = 1; i <= len; i++)
@@ -497,10 +502,10 @@ sint32_t create_dir(const char *path)
  *******************************************************/
 sint32_t create_file(const char *path)
 {
-    char file_path[PATH_NAME_MAX_LEN] = {0};
+    char file_path[TEMP_PATH_NAME_MAX_LEN] = {0};
     sint32_t i, len, fd;
 
-    strcpy(file_path, path);
+    strncpy(file_path, path, (sizeof(file_path) - 1));
     len = strlen(file_path);
 
     for (i = 1; i <= len; i++)
@@ -602,9 +607,9 @@ void copy_files(const char *src, const char *dest)
     while ((entry = readdir(dir)) != NULL)
     {
         /* 构建源文件/目录路径*/
-        snprintf(src_path, sizeof(src_path), "%s/%s", src, entry->d_name);
+        rt_snprintf(src_path, sizeof(src_path), "%s/%s", src, entry->d_name);
         /* 构建目标文件/目录路径*/
-        snprintf(dest_path, sizeof(dest_path), "%s/%s", dest, entry->d_name);
+        rt_snprintf(dest_path, sizeof(dest_path), "%s/%s", dest, entry->d_name);
 
         if (stat(src_path, &statbuf) == -1)
         {

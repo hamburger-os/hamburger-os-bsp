@@ -30,6 +30,7 @@
 #define  Safe_TX1_II_C_ADR              6                   /* II系通信1子板地址 */
 #define  Safe_TX2_II_L_ADR              57              /* II系通信2底板地址 */
 #define  Safe_TX2_II_C_ADR              72              /* II系通信2子板地址 */
+#define  Safe_RECORD_ADR              106              /* 记录插件地址 */
 
 #else                           //三合一
 #define  Safe_ZK_I_ADR                      9                   /* I系主控地址 */
@@ -42,6 +43,7 @@
 #define  Safe_TX1_II_C_ADR              12              /* II系通信1子板地址 */
 #define  Safe_TX2_II_L_ADR              13              /* II系通信2底板地址 */
 #define  Safe_TX2_II_C_ADR              14              /* II系通信2子板地址 */
+#define  Safe_RECORD_ADR              106              /* 记录插件地址 */
 
 #endif
 
@@ -62,5 +64,5 @@ typedef struct eth_rx_safe_layer
 } r_safe_layer;
 #pragma pack()
 rt_err_t rx_safe_layer_check(S_DATA_HANDLE * data_handle, uint8_t *pBuf, uint8_t from_chl);
-
+void app_add_safelayer_pakage_tx(uint8_t *pSafe, uint8_t *pApp, uint16_t app_len);
 #endif /* APPLICATIONS_STO_RECORD_BOARD_INC_SAFE_LAYER_H_ */

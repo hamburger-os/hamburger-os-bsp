@@ -27,6 +27,10 @@ src =  Split('''
     src/power_msg/power_msg.c
     src/udp_comm.c
     src/Record_FileDown.c
+    src/record_ota.c
+    src/swos2_cfg_init.c
+    src/send_data_by_eth.c
+    src/vcp_time_manage.c
     '''
     )
 

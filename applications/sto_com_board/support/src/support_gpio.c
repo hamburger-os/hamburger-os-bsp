@@ -170,6 +170,7 @@ extern E_BOARD_ID support_gpio_getBoardId(void)
     /* 1.获取平台状态信息 */
     slot_id = if_gpio_getSlotId();
 
+    //MY_Printf("slot_id is %d\r\n",slot_id);
     /* 2.获取板子位置信息 */
     switch (slot_id)
     {
