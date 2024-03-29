@@ -2154,15 +2154,6 @@ osStatus_t osMessageQueueGet(osMessageQueueId_t mq_id, void *msg_ptr, uint8_t *m
         return osErrorParameter;
     }
 
-#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
-    rt_ssize_t result;
-    result = rt_mq_recv(&(mq_cb->mq), msg_ptr, mq_cb->init_msg_size, timeout);
-
-    if (result > 0)
-        return osOK;
-    else
-        return osError;
-#else
     rt_err_t result;
     result = rt_mq_recv(&(mq_cb->mq), msg_ptr, mq_cb->init_msg_size, timeout);
 
@@ -2176,7 +2167,6 @@ osStatus_t osMessageQueueGet(osMessageQueueId_t mq_id, void *msg_ptr, uint8_t *m
     }
     else
         return osError;
-#endif
 }
 
 /// Get maximum number of messages in a Message Queue.
