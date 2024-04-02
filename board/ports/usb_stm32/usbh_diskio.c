@@ -53,6 +53,7 @@ struct usbh_diskio
     MSC_HandleTypeDef *handle;
     struct dfs_partition part;
     struct rt_device dev;
+    rt_mutex_t ready;
 };
 
 static struct usbh_diskio udisk_part[MAX_PARTITION_COUNT] = { 0 };
@@ -85,7 +86,7 @@ rt_err_t USBH_diskio_initialize(MSC_HandleTypeDef *handle)
     int i = 0;
     rt_err_t ret;
     char dname[8];
-    char sname[8];
+    char mname[8];
     MSC_LUNTypeDef info;
     USBH_HandleTypeDef *phost = &hUsbHost;
 
@@ -135,9 +136,9 @@ rt_err_t USBH_diskio_initialize(MSC_HandleTypeDef *handle)
         {
             data->handle = handle;
             rt_snprintf(dname, 6, "ud0p%d", i);
-            rt_snprintf(sname, 8, "sem_ud%d", i);
+            rt_snprintf(mname, 8, "mut_ud%d", i);
             rt_sprintf(blk_dir, "/mnt/%s/%s", BLK_USBH_UDISK, dname);
-            data->part.lock = rt_sem_create(sname, 1, RT_IPC_FLAG_FIFO);
+            data->ready = rt_mutex_create(mname, RT_IPC_FLAG_PRIO);
 
             /* register udisk device */
             data->dev.type = RT_Device_Class_Block;
@@ -177,7 +178,7 @@ rt_err_t USBH_diskio_initialize(MSC_HandleTypeDef *handle)
                 data->part.offset = 0;
                 data->part.size = info.capacity.block_nbr;
                 data->handle = handle;
-                data->part.lock = rt_sem_create("sem_ud", 1, RT_IPC_FLAG_FIFO);
+                data->ready = rt_mutex_create("mut_ud", RT_IPC_FLAG_PRIO);
 
                 rt_snprintf(dname, 7, "ud0p0");
                 rt_sprintf(blk_dir, "/mnt/%s/%s", BLK_USBH_UDISK, dname);
@@ -230,8 +231,10 @@ rt_err_t USBH_diskio_uninitialize()
     for (i = 0; i < MAX_PARTITION_COUNT; i++)
     {
         struct usbh_diskio *data = &udisk_part[i];
+
         if (data->handle == NULL)
             break;
+        rt_mutex_take(data->ready, RT_WAITING_FOREVER);
 
         /* unmount file system */
         const char *blk_dir = dfs_filesystem_get_mounted_path(&(data->dev));
@@ -248,10 +251,6 @@ rt_err_t USBH_diskio_uninitialize()
             }
             rmdir(blk_dir);
         }
-
-        /* delete semaphore */
-        rt_sem_delete(data->part.lock);
-
         /* unregister device */
         if (rt_device_unregister(&data->dev) == RT_EOK)
         {
@@ -263,7 +262,8 @@ rt_err_t USBH_diskio_uninitialize()
             ret = -RT_ERROR;
         }
 
-        rt_memset(data, 0, sizeof(struct usbh_diskio));
+        /* clean */
+        rt_mutex_delete(data->ready);
     }
 
     return ret;
@@ -311,6 +311,7 @@ static rt_size_t USBH_read(rt_device_t dev, rt_off_t sector, void* buff, rt_size
     struct usbh_diskio *msc_class = part->user_data;
 
     RT_ASSERT(part != RT_NULL);
+    rt_mutex_take(msc_class->ready, RT_WAITING_FOREVER);
 
     rt_size_t res = 0;
     MSC_LUNTypeDef info;
@@ -364,6 +365,7 @@ static rt_size_t USBH_read(rt_device_t dev, rt_off_t sector, void* buff, rt_size
         }
     }
 
+    rt_mutex_release(msc_class->ready);
     return res;
 }
 
@@ -386,6 +388,7 @@ static rt_size_t USBH_write(rt_device_t dev, rt_off_t sector, const void* buff, 
     struct usbh_diskio *msc_class = part->user_data;
 
     RT_ASSERT(part != RT_NULL);
+    rt_mutex_take(msc_class->ready, RT_WAITING_FOREVER);
 
     rt_size_t res = 0;
     MSC_LUNTypeDef info;
@@ -441,6 +444,7 @@ static rt_size_t USBH_write(rt_device_t dev, rt_off_t sector, const void* buff, 
         }
     }
 
+    rt_mutex_release(msc_class->ready);
     return res;
 }
 #endif /* _USE_WRITE == 1 */
@@ -460,6 +464,7 @@ static rt_err_t USBH_ioctl(rt_device_t dev, int cmd, void *buff)
     USBH_HandleTypeDef *phost = &hUsbHost;
 
     RT_ASSERT(part != RT_NULL);
+    rt_mutex_take(msc_class->ready, RT_WAITING_FOREVER);
 
     rt_err_t res = RT_EOK;
     MSC_LUNTypeDef info;
@@ -479,6 +484,7 @@ static rt_err_t USBH_ioctl(rt_device_t dev, int cmd, void *buff)
             geometry = (struct rt_device_blk_geometry *) buff;
             if (geometry == RT_NULL)
             {
+                rt_mutex_release(msc_class->ready);
                 return -RT_ERROR;
             }
 
@@ -497,6 +503,7 @@ static rt_err_t USBH_ioctl(rt_device_t dev, int cmd, void *buff)
         break;
     }
 
+    rt_mutex_release(msc_class->ready);
     return res;
 }
 #endif /* _USE_IOCTL == 1 */
