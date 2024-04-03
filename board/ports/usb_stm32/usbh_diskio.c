@@ -234,12 +234,12 @@ rt_err_t USBH_diskio_uninitialize()
 
         if (data->handle == NULL)
             break;
-        rt_mutex_take(data->ready, RT_WAITING_FOREVER);
 
         /* unmount file system */
         const char *blk_dir = dfs_filesystem_get_mounted_path(&(data->dev));
         if (blk_dir)
         {
+            rt_mutex_take(data->ready, RT_WAITING_FOREVER);
             if (dfs_unmount(blk_dir) == 0)
             {
                 LOG_I("Udisk unmount '%s' successfully", blk_dir);
@@ -251,19 +251,23 @@ rt_err_t USBH_diskio_uninitialize()
             }
             rmdir(blk_dir);
         }
-        /* unregister device */
-        if (rt_device_unregister(&data->dev) == RT_EOK)
-        {
-            LOG_I("The block device (%s) unregister successfully", data->dev.parent.name);
-        }
-        else
-        {
-            LOG_E("The block device (%s) unregister failed!", data->dev.parent.name);
-            ret = -RT_ERROR;
-        }
 
-        /* clean */
-        rt_mutex_delete(data->ready);
+        if (rt_device_find(data->dev.parent.name) != NULL)
+        {
+            /* unregister device */
+            if (rt_device_unregister(&data->dev) == RT_EOK)
+            {
+                LOG_I("The block device (%s) unregister successfully", data->dev.parent.name);
+            }
+            else
+            {
+                LOG_E("The block device (%s) unregister failed!", data->dev.parent.name);
+                ret = -RT_ERROR;
+            }
+
+            /* clean */
+            rt_mutex_delete(data->ready);
+        }
     }
 
     return ret;
