@@ -7,3 +7,6 @@
 [submodule "packages/swops"]
 	path = packages/swops
 	url = http://192.168.101.251:8088/sw-software/swops.git
+[submodule "packages/trdp"]
+	path = packages/trdp
+	url = http://192.168.101.251:8088/sw-software/trdp.git
