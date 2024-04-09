@@ -82,6 +82,9 @@ if GetDepend('BSP_USING_KSZ8794_TEST'):
     
 if GetDepend('BSP_USING_MCP2517FD_TEST'):
     src += Glob('mcp2517fd_test.c')
+
+if GetDepend('BSP_USING_TRDP_PD_TEST'):
+    src += Glob('trdp-pd-test.c')
         
 group = DefineGroup('Applications', src, depend = [''], CPPPATH = CPPPATH)
 

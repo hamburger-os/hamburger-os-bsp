@@ -129,6 +129,10 @@ menu "Test functions and examples"
     menuconfig BSP_USING_MCP2517FD_TEST
         bool "Enable mcp2517fd test"
         default n
+
+    menuconfig BSP_USING_TRDP_PD_TEST
+        bool "Enable trdp pd test"
+        default n
 endmenu
 
 menu "Product Application and Function"
