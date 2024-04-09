@@ -38,23 +38,10 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-/* --- globals ---------------------------------------------------------------*/
-
-TRDP_MEM_CONFIG_T memcfg;
-TRDP_APP_SESSION_T apph;
-TRDP_PD_CONFIG_T pdcfg;
-TRDP_PROCESS_CONFIG_T proccfg;
-
-/* default addresses - overriden from command line */
-TRDP_IP_ADDR_T srcip;
-TRDP_IP_ADDR_T dstip;
-TRDP_IP_ADDR_T mcast;
 
 #define APP_VERSION         "1.0"
-#define TRDP_PD_TEST_LOCALIP    "10.0.1.3"   /* 本地IP */
-#define TRDP_PD_TEST_REMOTEIP   "10.0.1.2"   /* 远端IP */
-#define TRDP_PD_TEST_MCAST      "239.255.55.1"   /* 组播 */
 
+/* --- globals ---------------------------------------------------------------*/
 typedef enum
 {
     PORT_PUSH,                      /* outgoing port ('Pd'/push)   (TSN suppport)*/
@@ -85,12 +72,32 @@ typedef struct
     int link;                       /* index of linked port (echo or subscribe) */
 } Port;
 
+typedef struct {
+    /* default addresses - overriden from command line */
+    TRDP_IP_ADDR_T srcip;
+    TRDP_IP_ADDR_T dstip;
+    TRDP_IP_ADDR_T mcast;
+} TRDP_PD_TEST_IP_CFG;
+
+typedef struct {
+    TRDP_PD_TEST_IP_CFG ip_cfg;
+    uint32_t pub_commid;
+    uint32_t sub_commid;
+    Port ports[64];                     /* array of ports          */
+    uint32_t nports;                    /* number of ports         */
+    TRDP_PD_INFO_T pdi;
+
+    TRDP_MEM_CONFIG_T memcfg;
+    TRDP_APP_SESSION_T apph;
+    TRDP_PD_CONFIG_T pdcfg;
+    TRDP_PROCESS_CONFIG_T proccfg;
+} TRDP_PD_TEST;
+
 int size[3] = { 0, 256, TRDP_MAX_PD_DATA_SIZE };     /* small/medium/big dataset */
 int period[2]  = { 100, 250 };      /* fast/slow cycle          */
 unsigned cycle = 0;
 
-Port ports[64];                     /* array of ports          */
-int nports = 0;                     /* number of ports         */
+static TRDP_PD_TEST trdp_pd_test_dev;
 
 #ifdef TSN_SUPPORT
     #define PORT_FLAGS TRDP_FLAGS_TSN
@@ -101,260 +108,68 @@ int nports = 0;                     /* number of ports         */
 /***********************************************************************************************************************
  * PROTOTYPES
  */
-void gen_push_ports_master(UINT32 comid, UINT32 echoid);
-void gen_pull_ports_slave(UINT32 reqid, UINT32 repid);
-void gen_push_ports_slave(UINT32 comid, UINT32 echoid);
 
 /* --- generate PUSH ports ---------------------------------------------------*/
 
-void gen_push_ports_master_one(UINT32 comid, UINT32 echoid)
+/*
+ * 设置所有发布者
+ * */
+static void set_gen_pub_config(TRDP_PD_TEST *dev)
 {
-    Port src, snk;
-    int num = nports;
-    UINT32  a, sz, per;
-    
-    LOG_I("- generating PUSH ports (master side) ... ");
+    Port src;
+
+    if(dev == RT_NULL)
+    {
+        LOG_E("set_gen_pub_config dev is null");
+    }
+
+    LOG_I("set_gen_pub_config");
 
     memset(&src, 0, sizeof(src));
-    memset(&snk, 0, sizeof(snk));
 
     src.type = PORT_PUSH;
-    snk.type = PORT_SINK_PUSH;
-    snk.timeout = 4000000;         /* 4 secs timeout*/
-
-    a = 0;
-
-    src.comid = comid;
-    snk.comid = echoid;
+    src.comid = dev->pub_commid;
     /* dataset size */
-    src.size = snk.size = (UINT32) size[1];
+    src.size = 256;
     /* period [usec] */
-    src.cycle = (UINT32) 1000u * (UINT32)period[0];
-    /* addresses */
-    if (!a)
-    {   /* unicast address 单点 */
-        src.dst = snk.src = dstip;
-        src.src = snk.dst = srcip;
-    }
-    else
-    {   /* multicast address 组播 */
-        src.dst = snk.dst = mcast;
-        src.src = srcip;
-        snk.src = dstip;
-    }
-    src.link = -1;
-    /* add ports to config */
-    ports[nports++] = src;
-    ports[nports++] = snk;
+    src.cycle = (UINT32) 1000u * (UINT32)100; /* 100ms */
 
-    LOG_I("%u ports created", nports - num);
+    /* unicast address 单点 */
+    src.dst = dev->ip_cfg.dstip;
+    src.src = dev->ip_cfg.srcip;
+
+    src.link = -1;
+
+    /* add ports to config */
+    dev->ports[dev->nports++] = src;
 }
 
-void gen_push_ports_master(UINT32 comid, UINT32 echoid)
+/*
+ * 设置所有订阅者
+ * */
+static void set_gen_sub_config(TRDP_PD_TEST *dev)
 {
-    Port src, snk;
-    int num = nports;
-    UINT32  a, sz, per;
+    Port snk;
 
-    LOG_I("- generating PUSH ports (master side) ... ");
+    if(dev == RT_NULL)
+    {
+        LOG_E("set_gen_sub_config dev is null");
+    }
 
-    memset(&src, 0, sizeof(src));
     memset(&snk, 0, sizeof(snk));
 
-    src.type = PORT_PUSH;
     snk.type = PORT_SINK_PUSH;
     snk.timeout = 4000000;         /* 4 secs timeout*/
+    snk.comid = dev->sub_commid;
+    /* dataset size */
+    snk.size = 256;
 
-    /* for unicast/multicast address */
-    for (a = 0; a < 2; ++a)
-    {   /* for all dataset sizes */
-        for (sz = 1; sz < 3; ++sz)
-        {   /* for all cycle periods */
-            for (per = 0; per < 2; ++per)
-            {   /* comid  */
-                src.comid = comid + 100u *a+40*(per+1)+3*(sz+1);
-                snk.comid = echoid + 100u *a+40*(per+1)+3*(sz+1);
-                /* dataset size */
-                src.size = snk.size = (UINT32) size[sz];
-                /* period [usec] */
-                src.cycle = (UINT32) 1000u * (UINT32)period[per];
-                /* addresses */
-                if (!a)
-                {   /* unicast address */
-                    src.dst = snk.src = dstip;
-                    src.src = snk.dst = srcip;
-                }
-                else
-                {   /* multicast address */
-                    src.dst = snk.dst = mcast;
-                    src.src = srcip;
-                    snk.src = dstip;
-                }
-                src.link = -1;
-                /* add ports to config */
-                ports[nports++] = src;
-                ports[nports++] = snk;
-            }
-        }
-    }
+    snk.src = dev->ip_cfg.dstip;
+    snk.dst = dev->ip_cfg.srcip;
 
-    LOG_I("%u ports created", nports - num);
-}
+    /* add ports to config */
+    dev->ports[dev->nports++] = snk;
 
-void gen_push_ports_slave(UINT32 comid, UINT32 echoid)
-{
-    Port src, snk;
-    int num = nports;
-    UINT32 a, sz, per;
-
-    LOG_I("- generating PUSH ports (slave side) ... ");
-
-    memset(&src, 0, sizeof(src));
-    memset(&snk, 0, sizeof(snk));
-
-    src.type = PORT_PUSH;
-    snk.type = PORT_SINK_PUSH;
-    snk.timeout = 4000000;         /* 4 secs timeout */
-
-    /* for unicast/multicast address */
-    for (a = 0; a < 2; ++a)
-    {   /* for all dataset sizes */
-        for (sz = 1; sz < 3; ++sz)
-        {   /* for all cycle periods */
-            for (per = 0; per < 2; ++per)
-            {   /* comid  */
-                src.comid = echoid + 100*a+40*(per+1)+3*(sz+1);
-                snk.comid = comid + 100*a+40*(per+1)+3*(sz+1);
-                /* dataset size */
-                src.size = snk.size = (UINT32) size[sz];
-                /* period [usec] */
-                src.cycle = (UINT32) (1000 * period[per]);
-                /* addresses */
-                if (!a)
-                {   /* unicast address */
-                    src.dst = snk.src =  dstip;
-                    src.src = snk.dst =  srcip;
-                }
-                else
-                {   /* multicast address */
-                    src.dst = snk.dst = mcast;
-                    src.src = srcip;
-                    snk.src = dstip;
-                }
-                /* add ports to config */
-                ports[nports++] = snk;
-                src.link = nports - 1;
-                ports[nports++] = src;
-            }
-        }
-    }
-
-    LOG_I("%u ports created", nports - num);
-}
-
-/* --- generate PULL ports ---------------------------------------------------*/
-
-static void gen_pull_ports_master(UINT32 reqid, UINT32 repid)
-{
-    Port req, rep;
-    int num = nports;
-    UINT32  a, sz;
-
-    LOG_I("- generating PULL ports (master side) ... ");
-
-    memset(&req, 0, sizeof(req));
-    memset(&rep, 0, sizeof(rep));
-
-    req.type = PORT_REQUEST;
-    rep.type = PORT_SINK;
-
-    /* for unicast/multicast address */
-    for (a = 0; a < 2; ++a)
-    {   /* for all dataset sizes */
-        for (sz = 0; sz < 2; ++sz)
-        {   /* comid */
-            req.comid = reqid + 100*a + 3*(sz+1);
-            rep.comid = repid + 100*a + 3*(sz+1);
-            /* dataset size */
-            req.size = (UINT32) size[sz];
-            rep.size = (UINT32) size[sz + 1];
-            /* addresses */
-            if (!a)
-            {   /* unicast address */
-                req.dst = dstip;
-                req.src = srcip;
-                req.rep = srcip;
-                req.repid = rep.comid;
-                rep.src = dstip;
-                rep.dst = srcip;
-            }
-            else
-            {   /* multicast address */
-                req.dst = mcast;
-                req.src = srcip;
-                req.rep = mcast;
-                req.repid = rep.comid;
-                rep.dst = mcast;
-                rep.src = dstip;
-            }
-            /* add ports to config */
-            ports[nports++] = rep;
-            req.link = nports - 1;
-            ports[nports++] = req;
-        }
-    }
-
-    LOG_I("%u ports created", nports - num);
-}
-
-void gen_pull_ports_slave(UINT32 reqid, UINT32 repid)
-{
-    Port req, rep;
-    int num = nports;
-    UINT32 a, sz;
-
-    LOG_I("- generating PULL ports (slave side) ... ");
-
-    memset(&req, 0, sizeof(req));
-    memset(&rep, 0, sizeof(rep));
-
-    req.type = PORT_SINK;
-    rep.type = PORT_PULL;
-    req.timeout = 4000000;      /* 4 secs timeout */
-
-    /* for unicast/multicast address */
-    for (a = 0; a < 2; ++a)
-    {   /* for all dataset sizes */
-        for (sz = 0; sz < 2; ++sz)
-        {   /* comid */
-            req.comid = reqid + 100*a + 3*(sz+1);
-            rep.comid = repid + 100*a + 3*(sz+1);
-            /* dataset size */
-            req.size = (UINT32) size[sz];
-            rep.size = (UINT32) size[sz + 1];
-            /* addresses */
-            if (!a)
-            {   /* unicast address */
-                req.dst = srcip;
-                req.src = dstip;
-                rep.src = srcip;
-                rep.dst = 0;
-            }
-            else
-            {   /* multicast address */
-                req.dst = mcast;
-                req.src = dstip;
-                rep.src = srcip;
-                rep.dst = 0;
-            }
-            /* add ports to config */
-            ports[nports++] = req;
-            rep.link = nports - 1;
-            ports[nports++] = rep;
-        }
-    }
-
-    LOG_I("%u ports created", nports - num);
 }
 
 /* --- setup ports -----------------------------------------------------------*/
@@ -365,9 +180,9 @@ static void setup_ports()
 
     LOG_I("setup_ports:");
     /* setup ports one-by-one */
-    for (i = 0; i < nports; ++i)
+    for (i = 0; i < trdp_pd_test_dev.nports; ++i)
     {
-        Port * p = &ports[i];
+        Port * p = &trdp_pd_test_dev.ports[i];
         TRDP_COM_PARAM_T comPrams = TRDP_PD_DEFAULT_SEND_PARAM;
 #if PORT_FLAGS == TRDP_FLAGS_TSN
         comPrams.vlan = 1;
@@ -382,7 +197,7 @@ static void setup_ports()
         {
         case PORT_PUSH:
             p->err = tlp_publish(
-                apph,               /* session handle */
+                trdp_pd_test_dev.apph,               /* session handle */
                 &p->ph,             /* publish handle */
                 NULL, NULL,
                 0u,                 /* serviceId        */
@@ -405,7 +220,7 @@ static void setup_ports()
             break;
         case PORT_PULL:
             p->err = tlp_publish(
-                apph,               /* session handle */
+                trdp_pd_test_dev.apph,               /* session handle */
                 &p->ph,             /* publish handle */
                 NULL, NULL, 
                 0u,                 /* serviceId        */
@@ -429,8 +244,8 @@ static void setup_ports()
 
         case PORT_REQUEST:
             p->err = tlp_request(
-                apph,               /* session handle */
-                ports[p->link].sh,  /* related subscribe handle */
+                trdp_pd_test_dev.apph,               /* session handle */
+                trdp_pd_test_dev.ports[p->link].sh,  /* related subscribe handle */
                 0u,                 /* serviceId        */
                 p->comid,           /* comid          */
                 0,                  /* topo counter   */
@@ -453,7 +268,7 @@ static void setup_ports()
 
         case PORT_SINK:
             p->err = tlp_subscribe(
-                apph,               /* session handle   */
+                trdp_pd_test_dev.apph,               /* session handle   */
                 &p->sh,             /* subscribe handle */
                 NULL,               /* user ref         */
                 NULL,               /* callback funktion */
@@ -476,7 +291,7 @@ static void setup_ports()
             break;
         case PORT_SINK_PUSH:
             p->err = tlp_subscribe(
-                apph,               /* session handle   */
+                trdp_pd_test_dev.apph,               /* session handle   */
                 &p->sh,             /* subscribe handle */
                 NULL,               /* user ref         */
                 NULL,               /* callback funktion */
@@ -568,18 +383,20 @@ static const char * get_result_string(int ret)
 
 static void process_data(void)
 {
-    int i = 0, index = 0;
+    int i = 0;
     unsigned n;
     TRDP_COM_PARAM_T comPrams = TRDP_PD_DEFAULT_SEND_PARAM;
 #if PORT_FLAGS == TRDP_FLAGS_TSN
     comPrams.vlan = 1;
     comPrams.tsn = TRUE;
 #endif
+    static uint32_t expect_seqCount = 0;
+    int k = 0;
 
     /* go through ports one-by-one */
-    for (i = 0; i < nports; ++i)
+    for (i = 0; i < trdp_pd_test_dev.nports; ++i)
     {
-        Port * p = &ports[i];
+        Port * p = &trdp_pd_test_dev.ports[i];
         /* write port data */
         if (p->type == PORT_PUSH || p->type == PORT_PULL)
         {
@@ -601,7 +418,7 @@ static void process_data(void)
             }
             else
             {   /* echo data from incoming port, replace all '_' by '~' */
-                unsigned char * src = ports[p->link].data;
+                unsigned char * src = trdp_pd_test_dev.ports[p->link].data;
                 unsigned char * dst = p->data;
                 for (n = p->size; n; --n, ++src, ++dst)
                     *dst = (*src == '_') ? '~' : *src;
@@ -616,7 +433,7 @@ static void process_data(void)
                 p->err = tlp_put(apph, p->ph, p->data, p->size);
             }
 #else
-            p->err = tlp_put(apph, p->ph, p->data, p->size);
+            p->err = tlp_put(trdp_pd_test_dev.apph, p->ph, p->data, p->size);
 
 #endif
 
@@ -646,7 +463,7 @@ static void process_data(void)
                     p->cycle / 1000, p->size, cycle);
             }
 
-            p->err = tlp_request(apph, ports[p->link].sh, 0u, p->comid, 0u, 0u,
+            p->err = tlp_request(trdp_pd_test_dev.apph, trdp_pd_test_dev.ports[p->link].sh, 0u, p->comid, 0u, 0u,
                 p->src, p->dst, 0, PORT_FLAGS, &comPrams, p->data, p->size,
                 p->repid, p->rep);
 
@@ -661,6 +478,24 @@ static void process_data(void)
                 LOG_E("PORT_REQUEST-- %s", get_result_string(p->err));
             }
         }
+        else if(p->type == PORT_SINK_PUSH)
+        {
+            if(p->err == TRDP_NO_ERR)
+            {
+                if(trdp_pd_test_dev.pdi.seqCount == expect_seqCount)
+                {
+                    rt_kprintf("***recv seqcount %d etbTopoCnt %d opTrnTopoCnt %d size %d***\n",
+                            trdp_pd_test_dev.pdi.seqCount, trdp_pd_test_dev.pdi.etbTopoCnt, trdp_pd_test_dev.pdi.opTrnTopoCnt, p->size);
+                    for(k = 0; k < p->size; k++)
+                    {
+                        rt_kprintf("%x ", p->data[k]);
+                    }
+                    rt_kprintf("\n");
+                    expect_seqCount++;
+                }
+            }
+            memset(&trdp_pd_test_dev.pdi, 0, sizeof(TRDP_PD_INFO_T));
+        }
     }
     /* increment cycle counter  */
     ++cycle;
@@ -670,35 +505,16 @@ static void process_data(void)
 
 static void poll_data()
 {
-    TRDP_PD_INFO_T pdi;
     int i;
-    int k = 0;
-    static uint32_t expect_seqCount = 0;
 
     /* go through ports one-by-one */
-    for (i = 0; i < nports; ++i)
+    for (i = 0; i < trdp_pd_test_dev.nports; ++i)
     {
-        Port * p = &ports[i];
-        UINT32 size = p->size;
+        Port * p = &trdp_pd_test_dev.ports[i];
         if (p->type == PORT_SINK || p->type == PORT_SINK_PUSH)
         {
-            p->err = tlp_get(apph, p->sh, &pdi, p->data, &size);
-
-            if(p->err == TRDP_NO_ERR)
-            {
-                if(pdi.seqCount == expect_seqCount)
-                {
-                    rt_kprintf("!!!%d\n", pdi.seqCount);
-                    for(k = 0; k < size; k++)
-                    {
-                        rt_kprintf("%x ", p->data[k]);
-                    }
-                    rt_kprintf("\n");
-                    expect_seqCount++;
-                }
-            }
-            memset(&pdi, 0, sizeof(TRDP_PD_INFO_T));
-        }        
+            p->err = tlp_get(trdp_pd_test_dev.apph, p->sh, &trdp_pd_test_dev.pdi, p->data, &p->size);
+        }
     }
 }
 
@@ -726,10 +542,10 @@ static void trdp_pd_test_thread(void *paramemter)
 {
     unsigned tick = 0;
 
-    /* main test loop */
+    /* trdp_pd_test loop */
     while (1)
     {   /* drive TRDP communications */
-        tlc_process(apph, NULL, NULL);
+        tlc_process(trdp_pd_test_dev.apph, NULL, NULL);
         /* poll (receive) data */
         poll_data();
         /* process data every 500 msec */
@@ -749,64 +565,61 @@ void trdp_pd_test(int argc, char * argv[])
     LOG_I("%s: Version %s (%s - %s)\n",
                           argv[0], APP_VERSION, __DATE__, __TIME__);
 
-    srcip = vos_dottedIP(TRDP_PD_TEST_LOCALIP);
-    dstip = vos_dottedIP(TRDP_PD_TEST_REMOTEIP);
-    mcast = vos_dottedIP(TRDP_PD_TEST_MCAST);
-
-#ifdef SIM
-    if (argc < 6)
+    if (argc < 4)
     {
-        printf("In simulation mode an extra last argument is required <Unike thread name>\n");
-        return 1;
+        rt_kprintf("usage: %s <localip> <remoteip> <mcast> <pub comm id> <sub comm id>\n", argv[0]);
+        rt_kprintf("<localip>       .. own IP address (ie. 10.0.1.3)\n");
+        rt_kprintf("<remoteip>      .. remote peer IP address (ie. 10.0.1.2)\n");
+        rt_kprintf("<mcast>         .. multicast group address (ie. 239.255.55.1)\n");
+        rt_kprintf("<mcast>         .. multicast group address (ie. 239.255.55.1)\n");
+        rt_kprintf("<pub comm id>   .. pub comm id (ie. 21761)\n");
+        rt_kprintf("<sub comm id>   .. pub comm id (ie. 20000)\n");
+        return;
     }
-    vos_setTimeSyncPrefix(argv[5]);
 
-    if (!SimSetHostIp(argv[1]))
-        printf("Failed to set sim host IP.");
-#endif
+    trdp_pd_test_dev.ip_cfg.srcip = vos_dottedIP(argv[1]);       /* 本地IP */
+    trdp_pd_test_dev.ip_cfg.dstip = vos_dottedIP(argv[2]);       /* 远端IP */
+    trdp_pd_test_dev.ip_cfg.mcast = vos_dottedIP(argv[3]);       /* 组播地址 */
+    trdp_pd_test_dev.pub_commid = vos_dottedIP(argv[4]);         /* 发布者 commid */
+    trdp_pd_test_dev.sub_commid = vos_dottedIP(argv[5]);         /* 订阅者 commid  */
 
-    if (!srcip || !dstip || (mcast >> 28) != 0xE)
+    if (!trdp_pd_test_dev.ip_cfg.srcip || !trdp_pd_test_dev.ip_cfg.dstip || (trdp_pd_test_dev.ip_cfg.mcast >> 28) != 0xE)
     {
         LOG_E("invalid ip arguments\n");
     }
 
-    memset(&memcfg, 0, sizeof(memcfg));
-    memset(&proccfg, 0, sizeof(proccfg));
+    memset(&trdp_pd_test_dev.memcfg, 0, sizeof(TRDP_MEM_CONFIG_T));
+    memset(&trdp_pd_test_dev.proccfg, 0, sizeof(TRDP_PROCESS_CONFIG_T));
 
     /* initialize TRDP protocol library */
-    err = tlc_init(printLog, NULL, &memcfg);
+    err = tlc_init(printLog, NULL, &trdp_pd_test_dev.memcfg);
     if (err != TRDP_NO_ERR)
     {
         LOG_E("tlc_init() failed, err: %d\n", err);
+        return;
     }
-#ifdef SIM
-    vos_threadRegister("main", TRUE);
-#endif
-    pdcfg.pfCbFunction = NULL;
-    pdcfg.pRefCon = NULL;
-    pdcfg.sendParam.qos = 5;
-    pdcfg.sendParam.ttl = 64;
-    pdcfg.flags = TRDP_FLAGS_NONE;
-    pdcfg.timeout = 10000000;
-    pdcfg.toBehavior = TRDP_TO_SET_TO_ZERO;
-    pdcfg.port = 17224;
+
+    trdp_pd_test_dev.pdcfg.pfCbFunction = NULL;
+    trdp_pd_test_dev.pdcfg.pRefCon = NULL;
+    trdp_pd_test_dev.pdcfg.sendParam.qos = 5;
+    trdp_pd_test_dev.pdcfg.sendParam.ttl = 64;
+    trdp_pd_test_dev.pdcfg.flags = TRDP_FLAGS_NONE;
+    trdp_pd_test_dev.pdcfg.timeout = 10000000;
+    trdp_pd_test_dev.pdcfg.toBehavior = TRDP_TO_SET_TO_ZERO;
+    trdp_pd_test_dev.pdcfg.port = 17224;
 
     /* open session */
-    err = tlc_openSession(&apph, srcip, 0, NULL, &pdcfg, NULL, &proccfg);
+    err = tlc_openSession(&trdp_pd_test_dev.apph, trdp_pd_test_dev.ip_cfg.srcip, 0, NULL, &trdp_pd_test_dev.pdcfg, NULL, &trdp_pd_test_dev.proccfg);
     if (err != TRDP_NO_ERR)
     {
         LOG_E("tlc_openSession() failed, err: %d\n", err);
+        return;
     }
 
     /* generate ports configuration */
-#if 0
-    gen_push_ports_master(10000, 20000);
-    gen_push_ports_slave(10000, 20000);
-    gen_pull_ports_master(30000, 40000);
-    gen_pull_ports_slave(30000, 40000);
-#else
-    gen_push_ports_master_one(21761, 20000);
-#endif
+    set_gen_pub_config(&trdp_pd_test_dev);
+    set_gen_sub_config(&trdp_pd_test_dev);
+
     setup_ports();
     vos_threadDelay(2000000);
 
