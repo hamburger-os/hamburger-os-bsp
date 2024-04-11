@@ -29,6 +29,12 @@ if GetDepend('APP_USING_TRDP_PD_POINT_TO_POINT_TEST'):
 if GetDepend('APP_USING_TRDP_PD_TIMEOUT_AND_VALIDITY_TEST'):
     src += Glob('trdp_timeout_and_validity_test.c')
 
+if GetDepend('APP_USING_TRDP_PD_TOPOLOGY_COUNTER_TEST'):
+    src += Glob('trdp_topology_counter_iut_test.c')
+    src += Glob('trdp_topology_counter_system_test.c')
+
+    
+
 group = DefineGroup('conformance_test_of_trdp', src, depend = ['APP_USING_TRDP_PD_CONFORMANCE_TEST'], CPPPATH = path)
 
 Return('group')

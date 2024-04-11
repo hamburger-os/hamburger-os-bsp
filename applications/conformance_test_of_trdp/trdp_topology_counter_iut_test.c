@@ -13,7 +13,7 @@
 #include "vos_thread.h"
 #include "vos_utils.h"
 
-#define DBG_TAG "trdp_pd_timeout_and_validity_test"
+#define DBG_TAG "trdp_pd_topology_counter_iut_test"
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
@@ -23,8 +23,7 @@
 #include <unistd.h>
 #include <sys/select.h>
 
-#define TRDP_PUSH_TIMEOUT_AND_VALIDITY_TEST_PORT_NUM (6)
-#define TRDP_PUSH_TIMEOUT_AND_VALIDITY_TEST_LOCAL_IP ("10.0.1.1")
+#define TRDP_PUSH_TOPOLOGY_COUNTER_IUT_TEST_PORT_NUM (6)
 
 /* --- globals ---------------------------------------------------------------*/
 typedef enum
@@ -60,9 +59,26 @@ typedef struct
 } Port;
 
 typedef struct {
-    TRDP_TO_BEHAVIOR_T      sub_toBehavior;
+    /* default addresses - overriden from command line */
     TRDP_IP_ADDR_T srcip;
-    Port ports[TRDP_PUSH_TIMEOUT_AND_VALIDITY_TEST_PORT_NUM];   /* array of ports          */
+    TRDP_IP_ADDR_T dstip;
+    TRDP_IP_ADDR_T pub_mcast;
+    TRDP_IP_ADDR_T sub_mcast;
+    TRDP_IP_ADDR_T sub_src;
+} TRDP_PD_TEST_IP_CFG;
+
+typedef struct {
+    TRDP_PD_TEST_IP_CFG ip_cfg;
+    uint32_t pub_commid;
+    uint32_t sub_commid;
+
+    uint32_t load_etbTopoCnt;
+    uint32_t load_opTrnTopoCnt;
+
+    uint32_t send_etbTopoCnt;
+    uint32_t send_opTrnTopoCnt;
+
+    Port ports[TRDP_PUSH_TOPOLOGY_COUNTER_IUT_TEST_PORT_NUM];   /* array of ports          */
     uint32_t nports;                    /* number of ports         */
     TRDP_PD_INFO_T pdi;
 
@@ -71,8 +87,6 @@ typedef struct {
     TRDP_PD_CONFIG_T pdcfg;
     TRDP_PROCESS_CONFIG_T proccfg;
 } TRDP_PD_TEST;
-
-static unsigned cycle = 0;
 
 static TRDP_PD_TEST trdp_pd_test_dev;
 
@@ -101,22 +115,21 @@ static void set_gen_pub_config(TRDP_PD_TEST *dev)
     memset(&src, 0, sizeof(src));
 
     src.type = PORT_PUSH;
-
-    if(trdp_pd_test_dev.sub_toBehavior == TRDP_TO_SET_TO_ZERO)
-    {
-        src.comid = 331;
-    }
-    else
-    {
-        src.comid = 332;
-    }
+    src.comid = dev->pub_commid;
     /* dataset size */
     src.size = 1024;
     /* period [usec] */
     src.cycle = (UINT32) 1000u * (UINT32)1000; /* 1000ms */
 
-    src.dst = vos_dottedIP("239.255.3.31");
-    src.src = vos_dottedIP(TRDP_PUSH_TIMEOUT_AND_VALIDITY_TEST_LOCAL_IP);
+#if 0
+    /* unicast address 单点 */
+    src.dst = dev->ip_cfg.dstip;
+    src.src = dev->ip_cfg.srcip;
+#else
+    /* unicast address 组播 */
+    src.dst = dev->ip_cfg.pub_mcast;
+    src.src = dev->ip_cfg.srcip;
+#endif
 
     src.link = -1;
 
@@ -140,13 +153,13 @@ static void set_gen_sub_config(TRDP_PD_TEST *dev)
     memset(&snk, 0, sizeof(snk));
 
     snk.type = PORT_SINK_PUSH;
-    snk.timeout = 5000000;         /* 4 secs timeout*/
-    snk.comid = 330;
+    snk.timeout = 5000000;         /* 5 secs timeout*/
+    snk.comid = dev->sub_commid;
     /* dataset size */
     snk.size = 1024;
 
-    snk.src = dev->srcip;
-    snk.dst = vos_dottedIP("239.255.3.30");
+    snk.src = dev->ip_cfg.sub_src;
+    snk.dst = dev->ip_cfg.sub_mcast;
 
     /* add ports to config */
     dev->ports[dev->nports++] = snk;
@@ -164,10 +177,6 @@ static void setup_ports()
     {
         Port * p = &trdp_pd_test_dev.ports[i];
         TRDP_COM_PARAM_T comPrams = TRDP_PD_DEFAULT_SEND_PARAM;
-#if PORT_FLAGS == TRDP_FLAGS_TSN
-        comPrams.vlan = 1;
-        comPrams.tsn = TRUE;
-#endif
 
         LOG_I("%3d: commid <%d> / %s / %4d / %3d ... ",
             i, p->comid, types[p->type], p->size, p->cycle / 1000);
@@ -182,8 +191,8 @@ static void setup_ports()
                 NULL, NULL,
                 0u,                 /* serviceId        */
                 p->comid,           /* comid            */
-                0,                  /* topo counter     */
-                0,
+                trdp_pd_test_dev.send_etbTopoCnt,                  /* topo counter     */
+                trdp_pd_test_dev.send_opTrnTopoCnt,
                 p->src,             /* source address   */
                 p->dst,             /* destination address */
                 p->cycle,           /* cycle period   */
@@ -285,7 +294,7 @@ static void setup_ports()
                 PORT_FLAGS,         /* No flags set     */
                 &comPrams,              /*    Receive params */
                 p->timeout,             /* timeout [usec]   */
-                trdp_pd_test_dev.sub_toBehavior);   /* timeout behavior */
+                TRDP_TO_SET_TO_ZERO);   /* timeout behavior */
 
             if (p->err != TRDP_NO_ERR)
                 LOG_E("tlp_subscribe() failed, err: %d", p->err);
@@ -301,9 +310,7 @@ static void setup_ports()
 static void process_data(void)
 {
     int i = 0;
-    TRDP_COM_PARAM_T comPrams = TRDP_PD_DEFAULT_SEND_PARAM;
-    static uint32_t expect_seqCount = 0;
-    int k = 0;
+    uint32_t index = 0;
 
     /* go through ports one-by-one */
     for (i = 0; i < trdp_pd_test_dev.nports; ++i)
@@ -312,87 +319,41 @@ static void process_data(void)
         /* write port data */
         if (p->type == PORT_PUSH || p->type == PORT_PULL)
         {
-//            if (p->link == -1)
-//            {   /* data generator */
-//                memset(p->data, 0, p->size);
-//                p->data[0] = 300;
-//                p->data[1] = p->sign;
-//                p->sign+=1;
-//            }
-
-//            LOG_I("---send %d", p->data[1]);
             p->err = tlp_put(trdp_pd_test_dev.apph, p->ph, (const UINT8 *)p->data, p->size);
 
-//            LOG_I("send commit id %d %s", p->comid, types[p->type]);
-//            for(index = 0; index < p->size; index++)
-//            {
-//                rt_kprintf("%x ", p->data[index]);
-//            }
-//            rt_kprintf("\n");
             if (p->err != TRDP_NO_ERR)
             {
                 LOG_E("PORT_PU-- %s", trdp_test_public_get_result_string(p->err));
             }
         }
-        else if (p->type == PORT_REQUEST)
-        {
-            unsigned o = cycle % 128;
-            memset(p->data, '_', p->size);
-            if (o < p->size)
-            {
-                snprintf((char *) p->data + o, p->size - o,
-                    "<Pr/%ld.%ld.%ld.%ld->%ld.%ld.%ld.%ld/%ldms/%ldb:%d>",
-                    (p->src >> 24) & 0xff, (p->src >> 16) & 0xff,
-                    (p->src >> 8) & 0xff, p->src & 0xff,
-                    (p->dst >> 24) & 0xff, (p->dst >> 16) & 0xff,
-                    (p->dst >> 8) & 0xff, p->dst & 0xff,
-                    p->cycle / 1000, p->size, cycle);
-            }
-
-            p->err = tlp_request(trdp_pd_test_dev.apph, trdp_pd_test_dev.ports[p->link].sh, 0u, p->comid, 0u, 0u,
-                p->src, p->dst, 0, PORT_FLAGS, &comPrams, p->data, p->size,
-                p->repid, p->rep);
-
-//            LOG_I("recv commit id %d %s", p->comid, types[p->type]);
-//            for(index = 0; index < p->size; index++)
-//            {
-//                rt_kprintf("%x ", p->data[index]);
-//            }
-//            rt_kprintf("\n");
-            if (p->err != TRDP_NO_ERR)
-            {
-                LOG_E("PORT_REQUEST-- %s", trdp_test_public_get_result_string(p->err));
-            }
-        }
         else if(p->type == PORT_SINK_PUSH)
         {
-
-            Port * p_send = &trdp_pd_test_dev.ports[0];
-
-            uint32_t comm_id = 0;
-
-            if(trdp_pd_test_dev.sub_toBehavior == TRDP_TO_SET_TO_ZERO)
+            if(p->err == TRDP_NO_ERR)
             {
-                comm_id = 331;
+                Port * p_send = &trdp_pd_test_dev.ports[0];
+
+                uint32_t comm_id = 0;
+
+                comm_id = trdp_pd_test_dev.pub_commid;
+
+//                rt_kprintf("---recv data:\n");
+//                for(index = 0; index < p->size; index++)
+//                {
+//                    rt_kprintf("%x ", p->data[index]);
+//                }
+//                rt_kprintf("\n");
+
+                p_send->data[0] = comm_id;
+                p_send->data[1] = comm_id >> 8;
+                p_send->data[2] = comm_id >> 16;
+                p_send->data[3] = comm_id >> 24;
+
+                memcpy(&p_send->data[4], &p->data[4], 1020);
+
             }
-            else
-            {
-                comm_id = 332;
-            }
-
-            p_send->data[0] = comm_id;
-            p_send->data[1] = comm_id >> 8;
-            p_send->data[2] = comm_id >> 16;
-            p_send->data[3] = comm_id >> 24;
-
-            memcpy(&p_send->data[4], &p->data[4], 1020);
-
         }
     }
-    /* increment cycle counter  */
-    ++cycle;
 }
-
 
 /* --- poll received data ----------------------------------------------------*/
 
@@ -411,7 +372,42 @@ static void poll_data()
     }
 }
 
-static void trdp_pd_push_timeout_and_validity_test_thread(void *paramemter)
+static void trdp_pd_set_topology_counter_test(TRDP_PD_TEST *dev)
+{
+    /*   local etbTopoCnt set    */
+    if(dev->load_etbTopoCnt == 11223344)
+    {
+        dev->load_etbTopoCnt = 0x11223344;
+    }
+    else if(dev->load_etbTopoCnt == 22334455)
+    {
+        dev->load_etbTopoCnt = 0x22334455;
+    }
+
+    /*   local opTrnTopoCnt set    */
+    if(dev->load_opTrnTopoCnt == 55667788)
+    {
+        dev->load_opTrnTopoCnt = 0x55667788;
+    }
+    else if(dev->load_opTrnTopoCnt == 66778899)
+    {
+        dev->load_opTrnTopoCnt = 0x66778899;
+    }
+
+    /*   send etbTopoCnt set    */
+    if(dev->send_etbTopoCnt == 11223344)
+    {
+        dev->send_etbTopoCnt = 0x11223344;
+    }
+
+    /*   send opTrnTopoCnt set    */
+    if(dev->send_opTrnTopoCnt == 55667788)
+    {
+        dev->send_opTrnTopoCnt = 0x55667788;
+    }
+}
+
+static void trdp_pd_topolpgy_counter_iut_thread(void *paramemter)
 {
     static uint32_t current_ms = 0;
     /* trdp_pd_test loop */
@@ -430,38 +426,54 @@ static void trdp_pd_push_timeout_and_validity_test_thread(void *paramemter)
     }
 }
 
-/* --- trdp_pd_push_timeout_and_validity_test ------------------------------------------------------------------*/
-void trdp_pd_push_timeout_and_validity_test(int argc, char * argv[])
+/* --- trdp_pd_push_topology_counter_iut_test ------------------------------------------------------------------*/
+void trdp_pd_push_topology_counter_iut_test(int argc, char * argv[])
 {
     TRDP_ERR_T err;
     rt_thread_t tid;
-    TRDP_IP_ADDR_T srcip;
-    uint8_t toBehavior = 0;
 
     LOG_I("%s: (%s - %s)\n",
                           argv[0], __DATE__, __TIME__);
 
-    if (argc < 2)
+    memset(&trdp_pd_test_dev, 0, sizeof(trdp_pd_test_dev));
+
+    if (argc < 10)
     {
-        rt_kprintf("usage: %s <timeout behavior>\n", argv[0]);
-        rt_kprintf("<timeout behavior>   .. 0: zero 1: keep\n");
-        rt_kprintf("<remoteip>           .. remote IP address (ie. 10.0.1.2)\n");
+        rt_kprintf("usage: %s <localip> <pub  mcast> <sub mcast> <pub comm id> <sub comm id> <load etbTopoCnt> <load opTrnTopoCnt> <send etbTopoCnt> <send opTrnTopoCnt>\n", argv[0]);
+        rt_kprintf("<localip>       .. own IP address (ie. 10.0.1.1)\n");
+        rt_kprintf("<remoteip>      .. remote IP address (ie. 10.0.1.2)\n");
+        rt_kprintf("<pub mcast>     .. multicast group address (ie. 239.255.3.15)\n");
+        rt_kprintf("<sub mcast>     .. multicast group address (ie. 239.255.3.6)\n");
+        rt_kprintf("<pub comm id>   .. pub comm id (ie. 315)\n");
+        rt_kprintf("<sub comm id>   .. sub comm id (ie. 306)\n");
+        rt_kprintf("<load etbTopoCnt>    .. etbTopoCnt (ie. 11223344)\n");
+        rt_kprintf("<load opTrnTopoCnt>  .. opTrnTopoCnt (ie. 55667788)\n");
+        rt_kprintf("<send etbTopoCnt>    .. etbTopoCnt (ie. 0)\n");
+        rt_kprintf("<send opTrnTopoCnt>  .. opTrnTopoCnt (ie. 0)\n");
         return;
     }
 
-    toBehavior = vos_dottedIP(argv[1]);
-    trdp_pd_test_dev.srcip = vos_dottedIP(argv[2]);
-    LOG_I("toBehavior %d", toBehavior);
-    if(toBehavior == 0)
-    {
-        trdp_pd_test_dev.sub_toBehavior = TRDP_TO_SET_TO_ZERO;
-    }
-    else
-    {
-        trdp_pd_test_dev.sub_toBehavior = TRDP_TO_KEEP_LAST_VALUE;
-    }
+    trdp_pd_test_dev.ip_cfg.srcip = vos_dottedIP(argv[1]);       /* 本地IP */
+    trdp_pd_test_dev.ip_cfg.sub_src = vos_dottedIP(argv[2]);       /* 远程IP */
+    trdp_pd_test_dev.ip_cfg.pub_mcast = vos_dottedIP(argv[3]);   /* 发布者 组播地址 */
+    trdp_pd_test_dev.ip_cfg.sub_mcast = vos_dottedIP(argv[4]);   /* 订阅者 组播地址 */
+    trdp_pd_test_dev.pub_commid = vos_dottedIP(argv[5]);         /* 发布者 commid */
+    trdp_pd_test_dev.sub_commid = vos_dottedIP(argv[6]);         /* 订阅者 commid */
+    trdp_pd_test_dev.load_etbTopoCnt = vos_dottedIP(argv[7]);
+    trdp_pd_test_dev.load_opTrnTopoCnt = vos_dottedIP(argv[8]);
+    trdp_pd_test_dev.send_etbTopoCnt = vos_dottedIP(argv[9]);
+    trdp_pd_test_dev.send_opTrnTopoCnt = vos_dottedIP(argv[10]);
 
-    srcip = vos_dottedIP(TRDP_PUSH_TIMEOUT_AND_VALIDITY_TEST_LOCAL_IP);
+    trdp_pd_set_topology_counter_test(&trdp_pd_test_dev);
+
+    LOG_I("send_etbTopoCnt %x %x %x %x",
+            trdp_pd_test_dev.send_etbTopoCnt, trdp_pd_test_dev.send_opTrnTopoCnt,
+            trdp_pd_test_dev.load_etbTopoCnt, trdp_pd_test_dev.load_opTrnTopoCnt);
+
+    if (!trdp_pd_test_dev.ip_cfg.srcip || (trdp_pd_test_dev.ip_cfg.pub_mcast >> 28) != 0xE)
+    {
+        LOG_E("invalid ip arguments\n");
+    }
 
     memset(&trdp_pd_test_dev.memcfg, 0, sizeof(TRDP_MEM_CONFIG_T));
     memset(&trdp_pd_test_dev.proccfg, 0, sizeof(TRDP_PROCESS_CONFIG_T));
@@ -479,27 +491,29 @@ void trdp_pd_push_timeout_and_validity_test(int argc, char * argv[])
     trdp_pd_test_dev.pdcfg.sendParam.qos = 5;
     trdp_pd_test_dev.pdcfg.sendParam.ttl = 64;
     trdp_pd_test_dev.pdcfg.flags = TRDP_FLAGS_NONE;
-    trdp_pd_test_dev.pdcfg.timeout = 5000000;
-    trdp_pd_test_dev.pdcfg.toBehavior = TRDP_TO_SET_TO_ZERO;//TRDP_TO_KEEP_LAST_VALUE
+    trdp_pd_test_dev.pdcfg.timeout = 10000000;
+    trdp_pd_test_dev.pdcfg.toBehavior = TRDP_TO_SET_TO_ZERO;
     trdp_pd_test_dev.pdcfg.port = 17224;
 
     /* open session */
-    err = tlc_openSession(&trdp_pd_test_dev.apph, srcip, 0, NULL, &trdp_pd_test_dev.pdcfg, NULL, &trdp_pd_test_dev.proccfg);
+    err = tlc_openSession(&trdp_pd_test_dev.apph, trdp_pd_test_dev.ip_cfg.srcip, 0, NULL, &trdp_pd_test_dev.pdcfg, NULL, &trdp_pd_test_dev.proccfg);
     if (err != TRDP_NO_ERR)
     {
-        LOG_E("tlc_openSession() failed, err: %s\n", trdp_test_public_get_result_string(err));
+        LOG_E("tlc_openSession() failed, err: %d\n", err);
         return;
     }
-
     /* generate ports configuration */
     set_gen_pub_config(&trdp_pd_test_dev);
     set_gen_sub_config(&trdp_pd_test_dev);
 
     setup_ports();
+
+    tlc_setETBTopoCount(trdp_pd_test_dev.apph, trdp_pd_test_dev.load_etbTopoCnt);
+    tlc_setOpTrainTopoCount(trdp_pd_test_dev.apph, trdp_pd_test_dev.load_opTrnTopoCnt);
     vos_threadDelay(2000000);
 
-    tid = rt_thread_create("trdp_pd_push_timeout_and_validity_test_thread",
-                            trdp_pd_push_timeout_and_validity_test_thread, RT_NULL,
+    tid = rt_thread_create("trdp_pd_topolpgy_counter_iut_thread",
+                            trdp_pd_topolpgy_counter_iut_thread, RT_NULL,
                         (1024 * 6), 20, 5);
     if (tid != RT_NULL)
     {
@@ -509,5 +523,7 @@ void trdp_pd_push_timeout_and_validity_test(int argc, char * argv[])
 
 #ifdef RT_USING_FINSH
 #include <finsh.h>
-MSH_CMD_EXPORT_ALIAS(trdp_pd_push_timeout_and_validity_test, trdp_pd_push_timeout_and_validity_test, trdp pd push timeout and validity test);
+MSH_CMD_EXPORT_ALIAS(trdp_pd_push_topology_counter_iut_test, trdp_pd_push_topology_counter_iut_test, trdp pd push topology counter iut test);
 #endif
+
+
