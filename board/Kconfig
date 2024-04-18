@@ -71,6 +71,10 @@ menu "On-chip Peripheral Drivers"
                 config SOC_ATK_EXPLORER_V24
                     bool "Select stm32f407 atk explorer v2.4"
                     select SOC_SERIES_STM32F4
+                    
+                config SOC_M4_EXT_COM_BOARD
+                	bool "Select ext_com board"
+                	select SOC_SERIES_STM32F4
             endchoice
             
             config BSP_USING_GD32
