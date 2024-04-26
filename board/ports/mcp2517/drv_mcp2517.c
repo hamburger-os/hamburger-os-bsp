@@ -3064,9 +3064,18 @@ static rt_size_t mcp2517_write(rt_device_t dev, rt_off_t pos, const void *buffer
         txObj_tmp.bF.ctrl.IDE = 1;
     }
 
+#ifdef RT_CAN_USING_CANFD
     txObj_tmp.bF.ctrl.BRS = 1; /* 数据区加速 */
+#else
+    txObj_tmp.bF.ctrl.BRS = 0; /* 数据区加速 */
+#endif
+
     txObj_tmp.bF.ctrl.DLC = can_spi_data_bytes_to_dlc(can_msg->len);
+#ifdef RT_CAN_USING_CANFD
     txObj_tmp.bF.ctrl.FDF = can_msg->fd_frame;  /* 0: CAN2.0模式发送 / 1: FDCAN模式发送 */
+#else
+    txObj_tmp.bF.ctrl.FDF = 0;  /* 0: CAN2.0模式发送 / 1: FDCAN模式发送 */
+#endif
     txObj_tmp.bF.ctrl.ESI = 0;
     txObj_tmp.bF.ctrl.SEQ = 2;
 
