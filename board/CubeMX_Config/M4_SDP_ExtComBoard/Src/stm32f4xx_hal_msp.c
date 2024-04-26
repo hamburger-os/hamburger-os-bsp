@@ -1,3 +1,4 @@
+#include <CubeMX_Config/M4_SDP_ExtComBoard/Inc/main.h>
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
@@ -19,7 +20,6 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
