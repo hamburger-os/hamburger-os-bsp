@@ -72,8 +72,8 @@ menu "On-chip Peripheral Drivers"
                     bool "Select stm32f407 atk explorer v2.4"
                     select SOC_SERIES_STM32F4
                     
-                config SOC_M4_EXT_COM_BOARD
-                	bool "Select ext_com board"
+                config SOC_M4_SDP_EXTCOM_BOARD
+                	bool "Select SDP M4 extcom board"
                 	select SOC_SERIES_STM32F4
             endchoice
             
@@ -3988,10 +3988,16 @@ menu "Onboard Peripheral Drivers"
                     bool "Select RMII MODE"
             endchoice
             
-            config ETH_RST_PIN
-                string "Set ETH rst pin, default: PD.3"
-                default "PD.3"
-        
+            menuconfig BSP_USING_ETH_RST_PIN
+            	bool "Enable Ethernet Reset pin"
+            	default y
+            	
+            	if BSP_USING_ETH_RST_PIN
+            	
+            		config ETH_RST_PIN
+                		string "Set ETH rst pin, default: PD.3"
+                		default "PD.3"
+                endif
             config ETH_USING_INTERRUPT_MODE
                 bool "Enable interrupt mode"
                 default n
@@ -4015,6 +4021,9 @@ menu "Onboard Peripheral Drivers"
                 
                 config PHY_USING_LAN8720A
                     bool "Select phy LAN8720A"
+                
+                config SWITCH_USING_JL5104
+                	bool "Select switch JL5104"
             endchoice
             
             config ETH_USING_KVDB_NET_IF
@@ -4433,6 +4442,23 @@ menu "Onboard Peripheral Drivers"
                 hex "Set the i2c device address, default: 0x44"
                 default (0x44)
         endif
+   	menuconfig BSP_USING_TPA626
+   		bool "Enable tpa626"
+   		default n
+   		
+   		if BSP_USING_TPA626
+   			config TPA626_I2C_DEV
+   				string "Set the i2c device name used, default: i2c3"
+   				default "i2c3"
+   				
+   			config TPA626_I2C_ADD
+   				hex "Set the i2c device address, default: 0x40"
+   				default (0x40)
+   				
+   			config SAMP_RES_VAL
+   				int "Set the sampling resistance size, unit: mR"
+   				default (20)
+   		endif
         
     menuconfig BSP_USING_SC16IS752
         bool "Enable The SC16IS752/SC16IS762 is Dual UART with I2C-bus/SPI interface, 64-byte FIFOs, IrDA SIR."

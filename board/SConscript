@@ -85,11 +85,11 @@ if GetDepend(['SOC_H7_STO_COM_1_LOARD_BOARD']) or GetDepend(['SOC_H7_STO_COM_2_L
     elif rtconfig.PLATFORM in ['iccarm']:
         src += [startup_path_prefix + '/STM32H7xx_HAL/CMSIS/Device/ST/STM32H7xx/Source/Templates/iar/startup_stm32h743xx.s']
         
-if GetDepend(['SOC_M4_EXT_COM_BOARD']):
-    if GetDepend(['SOC_M4_EXT_COM_BOARD']):
-        src += Glob('CubeMX_Config/M4_Ext_ComBoard/Src/main.c')
-        src += Glob('CubeMX_Config/M4_Ext_ComBoard/Src/stm32f4xx_hal_msp.c')
-        path += [cwd + '/CubeMX_Config/M4_Ext_ComBoard/Inc']
+if GetDepend(['SOC_M4_SDP_EXTCOM_BOARD']):
+    if GetDepend(['SOC_M4_SDP_EXTCOM_BOARD']):
+        src += Glob('CubeMX_Config/M4_SDP_ExtComBoard/Src/main.c')
+        src += Glob('CubeMX_Config/M4_SDP_ExtComBoard/Src/stm32f4xx_hal_msp.c')
+        path += [cwd + '/CubeMX_Config/M4_SDP_ExtComBoard/Inc']
  
     CPPDEFINES = ['STM32F407xx']
     if rtconfig.PLATFORM in ['gcc']:
@@ -212,15 +212,11 @@ if GetDepend(['BSP_USING_ETH']):
     src += Glob('ports/eth/drv_eth.c')
     if GetDepend(['PHY_USING_LAN8720A']):
         src += Glob('ports/eth/lan8720.c')
+    if GetDepend(['SWITCH_USING_JL5104']):
+    	src += Glob('ports/eth/jl5104.c')
     if GetDepend(['BSP_USE_LINK_LAYER_COMMUNICATION']):
         src += Glob('ports/drv_link_layer_list.c')
     path += [cwd + '/ports/eth']
-    
-if GetDepend(['BSP_USING_ETH']):
-    src += Glob('ports/eth/drv_eth.c')
-    if GetDepend(['PHY_USING_LAN8720A']):
-        src += Glob('ports/eth/jl5104/jl5104.c')
-    path += [cwd + '/ports/eth/jl5104']
     
 if GetDepend(['BSP_USING_MAX31826']):
     src += Glob('ports/drv_max31826.c')
@@ -282,6 +278,9 @@ if GetDepend(['BSP_USING_MCP2517FD']):
   
 if GetDepend(['BSP_USING_LTC4281I']):
     src += Glob('ports/drv_ltc4281i.c')
+
+if GetDepend(['BSP_USING_TPA626']):
+	src += Glob('ports/drv_tpa626.c')
     
 if GetDepend(['BSP_USING_SC16IS752']):
     src += Glob('ports/sc16is7xx/sc16is7xx.c')

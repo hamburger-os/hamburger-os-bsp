@@ -14,6 +14,7 @@
 #include "board.h"
 #include "drv_eth.h"
 #include "lan8720.h"
+#include "jl5104.h"
 #include <netif/ethernetif.h>
 #include <lwipopts.h>
 
@@ -83,6 +84,8 @@ struct rt_stm32_eth stm32_eth_device = {
     .phy_addr = LAN8720_ADDR,
 };
 
+#define ETH_RST_PIN "PA.3"
+//#ifdef BSP_USING_ETH_RST_PIN
 static void phy_reset(void)
 {
     rt_base_t rst_pin = rt_pin_get(ETH_RST_PIN);
@@ -91,6 +94,7 @@ static void phy_reset(void)
     rt_thread_mdelay(100);
     rt_pin_write(rst_pin, PIN_HIGH);
 }
+//#endif
 
 static void phy_linkchange(void *parameter);
 
@@ -98,7 +102,9 @@ static void phy_linkchange(void *parameter);
 static rt_err_t rt_stm32_eth_init(rt_device_t dev)
 {
     struct rt_stm32_eth *eth = dev->user_data;
+//#ifdef BSP_USING_ETH_RST_PIN
     phy_reset();
+//#endif
 
     eth->heth.Instance = ETH;
     eth->heth.Init.MACAddr = &eth->mac[0];
@@ -125,12 +131,19 @@ static rt_err_t rt_stm32_eth_init(rt_device_t dev)
 
     /* Initialize the RX POOL */
     LWIP_MEMPOOL_INIT(RX_POOL);
-
+#ifdef PHY_USING_LAN8720A
     if (LAN8720_Init() != LAN8720_STATUS_OK)
     {
         LOG_E("LAN8720 init failed!");
     }
+#endif
 
+#ifdef SWITCH_USING_JL5104
+    if(JL5104_Init() != JL5104_STATUS_OK)
+    {
+        LOG_E("JL5104 init failed");
+    }
+#endif
     phy_linkchange(eth);
     return RT_EOK;
 }
@@ -596,6 +609,7 @@ void HAL_ETH_RxLinkCallback(void **pStart, void **pEnd, uint8_t *buff, uint16_t 
     }
 }
 
+#ifdef PHY_USING_LAN8720A
 static void phy_linkchange(void *parameter)
 {
     struct rt_stm32_eth *eth = parameter;
@@ -653,6 +667,32 @@ static void phy_linkchange(void *parameter)
         eth_device_linkchange(&eth->parent, RT_TRUE);
     }
 }
+#endif
+
+#ifdef SWITCH_USING_JL5104
+static void phy_linkchange(void *parameter)
+{
+    struct rt_stm32_eth *eth = parameter;
+    ETH_MACConfigTypeDef MACConf;
+    uint32_t PHYLinkState;
+    uint32_t speed = 0, duplex = 0;
+
+    duplex = ETH_FULLDUPLEX_MODE;
+    speed = ETH_SPEED_100M;
+
+    HAL_ETH_GetMACConfig(&eth->heth, &MACConf);
+    MACConf.DuplexMode = duplex;
+    MACConf.Speed = speed;
+#ifdef SOC_SERIES_STM32H7
+    MACConf.SourceAddrControl = ETH_SRC_ADDR_REPLACE;
+#endif
+    HAL_ETH_SetMACConfig(&eth->heth, &MACConf);  //设置MAC
+
+    HAL_ETH_Start_IT(&eth->heth);
+    eth_device_linkchange(&eth->parent, RT_TRUE);
+}
+
+#endif
 
 #ifdef PHY_USING_INTERRUPT_MODE
 static void eth_phy_isr(void *args)
