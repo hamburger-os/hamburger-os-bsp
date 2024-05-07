@@ -5,15 +5,22 @@
  *
  * Change Logs:
  * Date           Author       Notes
- * 2024-04-10     zm       the first version
+ * 2024-04-15     zm       the first version
  */
+
+/*
+ * 版本修改此宏定义 TRDP_PROTO_VER
+ * */
 
 #include "trdp_test_public.h"
 #include "trdp_if_light.h"
 #include "vos_thread.h"
 #include "vos_utils.h"
 
-#define DBG_TAG "trdp_pd_topology_counter_iut_test"
+/* 应用中不能包含此文件，这里测试需要修改该文件内参数 */
+#include "trdp_private.h"
+
+#define DBG_TAG "trdp_pd_protocol_version_system_test"
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
@@ -23,7 +30,12 @@
 #include <unistd.h>
 #include <sys/select.h>
 
-#define TRDP_PUSH_TOPOLOGY_COUNTER_SYSTEM_TEST_PORT_NUM (6)
+#define TRDP_PUSH_PROTOCOL_VERSION_SYSTEM_TEST_PORT_NUM (6)
+
+#define TRDP_PROTOCOL_VERSION_IUT_TEST_PUB_MCAST  ("239.255.3.4")
+#define TRDP_PROTOCOL_VERSION_IUT_TEST_SUB_MCAST  ("239.255.3.5")
+#define TRDP_PROTOCOL_VERSION_IUT_TEST_PUB_COM_ID (304)
+#define TRDP_PROTOCOL_VERSION_IUT_TEST_SUB_COM_ID (305)
 
 /* --- globals ---------------------------------------------------------------*/
 typedef enum
@@ -64,21 +76,14 @@ typedef struct {
     TRDP_IP_ADDR_T dstip;
     TRDP_IP_ADDR_T pub_mcast;
     TRDP_IP_ADDR_T sub_mcast;
-    TRDP_IP_ADDR_T sub_src;
 } TRDP_PD_TEST_IP_CFG;
 
 typedef struct {
     TRDP_PD_TEST_IP_CFG ip_cfg;
-    uint32_t pub_commid;
-    uint32_t sub_commid;
+    uint32_t pub_com_id;
+    uint32_t sub_com_id;
 
-    uint32_t load_etbTopoCnt;
-    uint32_t load_opTrnTopoCnt;
-
-    uint32_t send_etbTopoCnt;
-    uint32_t send_opTrnTopoCnt;
-
-    Port ports[TRDP_PUSH_TOPOLOGY_COUNTER_SYSTEM_TEST_PORT_NUM];   /* array of ports          */
+    Port ports[TRDP_PUSH_PROTOCOL_VERSION_SYSTEM_TEST_PORT_NUM];   /* array of ports          */
     uint32_t nports;                    /* number of ports         */
     TRDP_PD_INFO_T pdi;
 
@@ -115,7 +120,7 @@ static void set_gen_pub_config(TRDP_PD_TEST *dev)
     memset(&src, 0, sizeof(src));
 
     src.type = PORT_PUSH;
-    src.comid = dev->pub_commid;
+    src.comid = dev->pub_com_id;
     /* dataset size */
     src.size = 1024;
     /* period [usec] */
@@ -154,11 +159,11 @@ static void set_gen_sub_config(TRDP_PD_TEST *dev)
 
     snk.type = PORT_SINK_PUSH;
     snk.timeout = 5000000;         /* 5 secs timeout*/
-    snk.comid = dev->sub_commid;
+    snk.comid = dev->sub_com_id;
     /* dataset size */
     snk.size = 1024;
 
-    snk.src = dev->ip_cfg.sub_src;
+    snk.src = dev->ip_cfg.dstip;
     snk.dst = dev->ip_cfg.sub_mcast;
 
     /* add ports to config */
@@ -191,8 +196,8 @@ static void setup_ports()
                 NULL, NULL,
                 0u,                 /* serviceId        */
                 p->comid,           /* comid            */
-                trdp_pd_test_dev.send_etbTopoCnt,                  /* topo counter     */
-                trdp_pd_test_dev.send_opTrnTopoCnt,
+                0,                  /* topo counter     */
+                0,
                 p->src,             /* source address   */
                 p->dst,             /* destination address */
                 p->cycle,           /* cycle period   */
@@ -310,8 +315,6 @@ static void setup_ports()
 static void process_data(void)
 {
     int i = 0;
-    uint32_t comm_id = 0;
-    uint32_t index = 0;
 
     /* go through ports one-by-one */
     for (i = 0; i < trdp_pd_test_dev.nports; ++i)
@@ -320,7 +323,9 @@ static void process_data(void)
         /* write port data */
         if (p->type == PORT_PUSH || p->type == PORT_PULL)
         {
-            comm_id = trdp_pd_test_dev.pub_commid;
+            uint32_t comm_id = 0;
+
+            comm_id = trdp_pd_test_dev.pub_com_id;
 
             p->data[0] = comm_id;
             p->data[1] = comm_id >> 8;
@@ -331,7 +336,8 @@ static void process_data(void)
             p->data[5] = p->sign >> 8;
             p->data[6] = p->sign >> 16;
             p->data[7] = p->sign >> 24;
-            p->sign++;
+
+            p->sign+=1;
 
             p->err = tlp_put(trdp_pd_test_dev.apph, p->ph, (const UINT8 *)p->data, p->size);
 
@@ -344,13 +350,12 @@ static void process_data(void)
         {
             if(p->err == TRDP_NO_ERR)
             {
-                rt_kprintf("---recv data:\n");
-                for(index = 0; index < p->size; index++)
+                rt_kprintf("recv %d data:\n", i);
+                for(int k = 0; k < p->size; k++)
                 {
-                    rt_kprintf("%x ", p->data[index]);
+                    rt_kprintf("%x ", p->data[k]);
                 }
                 rt_kprintf("\n");
-
             }
         }
     }
@@ -373,42 +378,7 @@ static void poll_data()
     }
 }
 
-static void trdp_pd_set_topology_counter_test(TRDP_PD_TEST *dev)
-{
-    /*   local etbTopoCnt set    */
-    if(dev->load_etbTopoCnt == 11223344)
-    {
-        dev->load_etbTopoCnt = 0x11223344;
-    }
-    else if(dev->load_etbTopoCnt == 22334455)
-    {
-        dev->load_etbTopoCnt = 0x22334455;
-    }
-
-    /*   local opTrnTopoCnt set    */
-    if(dev->load_opTrnTopoCnt == 55667788)
-    {
-        dev->load_opTrnTopoCnt = 0x55667788;
-    }
-    else if(dev->load_opTrnTopoCnt == 66778899)
-    {
-        dev->load_opTrnTopoCnt = 0x66778899;
-    }
-
-    /*   send etbTopoCnt set    */
-    if(dev->send_etbTopoCnt == 11223344)
-    {
-        dev->send_etbTopoCnt = 0x11223344;
-    }
-
-    /*   send opTrnTopoCnt set    */
-    if(dev->send_opTrnTopoCnt == 55667788)
-    {
-        dev->send_opTrnTopoCnt = 0x55667788;
-    }
-}
-
-static void trdp_pd_topolpgy_counter_system_thread(void *paramemter)
+static void trdp_pd_protocol_version_system_thread(void *paramemter)
 {
     static uint32_t current_ms = 0;
     /* trdp_pd_test loop */
@@ -427,8 +397,8 @@ static void trdp_pd_topolpgy_counter_system_thread(void *paramemter)
     }
 }
 
-/* --- trdp_pd_push_topology_counter_system_test ------------------------------------------------------------------*/
-void trdp_pd_push_topology_counter_system_test(int argc, char * argv[])
+/* --- trdp_pd_push_protocol_version_system_test ------------------------------------------------------------------*/
+void trdp_pd_push_protocol_version_system_test(int argc, char * argv[])
 {
     TRDP_ERR_T err;
     rt_thread_t tid;
@@ -436,40 +406,24 @@ void trdp_pd_push_topology_counter_system_test(int argc, char * argv[])
     LOG_I("%s: (%s - %s)\n",
                           argv[0], __DATE__, __TIME__);
 
+    LOG_I("Protocol Version %x", TRDP_PROTO_VER);
+
     memset(&trdp_pd_test_dev, 0, sizeof(trdp_pd_test_dev));
 
-    if (argc < 10)
+    if (argc < 2)
     {
-        rt_kprintf("usage: %s <localip> <remoteip> <pub  mcast> <sub mcast> <pub com id> <sub com id> <load etbTopoCnt> <load opTrnTopoCnt> <send etbTopoCnt> <send opTrnTopoCnt>\n", argv[0]);
-        rt_kprintf("<localip>       .. own IP address (ie. 10.0.1.1)\n");
-        rt_kprintf("<remoteip>      .. remote IP address (ie. 10.0.1.2)\n");
-        rt_kprintf("<pub mcast>     .. multicast group address (ie. 239.255.3.15)\n");
-        rt_kprintf("<sub mcast>     .. multicast group address (ie. 239.255.3.6)\n");
-        rt_kprintf("<pub com id>   .. pub comm id (ie. 315)\n");
-        rt_kprintf("<sub com id>   .. sub comm id (ie. 306)\n");
-        rt_kprintf("<load etbTopoCnt>    .. etbTopoCnt (ie. 11223344)\n");
-        rt_kprintf("<load opTrnTopoCnt>  .. opTrnTopoCnt (ie. 55667788)\n");
-        rt_kprintf("<send etbTopoCnt>    .. etbTopoCnt (ie. 0)\n");
-        rt_kprintf("<send opTrnTopoCnt>  .. opTrnTopoCnt (ie. 0)\n");
+        rt_kprintf("usage: %s <localip> <remoteip>\n", argv[0]);
+        rt_kprintf("<localip>       .. own IP address (ie. 10.0.1.4)\n");
+        rt_kprintf("<remoteip>      .. remote IP address (ie. 10.0.1.1)\n");
         return;
     }
 
     trdp_pd_test_dev.ip_cfg.srcip = vos_dottedIP(argv[1]);       /* 本地IP */
-    trdp_pd_test_dev.ip_cfg.sub_src = vos_dottedIP(argv[2]);       /* 远程IP */
-    trdp_pd_test_dev.ip_cfg.pub_mcast = vos_dottedIP(argv[3]);   /* 发布者 组播地址 */
-    trdp_pd_test_dev.ip_cfg.sub_mcast = vos_dottedIP(argv[4]);   /* 订阅者 组播地址 */
-    trdp_pd_test_dev.pub_commid = vos_dottedIP(argv[5]);         /* 发布者 commid */
-    trdp_pd_test_dev.sub_commid = vos_dottedIP(argv[6]);         /* 订阅者 commid */
-    trdp_pd_test_dev.load_etbTopoCnt = vos_dottedIP(argv[7]);
-    trdp_pd_test_dev.load_opTrnTopoCnt = vos_dottedIP(argv[8]);
-    trdp_pd_test_dev.send_etbTopoCnt = vos_dottedIP(argv[9]);
-    trdp_pd_test_dev.send_opTrnTopoCnt = vos_dottedIP(argv[10]);
-
-    trdp_pd_set_topology_counter_test(&trdp_pd_test_dev);
-
-    LOG_I("send_etbTopoCnt %x %x %x %x",
-            trdp_pd_test_dev.send_etbTopoCnt, trdp_pd_test_dev.send_opTrnTopoCnt,
-            trdp_pd_test_dev.load_etbTopoCnt, trdp_pd_test_dev.load_opTrnTopoCnt);
+    trdp_pd_test_dev.ip_cfg.dstip = vos_dottedIP(argv[2]);       /* 远程IP */
+    trdp_pd_test_dev.ip_cfg.pub_mcast = vos_dottedIP(TRDP_PROTOCOL_VERSION_IUT_TEST_PUB_MCAST);   /* 发布者 组播地址 */
+    trdp_pd_test_dev.ip_cfg.sub_mcast = vos_dottedIP(TRDP_PROTOCOL_VERSION_IUT_TEST_SUB_MCAST);   /* 订阅者 组播地址 */
+    trdp_pd_test_dev.pub_com_id = TRDP_PROTOCOL_VERSION_IUT_TEST_PUB_COM_ID;         /* 发布者 commid */
+    trdp_pd_test_dev.sub_com_id = TRDP_PROTOCOL_VERSION_IUT_TEST_SUB_COM_ID;         /* 订阅者 commid */
 
     if (!trdp_pd_test_dev.ip_cfg.srcip || (trdp_pd_test_dev.ip_cfg.pub_mcast >> 28) != 0xE)
     {
@@ -508,13 +462,10 @@ void trdp_pd_push_topology_counter_system_test(int argc, char * argv[])
     set_gen_sub_config(&trdp_pd_test_dev);
 
     setup_ports();
-
-    tlc_setETBTopoCount(trdp_pd_test_dev.apph, trdp_pd_test_dev.load_etbTopoCnt);
-    tlc_setOpTrainTopoCount(trdp_pd_test_dev.apph, trdp_pd_test_dev.load_opTrnTopoCnt);
     vos_threadDelay(2000000);
 
-    tid = rt_thread_create("trdp_pd_topolpgy_counter_system_thread",
-                            trdp_pd_topolpgy_counter_system_thread, RT_NULL,
+    tid = rt_thread_create("trdp_pd_protocol_version_system_thread",
+                            trdp_pd_protocol_version_system_thread, RT_NULL,
                         (1024 * 6), 20, 5);
     if (tid != RT_NULL)
     {
@@ -524,8 +475,10 @@ void trdp_pd_push_topology_counter_system_test(int argc, char * argv[])
 
 #ifdef RT_USING_FINSH
 #include <finsh.h>
-MSH_CMD_EXPORT_ALIAS(trdp_pd_push_topology_counter_system_test, trdp_pd_push_topology_counter_system_test, trdp pd push topology counter system test);
+MSH_CMD_EXPORT_ALIAS(trdp_pd_push_protocol_version_system_test, trdp_pd_push_protocol_version_system_test, trdp pd push protocol version system test);
 #endif
+
+
 
 
 

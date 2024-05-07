@@ -439,13 +439,13 @@ void trdp_pd_push_topology_counter_iut_test(int argc, char * argv[])
 
     if (argc < 10)
     {
-        rt_kprintf("usage: %s <localip> <pub  mcast> <sub mcast> <pub comm id> <sub comm id> <load etbTopoCnt> <load opTrnTopoCnt> <send etbTopoCnt> <send opTrnTopoCnt>\n", argv[0]);
+        rt_kprintf("usage: %s <localip> <remoteip> <pub  mcast> <sub mcast> <pub com id> <sub com id> <load etbTopoCnt> <load opTrnTopoCnt> <send etbTopoCnt> <send opTrnTopoCnt>\n", argv[0]);
         rt_kprintf("<localip>       .. own IP address (ie. 10.0.1.1)\n");
         rt_kprintf("<remoteip>      .. remote IP address (ie. 10.0.1.2)\n");
         rt_kprintf("<pub mcast>     .. multicast group address (ie. 239.255.3.15)\n");
         rt_kprintf("<sub mcast>     .. multicast group address (ie. 239.255.3.6)\n");
-        rt_kprintf("<pub comm id>   .. pub comm id (ie. 315)\n");
-        rt_kprintf("<sub comm id>   .. sub comm id (ie. 306)\n");
+        rt_kprintf("<pub com id>   .. pub comm id (ie. 315)\n");
+        rt_kprintf("<sub com id>   .. sub comm id (ie. 306)\n");
         rt_kprintf("<load etbTopoCnt>    .. etbTopoCnt (ie. 11223344)\n");
         rt_kprintf("<load opTrnTopoCnt>  .. opTrnTopoCnt (ie. 55667788)\n");
         rt_kprintf("<send etbTopoCnt>    .. etbTopoCnt (ie. 0)\n");

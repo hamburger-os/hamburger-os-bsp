@@ -24,4 +24,10 @@ config APP_USING_TRDP_PD_CONFORMANCE_TEST
         config APP_USING_TRDP_PD_TOPOLOGY_COUNTER_TEST
             bool "Topology counter test"
             default n
+        config APP_USING_TRDP_PD_FCS_CHECK_TEST
+            bool "FCS check test"
+            default n
+        config APP_USING_TRDP_PD_PROTOCOL_VERSION_TEST
+            bool "Protocol version test"
+            default n
     endif

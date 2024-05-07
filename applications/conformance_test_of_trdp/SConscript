@@ -33,6 +33,16 @@ if GetDepend('APP_USING_TRDP_PD_TOPOLOGY_COUNTER_TEST'):
     src += Glob('trdp_topology_counter_iut_test.c')
     src += Glob('trdp_topology_counter_system_test.c')
 
+if GetDepend('APP_USING_TRDP_PD_FCS_CHECK_TEST'):
+    src += Glob('trdp_fcs_check_iut_test.c')
+    src += Glob('trdp_fcs_check_system_test.c')
+
+if GetDepend('APP_USING_TRDP_PD_PROTOCOL_VERSION_TEST'):
+    src += Glob('trdp_protocol_version_iut_test.c')
+    src += Glob('trdp_protocol_version_system_test.c')
+
+    
+
     
 
 group = DefineGroup('conformance_test_of_trdp', src, depend = ['APP_USING_TRDP_PD_CONFORMANCE_TEST'], CPPPATH = path)
