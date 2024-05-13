@@ -24,6 +24,7 @@
 #include "vcp_time_manage.h"
 #include "eth_thread.h"
 #include "board_info.h"
+#include "data_handle.h"
 
 static uint16_t  applayer_timeajust_ETH0_no_u16 = 0U,
                                  applayer_timeajust_ETH1_no_u16 = 0U,
@@ -139,14 +140,15 @@ static void app_clock_applyadjust(uint8_t *p_safe_layer, r_app_layer *pApp_layer
 }
 
 /****************************************************************************
-* 函数名: tx_data_export
-* 说  明: 把业务数据内的 通道数据发送至目的通道(外部道道 )
-* 参数:  uint8_t *pbuf主控发来的应用层业务数据中的通道数据中转发数据
-         uint8_t  data_len 转发数据长度
-                 uint8_t des_chl 需要转发的通道号
+* 函数名: channel_canframe_proc
+* 说  明: 处理通道数据
+* 参数:
+* uint8_t des_chl 通道号
+* uint8_t *pbuf 应用层业务数据中的通道数据
+* uint8_t  data_len 数据长度
 * 返回值: 无
  ****************************************************************************/
-static void tx_data_to_export(S_DATA_HANDLE * data_handle, uint8_t des_chl , uint8_t *pbuf , uint16_t  data_len)
+static void channel_canframe_proc(S_DATA_HANDLE * data_handle, uint8_t des_chl , uint8_t *pbuf , uint16_t  data_len)
 {
     if (pbuf != NULL)
     {
@@ -155,15 +157,22 @@ static void tx_data_to_export(S_DATA_HANDLE * data_handle, uint8_t des_chl , uin
         /* 外部硬CAN */
         case DATA_CHANNEL_TX1CAN1:
         case DATA_CHANNEL_TX1CAN2:
-        case DATA_CHANNEL_TX2CAN1:
+        case DATA_CHANNEL_TX1VMCAN1:
+        case DATA_CHANNEL_TX1VMCAN2:
+            ETHToCanDataHandleByTX1(data_handle, pbuf, data_len);
+            break;
         case DATA_CHANNEL_TX2CAN2:
+        case DATA_CHANNEL_TX2VMCAN1:
+        case DATA_CHANNEL_TX2VMCAN2:
+//            ETHToCanDataHandleByTX2(data_handle, pbuf, data_len);
+//            break;
         case DATA_CHANNEL_TX1CAN3:
         case DATA_CHANNEL_TX1CAN4:
+        case DATA_CHANNEL_TX2CAN1:
         case DATA_CHANNEL_TX2CAN3:
         case DATA_CHANNEL_TX2CAN4:
         case DATA_CHANNEL_TX1CAN5:
         case DATA_CHANNEL_TX2CAN5:
-//            Protocol_STO_2_ExpCAN(des_chl, pbuf, data_len);
             ETHToCanDataHandle(data_handle, pbuf, data_len);
             break;
 #if 0 //TODO(mingzhao)
@@ -193,7 +202,7 @@ static void tx_data_to_export(S_DATA_HANDLE * data_handle, uint8_t des_chl , uin
             Protocol_STO_2_ETH1_PD(pbuf, data_len);
 #endif
         default:
-            LOG_E("tx_data_export des_chl  = %x err !\r\n", des_chl);
+            LOG_D("tx_data_export des_chl  = %x err !\r\n", des_chl);
             break;
         }
     }
@@ -235,14 +244,25 @@ static void mainctl_2_export(S_DATA_HANDLE * data_handle, uint8_t *pbuf, uint8_t
                 case DATA_CHANNEL_TX2CAN4:
                 case DATA_CHANNEL_TX1CAN5:
                 case DATA_CHANNEL_TX2CAN5:
-//                    LOG_I("mainctl_2_export chnal_index  = %x !\r\n" , chnal_index);
+                case DATA_CHANNEL_TX1VMCAN1:
+                case DATA_CHANNEL_TX1VMCAN2:
+                case DATA_CHANNEL_TX2VMCAN1:
+                case DATA_CHANNEL_TX2VMCAN2:
+//                    LOG_I("mainctl_2_export chnal_index  = %x !" , chnal_index);
                     pthis = (h_exp_chanl *) &pbuf[step_pos];
                     step_pos = step_pos + sizeof(h_exp_chanl);
-                    tx_data_to_export(data_handle, chnal_index, &pbuf[step_pos], pthis->data_len);
+                    channel_canframe_proc(data_handle, chnal_index, &pbuf[step_pos], pthis->data_len);
                     step_pos = step_pos + pthis->data_len;
                     break;
+                case 0x32:
+                case 0x33:
+                case 0x50:
+                case 0x81:
+                case 0x82:
+                case 0x92:
+                    break;
                 default:
-//                    LOG_W("mainctl_2_export chnal_index  = %x err !\r\n", chnal_index);
+                    LOG_D("mainctl_2_export chnal_index err = %x !", chnal_index);
                     break;
             }
         }
@@ -288,35 +308,34 @@ rt_err_t app_layer_check(S_DATA_HANDLE * data_handle, uint8_t *pBuf, uint8_t *p_
                 {
     //                /*把通道配置信息设置到本地*/       //TODO(mingzhao) SET_CHANNL_INFO
     //                set_exp_chanl_refer(p_safe_layer, pApp_layer, &pBuf[sizeof(r_app_layer) + 1],
-    //                        pBuf[sizeof(r_app_layer)]);
+    //                pBuf[sizeof(r_app_layer)]);
     //                /*把通道配置信息存储到本地*/
     //                save_exp_chanl_refer(&pBuf[sizeof(r_app_layer) + 1], pBuf[sizeof(r_app_layer)]);
-
-                    LOG_I("SET_CHANNL_INFO NO");  //TODO(mingzhao )
-
+    //                LOG_I("SET_CHANNL_INFO NO");  //TODO(mingzhao )
                 }
                     break;
                 case GET_CHANNL_INFO:/*24轮循模式时 查询通道配置信息，通道数目+通道号+通道号+N 有应答 通道数目+通道1参数+通道2参数+N参数*/
                 {
-    //                get_exp_chanl_refer(p_safe_layer, pApp_layer, &pBuf[sizeof(r_app_layer) + 1],
-    //                        pBuf[sizeof(r_app_layer)]);       //TODO(mingzhao) GET_CHANNL_INFO
-                    LOG_I("SET_CHANNL_INFO NO");  //TODO(mingzhao )
+    //                get_exp_chanl_refer(p_safe_layer, pApp_layer, &pBuf[sizeof(r_app_layer) + 1], pBuf[sizeof(r_app_layer)]);       //TODO(mingzhao) GET_CHANNL_INFO
+    //                LOG_I("SET_CHANNL_INFO NO");  //TODO(mingzhao )
 
                 }
                     break;
                 case SET_CONTIUE_INFO:/*27轮循模式时 设置数据转发路由表，路由表数目1字节+路由表1(4字节)+N 有应答 2字节OK或ERR*/
                 {
-    //                      app_chl_router_save(p_safe_layer ,pApp_layer , &pBuf[sizeof(r_app_layer)+1] , pBuf[sizeof(r_app_layer)] );
+    //                app_chl_router_save(p_safe_layer ,pApp_layer , &pBuf[sizeof(r_app_layer)+1] , pBuf[sizeof(r_app_layer)] );
                 }
                     break;
                 case GET_CONTIUE_INFO: /*29轮循模式时 查询数据转发路由表，2字节保留 有应答  路由表数目1字节+路由表1(4字节)+N*/
                 {
-    //                      app_chl_router_get(p_safe_layer , pApp_layer);
+    //                app_chl_router_get(p_safe_layer , pApp_layer);
                 }
+                    break;
+                case APPLY_TIME_SET:
                     break;
                 default:
                     ret = -RT_ERROR;
-                    LOG_E("app_layer_check ROUND_CIRCLE_TYPE msg_sub_type err !\r\n");
+                    LOG_E("app_layer_check ROUND_CIRCLE_TYPE msg_sub_type err %d !", pApp_layer->msg_sub_type);
                     break;
             }
         }
@@ -325,15 +344,23 @@ rt_err_t app_layer_check(S_DATA_HANDLE * data_handle, uint8_t *pBuf, uint8_t *p_
         {
             switch (pApp_layer->msg_sub_type)
             {
-            case APPLY_TIME_SET:/*6 轮循模式时 时钟同步申请，主控下发申请的时钟通信插件同步 业务数据为4个字节 无应答*/
-            {
-                app_clock_applyadjust(p_safe_layer, pApp_layer, &pBuf[sizeof(r_app_layer)]);
-            }
-                break;
-            default:
-                ret = -RT_ERROR;
-                LOG_E("app_layer_check ROUND_CIRCLE_ACK_TYPE msg_sub_type err !\r\n");
-                break;
+                case APPLY_TIME_SET:/*6 轮循模式时 时钟同步申请，主控下发申请的时钟通信插件同步 业务数据为4个字节 无应答*/
+                {
+                    app_clock_applyadjust(p_safe_layer, pApp_layer, &pBuf[sizeof(r_app_layer)]);
+                }
+                    break;
+
+                case COMM_PLUG_INFO:/* 轮循模式时 主控获取插件信息 */
+                {
+    //                    LOG_I("ROUND_CIRCLE_ACK_TYPE COMM_PLUG_INFO src %d dst %d " , pSafe_layer->des_adr , pSafe_layer->src_adr);
+                    break;
+                }
+                case TIME_SET_LOCAL:
+                    break;
+                default:
+                    ret = -RT_ERROR;
+                    LOG_E("app_layer_check ROUND_CIRCLE_ACK_TYPE msg_sub_type err %d !", pApp_layer->msg_sub_type);
+                    break;
             }
         }
         /*周期模式*/
@@ -341,20 +368,26 @@ rt_err_t app_layer_check(S_DATA_HANDLE * data_handle, uint8_t *pBuf, uint8_t *p_
         {
             switch (pApp_layer->msg_sub_type)
             {
-
                 case IAP_PAKAGE:/* 5周期模式时 IAP数据包  业务数据为IAP数据包  无应答*/
                 {
 
                 }
-                break;
+                    break;
                 case RX_MAINCTLDATA_EXP: /*33周期模式时 收到主控数据发送到外部通道  通道数目+通道数据(通道编号1+时间戳4+长度2+数据N)+N  无应答*/
                 {
                     mainctl_2_export(data_handle, &pBuf[sizeof(r_app_layer) + 1], pBuf[sizeof(r_app_layer)]);
                 }
-                break;
+                    break;
+                case RX_EXPDATA_MAINCTL: /* 34 周期模式时 收到外部数据发送给主控     通道数目+通道数据(通道编号1+时间戳4+长度2+数据N)+N 无应答*/
+                {
+                    /* 解析通信插件转发的数据 */
+                    mainctl_2_export(data_handle, &pBuf[sizeof(r_app_layer) + 1], pBuf[sizeof(r_app_layer)]);
+                    break;
+                }
+                    break;
                 default:
                     ret = -RT_ERROR;
-                    //LOG_E("app_layer_check TIMER_PULSE_TYPE msg_sub_type err !\r\n");
+                    LOG_E("app_layer_check TIMER_PULSE_TYPE msg_sub_type err !\r\n");
                     break;
             }
         }
@@ -392,35 +425,34 @@ static uint8_t get_applayer_pakage_tx_flag(uint8_t *pSafe, r_app_layer *pApp)
     app_layer.msg_sub_type = pApp->msg_sub_type;
 
     /* 时钟同步命令允许应答 */
-    if((app_layer.msg_type == ROUND_CIRCLE_TYPE) || (app_layer.msg_type == ROUND_CIRCLE_ACK_TYPE))
+    if ((app_layer.msg_type == ROUND_CIRCLE_TYPE) || (app_layer.msg_type == ROUND_CIRCLE_ACK_TYPE))
     {
 //        LOG_I("app_layer.msg_type %d app_layer.msg_sub_type %d", app_layer.msg_type, app_layer.msg_sub_type);
-        if((app_layer.msg_sub_type == TIME_SET_LOCAL) || (app_layer.msg_sub_type == APPLY_TIME_SET)
+        if ((app_layer.msg_sub_type == TIME_SET_LOCAL) || (app_layer.msg_sub_type == APPLY_TIME_SET)
                 || (app_layer.msg_sub_type == COMM_PLUG_INFO))
-        send_flag = 1;
+            send_flag = 1;
     }
     /* 其他命令，在收到各自通道时钟同步之前，不允许应答 */
     else
     {
-        switch(pRx_safe->res)
+        switch (pRx_safe->res)
         {
             case ETH_CH_INEX_1:
-                if(InETH0_2_MainCtl_en)
+                if (InETH0_2_MainCtl_en)
                 {
                     send_flag = 1;
                 }
-            break;
+                break;
             case ETH_CH_INEX_2:
-                if(InETH1_2_MainCtl_en)
+                if (InETH1_2_MainCtl_en)
                 {
                     send_flag = 1;
                 }
-            break;
+                break;
             default:
-            break;
+                break;
         }
     }
-
     return send_flag;
 }
 

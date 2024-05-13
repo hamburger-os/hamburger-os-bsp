@@ -20,10 +20,11 @@
 
 #define RECORD_FILE_NO_USED_BEI_YONG (1)  //记录文件不记录备用位
 
-#define RECORD_CAN_BUFFER_SIZE (200U)
+#define RECORD_CAN_BUFFER_SIZE (300U)
 #define FRAM_WRITE_BUF_SIZE    (256U)
 
 extern CAN_FRAME  Record_CanBuffer[RECORD_CAN_BUFFER_SIZE];
+extern uint8_t LocomotiveInfo_Received_data[MAX_LENGTH_PACKET];
 
 extern uint8_t g_ZK_DevCode;
 extern uint8_t g_XSQ_DevCode;
@@ -83,6 +84,10 @@ extern uint8_t g_ECU_DevCode;
 #define CAN_0x33(N)    Record_CanBuffer[168 + N]     //增加CAN协议内容
 /* 机车接口板发送状态信息 */
 #define CAN_0x91(N)    Record_CanBuffer[176 + N]     //增加CAN协议内容
+/* 机车接口板发送状态信息 */
+#define CAN_0x15(N)    Record_CanBuffer[184 + N]     //增加CAN协议内容
+/* 0x2D */
+#define RSS2_(N)        Record_CanBuffer[192 + N]
 
 /* 协议解析文件头 */
 #if 0
@@ -142,10 +147,10 @@ extern uint8_t g_ECU_DevCode;
 #define SKHYOUQUANDUAN              ( QSS_( 3u ).data_u8[6] )
 #if 0 //TODO(mingzhao)
 #define	KONGZHIGONGKUANG            ( CAN_KONGCHE( 0u ).data_u8[1] )
-#define KONGZHIJIWEI                ( CAN_KONGCHE( 0u ).data_u8[2] )
+#define KONGZHISHOUBINGJIWEI        ( CAN_KONGCHE( 0u ).data_u8[2] )
 #else
 #define KONGZHIGONGKUANG            ( QSS_( 2u ).data_u8[7] )
-#define KONGZHIJIWEI                ( QSS_( 2u ).data_u8[5] )
+#define KONGZHISHOUBINGJIWEI        ( QSS_( 2u ).data_u8[5] )
 #endif
 #define SHOUBINGHUILING             ( QSS_( 6u ).data_u8[ 6u ] )
 /* 12-June-2018, by Liang Zhen. */
@@ -209,8 +214,8 @@ extern uint8_t g_ECU_DevCode;
 #define BJISTOKONGZHICANSHUBIANYIRIQI   ( CAN_0X73_( 1u ).data_u8[6] )
 #define AJILKJSHUJUBANBEN               ETH_DAT[4]           //CAN协议没有定义
 #define BJILKJSHUJUBANBEN               ETH_DAT[4]           //CAN协议没有定义
-#define AJILKJSHUJUSHIJIAN              ETH_DAT[4]           //CAN协议没有定义
-#define BJILKJSHUJUSHIJIAN	            ETH_DAT[4]           //CAN协议没有定义
+#define AJILKJSHUJUSHIJIAN               ( CAN_0x15( 2u ).data_u8[5] )
+#define BJILKJSHUJUSHIJIAN               ( CAN_0x15( 3u ).data_u8[5] )
 
 /* 公共信息 */
 #define loco_T34                   ( CAN_0x32( 4u ).data_u8[1] )
@@ -239,8 +244,14 @@ extern uint8_t g_ECU_DevCode;
 #define JICHEFAHUISHOUBINGJIWEI    TCMSJIWEI
 #define CCUSUDU                    ( CAN_0x32( 4u ).data_u8[2] )
 #define LIECHEGUANYALI             LIECHEGUANYA 
-#define ZHIDONGGANGYALI            ZHAGANGYALI  
-#define JUNFENGGANGYALI            JUNGANG1YALI   
+#define ZHIDONGGANGYALI            ZHAGANGYALI      /* 状态信息 */
+#define JUNFENGGANGYALI            JUNGANG1YALI     /* 状态信息 */
+
+#define KONGZHIZHUANGTAI_XIN_XI            ( QSS_( 7u ).data_u8[4] )
+#define ZHIDONGGANGYALI_KONGCHE_XIN_XI     ( RSS_( 7u ).data_u8[2] )
+//#define KONGZHIZHUANGTAI_XIN_XI            ( RSS2_( 2u ).data_u8[0] )
+//#define ZHIDONGGANGYALI_KONGCHE_XIN_XI     ( RSS2_( 2u ).data_u8[1] )
+#define BIAO_ZHUN_GUAN_YA_XIN_XI           ( RSS_( 7u ).data_u8[7] )
 #define CHAIZHUANDIANLIU           CHAIYOUJIZHUANSU 
 
 /* 板间自检信息 */
@@ -308,7 +319,7 @@ extern uint8_t g_ECU_DevCode;
 #define YUNXUQIDONG	                  ( CAN_0x6A( 0u ).data_u8[3] )
 #define	KONGZHILIECHEQIDONG	          ( (*(&WENBENTISHI + 1U)) & 0x01) 
 #define KONGCHEGONGKUANG	          KONGZHIGONGKUANG
-#define KONGCHEJIWEI                  KONGZHIJIWEI
+#define KONGCHEJIWEI                  KONGZHISHOUBINGJIWEI
 #define KEKONGBIAOZHI                 ( ((*(&WENBENTISHI + 1U)) & 0x10) >> 4U )
 #define FENXIANGHUILING               ( QSS_( 6u ).data_u8[6] )
 #define WENBENTISHI2                  ( QSS_( 2u ).data_u8[2] )
@@ -327,10 +338,19 @@ extern uint8_t g_ECU_DevCode;
 //#define LIECHEGUANYALI               s_packet_gradeInfo.received_data_u8[26]  //公共信息已定义
 //#define ZHIDONGGANGYALI              s_packet_gradeInfo.received_data_u8[28]  //公共信息已定义
 #define ZONGFENGGANGYALI               ( CAN_0x32( 0u ).data_u8[2] )
+
 //#define JUNGANGYALI                    JUNFENGGANGYALI  
+#if 0
 #define ZIZHIDONGSHOUBING              ( CAN_0x32( 2u ).data_u8[2] )
-#define DANDUZHIDONGSHOUBING           ( CAN_0x32( 2u ).data_u8[3] ) 
-#define XIAOZHACEHUAN                  ( CAN_0x75( 2u ).data_u8[4] )  
+#define DANDUZHIDONGSHOUBING           ( CAN_0x32( 2u ).data_u8[3] )
+#define XIAOZHACEHUAN                  ( CAN_0x75( 2u ).data_u8[4] )
+#else
+/* 从曲线打包数据中取 */
+#define ZIZHIDONGSHOUBING              ( LocomotiveInfo_Received_data[39] )  /* 自阀手柄工况 */
+#define DANDUZHIDONGSHOUBING           ( LocomotiveInfo_Received_data[40] )  /* 单阀手柄工况 */
+#define XIAOZHACEHUAN                  ( LocomotiveInfo_Received_data[41] )  /* 侧缓状态 */
+#endif
+
 #define BCUCHONGFENGLIULIANG           ( CAN_0x32( 1u ).data_u8[2] )
 #define BCUZHUANGTAI                   ( (CAN_0x32( 2u ).data_u8[1] & 0x03) >> 0u )
 #define BCUCHENGFAZHIDONG              ( (CAN_0x32( 2u ).data_u8[0] & 0x20) >> 5u )
@@ -338,6 +358,8 @@ extern uint8_t g_ECU_DevCode;
 #define BCUYUNXUTIAOJIAN               ( CAN_0x32( 3u ).data_u8[4] )
 #define BCUCHANGJIA	                   ( CAN_0x32( 1u ).data_u8[4] )
 #define BCUGUZHANGDAIMA	               ( CAN_0x32( 3u ).data_u8[0] )
+
+
 
 /* 机车牵引系统信息 */
 #define axle_cut_T47                   ( CAN_0x32( 5u ).data_u8[6] )
@@ -350,8 +372,14 @@ extern uint8_t g_ECU_DevCode;
 #define auto_stat_T53                  ( CAN_0x32( 6u ).data_u8[4] )
 #define CESHIZHUANGTAIJIJIEGUO         ( CAN_0x6A( 2u ).data_u8[2] )
 
+#if 0
 #define WULISHOUBINGJIWEI              skq_jiwei_T52
 #define WULIJICHEGONGKUANG             ( (skq_stat_T50 & 0x70) >> 4u )
+#else
+/* 从曲线打包数据中取 */
+#define WULIJICHEGONGKUANG             ( LocomotiveInfo_Received_data[37] )  /* TCMS手柄工况 */
+#define WULISHOUBINGJIWEI              ( LocomotiveInfo_Received_data[38] )  /* TCMS手柄级位 */
+#endif
 #define DIANJIGELIZHUANGTAI            (axle_cut_T47 & 0x3F)
 #define JICHELIKEYONGBILI              jicheli_per_T51
 #define CLJICHELIKEYONGBILI            CLjicheli_per_T82
@@ -419,7 +447,7 @@ extern uint8_t g_ECU_DevCode;
 #define XINHAOJIZHUANGTAI                JICHEXINHAODAIMA
 //#define lLKJSUDU                       //公共信息已定义
 //#define XIANSU                         //公共信息已定义
-#define GUOFENXIANG                     ( RSS_( 1u ).data_u8[7] )
+#define GUOFENXIANG                     ( QSS_( 6u ).data_u8[6] )
 #define XIANLUSHUJUZHONGZHI              ETH_DAT[1]      //CAN协议没有定义
 #define ATOYUNXUFUZHUTIAOJIAN           ( CAN_0x6A( 3u ).data_u8[1] )
 #define SHUJUGUZHANG                    ( ATOYUNXUFUZHUTIAOJIAN & 0x01 )
@@ -458,6 +486,15 @@ typedef enum {
     S_LKF_FACTORY_SI_WEI = 1,   /* 思维LKJ */
     S_LKF_FACTORY_ZHU_SUO = 2   /* 株所LKJ */
 } S_LKF_FACTORY;
+
+typedef enum {
+    E_Control_Mode_Que_Xing = 0x00,
+    E_Control_Mode_Shou_Dong_Kong_Che,
+    E_Control_Mode_Yun_Xu_Zi_Kong,
+    E_Control_Mode_Zi_Dong_Kong_Che,
+    E_Control_Mode_Tui_Chu_Zi_Kong_Yu_Zhi,
+    E_Control_Mode_Tui_Chu_Zi_Kong
+} E_Control_Mode;
 
 /* public type definition ---------------------------------------------------------------------- */
 
@@ -554,8 +591,10 @@ typedef struct __attribute__((packed))
     char ch_BjiSTOkongzhicanshu[4];       /* B机STO控制参数版本日期 */
     char ch_AjiLKJshujubanben[4];         /* A机LKJ数据版本日期 */
     char ch_BjiLKJshujubanben[4];         /* B机LKJ数据版本日期 */
-    char ch_AjiLKJshujushijian[4];        /* A机LKJ数据时间日期 */
-    char ch_BjiLKJshujushijian[4];        /* B机LKJ数据时间日期 */
+//    char ch_AjiLKJshujushijian[4];        /* A机LKJ数据时间日期 */
+//    char ch_BjiLKJshujushijian[4];        /* B机LKJ数据时间日期 */
+    uint32_t ch_AjiLKJshujushijian;        /* A机LKJ数据时间日期 */
+    uint32_t ch_BjiLKJshujushijian;        /* B机LKJ数据时间日期 */
     char ch_wenjianneirongCRC[4];         /* 文件内容CRC32 */
     uint32_t u32_CRC32;                   /* CRC32 */
 } SFile_Head;

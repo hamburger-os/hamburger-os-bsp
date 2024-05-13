@@ -37,11 +37,9 @@ uint8_t u8_Contant_Flag  = 0u;
 uint8_t u8_Gonggongxinxi_Flag = 1U; 
 /* 软件周期标志 */
 uint8_t SoftWare_Cycle_Flag = 0U;
-/* 读写flash临时缓存 */
-uint8_t FLASH_SectorWriteRead_Buff[256U] = {0U};
 
 uint8_t ETH_DAT[12] = { 0u };   //临时定义
-uint32_t JILUGESHIBANBEN = 0x01020000;   //记录格式版本
+uint32_t JILUGESHIBANBEN = 0x01030000;   //记录格式版本
 
 /* 定义主控设备代码，默认：0x11--A模，0x12--B模 */
 uint8_t g_ZK_DevCode = 0x11;
@@ -198,6 +196,37 @@ typedef struct tagRecordingMessage
   LKJ_HLRT_Message SLKJ_HLRT_MSG;
 } RecordingMessage, *pRecordingMessage;
 
+typedef struct {
+    uint8_t zk_I_A_bb[6];
+    uint8_t zk_I_B_bb[6];
+    uint8_t zk_II_A_bb[6];
+    uint8_t zk_II_B_bb[6];
+
+    uint8_t xsq_I_bb[6];
+    uint8_t xsq_II_bb[6];
+
+    uint8_t tx_1_I_load_bb[6];
+    uint8_t tx_1_II_load_bb[6];
+
+    uint8_t tx_1_I_child_bb[6];
+    uint8_t tx_1_II_child_bb[6];
+
+    uint8_t tx_2_I_load_bb[6];
+    uint8_t tx_2_II_load_bb[6];
+
+    uint8_t tx_2_I_child_bb[6];
+    uint8_t tx_2_II_child_bb[6];
+
+    uint8_t wjjk_I_bb[6];
+    uint8_t wjjk_II_bb[6];
+
+    uint8_t CEU_I_bb[6];
+    uint8_t CEU_II_bb[6];
+
+    uint8_t ECU_I_bb[6];
+    uint8_t ECU_II_bb[6];
+
+} RecordSTOBoardVersion;
 
 /* private variable declaration ---------------------------------------------------------------- */
 /* Flash写BUFFER */
@@ -240,6 +269,8 @@ static uint8_t C_liecheguanyali[2]  = { 0x00U, 0x00U };
 static uint8_t C_zhidonggangyali[2]  = { 0x00U, 0x00U };
 static uint8_t C_jungangyali[2]  = { 0x00U, 0x00U };
 static uint8_t C_CCUfuzhuzhuangtai[1]  = { 0U };
+
+static RecordSTOBoardVersion record_sto_board_version = { 0u };;
 
 /* 12-June-2018, by Liang Zhen. */
 /* Recording message. */
@@ -974,6 +1005,8 @@ static rt_err_t Init_FileDirectory(S_CURRENT_FILE_INFO *current_file_info, uint8
 ***************************************************************************************************/
 static void Update_FileHead(void)
 {
+    uint8_t year = 0;
+
     /* 获取文件头 */
     s_file_head.ch_head_flag[0] = 0xb1;
     s_file_head.ch_head_flag[1] = 0xf1;
@@ -1081,8 +1114,28 @@ static void Update_FileHead(void)
     rt_memcpy (&s_file_head.ch_BjiSTOkongzhicanshu[2], &BJISTOKONGZHICANSHUBIANYIRIQI, 2u);
     rt_memcpy (s_file_head.ch_AjiLKJshujubanben, &AJILKJSHUJUBANBEN, 4u );
     rt_memcpy (s_file_head.ch_BjiLKJshujubanben, &BJILKJSHUJUBANBEN, 4u );
-    rt_memcpy (s_file_head.ch_AjiLKJshujushijian, &AJILKJSHUJUSHIJIAN, 4u );
-    rt_memcpy (s_file_head.ch_BjiLKJshujushijian, &BJILKJSHUJUSHIJIAN, 4u );
+
+//    LOG_I("s_file_head.ch_AjiSTOjichushujubanben %d %d %d %d",
+//            s_file_head.ch_AjiSTOjichushujubanben[0], s_file_head.ch_AjiSTOjichushujubanben[1], s_file_head.ch_AjiSTOjichushujubanben[2], s_file_head.ch_AjiSTOjichushujubanben[3]);
+//    LOG_I("s_file_head.ch_BjiSTOjichushujubanben %d %d %d %d",
+//            s_file_head.ch_BjiSTOjichushujubanben[0], s_file_head.ch_BjiSTOjichushujubanben[1], s_file_head.ch_BjiSTOjichushujubanben[2], s_file_head.ch_BjiSTOjichushujubanben[3]);
+
+    s_file_head.ch_AjiLKJshujushijian = 0;
+    s_file_head.ch_BjiLKJshujushijian = 0;
+
+    if((*(&AJILKJSHUJUSHIJIAN + 1)) != 0)
+    {
+        year = (AJILKJSHUJUSHIJIAN & 0x7f) - 15;
+        s_file_head.ch_AjiLKJshujushijian = (*(&AJILKJSHUJUSHIJIAN + 2)) << 17 | (*(&AJILKJSHUJUSHIJIAN + 1)) << 22 | year << 26;
+//        LOG_I("lkj date A %d %d %d %02x", year, (*(&AJILKJSHUJUSHIJIAN + 1)), (*(&AJILKJSHUJUSHIJIAN + 2)), s_file_head.ch_AjiLKJshujushijian);
+    }
+
+    if((*(&BJILKJSHUJUSHIJIAN + 1)) != 0)
+    {
+        year = (BJILKJSHUJUSHIJIAN & 0x7f) - 15;
+        s_file_head.ch_BjiLKJshujushijian = (*(&BJILKJSHUJUSHIJIAN + 2)) << 17 | (*(&BJILKJSHUJUSHIJIAN + 1)) << 22 | year << 26;
+//        LOG_I("lkj date B %d %d %d %02x", year, (*(&BJILKJSHUJUSHIJIAN + 1)), (*(&BJILKJSHUJUSHIJIAN + 2)), s_file_head.ch_BjiLKJshujushijian);
+    }
 
     rt_memcpy (s_file_head.ch_wenjianneirongCRC, &FileContent_CRC32, 4u);
     /* CRC校验 */
@@ -1140,6 +1193,32 @@ static rt_err_t Creat_FileHead(S_CURRENT_FILE_INFO *current_file_info)
         u8_Clear_Flag = 1u;
     } /* end if */
     return RT_EOK;
+}
+
+
+static void GetZhiDongGangYaAndJunFengGangYa(uint16_t *zhidonggangyali_new, uint16_t *junfenggangyali_new)
+{
+    uint16_t dazhajianyaliang = 0, biaozhunguanya = 0;
+
+    *zhidonggangyali_new = ((uint16_t) ((*(&ZHIDONGGANGYALI_KONGCHE_XIN_XI + 1) & 0x0F)) << 8u) + (uint16_t)ZHIDONGGANGYALI_KONGCHE_XIN_XI;
+    dazhajianyaliang = ((uint16_t) (*(&ZHIDONGGANGYALI_KONGCHE_XIN_XI + 2)) << 8) + (uint16_t)(*(&ZHIDONGGANGYALI_KONGCHE_XIN_XI + 1) & 0xF0);
+    dazhajianyaliang = dazhajianyaliang >> 4;
+    biaozhunguanya = BIAO_ZHUN_GUAN_YA_XIN_XI;
+//    LOG_I("ZHIDONGGANGYALI_KONGCHE_XIN_XI %02x %02x %02x",
+//            ZHIDONGGANGYALI_KONGCHE_XIN_XI, (*(&ZHIDONGGANGYALI_KONGCHE_XIN_XI + 1)), (*(&ZHIDONGGANGYALI_KONGCHE_XIN_XI + 2)));
+//    LOG_I("zhidonggangyali_new %d", *zhidonggangyali_new);
+//    LOG_I("biaozhunguanya %d", biaozhunguanya);
+//    LOG_I("dazhajianyaliang %d", dazhajianyaliang);
+    if(biaozhunguanya != 0)
+    {
+        biaozhunguanya = biaozhunguanya + 400;
+        *junfenggangyali_new = biaozhunguanya - dazhajianyaliang;
+    }
+    else
+    {
+        *junfenggangyali_new = 0;
+    }
+//    LOG_I("junfenggangyali_new %d", *junfenggangyali_new);
 }
 
 /**************************************************************************************************
@@ -1281,7 +1360,8 @@ static void Get_Gonggongxinxi(void)
             case 0x02:
                 s_file_public.ch_jichefahuigongkuang[0] = 0x00;
                 break;
-            case 0x04:
+            case 0x03:  /* 从打包曲线数据中取 3代表制动 */
+            case 0x04:  /* 原来4代表制动 */
                 s_file_public.ch_jichefahuigongkuang[0] = 0x02;
                 break;
             default:
@@ -2664,20 +2744,37 @@ static void RecordingThroughCommonMessage(void)
 static void RecordingAirBrakeCommonMessage(void)
 {
     uint8_t C_Kongqizhidong[6] = { 0x0U };
-    static uint8_t kongzhizhuangtai_old = 0u;
+    uint16_t zhidonggangyali_new = 0;
+    uint16_t junfenggangyali_new = 0;
 
-    if (kongzhizhuangtai_old != KONGZHIZHUANGTAI)
+    static uint16_t zhidonggangyali_old = 0;
+    static uint16_t junfenggangyali_old = 0;
+
+    if(KONGZHIMOSHI == E_Control_Mode_Zi_Dong_Kong_Che ||
+            KONGZHIMOSHI == E_Control_Mode_Tui_Chu_Zi_Kong_Yu_Zhi)
     {
-//        LOG_I("...生成空气制动事项...");
-        C_Kongqizhidong[0] = (*(&JUNFENGGANGYALI + 1));
-        C_Kongqizhidong[1] = JUNFENGGANGYALI;
-        C_Kongqizhidong[2] = (*(&ZHIDONGGANGYALI + 1));
-        C_Kongqizhidong[3] = ZHIDONGGANGYALI;
-        C_Kongqizhidong[4] = XIAOZHACEHUAN;
-        C_Kongqizhidong[5] = KONGZHIZHUANGTAI;
-        WriteFileContantPkt(0xA1, 0x65, g_ZK_DevCode, C_Kongqizhidong, 6u);
-        kongzhizhuangtai_old = KONGZHIZHUANGTAI;
+        GetZhiDongGangYaAndJunFengGangYa(&zhidonggangyali_new, &junfenggangyali_new);
+
+        /* 地面分析软件中将该数据除以了16 所以这里乘以16 */
+        junfenggangyali_new = junfenggangyali_new * 16;
+        zhidonggangyali_new = zhidonggangyali_new * 16;
+
+        if(zhidonggangyali_old != zhidonggangyali_new ||
+           junfenggangyali_old != junfenggangyali_new)
+        {
+            C_Kongqizhidong[0] = (uint8_t)junfenggangyali_new;
+            C_Kongqizhidong[1] = (uint8_t)(junfenggangyali_new >> 8);
+            C_Kongqizhidong[2] = (uint8_t)zhidonggangyali_new;
+            C_Kongqizhidong[3] = (uint8_t)(zhidonggangyali_new >> 8);
+            C_Kongqizhidong[4] = XIAOZHACEHUAN;
+            C_Kongqizhidong[5] = KONGZHIZHUANGTAI;
+            WriteFileContantPkt(0xA1, 0x65, g_ZK_DevCode, C_Kongqizhidong, 6u);
+            junfenggangyali_old = junfenggangyali_new;
+            zhidonggangyali_old = zhidonggangyali_new;
+//            LOG_I("...AirBrake...%d %d--%d %d", zhidonggangyali_new, junfenggangyali_new, zhidonggangyali_old, junfenggangyali_old);
+        }
     } /* end if */
+
 } /* end function RecordingAirBrakeCommonMessage */
 
 /**********************************************
@@ -3240,7 +3337,8 @@ static void RecordingPhysicalConditionMessage(void)
         case 2:
             wuligongkuangzhi = 0x00;
             break;
-        case 4:
+        case 3:  /* 从打包曲线数据中取 3代表制动 */
+        case 4:  /* 原来4代表制动 */
             wuligongkuangzhi = 0x02;
             break;
         default:
@@ -4331,16 +4429,20 @@ static void RecordingLimitSpeedMessage(void)
 ***********************************************/
 static void RecordingPassingNeutralSectionMessage(void)
 {
-    static uint8_t C_guofenxiangbiaozhi = 0U;
-    uint8_t guofenxiangzhi = 0u;
+    static uint8_t C_guofenxiang[2] = {0x00U, 0x00U};
+    uint16_t guofenxaing_old = 0, guofenxaing_new = 0;
 
-    guofenxiangzhi = (GUOFENXIANG & 0x01);
-    if ((C_guofenxiangbiaozhi == 0U) && (guofenxiangzhi == 1U))
+    guofenxaing_old = (uint16_t) C_guofenxiang[0] + (uint16_t) (C_guofenxiang[1] << 8);
+    guofenxaing_new = (uint16_t) (GUOFENXIANG << 8u) + (uint16_t) (*(&GUOFENXIANG + 1));
+
+//    LOG_I("PassingNeutral %d %d %d %d", guofenxaing_old, guofenxaing_new, GUOFENXIANG, (*(&GUOFENXIANG + 1)));
+    if ((guofenxaing_old != 0U) && (guofenxaing_new == 0U))
     {
-//        LOG_I("...生成过分相事项...");
-        WriteFileContantPkt(0xA4, 0x60, g_ZK_DevCode, &C_guofenxiangbiaozhi, 0U);
+        //LOG_I("...生成过分相事项...%d %d", guofenxaing_old, guofenxaing_new);
+        WriteFileContantPkt(0xA4, 0x60, g_ZK_DevCode, C_guofenxiang, 2U);
     } /* end if */
-    C_guofenxiangbiaozhi = guofenxiangzhi;
+    C_guofenxiang[0] = (*(&GUOFENXIANG + 1));
+    C_guofenxiang[1] = GUOFENXIANG;
 } /* end function RecordingPassingNeutralSectionMessage */
 
 /**********************************************
@@ -4438,6 +4540,9 @@ static void RecordingSoftwareVersionMessage(void)
         {
             rt_memcpy (&C_wjjk_I_bb[5], &C_wjjk_I_bb[1], 4u);
             rt_memcpy (&C_wjjk_I_bb[1], &WJJK_I_BB, 4u);
+            record_sto_board_version.wjjk_I_bb[0] = 0x51;
+            record_sto_board_version.wjjk_I_bb[1] = 0x01;
+            rt_memcpy (&record_sto_board_version.wjjk_I_bb[2], &WJJK_I_BB, 4u);
             WriteFileContantPkt(0xA5, 0x01, 0x51, C_wjjk_I_bb, 9u);
         } /* end if */
     }
@@ -4449,6 +4554,9 @@ static void RecordingSoftwareVersionMessage(void)
         {
             rt_memcpy (&C_wjjk_II_bb[5], &C_wjjk_II_bb[1], 4u);
             rt_memcpy (&C_wjjk_II_bb[1], &WJJK_II_BB, 4u);
+            record_sto_board_version.wjjk_II_bb[0] = 0x52;
+            record_sto_board_version.wjjk_II_bb[1] = 0x01;
+            rt_memcpy (&record_sto_board_version.wjjk_II_bb[2], &WJJK_II_BB, 4u);
             WriteFileContantPkt(0xA5, 0x01, 0x52, C_wjjk_II_bb, 9u);
         } /* end if */
     }
@@ -4459,6 +4567,9 @@ static void RecordingSoftwareVersionMessage(void)
 //        LOG_I("ZK_BB I_A %d %d %d %d", ZK_I_A_BB, *(&ZK_I_A_BB + 1), *(&ZK_I_A_BB + 2), *(&ZK_I_A_BB + 3));
         rt_memcpy (&C_zk_I_A_bb[5], &C_zk_I_A_bb[1], 4u);
         rt_memcpy (&C_zk_I_A_bb[1], &ZK_I_A_BB, 4u);
+        record_sto_board_version.zk_I_A_bb[0] = 0x11;
+        record_sto_board_version.zk_I_A_bb[1] = 0x01;
+        rt_memcpy (&record_sto_board_version.zk_I_A_bb[2], &ZK_I_A_BB, 4u);
         WriteFileContantPkt(0xA5, 0x01, 0x11, C_zk_I_A_bb, 9u);
     } /* end if */
 
@@ -4468,6 +4579,9 @@ static void RecordingSoftwareVersionMessage(void)
 //        LOG_I("ZK_BB I_B %d %d %d %d", ZK_I_B_BB, *(&ZK_I_B_BB + 1), *(&ZK_I_B_BB + 2), *(&ZK_I_B_BB + 3));
         rt_memcpy (&C_zk_I_B_bb[5], &C_zk_I_B_bb[1], 4u);
         rt_memcpy (&C_zk_I_B_bb[1], &ZK_I_B_BB, 4u);
+        record_sto_board_version.zk_I_B_bb[0] = 0x12;
+        record_sto_board_version.zk_I_B_bb[1] = 0x01;
+        rt_memcpy (&record_sto_board_version.zk_I_B_bb[2], &ZK_I_B_BB, 4u);
         WriteFileContantPkt(0xA5, 0x01, 0x12, C_zk_I_B_bb, 9u);
     } /* end if */
 
@@ -4477,6 +4591,9 @@ static void RecordingSoftwareVersionMessage(void)
 //        LOG_I("ZK_BB II_A %d %d %d %d", ZK_II_A_BB, *(&ZK_II_A_BB + 1), *(&ZK_II_A_BB + 2), *(&ZK_II_A_BB + 3));
         rt_memcpy (&C_zk_II_A_bb[5], &C_zk_II_A_bb[1], 4u);
         rt_memcpy (&C_zk_II_A_bb[1], &ZK_II_A_BB, 4u);
+        record_sto_board_version.zk_II_A_bb[0] = 0x13;
+        record_sto_board_version.zk_II_A_bb[1] = 0x01;
+        rt_memcpy (&record_sto_board_version.zk_II_A_bb[2], &ZK_II_A_BB, 4u);
         WriteFileContantPkt(0xA5, 0x01, 0x13, C_zk_II_A_bb, 9u);
     } /* end if */
 
@@ -4486,6 +4603,9 @@ static void RecordingSoftwareVersionMessage(void)
 //        LOG_I("ZK_BB II_B %d %d %d %d", ZK_II_B_BB, *(&ZK_II_B_BB + 1), *(&ZK_II_B_BB + 2), *(&ZK_II_B_BB + 3));
         rt_memcpy (&C_zk_II_B_bb[5], &C_zk_II_B_bb[1], 4u);
         rt_memcpy (&C_zk_II_B_bb[1], &ZK_II_B_BB, 4u);
+        record_sto_board_version.zk_II_B_bb[0] = 0x14;
+        record_sto_board_version.zk_II_B_bb[1] = 0x01;
+        rt_memcpy (&record_sto_board_version.zk_II_B_bb[2], &ZK_II_B_BB, 4u);
         WriteFileContantPkt(0xA5, 0x01, 0x14, C_zk_II_B_bb, 9u);
     } /* end if */
 
@@ -4493,6 +4613,7 @@ static void RecordingSoftwareVersionMessage(void)
     /* 获取板子类型 */
     i_ii_type = ((*(&TX1_ZJ + 1) & 0x40) >> 6);
     board_type = ((*(&TX1_ZJ + 1) & 0x80) >> 7);
+//    LOG_I("tx1 %d %d %d %d", i_ii_type, board_type, *(&TX1_ZJ + 1), *(&TX1_ZJ + 1));
     if(0x00 == i_ii_type)  /* I系 */
     {
         if(0x00 == board_type)  /* 子板 */
@@ -4502,6 +4623,9 @@ static void RecordingSoftwareVersionMessage(void)
 //                LOG_I("TX_1 I child %d %d %d %d", TX_1_BB, *(&TX_1_BB + 1), *(&TX_1_BB + 2), *(&TX_1_BB + 3));
                 rt_memcpy (&C_tx_1_I_child_bb[5], &C_tx_1_I_child_bb[1], 4u);
                 rt_memcpy (&C_tx_1_I_child_bb[1], &TX_1_BB, 4u);
+                record_sto_board_version.tx_1_I_child_bb[0] = 0x33;
+                record_sto_board_version.tx_1_I_child_bb[1] = 0x01;
+                rt_memcpy (&record_sto_board_version.tx_1_I_child_bb[2], &TX_1_BB, 4u);
                 WriteFileContantPkt(0xA5, 0x01, 0x33, C_tx_1_I_child_bb, 9u);
             }
         }
@@ -4512,6 +4636,9 @@ static void RecordingSoftwareVersionMessage(void)
 //                LOG_I("TX_1 I load %d %d %d %d", TX_1_BB, *(&TX_1_BB + 1), *(&TX_1_BB + 2), *(&TX_1_BB + 3));
                 rt_memcpy (&C_tx_1_I_load_bb[5], &C_tx_1_I_load_bb[1], 4u);
                 rt_memcpy (&C_tx_1_I_load_bb[1], &TX_1_BB, 4u);
+                record_sto_board_version.tx_1_I_load_bb[0] = 0x31;
+                record_sto_board_version.tx_1_I_load_bb[1] = 0x01;
+                rt_memcpy (&record_sto_board_version.tx_1_I_load_bb[2], &TX_1_BB, 4u);
                 WriteFileContantPkt(0xA5, 0x01, 0x31, C_tx_1_I_load_bb, 9u);
             }
         }
@@ -4522,9 +4649,13 @@ static void RecordingSoftwareVersionMessage(void)
         {
             if (memcmp(&C_tx_1_II_child_bb[1], &TX_1_BB, 4u))
             {
+
 //                LOG_I("TX_1 II child %d %d %d %d", TX_1_BB, *(&TX_1_BB + 1), *(&TX_1_BB + 2), *(&TX_1_BB + 3));
                 rt_memcpy (&C_tx_1_II_child_bb[5], &C_tx_1_II_child_bb[1], 4u);
                 rt_memcpy (&C_tx_1_II_child_bb[1], &TX_1_BB, 4u);
+                record_sto_board_version.tx_1_II_child_bb[0] = 0x34;
+                record_sto_board_version.tx_1_II_child_bb[1] = 0x01;
+                rt_memcpy (&record_sto_board_version.tx_1_II_child_bb[2], &TX_1_BB, 4u);
                 WriteFileContantPkt(0xA5, 0x01, 0x34, C_tx_1_II_child_bb, 9u);
             }
         }
@@ -4535,6 +4666,9 @@ static void RecordingSoftwareVersionMessage(void)
 //                LOG_I("TX_1 II load %d %d %d %d", TX_1_BB, *(&TX_1_BB + 1), *(&TX_1_BB + 2), *(&TX_1_BB + 3));
                 rt_memcpy (&C_tx_1_II_load_bb[5], &C_tx_1_II_load_bb[1], 4u);
                 rt_memcpy (&C_tx_1_II_load_bb[1], &TX_1_BB, 4u);
+                record_sto_board_version.tx_1_II_load_bb[0] = 0x32;
+                record_sto_board_version.tx_1_II_load_bb[1] = 0x01;
+                rt_memcpy (&record_sto_board_version.tx_1_II_load_bb[2], &TX_1_BB, 4u);
                 WriteFileContantPkt(0xA5, 0x01, 0x32, C_tx_1_II_load_bb, 9u);
             }
         }
@@ -4544,6 +4678,7 @@ static void RecordingSoftwareVersionMessage(void)
     /* 获取板子类型 */
     i_ii_type = ((*(&TX2_ZJ + 1) & 0x40) >> 6);
     board_type = ((*(&TX2_ZJ + 1) & 0x80) >> 7);
+//    LOG_I("tx2 %d %d %d %d", i_ii_type, board_type, *(&TX2_ZJ + 1), *(&TX2_ZJ + 1));
     if(0x00 == i_ii_type)  /* I系 */
     {
         if(0x00 == board_type)  /* 子板 */
@@ -4553,6 +4688,9 @@ static void RecordingSoftwareVersionMessage(void)
 //                LOG_I("TX_2 I child %d %d %d %d", TX_2_BB, *(&TX_2_BB + 1), *(&TX_2_BB + 2), *(&TX_2_BB + 3));
                 rt_memcpy (&C_tx_2_I_child_bb[5], &C_tx_2_I_child_bb[1], 4u);
                 rt_memcpy (&C_tx_2_I_child_bb[1], &TX_2_BB, 4u);
+                record_sto_board_version.tx_2_I_child_bb[0] = 0x43;
+                record_sto_board_version.tx_2_I_child_bb[1] = 0x01;
+                rt_memcpy (&record_sto_board_version.tx_2_I_child_bb[2], &TX_2_BB, 4u);
                 WriteFileContantPkt(0xA5, 0x01, 0x43, C_tx_2_I_child_bb, 9u);
             }
         }
@@ -4563,6 +4701,9 @@ static void RecordingSoftwareVersionMessage(void)
 //                LOG_I("TX_2 I load %d %d %d %d", TX_2_BB, *(&TX_2_BB + 1), *(&TX_2_BB + 2), *(&TX_2_BB + 3));
                 rt_memcpy (&C_tx_2_I_load_bb[5], &C_tx_2_I_load_bb[1], 4u);
                 rt_memcpy (&C_tx_2_I_load_bb[1], &TX_2_BB, 4u);
+                record_sto_board_version.tx_2_I_load_bb[0] = 0x41;
+                record_sto_board_version.tx_2_I_load_bb[1] = 0x01;
+                rt_memcpy (&record_sto_board_version.tx_2_I_load_bb[2], &TX_2_BB, 4u);
                 WriteFileContantPkt(0xA5, 0x01, 0x41, C_tx_2_I_load_bb, 9u);
             }
         }
@@ -4576,6 +4717,9 @@ static void RecordingSoftwareVersionMessage(void)
 //                LOG_I("TX_2 II child %d %d %d %d", TX_2_BB, *(&TX_2_BB + 1), *(&TX_2_BB + 2), *(&TX_2_BB + 3));
                 rt_memcpy (&C_tx_2_II_child_bb[5], &C_tx_2_II_child_bb[1], 4u);
                 rt_memcpy (&C_tx_2_II_child_bb[1], &TX_2_BB, 4u);
+                record_sto_board_version.tx_2_II_child_bb[0] = 0x44;
+                record_sto_board_version.tx_2_II_child_bb[1] = 0x01;
+                rt_memcpy (&record_sto_board_version.tx_2_II_child_bb[2], &TX_2_BB, 4u);
                 WriteFileContantPkt(0xA5, 0x01, 0x44, C_tx_2_II_child_bb, 9u);
             }
         }
@@ -4586,6 +4730,9 @@ static void RecordingSoftwareVersionMessage(void)
 //                LOG_I("TX_2 II load %d %d %d %d", TX_2_BB, *(&TX_2_BB + 1), *(&TX_2_BB + 2), *(&TX_2_BB + 3));
                 rt_memcpy (&C_tx_2_II_load_bb[5], &C_tx_2_II_load_bb[1], 4u);
                 rt_memcpy (&C_tx_2_II_load_bb[1], &TX_2_BB, 4u);
+                record_sto_board_version.tx_2_II_load_bb[0] = 0x42;
+                record_sto_board_version.tx_2_II_load_bb[1] = 0x01;
+                rt_memcpy (&record_sto_board_version.tx_2_II_load_bb[2], &TX_2_BB, 4u);
                 WriteFileContantPkt(0xA5, 0x01, 0x42, C_tx_2_II_load_bb, 9u);
             }
         }
@@ -4604,12 +4751,18 @@ static void RecordingSoftwareVersionMessage(void)
     {
         rt_memcpy (&C_xsq_I_bb[5], &C_xsq_I_bb[1], 4u);
         rt_memcpy (&C_xsq_I_bb[1], &XSQ_I_BB, 4u);
+        record_sto_board_version.xsq_I_bb[0] = 0x21;
+        record_sto_board_version.xsq_I_bb[1] = 0x01;
+        rt_memcpy (&record_sto_board_version.xsq_I_bb[2], &XSQ_I_BB, 4u);
         WriteFileContantPkt(0xA5, 0x01, 0x21, C_xsq_I_bb, 9u);
     } /* end if */
     if (memcmp(&C_xsq_II_bb[1], &XSQ_II_BB, 4u))
     {
         rt_memcpy (&C_xsq_II_bb[5], &C_xsq_II_bb[1], 4u);
         rt_memcpy (&C_xsq_II_bb[1], &XSQ_II_BB, 4u);
+        record_sto_board_version.xsq_II_bb[0] = 0x22;
+        record_sto_board_version.xsq_II_bb[1] = 0x01;
+        rt_memcpy (&record_sto_board_version.xsq_II_bb[2], &XSQ_II_BB, 4u);
         WriteFileContantPkt(0xA5, 0x01, 0x22, C_xsq_II_bb, 9u);
     } /* end if */
 
@@ -4626,12 +4779,18 @@ static void RecordingSoftwareVersionMessage(void)
     {
         rt_memcpy ( &C_CEU_I_bb[5], &C_CEU_I_bb[1], 4u );
         rt_memcpy ( &C_CEU_I_bb[1], &CEU_I_BB, 4u );
+        record_sto_board_version.CEU_I_bb[0] = 0x71;
+        record_sto_board_version.CEU_I_bb[1] = 0x01;
+        rt_memcpy (&record_sto_board_version.CEU_I_bb[2], &CEU_I_BB, 4u);
         WriteFileContantPkt( 0xA5, 0x01, 0x71, C_CEU_I_bb, 9u );
     } /* end if */
     if (memcmp(&C_CEU_II_bb[1], &CEU_II_BB, 4u ) )
     {
         rt_memcpy ( &C_CEU_II_bb[5], &C_CEU_II_bb[1], 4u );
         rt_memcpy ( &C_CEU_II_bb[1], &CEU_II_BB, 4u );
+        record_sto_board_version.CEU_II_bb[0] = 0x72;
+        record_sto_board_version.CEU_II_bb[1] = 0x01;
+        rt_memcpy (&record_sto_board_version.CEU_II_bb[2], &CEU_II_BB, 4u);
         WriteFileContantPkt( 0xA5, 0x01, 0x72, C_CEU_II_bb, 9u );
     } /* end if */
 
@@ -4640,12 +4799,18 @@ static void RecordingSoftwareVersionMessage(void)
     {
         rt_memcpy ( &C_ECU_I_bb[5], &C_ECU_I_bb[1], 4u );
         rt_memcpy ( &C_ECU_I_bb[1], &ECU_I_BB, 4u );
+        record_sto_board_version.ECU_I_bb[0] = 0x81;
+        record_sto_board_version.ECU_I_bb[1] = 0x01;
+        rt_memcpy (&record_sto_board_version.ECU_I_bb[2], &ECU_I_BB, 4u);
         WriteFileContantPkt( 0xA5, 0x01, 0x81, C_ECU_I_bb, 9u );
     } /* end if */
     if (memcmp(&C_ECU_II_bb[1], &ECU_II_BB, 4u ) )
     {
         rt_memcpy ( &C_ECU_II_bb[5], &C_ECU_II_bb[1], 4u );
         rt_memcpy ( &C_ECU_II_bb[1], &ECU_II_BB, 4u );
+        record_sto_board_version.ECU_II_bb[0] = 0x82;
+        record_sto_board_version.ECU_II_bb[1] = 0x01;
+        rt_memcpy (&record_sto_board_version.ECU_II_bb[2], &ECU_II_BB, 4u);
         WriteFileContantPkt( 0xA5, 0x01, 0x82, C_ECU_II_bb, 9u );
     } /* end if */
 
@@ -4673,14 +4838,211 @@ static void RecordingSoftwareVersionMessage(void)
 ***********************************************/
 static void RecordingSoftwareVersionInconsistMessage(void)
 {
-    static uint8_t C_ruanjianbanbenbuyizhi = 0xFFU;
+    static uint8_t zk_I_A_bb[6];
+    static uint8_t zk_I_B_bb[6];
+    static uint8_t zk_II_A_bb[6];
+    static uint8_t zk_II_B_bb[6];
 
-    if ((C_ruanjianbanbenbuyizhi == 0U) && ( RUANJIANBANBENBUYIZHI == 1U))
+    static uint8_t xsq_I_bb[6];
+    static uint8_t xsq_II_bb[6];
+
+    static uint8_t tx_1_I_load_bb[6];
+    static uint8_t tx_1_II_load_bb[6];
+
+    static uint8_t tx_1_I_child_bb[6];
+    static uint8_t tx_1_II_child_bb[6];
+
+    static uint8_t tx_2_I_load_bb[6];
+    static uint8_t tx_2_II_load_bb[6];
+
+    static uint8_t tx_2_I_child_bb[6];
+    static uint8_t tx_2_II_child_bb[6];
+
+    static uint8_t wjjk_I_bb[6];
+    static uint8_t wjjk_II_bb[6];
+
+    static uint8_t CEU_I_bb[6];
+    static uint8_t CEU_II_bb[6];
+
+    static uint8_t ECU_I_bb[6];
+    static uint8_t ECU_II_bb[6];
+
+    if(record_sto_board_version.wjjk_I_bb[1] == 0x01 && record_sto_board_version.wjjk_II_bb[1] == 0x01)
     {
-//        LOG_I("...生成软件版本不一致事项...");
-        WriteFileContantPkt(0xA5, 0x02, g_ZK_DevCode, &C_ruanjianbanbenbuyizhi, 0U);
-    } /* end if */
-    C_ruanjianbanbenbuyizhi = RUANJIANBANBENBUYIZHI;
+        /* 微机接口版本 */
+        if (memcmp(&record_sto_board_version.wjjk_I_bb[2], &record_sto_board_version.wjjk_II_bb[2], 4u))
+        {
+            if(memcmp(wjjk_I_bb, record_sto_board_version.wjjk_I_bb, sizeof(wjjk_I_bb)) ||
+               memcmp(wjjk_II_bb, record_sto_board_version.wjjk_II_bb, sizeof(wjjk_II_bb)))
+            {
+//                LOG_I("wjjk version diff");
+                WriteFileContantPkt(0xA5, 0x02, record_sto_board_version.wjjk_I_bb[0], 0, 0U);
+                rt_memcpy(wjjk_I_bb, record_sto_board_version.wjjk_I_bb, sizeof(wjjk_I_bb));
+                rt_memcpy(wjjk_II_bb, record_sto_board_version.wjjk_II_bb, sizeof(wjjk_I_bb));
+            }
+        } /* end if */
+    }
+
+    if(record_sto_board_version.zk_I_A_bb[1] == 0x01 && record_sto_board_version.zk_II_A_bb[1] == 0x01)
+    {
+        /* 主控插件版本A模 */
+        if (memcmp(&record_sto_board_version.zk_I_A_bb[2], &record_sto_board_version.zk_II_A_bb[2], 4u))
+        {
+            if(memcmp(zk_I_A_bb, record_sto_board_version.zk_I_A_bb, sizeof(zk_I_A_bb)) ||
+               memcmp(zk_II_A_bb, record_sto_board_version.zk_II_A_bb, sizeof(zk_II_A_bb)))
+            {
+//                LOG_I("zk A version diff");
+                WriteFileContantPkt(0xA5, 0x02, record_sto_board_version.zk_I_A_bb[0], 0, 0U);
+                rt_memcpy(zk_I_A_bb, record_sto_board_version.zk_I_A_bb, sizeof(zk_I_A_bb));
+                rt_memcpy(zk_II_A_bb, record_sto_board_version.zk_II_A_bb, sizeof(zk_II_A_bb));
+            }
+        } /* end if */
+    }
+
+
+    if(record_sto_board_version.zk_I_B_bb[1] == 0x01 && record_sto_board_version.zk_II_B_bb[1] == 0x01)
+    {
+        /* 主控插件版本  B模 */
+        if (memcmp(&record_sto_board_version.zk_I_B_bb[2], &record_sto_board_version.zk_II_B_bb[2], 4u))
+        {
+            if(memcmp(zk_I_B_bb, record_sto_board_version.zk_I_B_bb, sizeof(zk_I_B_bb)) ||
+               memcmp(zk_II_B_bb, record_sto_board_version.zk_II_B_bb, sizeof(zk_II_B_bb)))
+            {
+//                LOG_I("zk B version diff");
+                WriteFileContantPkt(0xA5, 0x02, record_sto_board_version.zk_I_B_bb[0], 0, 0U);
+                rt_memcpy(zk_I_B_bb, record_sto_board_version.zk_I_B_bb, sizeof(zk_I_B_bb));
+                rt_memcpy(zk_II_B_bb, record_sto_board_version.zk_II_B_bb, sizeof(zk_II_B_bb));
+            }
+        } /* end if */
+    }
+
+    if(record_sto_board_version.tx_1_I_child_bb[1] == 0x01 && record_sto_board_version.tx_1_II_child_bb[1] == 0x01)
+    {
+        /* 通信1插件子板版本 */
+        if (memcmp(&record_sto_board_version.tx_1_I_child_bb[2], &record_sto_board_version.tx_1_II_child_bb[2], 4u))
+        {
+            if(memcmp(tx_1_I_child_bb, record_sto_board_version.tx_1_I_child_bb, sizeof(tx_1_I_child_bb)) ||
+               memcmp(tx_1_II_child_bb, record_sto_board_version.tx_1_II_child_bb, sizeof(tx_1_II_child_bb)))
+            {
+//                LOG_I("tx 1 child version diff %d %d %d %d, %d %d %d %d",
+//                        record_sto_board_version.tx_1_I_child_bb[2], record_sto_board_version.tx_1_I_child_bb[3], record_sto_board_version.tx_1_I_child_bb[4], record_sto_board_version.tx_1_I_child_bb[5],
+//                        record_sto_board_version.tx_1_II_child_bb[2], record_sto_board_version.tx_1_II_child_bb[3], record_sto_board_version.tx_1_II_child_bb[4], record_sto_board_version.tx_1_II_child_bb[5]);
+                WriteFileContantPkt(0xA5, 0x02, record_sto_board_version.tx_1_I_child_bb[0], 0, 0U);
+
+                rt_memcpy(tx_1_I_child_bb, record_sto_board_version.tx_1_I_child_bb, sizeof(tx_1_I_child_bb));
+                rt_memcpy(tx_1_II_child_bb, record_sto_board_version.tx_1_II_child_bb, sizeof(tx_1_II_child_bb));
+            }
+        }
+    }
+
+    if(record_sto_board_version.tx_1_I_load_bb[1] == 0x01 && record_sto_board_version.tx_1_II_load_bb[1] == 0x01)
+    {
+        /* 通信1插件底板版本 */
+        if (memcmp(&record_sto_board_version.tx_1_I_load_bb[2], &record_sto_board_version.tx_1_II_load_bb[2], 4u))
+        {
+            if(memcmp(tx_1_I_load_bb, record_sto_board_version.tx_1_I_load_bb, sizeof(tx_1_I_load_bb)) ||
+               memcmp(tx_1_II_load_bb, record_sto_board_version.tx_1_II_load_bb, sizeof(tx_1_II_load_bb)))
+            {
+//                LOG_I("tx 1 load version diff %d %d %d %d, %d %d %d %d",
+//                        record_sto_board_version.tx_1_I_load_bb[2], record_sto_board_version.tx_1_I_load_bb[3], record_sto_board_version.tx_1_I_load_bb[4], record_sto_board_version.tx_1_I_load_bb[5],
+//                        record_sto_board_version.tx_1_II_load_bb[2], record_sto_board_version.tx_1_II_load_bb[3], record_sto_board_version.tx_1_II_load_bb[4], record_sto_board_version.tx_1_II_load_bb[5] );
+                WriteFileContantPkt(0xA5, 0x02, record_sto_board_version.tx_1_I_load_bb[0], 0, 0U);
+
+                rt_memcpy(tx_1_I_load_bb, record_sto_board_version.tx_1_I_load_bb, sizeof(tx_1_I_load_bb));
+                rt_memcpy(tx_1_II_load_bb, record_sto_board_version.tx_1_II_load_bb, sizeof(tx_1_II_load_bb));
+            }
+        }
+    }
+
+    if(record_sto_board_version.tx_2_I_child_bb[1] == 0x01 && record_sto_board_version.tx_2_II_child_bb[1] == 0x01)
+    {
+        /* 通信2插件子板版本 */
+        if (memcmp(&record_sto_board_version.tx_2_I_child_bb[2], &record_sto_board_version.tx_2_II_child_bb[2], 4u))
+        {
+            if(memcmp(tx_2_I_child_bb, record_sto_board_version.tx_2_I_child_bb, sizeof(tx_2_I_child_bb)) ||
+               memcmp(tx_2_II_child_bb, record_sto_board_version.tx_1_II_load_bb, sizeof(tx_2_II_child_bb)))
+            {
+//                LOG_I("tx 2 child version diff %d %d %d %d, %d %d %d %d",
+//                        record_sto_board_version.tx_2_I_child_bb[2], record_sto_board_version.tx_2_I_child_bb[3], record_sto_board_version.tx_2_I_child_bb[4], record_sto_board_version.tx_2_I_child_bb[5],
+//                        record_sto_board_version.tx_2_II_child_bb[2], record_sto_board_version.tx_2_II_child_bb[3], record_sto_board_version.tx_2_II_child_bb[4], record_sto_board_version.tx_2_II_child_bb[5]);
+                WriteFileContantPkt(0xA5, 0x02, record_sto_board_version.tx_2_I_child_bb[0], 0, 0U);
+
+                rt_memcpy(tx_2_I_child_bb, record_sto_board_version.tx_2_I_child_bb, sizeof(tx_2_I_child_bb));
+                rt_memcpy(tx_2_II_child_bb, record_sto_board_version.tx_2_II_child_bb, sizeof(tx_2_II_child_bb));
+            }
+        }
+    }
+
+    if(record_sto_board_version.tx_2_I_load_bb[1] == 0x01 && record_sto_board_version.tx_2_II_load_bb[1] == 0x01)
+    {
+        /* 通信2插件底板版本 */
+        if (memcmp(&record_sto_board_version.tx_2_I_load_bb[2], &record_sto_board_version.tx_2_II_load_bb[2], 4u))
+        {
+            if(memcmp(tx_2_I_load_bb, record_sto_board_version.tx_2_I_load_bb, sizeof(tx_2_I_load_bb)) ||
+               memcmp(tx_2_II_load_bb, record_sto_board_version.tx_2_II_load_bb, sizeof(tx_2_II_load_bb)))
+            {
+//                LOG_I("tx 2 load version diff %d %d %d %d, %d %d %d %d",
+//                        record_sto_board_version.tx_2_I_load_bb[2], record_sto_board_version.tx_2_I_load_bb[3], record_sto_board_version.tx_2_I_load_bb[4], record_sto_board_version.tx_2_I_load_bb[5],
+//                        record_sto_board_version.tx_2_II_load_bb[2], record_sto_board_version.tx_2_II_load_bb[3], record_sto_board_version.tx_2_II_load_bb[4], record_sto_board_version.tx_2_II_load_bb[5]);
+                WriteFileContantPkt(0xA5, 0x02, record_sto_board_version.tx_2_I_load_bb[0], 0, 0U);
+
+                rt_memcpy(tx_2_I_load_bb, record_sto_board_version.tx_2_I_load_bb, sizeof(tx_2_I_load_bb));
+                rt_memcpy(tx_2_II_load_bb, record_sto_board_version.tx_2_II_load_bb, sizeof(tx_2_II_load_bb));
+            }
+        }
+    }
+
+    if(record_sto_board_version.xsq_I_bb[1] == 0x01 && record_sto_board_version.xsq_I_bb[1] == 0x01)
+    {
+        /* 显示器版本 */
+        if (memcmp(&record_sto_board_version.xsq_I_bb[2], &record_sto_board_version.xsq_II_bb[2], 4u))
+        {
+            if(memcmp(xsq_I_bb, record_sto_board_version.xsq_I_bb, sizeof(xsq_I_bb)) ||
+               memcmp(xsq_II_bb, record_sto_board_version.xsq_II_bb, sizeof(xsq_II_bb)))
+            {
+//                LOG_I("xsq version diff");
+                WriteFileContantPkt(0xA5, 0x02, record_sto_board_version.xsq_I_bb[0], 0, 0U);
+
+                rt_memcpy(xsq_I_bb, record_sto_board_version.xsq_I_bb, sizeof(xsq_I_bb));
+                rt_memcpy(xsq_II_bb, record_sto_board_version.xsq_II_bb, sizeof(xsq_II_bb));
+            }
+        } /* end if */
+    }
+
+    if(record_sto_board_version.CEU_I_bb[1] == 0x01 && record_sto_board_version.CEU_II_bb[1] == 0x01)
+    {
+        /* CEU版本 */
+        if (memcmp(&record_sto_board_version.CEU_I_bb[2], &record_sto_board_version.CEU_II_bb[2], 4u ) )
+        {
+            if(memcmp(CEU_I_bb, record_sto_board_version.CEU_I_bb, sizeof(CEU_I_bb)) ||
+               memcmp(CEU_II_bb, record_sto_board_version.CEU_II_bb, sizeof(CEU_II_bb)))
+            {
+//                LOG_I("ceu version diff");
+                WriteFileContantPkt(0xA5, 0x02, record_sto_board_version.CEU_I_bb[0], 0, 0U);
+
+                rt_memcpy(CEU_I_bb, record_sto_board_version.CEU_I_bb, sizeof(CEU_I_bb));
+                rt_memcpy(CEU_II_bb, record_sto_board_version.CEU_II_bb, sizeof(CEU_II_bb));
+            }
+        } /* end if */
+    }
+
+    if(record_sto_board_version.ECU_I_bb[1] == 0x01 && record_sto_board_version.ECU_II_bb[1] == 0x01)
+    {
+        /* ECU版本 */
+        if (memcmp(&record_sto_board_version.ECU_I_bb[2], &record_sto_board_version.ECU_II_bb[2], 4u ) )
+        {
+            if(memcmp(ECU_I_bb, record_sto_board_version.ECU_I_bb, sizeof(ECU_I_bb)) ||
+               memcmp(ECU_II_bb, record_sto_board_version.ECU_II_bb, sizeof(ECU_II_bb)))
+            {
+//                LOG_I("ecu version diff");
+                WriteFileContantPkt(0xA5, 0x02, record_sto_board_version.ECU_I_bb[0], 0, 0U);
+
+                rt_memcpy(ECU_I_bb, record_sto_board_version.ECU_I_bb, sizeof(ECU_I_bb));
+                rt_memcpy(ECU_II_bb, record_sto_board_version.ECU_II_bb, sizeof(ECU_II_bb));
+            }
+        } /* end if */
+    }
+
 } /* end function RecordingSoftwareVersionInconsistMessage */
 
 /**********************************************
@@ -4700,6 +5062,7 @@ static void RecordingSoftwareVersionMismatchMessage(void)
 ***********************************************/
 static void RecordingSTOBasicDataVersionMessage(void)
 {
+#if 0  /* 暂时不记录  原因：翻译软件和记录格式不对应  该事项在文件头中也有记录，查看文件头中的记录 */
     static uint8_t C_stoA_jichushuju_bb[9] = { 0x01U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
     static uint8_t C_stoB_jichushuju_bb[9] = { 0x02U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U };
 
@@ -4719,6 +5082,9 @@ static void RecordingSTOBasicDataVersionMessage(void)
         rt_memcpy (&C_stoA_jichushuju_bb[1], &AJISTOJICHUSHUJUBANBENRIQI, 2u);
         rt_memcpy (&C_stoA_jichushuju_bb[3], &AJISTOJICHUSHUJUBIANYIRIQI, 2u);
 
+//        LOG_I("C_stoA_jichushuju_bb %d %d %d %d %d %d %d %d",
+//                C_stoA_jichushuju_bb[1], C_stoA_jichushuju_bb[2], C_stoA_jichushuju_bb[3], C_stoA_jichushuju_bb[4],
+//                C_stoA_jichushuju_bb[5], C_stoA_jichushuju_bb[6], C_stoA_jichushuju_bb[7], C_stoA_jichushuju_bb[8]);
         WriteFileContantPkt(0xA5, 0x04, g_ZK_DevCode, C_stoA_jichushuju_bb, 9u);
     } /* end if */
 
@@ -4738,8 +5104,12 @@ static void RecordingSTOBasicDataVersionMessage(void)
         rt_memcpy (&C_stoB_jichushuju_bb[1], &BJISTOJICHUSHUJUBANBENRIQI, 2u);
         rt_memcpy (&C_stoB_jichushuju_bb[3], &BJISTOJICHUSHUJUBIANYIRIQI, 2u);
 
+//        LOG_I("C_stoB_jichushuju_bb %d %d %d %d %d %d %d %d",
+//                C_stoB_jichushuju_bb[1], C_stoB_jichushuju_bb[2], C_stoB_jichushuju_bb[3], C_stoB_jichushuju_bb[4],
+//                C_stoB_jichushuju_bb[5], C_stoB_jichushuju_bb[6], C_stoB_jichushuju_bb[7], C_stoB_jichushuju_bb[8]);
         WriteFileContantPkt(0xA5, 0x04, g_ZK_DevCode, C_stoB_jichushuju_bb, 9u);
     } /* end if */
+#endif
 } /* end function RecordingSTOBasicDataVersionMessage */
 
 /**********************************************
@@ -4961,7 +5331,6 @@ static void RecordingTX1SelfCheckMessage(void)
         i_ii_type = ((*(&TX1_ZJ + 1) & 0x40) >> 6);
         board_type = ((*(&TX1_ZJ + 1) & 0x80) >> 7);
 
-        LOG_I("TX1_ZJ %d %d", i_ii_type, board_type);
         if (NORMAL == tx1zj_tmp[0] && NORMAL == tx1zj_current_h)
         {
             if(0x00 == i_ii_type)  /* I系 */
@@ -4969,12 +5338,10 @@ static void RecordingTX1SelfCheckMessage(void)
                 C_tx1zj[0] = 0x01;
                 if(0x00 == board_type)  /* 子板 */
                 {
-                    LOG_I("TX1_ZJ I child normal");
                     WriteFileContantPkt(0xA6u, 0x11u, 0x33, C_tx1zj, 3u);
                 }
                 else  /* 底板 */
                 {
-                    LOG_I("TX1_ZJ I board normal");
                     WriteFileContantPkt(0xA6u, 0x11u, 0x31, C_tx1zj, 3u);
                 }
             }
@@ -4983,12 +5350,10 @@ static void RecordingTX1SelfCheckMessage(void)
                 C_tx1zj[0] = 0x02;
                 if(0x00 == board_type)  /* 子板 */
                 {
-                    LOG_I("TX1_ZJ II child normal");
                     WriteFileContantPkt(0xA6u, 0x11u, 0x34, C_tx1zj, 3u);
                 }
                 else  /* 底板 */
                 {
-                    LOG_I("TX1_ZJ II board normal");
                     WriteFileContantPkt(0xA6u, 0x11u, 0x32, C_tx1zj, 3u);
                 }
             }
@@ -5000,12 +5365,10 @@ static void RecordingTX1SelfCheckMessage(void)
                 C_tx1zj[0] = 0x01;
                 if(0x00 == board_type)  /* 子板 */
                 {
-                    LOG_I("TX1_ZJ I child err");
                     WriteFileContantPkt(0xA6u, 0x02u, 0x33, C_tx1zj, 3u);
                 }
                 else  /* 底板 */
                 {
-                    LOG_I("TX1_ZJ I board err");
                     WriteFileContantPkt(0xA6u, 0x02u, 0x31, C_tx1zj, 3u);
                 }
             }
@@ -5014,12 +5377,10 @@ static void RecordingTX1SelfCheckMessage(void)
                 C_tx1zj[0] = 0x02;
                 if(0x00 == board_type)  /* 子板 */
                 {
-                    LOG_I("TX1_ZJ II child err");
                     WriteFileContantPkt(0xA6u, 0x02u, 0x34, C_tx1zj, 3u);
                 }
                 else  /* 底板 */
                 {
-                    LOG_I("TX1_ZJ II board err");
                     WriteFileContantPkt(0xA6u, 0x02u, 0x32, C_tx1zj, 3u);
                 }
             }
@@ -5057,7 +5418,6 @@ static void RecordingTX2SelfCheckMessage(void)
         i_ii_type = ((*(&TX2_ZJ + 1) & 0x40) >> 6);
         board_type = ((*(&TX2_ZJ + 1) & 0x80) >> 7);
 
-        LOG_I("TX2_ZJ %d %d", i_ii_type, board_type);
         if (NORMAL == tx2zj_tmp[0] && NORMAL == tx2zj_current_h)
         {
             if(0x00 == i_ii_type)  /* I系 */
@@ -5065,12 +5425,10 @@ static void RecordingTX2SelfCheckMessage(void)
                 C_tx2zj[0] = 0x01;
                 if(0x00 == board_type)  /* 子板 */
                 {
-                    LOG_I("TX2_ZJ I child normal");
                     WriteFileContantPkt(0xA6u, 0x11u, 0x43, C_tx2zj, 3u);
                 }
                 else  /* 底板 */
                 {
-                    LOG_I("TX2_ZJ I board normal");
                     WriteFileContantPkt(0xA6u, 0x11u, 0x41, C_tx2zj, 3u);
                 }
             }
@@ -5079,12 +5437,10 @@ static void RecordingTX2SelfCheckMessage(void)
                 C_tx2zj[0] = 0x02;
                 if(0x00 == board_type)  /* 子板 */
                 {
-                    LOG_I("TX2_ZJ II child normal");
                     WriteFileContantPkt(0xA6u, 0x11u, 0x44, C_tx2zj, 3u);
                 }
                 else  /* 底板 */
                 {
-                    LOG_I("TX2_ZJ II board normal");
                     WriteFileContantPkt(0xA6u, 0x11u, 0x42, C_tx2zj, 3u);
                 }
             }
@@ -5096,12 +5452,10 @@ static void RecordingTX2SelfCheckMessage(void)
                 C_tx2zj[0] = 0x01;
                 if(0x00 == board_type)  /* 子板 */
                 {
-                    LOG_I("TX2_ZJ I child err");
                     WriteFileContantPkt(0xA6u, 0x02u, 0x43, C_tx2zj, 3u);
                 }
                 else  /* 底板 */
                 {
-                    LOG_I("TX2_ZJ I board err");
                     WriteFileContantPkt(0xA6u, 0x02u, 0x41, C_tx2zj, 3u);
                 }
             }
@@ -5110,12 +5464,10 @@ static void RecordingTX2SelfCheckMessage(void)
                 C_tx2zj[0] = 0x02;
                 if(0x00 == board_type)  /* 子板 */
                 {
-                    LOG_I("TX2_ZJ II child err");
                     WriteFileContantPkt(0xA6u, 0x02u, 0x44, C_tx2zj, 3u);
                 }
                 else  /* 底板 */
                 {
-                    LOG_I("TX2_ZJ II board err");
                     WriteFileContantPkt(0xA6u, 0x02u, 0x42, C_tx2zj, 3u);
                 }
             }
@@ -5627,8 +5979,9 @@ void RecordingPowerOnMessage(void)
 {
     static uint8_t C_waisheleixing[2] = { 0x0u };
 
-    rt_memcpy ( &C_waisheleixing, &s_file_head.ch_waisheleixing, 2U);
-    WriteFileContantPkt( 0xA7, 0x01, 0x61, C_waisheleixing, 2u );
+    rt_memcpy ( &C_waisheleixing, &s_file_head.ch_waisheleixing, 1U);
+//    LOG_I("Power On %d %d", s_file_head.ch_waisheleixing[0], s_file_head.ch_waisheleixing[1]);
+    WriteFileContantPkt( 0xA7, 0x01, 0x61, C_waisheleixing, 1u );
 } /* end function RecordingPowerOnMessage */
 
 /**********************************************
@@ -5640,7 +5993,8 @@ void RecordingPowerOffMessage(void)
 {
     static uint8_t C_waisheleixing[2] = { 0x0u };
 
-    rt_memcpy ( &C_waisheleixing, &s_file_head.ch_waisheleixing, 2U);
+    rt_memcpy ( &C_waisheleixing, &s_file_head.ch_waisheleixing, 1U);
+//    LOG_I("Power Off %d %d", s_file_head.ch_waisheleixing[0], s_file_head.ch_waisheleixing[1]);
     WriteFileContantPkt( 0xA7, 0x02, 0x61, C_waisheleixing, 1u );
 } /* end function RecordingPowerOffMessage */
 
@@ -5656,6 +6010,7 @@ static void RecordingDateChangeMessage(void)
     if (memcmp(C_riqi, &TIME_NYR, 3U))
     {
         rt_memcpy (C_riqi, &TIME_NYR, 3U);
+        //LOG_I("DateChange %d %d %d", C_riqi[0], C_riqi[1], C_riqi[2]);
         WriteFileContantPkt(0xA7, 0x03, g_ZK_DevCode, C_riqi, 3u);
     }
 } /* end function RecordingDateChangeMessage */
