@@ -120,6 +120,11 @@
 #define CANPRI_WJZKSJ1   ( 0x32U )
 #define CANPRI_WJZKSJ2   ( 0x33U )
 
+/* 通过通信板获取 */
+#define CANPRI_LKJDATA   ( 0x15U )
+
+#define CANPRI_RSS_2_DATA   ( 0x2DU )  /* 主控发送扩展实时数据 */
+
 /* 06-July-2020, by DuYanPo. */
 #define PACKET_LEN (12495)                  /* 单包数据的长度 */
 #define MAX_LENGTH_PACKET (PACKET_LEN * 8)  /* 打包数据接收数据缓存区最大长度 */

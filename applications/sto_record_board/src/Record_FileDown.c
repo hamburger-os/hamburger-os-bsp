@@ -392,7 +392,7 @@ static uint32_t Processing_DW_SM_IDLE( uint32_t status, DownloadFileStruct *dwf 
         else
         {
             uint32_t sign = strncmp( HS_RB, ( const char * )&dwf->RX_Buffer[16], 2U );
-            LOG_I("IDLE udp %c %c", dwf->RX_Buffer[16], dwf->RX_Buffer[17]);
+            LOG_I("IDLE udp %c %c %d", dwf->RX_Buffer[16], dwf->RX_Buffer[17], sign);
             if ( sign )
             {
                 sign = strncmp( HS_RF, ( const char * )&dwf->RX_Buffer[16], 2U );
@@ -411,22 +411,17 @@ static uint32_t Processing_DW_SM_IDLE( uint32_t status, DownloadFileStruct *dwf 
 
                         if(PC_OTA_START_I == dwf->RX_Buffer[14] && PC_OTA_START_II == dwf->RX_Buffer[15])
                         {
-//                            dwf->ota_mode = RecordOTAModeUpdata;
                             RecordOTASetMode(RecordOTAModeUpdata);
                             Processing_DW_ACK_OTA(dwf);
-//                            LOG_I("1-start ota");
                         }
                         else if(PC_OTA_OVER_I == dwf->RX_Buffer[14] && PC_OTA_OVER_II == dwf->RX_Buffer[15])
                         {
-//                            dwf->ota_mode = RecordOTAModeNormal;
                             RecordOTASetMode(RecordOTAModeNormal);
                             Processing_DW_ACK_OTA(dwf);
-//                            LOG_I("1-stop ota");
                         }
                         else
                         {
                             dwf->smDownload = DW_SM_EXCEPTION;
-//                            dwf->ota_mode = RecordOTAModeNormal;
                             RecordOTASetMode(RecordOTAModeNormal);
                             exit_code = 5U;
                         }
@@ -657,10 +652,8 @@ static uint32_t Processing_DW_SM_SEND_BRIEF( DownloadFileStruct *dwf )
         else
         {
             memset( dwf->TX_Buffer, 0U, PROTOCOL_LENGTH );
-#if 1
-            LOG_I( "$$ 1, dwf->BriefAmount=%d, dwf->BriefNum=%d $$",\
-                                dwf->BriefAmount, dwf->BriefNum );
-#endif
+//            LOG_I( "$$ 1, dwf->BriefAmount=%d, dwf->BriefNum=%d $$", dwf->BriefAmount, dwf->BriefNum );
+            LOG_I( "dwf->BriefAmount=%d, BriefNum=%d", dwf->BriefAmount, dwf->BriefNum );
             /* 2.1 Loading command. */
             memcpy( dwf->TX_Buffer, DOWN_CMD_UPRB, 4U );
             /* 2.2 Loading datagram amount. */

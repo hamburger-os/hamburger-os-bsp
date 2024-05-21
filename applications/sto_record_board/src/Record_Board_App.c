@@ -30,6 +30,8 @@
 /* Define something usefull */
 #define TO_UINT16(X,Y)            ( ( ( uint16_t )( X ) << 8u ) + ( uint16_t )( Y ) )
 
+uint8_t Grade_Receiving_data_u8[PACKET_LEN];
+uint8_t LocomotiveInfo_Received_data[MAX_LENGTH_PACKET];       /* 保存机车信息的缓冲区 */
 uint8_t GradePacket_Start_Flag = 0;      /* 坡道信息开始接收标志 */
 uint8_t GradePacket_Finish_Flag = 0;     /* 坡道信息接收完成标志 */
 uint8_t LocomotiveInfo_Start_Flag = 0;   /* 机车信息开始接收标志 */
@@ -396,6 +398,7 @@ void Processing_Gradepacket_Message(CAN_FRAME *ps_can_frame)
         end_frame = (uint8_t) s_pack_describe.end_frm;
         total_packet = (uint16_t) s_pack_describe.total_pack;
         pack_id = (uint16_t) s_pack_describe.pack_id;
+//        LOG_I("Gradepacket %d %d %d %d %d", curve_type, end_group, end_frame, total_packet, pack_id);
         /*
          * 接收到第一包第一帧的内容，开始为接收区分配内存
          * 20170628---解决多包数据接收问题：在第一包数据的描述帧把对应的接收数据长度置零
@@ -422,7 +425,7 @@ void Processing_Gradepacket_Message(CAN_FRAME *ps_can_frame)
             else if (LocomotiveInfo_Type == curve_type)
             {
 //				printf("LocomotiveInfo_Type!\n");
-//				s_packet_gradeInfo.received_data_u8 = LocomotiveInfo_Received_data;
+				s_packet_gradeInfo.received_data_u8 = LocomotiveInfo_Received_data;
                 s_packet_gradeInfo.locomotiveinfo_total_length_u16 = CAL_PACKAGE_SIZE(pack_id, end_group, end_frame,
                         s_pack_describe.end_frm_len);
 

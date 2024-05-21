@@ -44,8 +44,8 @@
 #define DATA_CHANNEL_TX1CAN3 ( 0x12U )      /* 通信1的CAN3通道 */
 #define DATA_CHANNEL_TX1CAN4 ( 0x13U )      /* 通信1的CAN4通道 */
 #define DATA_CHANNEL_TX1CAN5 ( 0x14U )      /* 通信1的CAN5通道 */
-//#define DATA_CHANNEL_TX1VMCAN1 ( 0x15U )     /* 通信1的VMCAN1通道 */
-//#define DATA_CHANNEL_TX1VMCAN2 ( 0x16U )     /* 通信1的VMCAN2通道 */
+#define DATA_CHANNEL_TX1VMCAN1 ( 0x15U )     /* 通信1的VMCAN1通道 */
+#define DATA_CHANNEL_TX1VMCAN2 ( 0x16U )     /* 通信1的VMCAN2通道 */
 
 /* TX2插件CAN通道号 */
 #define DATA_CHANNEL_TX2CAN1 ( 0x17U )      /* 通信2的CAN1通道 */
