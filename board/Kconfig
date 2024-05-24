@@ -75,6 +75,11 @@ menu "On-chip Peripheral Drivers"
                 config SOC_M4_SDP_EXTCOM_BOARD
                 	bool "Select SDP M4 extcom board"
                 	select SOC_SERIES_STM32F4
+                	
+                config SOC_M4_SDP_EXCHANGE_BOARD
+                	bool "Select SDP M4 exchange board"
+                	select SOC_SERIES_STM32F4
+                	
             endchoice
             
             config BSP_USING_GD32
@@ -4022,8 +4027,14 @@ menu "Onboard Peripheral Drivers"
                 config PHY_USING_LAN8720A
                     bool "Select phy LAN8720A"
                 
+                config PHY_USING_YT8522
+                	bool "Select phy YT8522"
+                
                 config SWITCH_USING_JL5104
                 	bool "Select switch JL5104"
+                	
+                config PHY_SWITCH_NO_NEED_CFG
+                	bool "no configuration required"
             endchoice
             
             config ETH_USING_KVDB_NET_IF
@@ -4343,7 +4354,61 @@ menu "Onboard Peripheral Drivers"
           endif
         
         endif
-        
+ 
+ 	menuconfig BSP_USING_KSZ9897
+ 		bool "Enable ksz9897"
+ 		default n
+ 		
+ 		if BSP_USING_KSZ9897
+ 			config BSP_KSZ9897_SPI_SPEED
+ 			int "Set the rate of spi, default: (20 * 1000 *1000)"
+            default (20000000)
+            
+            menuconfig BSP_USING_KSZ9897_CHIP1
+            	bool "Enable ksz9897 chip1"
+            	default n
+            	
+            	if BSP_USING_KSZ9897_CHIP1
+            		config BSP_KSZ9897_CHIP1_SPI_BUS
+                  	string "Set the spi bus used, default: spi2"
+                  	default "spi2"
+                  
+              		config BSP_KSZ9897_CHIP1_CS_PIN
+                  	string "Set the pin of the chip select, default: PB.9"
+                  	default "PB.9"
+                endif
+                
+            menuconfig BSP_USING_KSZ9897_CHIP2
+            	bool "Enable ksz9897 chip2"
+            	default n
+            	
+            	if BSP_USING_KSZ9897_CHIP2
+            		config BSP_KSZ9897_CHIP2_SPI_BUS
+                  	string "Set the spi bus used, default: spi2"
+                  	default "spi2"
+                  
+              		config BSP_KSZ9897_CHIP2_CS_PIN
+                  	string "Set the pin of the chip select, default: PA.4"
+                  	default "PA.4"
+                endif
+                
+            menuconfig BSP_USING_KSZ9897_CHIP3
+            	bool "Enable ksz9897 chip3"
+            	default n
+            	
+            	if BSP_USING_KSZ9897_CHIP3
+            		config BSP_KSZ9897_CHIP3_SPI_BUS
+                  	string "Set the spi bus used, default: spi2"
+                  	default "spi2"
+                  
+              		config BSP_KSZ9897_CHIP3_CS_PIN
+                  	string "Set the pin of the chip select, default: PA.5"
+                  	default "PA.5"
+                endif
+        endif
+                  
+         
+ 		       
     menuconfig BSP_USING_GNSS
         bool "Enable GNSS with uart"
         select PKG_USING_LWGPS
