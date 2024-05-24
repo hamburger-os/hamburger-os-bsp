@@ -2791,7 +2791,13 @@ static rt_err_t mcp2517_reg_init(MCP2517_Dev *mcp2517_dev)
 
     /* Setup TX FIFO */
     can_spi_transmit_channel_configure_object_reset(&txConfig);
+#ifdef SOC_SERIES_STM32F4
+    txConfig.FifoSize = 8;
+#endif
+
+#ifdef SOC_SERIES_STM32H7
     txConfig.FifoSize = 32;
+#endif
     txConfig.PayLoadSize = CAN_PLSIZE_64;
     txConfig.TxPriority = 1;
     ret = can_spi_transmit_channel_configure(mcp2517_dev, APP_TX_FIFO, &txConfig);
@@ -2803,7 +2809,13 @@ static rt_err_t mcp2517_reg_init(MCP2517_Dev *mcp2517_dev)
 
     /* Setup RX FIFO */
     can_spi_receive_channel_configure_object_reset(&rxConfig);
-    rxConfig.FifoSize = 32;
+#ifdef SOC_SERIES_STM32F4
+    rxConfig.FifoSize = 16;
+#endif
+
+#ifdef SOC_SERIES_STM32H7
+    txConfig.FifoSize = 32;
+#endif
     rxConfig.PayLoadSize = CAN_PLSIZE_64;
     ret = can_spi_receive_channel_configure(mcp2517_dev, APP_RX_FIFO, &rxConfig);
     if (ret != RT_EOK)
