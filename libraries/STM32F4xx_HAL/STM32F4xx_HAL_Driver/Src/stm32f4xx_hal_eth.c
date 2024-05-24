@@ -2724,6 +2724,12 @@ static void ETH_FlushTransmitFIFO(ETH_HandleTypeDef *heth)
   /* Set the Flush Transmit FIFO bit */
   (heth->Instance)->DMAOMR |= ETH_DMAOMR_FTF;
 
+#ifdef BSP_USING_GD32
+
+  while((heth->Instance)->DMAOMR & ETH_DMAOMR_FTF);
+
+#endif
+
   /* Wait until the write operation will be taken into account:
      at least four TX_CLK/RX_CLK clock cycles */
   tmpreg = (heth->Instance)->DMAOMR;
