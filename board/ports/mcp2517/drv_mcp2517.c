@@ -2887,16 +2887,41 @@ static rt_err_t mcp2517_reg_init(MCP2517_Dev *mcp2517_dev)
     return RT_EOK;
 }
 
+static void mcp2517_spi_irq_callback(void *param);
+
 static rt_err_t mcp2517_init (rt_device_t dev)
 {
     rt_err_t ret = -RT_ERROR;
     MCP2517_Dev *mcp2517_dev = NULL;
+    char mux_name[RT_NAME_MAX];
 
     mcp2517_dev = (MCP2517_Dev *) dev;
     if (mcp2517_dev == NULL)
     {
         return -RT_ERROR;
     }
+
+    /* init mutex */
+    rt_snprintf(mux_name, RT_NAME_MAX, "%s_rx", dev->parent.name);
+    ret = rt_mutex_init(&mcp2517_dev->rx_mux, mux_name, RT_IPC_FLAG_PRIO);
+    if (ret != RT_EOK)
+    {
+        LOG_E("mutex rx init error %d, dev %s!", ret, dev->parent.name);
+        return -RT_ERROR;
+    }
+
+    rt_snprintf(mux_name, RT_NAME_MAX, "%s_tx", dev->parent.name);
+    ret = rt_mutex_init(&mcp2517_dev->tx_mux, mux_name, RT_IPC_FLAG_PRIO);
+    if (ret != RT_EOK)
+    {
+        LOG_E("mutex tx init error %d, dev %s!", ret, dev->parent.name);
+        return -RT_ERROR;
+    }
+
+    /* set irq pin */
+    rt_pin_mode(mcp2517_dev->spi_irq_pin_index, PIN_MODE_INPUT_PULLUP);
+    rt_pin_attach_irq(mcp2517_dev->spi_irq_pin_index, PIN_IRQ_MODE_FALLING,
+                        mcp2517_spi_irq_callback, (void *) mcp2517_dev);
 
     ret = mcp2517_reg_init(mcp2517_dev);
     if(ret != RT_EOK)
@@ -2949,6 +2974,10 @@ static rt_err_t mcp2517_close(rt_device_t dev)
     {
         return -RT_ERROR;
     }
+
+    rt_mutex_detach(&mcp2517_dev->rx_mux);
+    rt_mutex_detach(&mcp2517_dev->tx_mux);
+    rt_pin_detach_irq(mcp2517_dev->spi_irq_pin_index);
 
     rx_fifo = (MCP2517_CAN_RX_FIFO *)mcp2517_dev->can_rx;
     RT_ASSERT(rx_fifo != RT_NULL);
@@ -3248,7 +3277,6 @@ static int rt_hw_mcp2517_init(void)
 {
     int ret = -RT_ERROR;
     char dev_name[RT_NAME_MAX];
-    char mux_name[RT_NAME_MAX];
 
     for (rt_uint8_t i = 0; i < sizeof(mcp2517_can_port) / sizeof(MCP2517_Dev); i++)
     {
@@ -3295,28 +3323,6 @@ static int rt_hw_mcp2517_init(void)
             LOG_E("device %s configure error %d!", dev_name, ret);
             return -RT_EIO;
         }
-
-        /* init mutex */
-        rt_snprintf(mux_name, RT_NAME_MAX, "%s_rx", mcp2517_can_port[i].dev_name);
-        ret = rt_mutex_init(&mcp2517_can_port[i].rx_mux, mux_name, RT_IPC_FLAG_PRIO);
-        if (ret != RT_EOK)
-        {
-            LOG_E("mutex rx init error %d, dev %d!", ret, i);
-            return -RT_ERROR;
-        }
-
-        rt_snprintf(mux_name, RT_NAME_MAX, "%s_tx", mcp2517_can_port[i].dev_name);
-        ret = rt_mutex_init(&mcp2517_can_port[i].tx_mux, mux_name, RT_IPC_FLAG_PRIO);
-        if (ret != RT_EOK)
-        {
-            LOG_E("mutex tx init error %d, dev %d!", ret, i);
-            return -RT_ERROR;
-        }
-
-        /* set irq pin */
-        rt_pin_mode(mcp2517_can_port[i].spi_irq_pin_index, PIN_MODE_INPUT_PULLUP);
-        rt_pin_attach_irq(mcp2517_can_port[i].spi_irq_pin_index, PIN_IRQ_MODE_FALLING,
-                            mcp2517_spi_irq_callback, (void *) &mcp2517_can_port[i]);
 
         /* set user data */
         mcp2517_can_port[i].dev.user_data = &mcp2517_can_port[i];
