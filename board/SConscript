@@ -217,7 +217,7 @@ if GetDepend(['BSP_USING_ETH']):
     if GetDepend(['PHY_USING_YT8522']):
     	src += Glob('ports/eth/yt8522.c')
     	
-    if GetDepend(['PHY_USING_JL5104']):
+    if GetDepend(['SWITCH_USING_JL5104']):
     	src += Glob('ports/eth/jl5104.c')
     	
     if GetDepend(['BSP_USE_LINK_LAYER_COMMUNICATION']):
