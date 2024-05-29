@@ -313,8 +313,9 @@ int ext4_mount(struct ext4_blockdev *bd, const char *mount_point,
 
     size_t mp_len = strlen(mount_point);
 
-    if (mp_len > CONFIG_EXT4_MAX_MP_NAME)
+    if (mp_len > CONFIG_EXT4_MAX_MP_NAME) {
         return EINVAL;
+    }
 
     for (size_t i = 0; i < CONFIG_EXT4_MOUNTPOINTS_COUNT; ++i) {
         if (!s_mp[i].mounted) {
@@ -328,7 +329,7 @@ int ext4_mount(struct ext4_blockdev *bd, const char *mount_point,
     }
 
     if (mp == NULL) {
-        return ENOENT;
+        return ENOMEM;
     }
 
     r = ext4_block_init(bd);
@@ -352,8 +353,9 @@ int ext4_mount(struct ext4_blockdev *bd, const char *mount_point,
         return r;
     }
 
-    if (bsize != bc->itemsize)
+    if (bsize != bc->itemsize) {
         return ENOTSUP;
+    }
 
     /*Bind block cache to block device*/
     r = ext4_block_bind_bcache(bd, bc);
@@ -383,7 +385,7 @@ int ext4_umount(const char *mount_point)
     }
 
     if (mp == NULL) {
-        return ENOENT;
+        return ENODEV;
     }
 
     r = ext4_fs_fini(&mp->fs);
@@ -1668,11 +1670,13 @@ int ext4_fread(ext4_file *file, void *buf, size_t size, size_t *rcnt)
 
     ext4_assert(file && file->mp);
 
-    if (file->flags & O_WRONLY)
+    if (file->flags & O_WRONLY) {
         return EPERM;
+    }
 
-    if (!size)
+    if (!size) {
         return EOK;
+    }
 
     EXT4_MP_LOCK(file->mp);
 
@@ -1725,15 +1729,17 @@ int ext4_fread(ext4_file *file, void *buf, size_t size, size_t *rcnt)
             len = block_size - unalg;
 
         r = ext4_fs_get_inode_dblk_idx(&ref, iblock_idx, &fblock, true);
-        if (r != EOK)
+        if (r != EOK) {
             goto Finish;
+        }
         
         /* Do we get an unwritten range? */
         if (fblock != 0) {
             uint64_t off = fblock * block_size + unalg;
             r = ext4_block_readbytes(file->mp->fs.bdev, off, u8_buf, len);
-            if (r != EOK)
+            if (r != EOK) {
                 goto Finish;
+            }
 
         } else {
             /* Yes, we do. */
@@ -1756,8 +1762,9 @@ int ext4_fread(ext4_file *file, void *buf, size_t size, size_t *rcnt)
         while (iblock_idx < iblock_last) {
             r = ext4_fs_get_inode_dblk_idx(&ref, iblock_idx,
                                &fblock, true);
-            if (r != EOK)
+            if (r != EOK) {
                 goto Finish;
+            }
 
             iblock_idx++;
 
@@ -1772,8 +1779,9 @@ int ext4_fread(ext4_file *file, void *buf, size_t size, size_t *rcnt)
 
         r = ext4_blocks_get_direct(file->mp->fs.bdev, u8_buf, fblock_start,
                        fblock_count);
-        if (r != EOK)
+        if (r != EOK) {
             goto Finish;
+        }
 
         size -= block_size * fblock_count;
         u8_buf += block_size * fblock_count;
@@ -1789,13 +1797,15 @@ int ext4_fread(ext4_file *file, void *buf, size_t size, size_t *rcnt)
     if (size) {
         uint64_t off;
         r = ext4_fs_get_inode_dblk_idx(&ref, iblock_idx, &fblock, true);
-        if (r != EOK)
+        if (r != EOK) {
             goto Finish;
+        }
 
         off = fblock * block_size;
         r = ext4_block_readbytes(file->mp->fs.bdev, off, u8_buf, size);
-        if (r != EOK)
+        if (r != EOK) {
             goto Finish;
+        }
 
         file->fpos += size;
 
@@ -1828,14 +1838,17 @@ int ext4_fwrite(ext4_file *file, const void *buf, size_t size, size_t *wcnt)
 
     ext4_assert(file && file->mp);
 
-    if (file->mp->fs.read_only)
+    if (file->mp->fs.read_only) {
         return EROFS;
+    }
 
-    if (file->flags & O_RDONLY)
+    if (file->flags & O_RDONLY) {
         return EPERM;
+    }
 
-    if (!size)
+    if (!size) {
         return EOK;
+    }
 
     EXT4_MP_LOCK(file->mp);
     ext4_trans_start(file->mp);
@@ -1869,13 +1882,15 @@ int ext4_fwrite(ext4_file *file, const void *buf, size_t size, size_t *wcnt)
             len = block_size - unalg;
 
         r = ext4_fs_init_inode_dblk_idx(&ref, iblk_idx, &fblk);
-        if (r != EOK)
+        if (r != EOK) {
             goto Finish;
+        }
 
         off = fblk * block_size + unalg;
         r = ext4_block_writebytes(file->mp->fs.bdev, off, u8_buf, len);
-        if (r != EOK)
+        if (r != EOK) {
             goto Finish;
+        }
 
         u8_buf += len;
         size -= len;
@@ -1889,8 +1904,9 @@ int ext4_fwrite(ext4_file *file, const void *buf, size_t size, size_t *wcnt)
 
     /*Start write back cache mode.*/
     r = ext4_block_cache_write_back(file->mp->fs.bdev, 1);
-    if (r != EOK)
+    if (r != EOK) {
         goto Finish;
+    }
 
     fblock_start = 0;
     fblock_count = 0;
@@ -1900,8 +1916,9 @@ int ext4_fwrite(ext4_file *file, const void *buf, size_t size, size_t *wcnt)
             if (iblk_idx < ifile_blocks) {
                 r = ext4_fs_init_inode_dblk_idx(&ref, iblk_idx,
                                 &fblk);
-                if (r != EOK)
+                if (r != EOK) {
                     goto Finish;
+                }
             } else {
                 rr = ext4_fs_append_inode_dblk(&ref, &fblk,
                                    &iblk_idx);
@@ -1952,26 +1969,30 @@ int ext4_fwrite(ext4_file *file, const void *buf, size_t size, size_t *wcnt)
     /*Stop write back cache mode*/
     ext4_block_cache_write_back(file->mp->fs.bdev, 0);
 
-    if (r != EOK)
+    if (r != EOK) {
         goto Finish;
+    }
 
     if (size) {
         uint64_t off;
         if (iblk_idx < ifile_blocks) {
             r = ext4_fs_init_inode_dblk_idx(&ref, iblk_idx, &fblk);
-            if (r != EOK)
+            if (r != EOK) {
                 goto Finish;
+            }
         } else {
             r = ext4_fs_append_inode_dblk(&ref, &fblk, &iblk_idx);
-            if (r != EOK)
+            if (r != EOK) {
                 /*Node size sholud be updated.*/
                 goto out_fsize;
+            }
         }
 
         off = fblk * block_size;
         r = ext4_block_writebytes(file->mp->fs.bdev, off, u8_buf, size);
-        if (r != EOK)
+        if (r != EOK) {
             goto Finish;
+        }
 
         file->fpos += size;
 
@@ -3142,9 +3163,9 @@ int ext4_dir_mv(const char *path, const char *new_path)
 
 int ext4_dir_mk(const char *path)
 {
-    struct ext4_mountpoint *mp = ext4_get_mount(path);
     int r;
     ext4_file f;
+    struct ext4_mountpoint *mp = ext4_get_mount(path);
 
     if (mp == NULL) {
         return ENOENT;
@@ -3171,6 +3192,7 @@ Finish:
 int ext4_dir_open(ext4_dir *dir, const char *path)
 {
     struct ext4_mountpoint *mp = ext4_get_mount(path);
+
     int r;
 
     if (mp == NULL) {

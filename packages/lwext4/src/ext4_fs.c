@@ -75,12 +75,14 @@ int ext4_fs_init(struct ext4_fs *fs, struct ext4_blockdev *bdev,
         return r;
     }
 
-    if (!ext4_sb_check(&fs->sb))
+    if (!ext4_sb_check(&fs->sb)) {
         return ENOTSUP;
+    }
 
     bsize = ext4_sb_get_block_size(&fs->sb);
-    if (bsize > EXT4_MAX_BLOCK_SIZE)
+    if (bsize > EXT4_MAX_BLOCK_SIZE) {
         return ENXIO;
+    }
 
     r = ext4_fs_check_features(fs, &read_only);
     if (r != EOK) {

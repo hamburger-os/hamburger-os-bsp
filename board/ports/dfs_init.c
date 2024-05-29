@@ -56,6 +56,9 @@ static const struct romfs_dirent _romfs_root_mnt[] =
 #endif
 
 #ifdef EMMC_ENABLE_FS
+#ifdef EMMC_ENABLE_EXT4
+    {ROMFS_DIRENT_DIR, BLK_EXT4     , RT_NULL, 0},
+#endif
     {ROMFS_DIRENT_DIR, BLK_EMMC     , RT_NULL, 0},      //emmc
 #endif
 
@@ -140,6 +143,9 @@ static const struct mount_fs _mount_fs[] =
 #endif
 
 #ifdef EMMC_ENABLE_FS
+#ifdef EMMC_ENABLE_EXT4
+    {BLK_EXT4           , BLK_EXT4          , "ext"             },
+#endif
     {BLK_EMMC           , BLK_EMMC          , EMMC_FS           },
 #endif
 };

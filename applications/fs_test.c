@@ -26,7 +26,7 @@ static rt_thread_t fsrw_thread = RT_NULL;
 #define fsrw_fn                   "/test.dat"
 struct testDef
 {
-    char path[128];
+    char path[RT_DFS_ELM_MAX_LFN];
     uint32_t len;
     uint32_t count;
 };

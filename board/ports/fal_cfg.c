@@ -66,7 +66,7 @@ enum
     extern const struct fal_flash_dev nor_flash;
 #endif
 
-#if EMMC_OFFSET_FS > 0
+#if EMMC_OFFSET_EXT4 > 0
     extern const struct fal_flash_dev emmc_fal_flash;
 #endif
 

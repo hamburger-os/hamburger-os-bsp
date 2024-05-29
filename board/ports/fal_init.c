@@ -25,6 +25,9 @@ struct fal_dev_init
 };
 
 #ifdef BSP_USING_EMMC
+#ifdef EMMC_ENABLE_EXT4
+    extern struct fal_flash64_dev emmc_flash_ext4;
+#endif
     extern struct fal_flash64_dev emmc_flash;
 #endif
 
@@ -59,6 +62,9 @@ static const struct fal_dev_init _fal_dev[] =
 #endif
 
 #ifdef BSP_USING_EMMC
+#ifdef EMMC_ENABLE_EXT4
+    {BLK_EXT4, "ext", &emmc_flash_ext4},
+#endif
     {BLK_EMMC, EMMC_FS, &emmc_flash},
 #endif
 

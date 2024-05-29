@@ -147,8 +147,12 @@ extern "C" {
 //emmc定义,无需修改
 #define EMMC_DEV_NAME                   "sdmmc"
 #define BLK_EMMC                        "emmc"
+#define BLK_EXT4                        "ext4"
 #define EMMC_START_ADRESS               (0)
 #define EMMC_BLK_SIZE                   (512)
+#ifndef EMMC_ENABLE_EXT4
+#define EMMC_SIZE_EXT4                  (0)
+#endif
 #define EMMC_OFFSET_DOWNLOAD            (0)
 #define EMMC_OFFSET_FACTORY             (EMMC_OFFSET_DOWNLOAD + EMMC_SIZE_DOWNLOAD)
 #define EMMC_OFFSET_BIN                 (EMMC_OFFSET_FACTORY + EMMC_SIZE_FACTORY)
@@ -157,7 +161,8 @@ extern "C" {
 #define EMMC_OFFSET_USR                 (EMMC_OFFSET_LIB + EMMC_SIZE_LIB)
 #define EMMC_OFFSET_KVDB                (EMMC_OFFSET_USR + EMMC_SIZE_USR)
 #define EMMC_OFFSET_TSDB                (EMMC_OFFSET_KVDB + EMMC_SIZE_KVDB)
-#define EMMC_OFFSET_FS                  (EMMC_OFFSET_TSDB + EMMC_SIZE_TSDB)
+#define EMMC_OFFSET_EXT4                (EMMC_OFFSET_TSDB + EMMC_SIZE_TSDB)
+#define EMMC_OFFSET_FS                  (EMMC_OFFSET_EXT4 + EMMC_SIZE_EXT4)
 #ifndef EMMC_ENABLE_FS
 #define EMMC_FS                         ""
 #endif
