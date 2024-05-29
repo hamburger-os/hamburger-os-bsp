@@ -33,7 +33,7 @@
 extern "C" {
 #endif
 
-#define SYS_VERSION "v1.2.0.1_20231107"
+#define SYS_VERSION "v1.0.0.0_20240101"
 
 #define STM32_FLASH_START_ADRESS        ((uint32_t)BSP_FLASH_START_ADDR)
 #ifdef FLASH_USING_BLK256
