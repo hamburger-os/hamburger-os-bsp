@@ -92,7 +92,6 @@ static void BoardInitThreadEntry(void *parameter)
     RecordOTAInitThreadInit();
     BoardInfoThreadInit();
     usb_init();
-    LOG_I("init ok");
 }
 
 static int BoardInitThreadInit(void)

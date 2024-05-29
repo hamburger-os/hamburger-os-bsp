@@ -565,15 +565,14 @@ void trdp_pd_test(int argc, char * argv[])
     LOG_I("%s: Version %s (%s - %s)\n",
                           argv[0], APP_VERSION, __DATE__, __TIME__);
 
-    if (argc < 4)
+    if (argc < 6)
     {
         rt_kprintf("usage: %s <localip> <remoteip> <mcast> <pub comm id> <sub comm id>\n", argv[0]);
-        rt_kprintf("<localip>       .. own IP address (ie. 10.0.1.3)\n");
+        rt_kprintf("<localip>       .. own IP address (ie. 10.0.1.1)\n");
         rt_kprintf("<remoteip>      .. remote peer IP address (ie. 10.0.1.2)\n");
         rt_kprintf("<mcast>         .. multicast group address (ie. 239.255.55.1)\n");
-        rt_kprintf("<mcast>         .. multicast group address (ie. 239.255.55.1)\n");
         rt_kprintf("<pub comm id>   .. pub comm id (ie. 21761)\n");
-        rt_kprintf("<sub comm id>   .. pub comm id (ie. 20000)\n");
+        rt_kprintf("<sub comm id>   .. sub comm id (ie. 20000)\n");
         return;
     }
 

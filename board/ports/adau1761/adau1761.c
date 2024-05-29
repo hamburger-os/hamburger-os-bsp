@@ -50,7 +50,7 @@ static void adau1761_read_reg(uint16_t reg, uint8_t *data, uint16_t len_u16)
     rt_i2c_master_recv(i2c_bus, ADAU1761_I2C_ADD, RT_I2C_RD, data, len_u16);
 }
 
-static void adau1761_show()
+void adau1761_show()
 {
     uint8_t data[0xFA + 1];
     uint8_t pll_len = sizeof(R0_0x4000_Clock_control) + sizeof(R1_0x4002_PLL_control) + 1;
@@ -750,7 +750,7 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
     };
     adau1761_program(ADDR_R66_0x40FA_Clock_Enable_1, (uint8_t *)&r66, sizeof(R66_0x40FA_Clock_Enable_1));
 
-    adau1761_show();
+//    adau1761_show();
 
     return 0;
 }

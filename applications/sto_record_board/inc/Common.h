@@ -28,7 +28,7 @@
 #define FIRMWARE_VERSION_A               (0x01U)
 #define FIRMWARE_VERSION_B               (0x00U)
 #define FIRMWARE_VERSION_C               (0x00U)
-#define FIRMWARE_VERSION_D               (0x08U)
+#define FIRMWARE_VERSION_D               (0x0AU)
 
 #define FIRMWARE_YEAR                    ( 24U )
 #define FIRMWARE_MONTH                   ( 01U )

@@ -1,12 +1,15 @@
 [submodule "rt-thread"]
 	path = rt-thread
-	url = http://192.168.101.251:8088/swos2/swos2-kernel.git
+	url = http://192.168.23.108:8088/swos2/swos2-kernel.git
 [submodule "packages/sysinfo"]
 	path = packages/sysinfo
-	url = http://192.168.101.251:8088/sw-software/sysinfo.git
+	url = http://192.168.23.108:8088/sw-software/sysinfo.git
 [submodule "packages/swops"]
 	path = packages/swops
-	url = http://192.168.101.251:8088/sw-software/swops.git
+	url = http://192.168.23.108:8088/sw-software/swops.git
 [submodule "packages/trdp"]
 	path = packages/trdp
-	url = http://192.168.101.251:8088/sw-software/trdp.git
+	url = http://192.168.23.108:8088/sw-software/trdp.git
+[submodule "packages/sw_platform"]
+	path = packages/sw_platform
+	url = http://192.168.23.108:8088/sw-software/sw_platform.git

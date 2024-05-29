@@ -276,7 +276,7 @@ static int ota_on_begin(struct ota_from_file_ops *ops, uint8_t mode)
 
     /* check firmware */
     fw_info_t fw_info;
-    if ( ! ota_fd_fw_check(ops->fd, &fw_info))
+    if ((ops->update_file_total_size <= sizeof(fw_info_t)) && ! ota_fd_fw_check(ops->fd, &fw_info))
     {
         ops->updatesta = FileNotCheck;
         return -RT_ERROR;

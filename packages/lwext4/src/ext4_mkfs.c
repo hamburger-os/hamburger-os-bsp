@@ -325,6 +325,7 @@ static int write_bgroup_block(struct ext4_blockdev *bd,
         r = ext4_block_get_noread(bd, &b, dsc_blk);
         if (r != EOK)
             return r;
+        rt_thread_delay(1);
 
         memcpy(b.data, aux_info->bg_desc_blk, block_size);
 
@@ -397,6 +398,8 @@ static int write_bgroups(struct ext4_blockdev *bd, struct fs_aux_info *aux_info,
                  EXT4_BLOCK_GROUP_BLOCK_UNINIT |
                  EXT4_BLOCK_GROUP_INODE_UNINIT);
 
+        rt_thread_delay(1);
+
         sb_free_blk += bg_free_blk;
 
         r = ext4_block_get_noread(bd, &b, bg_start_block + blk_off + 1);
@@ -439,7 +442,7 @@ static int write_sblocks(struct ext4_blockdev *bd, struct fs_aux_info *aux_info,
 {
     uint64_t offset;
     uint32_t i;
-    int r;
+    int r = EOK;
 
     /* write out the backup superblocks */
     for (i = 1; i < aux_info->groups; i++) {
@@ -449,14 +452,18 @@ static int write_sblocks(struct ext4_blockdev *bd, struct fs_aux_info *aux_info,
 
             aux_info->sb->block_group_index = to_le16(i);
             r = ext4_block_writebytes(bd, offset, aux_info->sb, EXT4_SUPERBLOCK_SIZE);
-            if (r != EOK)
+            if (r != EOK) {
                 return r;
+            }
         }
     }
 
     /* write out the primary superblock */
     aux_info->sb->block_group_index = to_le16(0);
     r = ext4_block_writebytes(bd, 1024, aux_info->sb, EXT4_SUPERBLOCK_SIZE);
+    if (r != EOK) {
+        return r;
+    }
     return r;
 }
 
@@ -494,18 +501,21 @@ static int mkfs_init(struct ext4_blockdev *bd, struct ext4_mkfs_info *info)
     memset(&aux_info, 0, sizeof(struct fs_aux_info));
 
     r = create_fs_aux_info(&aux_info, info);
-    if (r != EOK)
+    if (r != EOK) {
         goto Finish;
+    }
 
     fill_sb(&aux_info, info);
 
     r = write_bgroups(bd, &aux_info, info);
-    if (r != EOK)
+    if (r != EOK) {
         goto Finish;
+    }
 
     r = write_sblocks(bd, &aux_info, info);
-    if (r != EOK)
+    if (r != EOK) {
         goto Finish;
+    }
 
 Finish:
     release_fs_aux_info(&aux_info);
@@ -522,6 +532,7 @@ static int init_bgs(struct ext4_fs *fs)
         r = ext4_fs_get_block_group_ref(fs, i, &ref);
         if (r != EOK)
             break;
+        rt_thread_delay(1);
 
         r = ext4_fs_put_block_group_ref(&ref);
         if (r != EOK)

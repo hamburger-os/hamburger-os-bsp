@@ -496,7 +496,7 @@ static rt_err_t USBH_ioctl(rt_device_t dev, int cmd, void *buff)
             geometry->bytes_per_sector = info.capacity.block_size;
             geometry->sector_count = msc_class->part.size;
             USBH_UsrLog("geometry : len %d MB, block %d"
-                    , geometry->sector_count / 1024 * geometry->block_size / 1024
+                    , (uint32_t)(geometry->sector_count / 1024 * geometry->block_size / 1024)
                     , geometry->block_size);
             res = RT_EOK;
         }

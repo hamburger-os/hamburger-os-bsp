@@ -47,6 +47,7 @@ typedef struct {
     uint32_t recv_len;
     rt_mq_t rcv_mq;
     rt_mutex_t mutex;
+    rt_mailbox_t  mailbox;
 } S_UDP_SERVER;
 
 static S_UDP_SERVER udp_server_dev;
@@ -74,6 +75,14 @@ rt_err_t UDPServerInit(void)
     S_UDP_SERVER *dev = &udp_server_dev;
 
     memset(dev, 0, sizeof(S_UDP_SERVER));
+
+    /* 创建邮箱 */
+    dev->mailbox = rt_mb_create("udp mb", sizeof(struct sockaddr_in), RT_IPC_FLAG_FIFO);
+    if(RT_NULL == dev->mailbox)
+    {
+        LOG_E("rt_mb_create failed");
+        return -RT_ERROR;
+    }
 
     dev->rcv_mq = rt_mq_create("udp mq", sizeof(uint8_t) * UDP_RCV_BUFSZ, UDP_RCV_MQ_NUM, RT_IPC_FLAG_FIFO);
     if(RT_NULL == dev->rcv_mq)
@@ -190,6 +199,12 @@ static void UDPServerRcvThreadEntry(void *paramemter)
             dev->recv_len = bytes_read;
             rt_mutex_release(dev->mutex);
 
+            ret = rt_mb_send(dev->mailbox, (rt_uint32_t)&dev->client_addr);
+            if(ret != RT_EOK)
+            {
+                LOG_D("udp mb send error %d", ret);
+            }
+
             ret = rt_mq_send(dev->rcv_mq, (const void *)dev->recv_data, sizeof(uint8_t) * UDP_RCV_BUFSZ);
             if(ret != RT_EOK)
             {
@@ -217,6 +232,27 @@ __exit:
     }
 }
 
+rt_err_t UDPServerRcvIPData(char *ip_str, uint32_t size, uint32_t *port)
+{
+    S_UDP_SERVER *dev = &udp_server_dev;
+    rt_err_t ret = -RT_ERROR;
+    rt_uint32_t client_addr;
+    struct sockaddr_in *client_info = RT_NULL;
+
+    ret = rt_mb_recv(dev->mailbox, &client_addr, RT_WAITING_NO);
+    if(ret != RT_EOK)
+    {
+        return -RT_ERROR;
+    }
+
+    client_info = (struct sockaddr_in *)client_addr;
+    rt_snprintf(ip_str, size, "%s", inet_ntoa(client_info->sin_addr.s_addr));
+    *port = ntohs(client_info->sin_port);
+    LOG_D("Rcv form %s port %d", ip_str, *port);
+
+    return RT_EOK;
+}
+
 rt_err_t UDPServerRcvMQData(void)
 {
     rt_err_t ret = -RT_ERROR;
@@ -228,7 +264,7 @@ rt_err_t UDPServerRcvMQData(void)
         LOG_E("udp rcv mq null");
         return -RT_EEMPTY;
     }
-    ret = rt_mq_recv(dev->rcv_mq, (void *)dev->recv_data_by_mq, sizeof(uint8_t) * UDP_RCV_BUFSZ, 0);
+    ret = rt_mq_recv(dev->rcv_mq, (void *)dev->recv_data_by_mq, sizeof(uint8_t) * UDP_RCV_BUFSZ, RT_WAITING_NO);
     if(ret != RT_EOK)
     {
         return -RT_ERROR;
@@ -237,7 +273,7 @@ rt_err_t UDPServerRcvMQData(void)
     rt_mutex_take(dev->mutex, RT_WAITING_FOREVER);
     udp_recv_len = dev->recv_len;
     rt_mutex_release(dev->mutex);
-    LOG_D("Rcv mq data = %s len %d", dev->recv_data_by_mq, udp_recv_len);
+    LOG_D("Rcv mq data %s len %d", dev->recv_data_by_mq, udp_recv_len);
 
     memset(udp_recv_buffer, 0, UDP_RCV_BUFSZ);
     memcpy(udp_recv_buffer, dev->recv_data_by_mq, udp_recv_len);

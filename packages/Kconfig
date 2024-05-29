@@ -184,4 +184,5 @@ menuconfig PKG_USING_OTA_FROM_FILE
 
 source "packages/swops/Kconfig"
 source "packages/trdp/Kconfig"
+source "packages/sw_platform/Kconfig"
     

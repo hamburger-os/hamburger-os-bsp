@@ -369,8 +369,9 @@ int ext4_balloc_alloc_block(struct ext4_inode_ref *inode_ref,
 
     /* Load block group reference */
     r = ext4_fs_get_block_group_ref(inode_ref->fs, bg_id, &bg_ref);
-    if (r != EOK)
+    if (r != EOK) {
         return r;
+    }
 
     struct ext4_bgroup *bg = bg_ref.block_group;
 
@@ -419,6 +420,8 @@ int ext4_balloc_alloc_block(struct ext4_inode_ref *inode_ref,
         }
 
         alloc = ext4_fs_bg_idx_to_addr(sb, idx_in_bg, bg_id);
+        if (alloc == 0) {
+        }
         goto success;
     }
 
@@ -443,6 +446,8 @@ int ext4_balloc_alloc_block(struct ext4_inode_ref *inode_ref,
             }
 
             alloc = ext4_fs_bg_idx_to_addr(sb, tmp_idx, bg_id);
+            if (alloc == 0) {
+            }
             goto success;
         }
     }
@@ -460,6 +465,8 @@ int ext4_balloc_alloc_block(struct ext4_inode_ref *inode_ref,
         }
 
         alloc = ext4_fs_bg_idx_to_addr(sb, rel_blk_idx, bg_id);
+        if (alloc == 0) {
+        }
         goto success;
     }
 
@@ -473,8 +480,9 @@ int ext4_balloc_alloc_block(struct ext4_inode_ref *inode_ref,
 goal_failed:
 
     r = ext4_fs_put_block_group_ref(&bg_ref);
-    if (r != EOK)
+    if (r != EOK) {
         return r;
+    }
 
     /* Try other block groups */
     uint32_t block_group_count = ext4_block_group_cnt(sb);
@@ -483,8 +491,9 @@ goal_failed:
 
     while (count > 0) {
         r = ext4_fs_get_block_group_ref(inode_ref->fs, bgid, &bg_ref);
-        if (r != EOK)
+        if (r != EOK) {
             return r;
+        }
 
         struct ext4_bgroup *bg = bg_ref.block_group;
         free_blocks = ext4_bg_get_free_blocks_count(bg, sb);
@@ -530,6 +539,8 @@ goal_failed:
             }
 
             alloc = ext4_fs_bg_idx_to_addr(sb, rel_blk_idx, bgid);
+            if (alloc == 0) {
+            }
             goto success;
         }
 
@@ -579,6 +590,9 @@ success:
     r = ext4_fs_put_block_group_ref(&bg_ref);
 
     *fblock = alloc;
+
+    if (r != EOK) {
+    }
     return r;
 }
 

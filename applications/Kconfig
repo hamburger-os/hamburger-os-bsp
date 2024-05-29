@@ -137,6 +137,8 @@ menu "Test functions and examples"
     menuconfig BSP_USING_TRDP_PD_TEST
         bool "Enable trdp pd test"
         default n
+        
+    source "applications/conformance_test_of_trdp/Kconfig"
 endmenu
 
 menu "Product Application and Function"
