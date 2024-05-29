@@ -15,6 +15,8 @@
 
 #include <string.h>
 
+extern uint8_t Grade_Receiving_data_u8[PACKET_LEN];
+
 /* 显示器拷贝程序 20201027 by dyp
  * can_buf_init - 接收CAN数据缓冲区初始化
  */
@@ -27,28 +29,8 @@ rt_err_t can_buf_init(S_CAN_PACKE_Grade *can_pkt_grade)
 
     memset(can_pkt_grade, 0, sizeof(S_CAN_PACKE_Grade));
 
-    can_pkt_grade->received_data_u8 = rt_malloc(sizeof(uint8_t) * MAX_LENGTH_PACKET);   /* 已接收完成的数据缓冲区 */
-    if(NULL == can_pkt_grade->received_data_u8)
-    {
-        LOG_E("malloc size %d error", sizeof(uint8_t) * MAX_LENGTH_PACKET);
-        return -RT_EEMPTY;
-    }
-    else
-    {
-        memset(can_pkt_grade->received_data_u8, 0, sizeof(uint8_t) * MAX_LENGTH_PACKET);
-    }
-
-    can_pkt_grade->receiving_data_u8 = rt_malloc(sizeof(uint8_t) * PACKET_LEN); /* 正在接收的数据缓冲区 */
-    if(NULL == can_pkt_grade->receiving_data_u8)
-    {
-        LOG_E("malloc size %d error", sizeof(uint8_t) * PACKET_LEN);
-        return -RT_EEMPTY;
-    }
-    else
-    {
-        memset(can_pkt_grade->receiving_data_u8, 0, sizeof(uint8_t) * PACKET_LEN);
-    }
-
+    can_pkt_grade->received_data_u8 = RT_NULL;                        /* 已接收完成的数据缓冲区 */
+    can_pkt_grade->receiving_data_u8 = Grade_Receiving_data_u8;       /* 正在接收的数据缓冲区 */
     can_pkt_grade->e_state = E_IDLE;                                  /* 接收状态 */
     can_pkt_grade->frame_id_u8 = 0;                                   /* 帧号 */
     can_pkt_grade->total_length_u16 = 0;                              /* 总长度 */

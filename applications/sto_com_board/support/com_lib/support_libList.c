@@ -14,8 +14,8 @@
 /*******************************************************************************************
  *        Local definitions
  *******************************************************************************************/
-#define LIST_BUF_TOTALLENGTH   ( 200*1024 )      /* 缓冲区总size */
-#define MAX_LISTARRY_COUNT     ( 2048U )         /* 最大队列计数 */
+#define LIST_BUF_TOTALLENGTH   ( 200*1024U )      /* 缓冲区总size */
+#define MAX_LISTARRY_COUNT     ( 2*1024U )         /* 最大队列计数 */
 
 /* 列表管理控制 */
 typedef struct

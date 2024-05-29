@@ -55,6 +55,138 @@ rt_err_t DataHandleInit(S_DATA_HANDLE *p_data_handle)
 
 /*
 以太网协议转CAN协议
+处理通信1发送的数据，后续如果主控不转发的话，就不需要区分了，使用同一个即可
+ */
+void ETHToCanDataHandleByTX1(S_DATA_HANDLE *p_data_handle, uint8_t *pbuf, uint16_t data_len)
+{
+    rt_err_t ret = -RT_ERROR;
+
+    if(RT_NULL == p_data_handle)
+    {
+        return;
+    }
+
+    S_ETH_CAN_FRAME *s_can_frame = NULL;
+    S_APP_INETH_PACK *p_can_PACK = (S_APP_INETH_PACK*) pbuf;
+    uint16_t send_len = 0;
+
+    /* 2.转换CAN数据 */
+    while (send_len < p_can_PACK->datalen)
+    {
+        /* 获取CNA帧地址 */
+        s_can_frame = (S_ETH_CAN_FRAME*) (p_can_PACK->data + send_len);
+
+        /* CAN帧有效长度判断 */
+        send_len += s_can_frame->len + 5;
+        if (send_len > p_can_PACK->datalen)
+        {
+            LOG_E("can len error");
+            break;
+        }
+
+        /* 放入队列 */
+        CAN_FRAME can_tmp;
+        memset(&can_tmp, 0, sizeof(CAN_FRAME));
+
+        can_tmp.priority_u8 = (uint8_t)(s_can_frame->ID >> 3u);
+        can_tmp.no_u8 = (uint8_t)(s_can_frame->ID & 0x07);
+
+        if(can_tmp.priority_u8 == CANPRI_LKJDATA || can_tmp.priority_u8 == CANPRI_JCJKZJ)
+        {
+            if(can_tmp.no_u8 == 0x02 || can_tmp.no_u8 == 0x03)
+            {
+
+//                LOG_I("year %d %d %d", (can_tmp.data_u8[5] & 0x7f), can_tmp.data_u8[6], can_tmp.data_u8[7]);
+
+                can_tmp.length_u8 = s_can_frame->len;
+                rt_memcpy (can_tmp.data_u8, s_can_frame->Data, s_can_frame->len);
+
+//                if(can_tmp.priority_u8 == CANPRI_JCJKZJ)
+//                {
+//                    LOG_I("tx1_data %x %x data %d %d %d %d %d %d %d %d", can_tmp.priority_u8, can_tmp.no_u8,
+//                            can_tmp.data_u8[0], can_tmp.data_u8[1], can_tmp.data_u8[2], can_tmp.data_u8[3],
+//                            can_tmp.data_u8[4], can_tmp.data_u8[5], can_tmp.data_u8[6], can_tmp.data_u8[7]);
+//                    LOG_I("tx1 xi %d %d", ((can_tmp.data_u8[0] & 0x40) >> 6), ((can_tmp.data_u8[0] & 0x80) >> 7));
+//                }
+
+                ret = rt_mq_send(p_data_handle->can_data_mq, (const void *)&can_tmp, sizeof(CAN_FRAME));
+                if(ret != RT_EOK)
+                {
+                    LOG_E("can data mq send error %d by tx1", ret);
+                }
+            }
+        }
+    }
+}
+
+/*
+以太网协议转CAN协议
+处理通信2发送的数据，后续如果主控不转发的话，就不需要区分了，使用同一个即可
+ */
+void ETHToCanDataHandleByTX2(S_DATA_HANDLE *p_data_handle, uint8_t *pbuf, uint16_t data_len)
+{
+    rt_err_t ret = -RT_ERROR;
+
+    if(RT_NULL == p_data_handle)
+    {
+        return;
+    }
+
+    S_ETH_CAN_FRAME *s_can_frame = NULL;
+    S_APP_INETH_PACK *p_can_PACK = (S_APP_INETH_PACK*) pbuf;
+    uint16_t send_len = 0;
+
+    /* 2.转换CAN数据 */
+    while (send_len < p_can_PACK->datalen)
+    {
+        /* 获取CNA帧地址 */
+        s_can_frame = (S_ETH_CAN_FRAME*) (p_can_PACK->data + send_len);
+
+        /* CAN帧有效长度判断 */
+        send_len += s_can_frame->len + 5;
+        if (send_len > p_can_PACK->datalen)
+        {
+            LOG_E("can len error");
+            break;
+        }
+
+        /* 放入队列 */
+        CAN_FRAME can_tmp;
+        memset(&can_tmp, 0, sizeof(CAN_FRAME));
+
+        can_tmp.priority_u8 = (uint8_t)(s_can_frame->ID >> 3u);
+        can_tmp.no_u8 = (uint8_t)(s_can_frame->ID & 0x07);
+
+        if(can_tmp.priority_u8 == CANPRI_TXZJ)
+        {
+
+            if(can_tmp.no_u8 == 0x00)
+            {
+
+
+
+                can_tmp.length_u8 = s_can_frame->len;
+                rt_memcpy (can_tmp.data_u8, s_can_frame->Data, s_can_frame->len);
+
+
+
+//                LOG_I("tx2_data %x %x data %d %d %d %d %d %d %d %d", can_tmp.priority_u8, can_tmp.no_u8,
+//                        can_tmp.data_u8[0], can_tmp.data_u8[1], can_tmp.data_u8[2], can_tmp.data_u8[3],
+//                        can_tmp.data_u8[4], can_tmp.data_u8[5], can_tmp.data_u8[6], can_tmp.data_u8[7]);
+//                LOG_I("xi %d %d", ((can_tmp.data_u8[0] & 0x40) >> 6), ((can_tmp.data_u8[0] & 0x80) >> 7));
+
+                ret = rt_mq_send(p_data_handle->can_data_mq, (const void *)&can_tmp, sizeof(CAN_FRAME));
+                if(ret != RT_EOK)
+                {
+                    LOG_E("can data mq send error %d by tx2", ret);
+                }
+            }
+        }
+    }
+}
+
+/*
+以太网协议转CAN协议
  */
 void ETHToCanDataHandle(S_DATA_HANDLE *p_data_handle, uint8_t *pbuf, uint16_t data_len)
 {
@@ -100,6 +232,19 @@ void ETHToCanDataHandle(S_DATA_HANDLE *p_data_handle, uint8_t *pbuf, uint16_t da
 
         can_tmp.length_u8 = s_can_frame->len;
         rt_memcpy (can_tmp.data_u8, s_can_frame->Data, s_can_frame->len);
+
+//        if(can_tmp.priority_u8 == CANPRI_TXZJ || can_tmp.priority_u8 == CANPRI_JCJKZJ)
+//        {
+//
+//            if(can_tmp.no_u8 == 0x00)
+//            {
+//                LOG_I("zk_data %x %x data %d %d %d %d %d %d %d %d", can_tmp.priority_u8, can_tmp.no_u8,
+//                        can_tmp.data_u8[0], can_tmp.data_u8[1], can_tmp.data_u8[2], can_tmp.data_u8[3],
+//                        can_tmp.data_u8[4], can_tmp.data_u8[5], can_tmp.data_u8[6], can_tmp.data_u8[7]);
+//                LOG_I("xi %d %d", ((can_tmp.data_u8[1] & 0x40) >> 6), ((can_tmp.data_u8[1] & 0x80) >> 7));
+//
+//            }
+//        }
 
         ret = rt_mq_send(p_data_handle->can_data_mq, (const void *)&can_tmp, sizeof(CAN_FRAME));
         if(ret != RT_EOK)
@@ -240,7 +385,9 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
 
 
             break;
-
+        case CANPRI_RSS_2_DATA:
+            RSS2_(can_tmp.no_u8) = can_tmp;
+            break;
         case CANPRI_KONGCHEA:
         case CANPRI_KONGCHEB:
             if((40 + 4 + can_tmp.no_u8) < RECORD_CAN_BUFFER_SIZE)
@@ -330,6 +477,15 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
             {
                 UpdateErrorFlag_HCB(can_tmp.data_u8);
             } /* end if */
+
+//            if(can_tmp.no_u8 == 0x00)
+//            {
+//                LOG_I("tx1_data %x %x data %d %d %d %d %d %d %d %d", can_tmp.priority_u8, can_tmp.no_u8,
+//                        can_tmp.data_u8[0], can_tmp.data_u8[1], can_tmp.data_u8[2], can_tmp.data_u8[3],
+//                        can_tmp.data_u8[4], can_tmp.data_u8[5], can_tmp.data_u8[6], can_tmp.data_u8[7]);
+//                LOG_I("xi %d %d", ((can_tmp.data_u8[1] & 0x40) >> 6), ((can_tmp.data_u8[1] & 0x80) >> 7));
+//
+//            }
             break;
 
         case CANPRI_ZKZJA:
@@ -391,6 +547,15 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
             {
                 UpdateErrorFlag_HIB(can_tmp.data_u8);
             } /* end if...else */
+
+//            if(can_tmp.no_u8 == 0x00)
+//            {
+//                LOG_I("t_data %x %x data %d %d %d %d %d %d %d %d", can_tmp.priority_u8, can_tmp.no_u8,
+//                        can_tmp.data_u8[0], can_tmp.data_u8[1], can_tmp.data_u8[2], can_tmp.data_u8[3],
+//                        can_tmp.data_u8[4], can_tmp.data_u8[5], can_tmp.data_u8[6], can_tmp.data_u8[7]);
+//                LOG_I("xi %d %d", ((can_tmp.data_u8[1] & 0x40) >> 6), ((can_tmp.data_u8[1] & 0x80) >> 7));
+//
+//            }
             break;
 
             /* 23-March-2018, by Liang Zhen. */
@@ -590,7 +755,14 @@ rt_err_t CanDataHandle(S_DATA_HANDLE *p_data_handle)
             {
                 LOG_E("115 + 2 + can_tmp.no_u8 > size %d", (115 + 2 + can_tmp.no_u8));
             }
-
+            break;
+        case CANPRI_LKJDATA:
+            if(can_tmp.no_u8 == 0x02 || can_tmp.no_u8 == 0x03)
+            {
+                CAN_0x15(can_tmp.no_u8) = can_tmp;
+//                LOG_I("lkj data %d %d %d %d", can_tmp.no_u8, (can_tmp.data_u8[5] & 0x7f), can_tmp.data_u8[6], can_tmp.data_u8[7]);
+            }
+            break;
         default:
             break;
     } /* end switch */

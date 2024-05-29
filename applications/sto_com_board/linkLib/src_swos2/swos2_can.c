@@ -132,6 +132,7 @@ static void CanRxThreadEntry(void *parameter)
     rt_err_t ret = RT_EOK;
     S_CAN_LEN_INFO *info = RT_NULL;
     rt_uint32_t mbval;
+    rt_size_t read_size = 0;
 
     struct rt_can_msg rxmsg = { 0 };
 
@@ -149,7 +150,8 @@ static void CanRxThreadEntry(void *parameter)
                 continue;
             }
 
-            if (rt_device_read(can_dev.info[info->channel].can_dev, 0, &rxmsg, sizeof(rxmsg)) == sizeof(rxmsg))
+            read_size = rt_device_read(can_dev.info[info->channel].can_dev, 0, &rxmsg, sizeof(rxmsg));
+            if (read_size == sizeof(rxmsg))
             {
 #if 1
                 //LOG_D("read %x %d %d %d", rxmsg.id, rxmsg.ide, rxmsg.rtr, rxmsg.len);
@@ -162,6 +164,7 @@ static void CanRxThreadEntry(void *parameter)
                     continue;
                 }
 #else
+
                 if (rt_device_write(can_dev.info[info->channel].can_dev, 0, &rxmsg, sizeof(rxmsg)) != sizeof(rxmsg))
                 {
                     LOG_E("can data send error %d", info->channel);
@@ -172,8 +175,9 @@ static void CanRxThreadEntry(void *parameter)
             }
             else
             {
-                LOG_E("read %x %d %d %d", rxmsg.id, rxmsg.ide, rxmsg.rtr, rxmsg.len);
+                LOG_E("ch %d read %x %d %d %d %d", info->channel, rxmsg.id, rxmsg.ide, rxmsg.rtr, rxmsg.len, read_size);
             }
+            rt_memset(&rxmsg, 0, sizeof(rxmsg));
         }
     }
 }
@@ -371,6 +375,8 @@ BOOL if_can_send(E_CAN_CH ch, S_CAN_MSG *pMsg)
     {
         return FALSE;
     }
+
+    return TRUE;
 }
 
 BOOL if_can_get(E_CAN_CH ch, S_CAN_MSG *pMsg)

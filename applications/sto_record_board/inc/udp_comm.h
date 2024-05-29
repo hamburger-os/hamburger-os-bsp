@@ -22,6 +22,7 @@ void UDPServerSendData(const void *data, size_t size);
 void udp_send_datagram(void *data, size_t size);
 rt_err_t UDPServerInit(void);
 int UDPServerRcvThreadInit(void);
+rt_err_t UDPServerRcvIPData(char *ip_str, uint32_t size, uint32_t *port);
 rt_err_t UDPServerRcvMQData(void);
 
 #endif /* APPLICATIONS_STO_RECORD_BOARD_INC_UDP_COMM_H_ */

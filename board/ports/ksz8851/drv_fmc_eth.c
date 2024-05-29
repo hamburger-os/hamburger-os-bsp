@@ -234,6 +234,19 @@ static rt_err_t fmc_eth_init(rt_device_t dev)
     rt_pin_attach_irq(fmc_eth->isr_pin, PIN_IRQ_MODE_FALLING, fmc_eth_irq_callback, fmc_eth);
     rt_pin_irq_enable(fmc_eth->isr_pin, PIN_IRQ_ENABLE);
 
+#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
+
+    if(fmc_eth->link_layer_enable)
+    {
+        res = lep_eth_if_init(&fmc_eth->link_layer_buf);
+        if(res != RT_EOK)
+        {
+            LOG_E("device %s init linklayer faild: %d", dev->parent.name, res);
+            return -RT_ERROR;
+        }
+    }
+#endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
+
     return RT_EOK;
 }
 
@@ -262,7 +275,6 @@ static rt_err_t fmc_eth_open(rt_device_t dev, rt_uint16_t oflag)
 
 static rt_err_t fmc_eth_close(rt_device_t dev)
 {
-#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
     struct rt_fmc_eth_port *fmc_eth = dev->user_data;
 
     if(NULL == fmc_eth)
@@ -270,8 +282,15 @@ static rt_err_t fmc_eth_close(rt_device_t dev)
         return -RT_EEMPTY;
     }
 
+    rt_mutex_detach(&fmc_eth->eth_mux);
+    rt_pin_detach_irq(fmc_eth->isr_pin);
+
+#ifdef BSP_USE_LINK_LAYER_COMMUNICATION
+
+
     if(fmc_eth->link_layer_enable)
     {
+        dev->rx_indicate = RT_NULL;
         return lep_eth_if_clear(&fmc_eth->link_layer_buf, E_ETH_IF_CLER_MODE_ALL);
     }
     else
@@ -635,16 +654,6 @@ static int rt_fmc_eth_init(void)
 #ifdef BSP_USE_LINK_LAYER_COMMUNICATION
         fmc_eth_device.port[i].parent.parent.read = fmc_eth_read;
         fmc_eth_device.port[i].parent.parent.write = fmc_eth_write;
-
-        if(fmc_eth_device.port[i].link_layer_enable)
-        {
-            state = lep_eth_if_init(&fmc_eth_device.port[i].link_layer_buf);
-            if(state != RT_EOK)
-            {
-                LOG_E("device %s init linklayer faild: %d", fmc_eth_device.port[i].dev_name, state);
-                state = -RT_ERROR;
-            }
-        }
 #endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
         /* register eth device */
         state = eth_device_init(&(fmc_eth_device.port[i].parent), fmc_eth_device.port[i].dev_name);

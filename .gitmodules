@@ -10,3 +10,6 @@
 [submodule "packages/trdp"]
 	path = packages/trdp
 	url = http://192.168.23.108:8088/sw-software/trdp.git
+[submodule "packages/sw_platform"]
+	path = packages/sw_platform
+	url = http://192.168.23.108:8088/sw-software/sw_platform.git
