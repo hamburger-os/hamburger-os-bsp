@@ -173,12 +173,12 @@ enum bcache_state_bits {
 #define ext4_bcache_test_flag(buf, b)    \
     (((buf)->flags & (1 << (b))) >> (b))
 
-static inline void ext4_bcache_set_dirty(struct ext4_buf *buf) {
+EXT_SECTION static inline void ext4_bcache_set_dirty(struct ext4_buf *buf) {
     ext4_bcache_set_flag(buf, BC_UPTODATE);
     ext4_bcache_set_flag(buf, BC_DIRTY);
 }
 
-static inline void ext4_bcache_clear_dirty(struct ext4_buf *buf) {
+EXT_SECTION static inline void ext4_bcache_clear_dirty(struct ext4_buf *buf) {
     ext4_bcache_clear_flag(buf, BC_UPTODATE);
     ext4_bcache_clear_flag(buf, BC_DIRTY);
 }
@@ -192,7 +192,7 @@ static inline void ext4_bcache_clear_dirty(struct ext4_buf *buf) {
 /**@brief   Insert buffer to dirty cache list
  * @param   bc block cache descriptor
  * @param   buf buffer descriptor */
-static inline void
+EXT_SECTION static inline void
 ext4_bcache_insert_dirty_node(struct ext4_bcache *bc, struct ext4_buf *buf) {
     if (!buf->on_dirty_list) {
         SLIST_INSERT_HEAD(&bc->dirty_list, buf, dirty_node);
@@ -203,7 +203,7 @@ ext4_bcache_insert_dirty_node(struct ext4_bcache *bc, struct ext4_buf *buf) {
 /**@brief   Remove buffer to dirty cache list
  * @param   bc block cache descriptor
  * @param   buf buffer descriptor */
-static inline void
+EXT_SECTION static inline void
 ext4_bcache_remove_dirty_node(struct ext4_bcache *bc, struct ext4_buf *buf) {
     if (buf->on_dirty_list) {
         SLIST_REMOVE(&bc->dirty_list, buf, ext4_buf, dirty_node);
@@ -218,32 +218,32 @@ ext4_bcache_remove_dirty_node(struct ext4_bcache *bc, struct ext4_buf *buf) {
  * @param   itemsize single item size (in bytes)
  * @return  standard error code*/
 int ext4_bcache_init_dynamic(struct ext4_bcache *bc, uint32_t cnt,
-                 uint32_t itemsize);
+                 uint32_t itemsize) EXT_SECTION;
 
 /**@brief   Do cleanup works on block cache.
  * @param   bc block cache descriptor.*/
-void ext4_bcache_cleanup(struct ext4_bcache *bc);
+void ext4_bcache_cleanup(struct ext4_bcache *bc) EXT_SECTION;
 
 /**@brief   Dynamic de-initialization of block cache.
  * @param   bc block cache descriptor
  * @return  standard error code*/
-int ext4_bcache_fini_dynamic(struct ext4_bcache *bc);
+int ext4_bcache_fini_dynamic(struct ext4_bcache *bc) EXT_SECTION;
 
 /**@brief   Get a buffer with the lowest LRU counter in bcache.
  * @param   bc block cache descriptor
  * @return  buffer with the lowest LRU counter*/
-struct ext4_buf *ext4_buf_lowest_lru(struct ext4_bcache *bc);
+struct ext4_buf *ext4_buf_lowest_lru(struct ext4_bcache *bc) EXT_SECTION;
 
 /**@brief   Drop unreferenced buffer from bcache.
  * @param   bc block cache descriptor
  * @param   buf buffer*/
-void ext4_bcache_drop_buf(struct ext4_bcache *bc, struct ext4_buf *buf);
+void ext4_bcache_drop_buf(struct ext4_bcache *bc, struct ext4_buf *buf) EXT_SECTION;
 
 /**@brief   Invalidate a buffer.
  * @param   bc block cache descriptor
  * @param   buf buffer*/
 void ext4_bcache_invalidate_buf(struct ext4_bcache *bc,
-                struct ext4_buf *buf);
+                struct ext4_buf *buf) EXT_SECTION;
 
 /**@brief   Invalidate a range of buffers.
  * @param   bc block cache descriptor
@@ -252,7 +252,7 @@ void ext4_bcache_invalidate_buf(struct ext4_bcache *bc,
  * @param   buf buffer*/
 void ext4_bcache_invalidate_lba(struct ext4_bcache *bc,
                 uint64_t from,
-                uint32_t cnt);
+                uint32_t cnt) EXT_SECTION;
 
 /**@brief   Find existing buffer from block cache memory.
  *          Unreferenced block allocation is based on LRU
@@ -263,7 +263,7 @@ void ext4_bcache_invalidate_lba(struct ext4_bcache *bc,
  * @return  block cache buffer */
 struct ext4_buf *
 ext4_bcache_find_get(struct ext4_bcache *bc, struct ext4_block *b,
-             uint64_t lba);
+             uint64_t lba) EXT_SECTION;
 
 /**@brief   Allocate block from block cache memory.
  *          Unreferenced block allocation is based on LRU
@@ -273,18 +273,18 @@ ext4_bcache_find_get(struct ext4_bcache *bc, struct ext4_block *b,
  * @param   is_new block is new (needs to be read)
  * @return  standard error code*/
 int ext4_bcache_alloc(struct ext4_bcache *bc, struct ext4_block *b,
-              bool *is_new);
+              bool *is_new) EXT_SECTION;
 
 /**@brief   Free block from cache memory (decrement reference counter).
  * @param   bc block cache descriptor
  * @param   b block to free
  * @return  standard error code*/
-int ext4_bcache_free(struct ext4_bcache *bc, struct ext4_block *b);
+int ext4_bcache_free(struct ext4_bcache *bc, struct ext4_block *b) EXT_SECTION;
 
 /**@brief   Return a full status of block cache.
  * @param   bc block cache descriptor
  * @return  full status*/
-bool ext4_bcache_is_full(struct ext4_bcache *bc);
+bool ext4_bcache_is_full(struct ext4_bcache *bc) EXT_SECTION;
 
 #ifdef __cplusplus
 }

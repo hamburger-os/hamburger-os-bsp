@@ -157,37 +157,37 @@ struct ext4_blockdev {
  * @param   bg_bsize logical block size
  * @param   bdev block device descriptor
  * @return  standard error code*/
-int ext4_block_init(struct ext4_blockdev *bdev);
+int ext4_block_init(struct ext4_blockdev *bdev) EXT_SECTION;
 
 /**@brief   Binds a bcache to block device.
  * @param   bdev block device descriptor
  * @param   bc block cache descriptor
  * @return  standard error code*/
-int ext4_block_bind_bcache(struct ext4_blockdev *bdev, struct ext4_bcache *bc);
+int ext4_block_bind_bcache(struct ext4_blockdev *bdev, struct ext4_bcache *bc) EXT_SECTION;
 
 /**@brief   Close block device
  * @param   bdev block device descriptor
  * @return  standard error code*/
-int ext4_block_fini(struct ext4_blockdev *bdev);
+int ext4_block_fini(struct ext4_blockdev *bdev) EXT_SECTION;
 
 /**@brief   Flush data in given buffer to disk.
  * @param   bdev block device descriptor
  * @param   buf buffer
  * @return  standard error code*/
-int ext4_block_flush_buf(struct ext4_blockdev *bdev, struct ext4_buf *buf);
+int ext4_block_flush_buf(struct ext4_blockdev *bdev, struct ext4_buf *buf) EXT_SECTION;
 
 /**@brief   Flush data in buffer of given lba to disk,
  *          if that buffer exists in block cache.
  * @param   bdev block device descriptor
  * @param   lba logical block address
  * @return  standard error code*/
-int ext4_block_flush_lba(struct ext4_blockdev *bdev, uint64_t lba);
+int ext4_block_flush_lba(struct ext4_blockdev *bdev, uint64_t lba) EXT_SECTION;
 
 /**@brief   Set logical block size in block device.
  * @param   bdev block device descriptor
  * @param   lb_size logical block size (in bytes)
  * @return  standard error code*/
-void ext4_block_set_lb_size(struct ext4_blockdev *bdev, uint32_t lb_bsize);
+void ext4_block_set_lb_size(struct ext4_blockdev *bdev, uint32_t lb_bsize) EXT_SECTION;
 
 /**@brief   Block get function (through cache, don't read).
  * @param   bdev block device descriptor
@@ -195,7 +195,7 @@ void ext4_block_set_lb_size(struct ext4_blockdev *bdev, uint32_t lb_bsize);
  * @param   lba logical block address
  * @return  standard error code*/
 int ext4_block_get_noread(struct ext4_blockdev *bdev, struct ext4_block *b,
-              uint64_t lba);
+              uint64_t lba) EXT_SECTION;
 
 /**@brief   Block get function (through cache).
  * @param   bdev block device descriptor
@@ -203,13 +203,13 @@ int ext4_block_get_noread(struct ext4_blockdev *bdev, struct ext4_block *b,
  * @param   lba logical block address
  * @return  standard error code*/
 int ext4_block_get(struct ext4_blockdev *bdev, struct ext4_block *b,
-           uint64_t lba);
+           uint64_t lba) EXT_SECTION;
 
 /**@brief   Block set procedure (through cache).
  * @param   bdev block device descriptor
  * @param   b block descriptor
  * @return  standard error code*/
-int ext4_block_set(struct ext4_blockdev *bdev, struct ext4_block *b);
+int ext4_block_set(struct ext4_blockdev *bdev, struct ext4_block *b) EXT_SECTION;
 
 /**@brief   Block read procedure (without cache)
  * @param   bdev block device descriptor
@@ -217,7 +217,7 @@ int ext4_block_set(struct ext4_blockdev *bdev, struct ext4_block *b);
  * @param   lba logical block address
  * @return  standard error code*/
 int ext4_blocks_get_direct(struct ext4_blockdev *bdev, void *buf, uint64_t lba,
-               uint32_t cnt);
+               uint32_t cnt) EXT_SECTION;
 
 /**@brief   Block write procedure (without cache)
  * @param   bdev block device descriptor
@@ -225,7 +225,7 @@ int ext4_blocks_get_direct(struct ext4_blockdev *bdev, void *buf, uint64_t lba,
  * @param   lba logical block address
  * @return  standard error code*/
 int ext4_blocks_set_direct(struct ext4_blockdev *bdev, const void *buf,
-               uint64_t lba, uint32_t cnt);
+               uint64_t lba, uint32_t cnt) EXT_SECTION;
 
 /**@brief   Write to block device (by direct address).
  * @param   bdev block device descriptor
@@ -234,7 +234,7 @@ int ext4_blocks_set_direct(struct ext4_blockdev *bdev, const void *buf,
  * @param   len length of the write buffer
  * @return  standard error code*/
 int ext4_block_writebytes(struct ext4_blockdev *bdev, uint64_t off,
-              const void *buf, uint32_t len);
+              const void *buf, uint32_t len) EXT_SECTION;
 
 /**@brief   Read freom block device (by direct address).
  * @param   bdev block device descriptor
@@ -243,12 +243,12 @@ int ext4_block_writebytes(struct ext4_blockdev *bdev, uint64_t off,
  * @param   len length of the write buffer
  * @return  standard error code*/
 int ext4_block_readbytes(struct ext4_blockdev *bdev, uint64_t off, void *buf,
-             uint32_t len);
+             uint32_t len) EXT_SECTION;
 
 /**@brief   Flush all dirty buffers to disk
  * @param   bdev block device descriptor
  * @return  standard error code*/
-int ext4_block_cache_flush(struct ext4_blockdev *bdev);
+int ext4_block_cache_flush(struct ext4_blockdev *bdev) EXT_SECTION;
 
 /**@brief   Enable/disable write back cache mode
  * @param   bdev block device descriptor
@@ -256,7 +256,7 @@ int ext4_block_cache_flush(struct ext4_blockdev *bdev);
  *              !0 - ENABLE
  *               0 - DISABLE (all delayed cache buffers will be flushed)
  * @return  standard error code*/
-int ext4_block_cache_write_back(struct ext4_blockdev *bdev, uint8_t on_off);
+int ext4_block_cache_write_back(struct ext4_blockdev *bdev, uint8_t on_off) EXT_SECTION;
 
 #ifdef __cplusplus
 }

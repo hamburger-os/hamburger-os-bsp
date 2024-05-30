@@ -47,7 +47,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-static void ext4_bdif_lock(struct ext4_blockdev *bdev)
+EXT_SECTION static void ext4_bdif_lock(struct ext4_blockdev *bdev)
 {
     if (!bdev->bdif->lock)
         return;
@@ -56,7 +56,7 @@ static void ext4_bdif_lock(struct ext4_blockdev *bdev)
     ext4_assert(r == EOK);
 }
 
-static void ext4_bdif_unlock(struct ext4_blockdev *bdev)
+EXT_SECTION static void ext4_bdif_unlock(struct ext4_blockdev *bdev)
 {
     if (!bdev->bdif->unlock)
         return;
@@ -65,7 +65,7 @@ static void ext4_bdif_unlock(struct ext4_blockdev *bdev)
     ext4_assert(r == EOK);
 }
 
-static int ext4_bdif_bread(struct ext4_blockdev *bdev, void *buf,
+EXT_SECTION static int ext4_bdif_bread(struct ext4_blockdev *bdev, void *buf,
                uint64_t blk_id, uint32_t blk_cnt)
 {
     ext4_bdif_lock(bdev);
@@ -75,7 +75,7 @@ static int ext4_bdif_bread(struct ext4_blockdev *bdev, void *buf,
     return r;
 }
 
-static int ext4_bdif_bwrite(struct ext4_blockdev *bdev, const void *buf,
+EXT_SECTION static int ext4_bdif_bwrite(struct ext4_blockdev *bdev, const void *buf,
                 uint64_t blk_id, uint32_t blk_cnt)
 {
     ext4_bdif_lock(bdev);
@@ -177,7 +177,7 @@ int ext4_block_flush_lba(struct ext4_blockdev *bdev, uint64_t lba)
     return r;
 }
 
-int ext4_block_cache_shake(struct ext4_blockdev *bdev)
+EXT_SECTION static int ext4_block_cache_shake(struct ext4_blockdev *bdev)
 {
     int r = EOK;
     struct ext4_buf *buf;

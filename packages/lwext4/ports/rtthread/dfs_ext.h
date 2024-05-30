@@ -14,6 +14,6 @@
 
 #include <rtthread.h>
 
-int dfs_ext_init(void);
+int dfs_ext_init(void) EXT_SECTION;
 
 #endif

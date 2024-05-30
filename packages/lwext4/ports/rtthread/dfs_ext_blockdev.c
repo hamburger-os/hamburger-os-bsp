@@ -18,12 +18,12 @@
 #include "dfs_ext.h"
 #include "dfs_ext_blockdev.h"
 
-static int blockdev_lock(struct ext4_blockdev *bdev);
-static int blockdev_unlock(struct ext4_blockdev *bdev);
-static int blockdev_open(struct ext4_blockdev *bdev);
-static int blockdev_read(struct ext4_blockdev *bdev, void *buf, uint64_t blk_id, uint32_t blk_cnt);
-static int blockdev_write(struct ext4_blockdev *bdev, const void *buf, uint64_t blk_id, uint32_t blk_cnt);
-static int blockdev_close(struct ext4_blockdev *bdev);
+static int blockdev_lock(struct ext4_blockdev *bdev) EXT_SECTION;
+static int blockdev_unlock(struct ext4_blockdev *bdev) EXT_SECTION;
+static int blockdev_open(struct ext4_blockdev *bdev) EXT_SECTION;
+static int blockdev_read(struct ext4_blockdev *bdev, void *buf, uint64_t blk_id, uint32_t blk_cnt) EXT_SECTION;
+static int blockdev_write(struct ext4_blockdev *bdev, const void *buf, uint64_t blk_id, uint32_t blk_cnt) EXT_SECTION;
+static int blockdev_close(struct ext4_blockdev *bdev) EXT_SECTION;
 
 static rt_mutex_t bdevice_mutex = RT_NULL;
 

@@ -140,7 +140,7 @@ int ext4_fs_fini(struct ext4_fs *fs)
     return EOK;
 }
 
-static void ext4_fs_debug_features_inc(uint32_t features_incompatible)
+EXT_SECTION static void ext4_fs_debug_features_inc(uint32_t features_incompatible)
 {
     if (features_incompatible & EXT4_FINCOM_COMPRESSION)
         ext4_dbg(DEBUG_FS, DBG_NONE "compression\n");
@@ -171,7 +171,7 @@ static void ext4_fs_debug_features_inc(uint32_t features_incompatible)
     if (features_incompatible & EXT4_FINCOM_INLINE_DATA)
         ext4_dbg(DEBUG_FS, DBG_NONE "inline_data\n");
 }
-static void ext4_fs_debug_features_comp(uint32_t features_compatible)
+EXT_SECTION static void ext4_fs_debug_features_comp(uint32_t features_compatible)
 {
     if (features_compatible & EXT4_FCOM_DIR_PREALLOC)
         ext4_dbg(DEBUG_FS, DBG_NONE "dir_prealloc\n");
@@ -187,7 +187,7 @@ static void ext4_fs_debug_features_comp(uint32_t features_compatible)
         ext4_dbg(DEBUG_FS, DBG_NONE "dir_index\n");
 }
 
-static void ext4_fs_debug_features_ro(uint32_t features_ro)
+EXT_SECTION static void ext4_fs_debug_features_ro(uint32_t features_ro)
 {
     if (features_ro & EXT4_FRO_COM_SPARSE_SUPER)
         ext4_dbg(DEBUG_FS, DBG_NONE "sparse_super\n");
@@ -259,7 +259,7 @@ int ext4_fs_check_features(struct ext4_fs *fs, bool *read_only)
  * @param bgid    block group id
  * @return Error code
  */
-static bool ext4_block_in_group(struct ext4_sblock *s, ext4_fsblk_t baddr,
+EXT_SECTION static bool ext4_block_in_group(struct ext4_sblock *s, ext4_fsblk_t baddr,
                     uint32_t bgid)
 {
     uint32_t actual_bgid;
@@ -273,7 +273,7 @@ static bool ext4_block_in_group(struct ext4_sblock *s, ext4_fsblk_t baddr,
  *          need to use it within a single byte (to ensure we get endianness right).
  *          We can use memset for the rest of the bitmap as there are no other users.
  */
-static void ext4_fs_mark_bitmap_end(int start_bit, int end_bit, void *bitmap)
+EXT_SECTION static void ext4_fs_mark_bitmap_end(int start_bit, int end_bit, void *bitmap)
 {
     int i;
 
@@ -291,7 +291,7 @@ static void ext4_fs_mark_bitmap_end(int start_bit, int end_bit, void *bitmap)
  * @param bg_ref Reference to block group
  * @return Error code
  */
-static int ext4_fs_init_block_bitmap(struct ext4_block_group_ref *bg_ref)
+EXT_SECTION static int ext4_fs_init_block_bitmap(struct ext4_block_group_ref *bg_ref)
 {
     struct ext4_sblock *sb = &bg_ref->fs->sb;
     struct ext4_bgroup *bg = bg_ref->block_group;
@@ -387,7 +387,7 @@ static int ext4_fs_init_block_bitmap(struct ext4_block_group_ref *bg_ref)
  * @param bg_ref Reference to block group
  * @return Error code
  */
-static int ext4_fs_init_inode_bitmap(struct ext4_block_group_ref *bg_ref)
+EXT_SECTION static int ext4_fs_init_inode_bitmap(struct ext4_block_group_ref *bg_ref)
 {
     int rc;
     struct ext4_sblock *sb = &bg_ref->fs->sb;
@@ -430,7 +430,7 @@ static int ext4_fs_init_inode_bitmap(struct ext4_block_group_ref *bg_ref)
  * @param bg_ref Reference to block group
  * @return Error code
  */
-static int ext4_fs_init_inode_table(struct ext4_block_group_ref *bg_ref)
+EXT_SECTION static int ext4_fs_init_inode_table(struct ext4_block_group_ref *bg_ref)
 {
     struct ext4_sblock *sb = &bg_ref->fs->sb;
     struct ext4_bgroup *bg = bg_ref->block_group;
@@ -468,7 +468,7 @@ static int ext4_fs_init_inode_table(struct ext4_block_group_ref *bg_ref)
     return EOK;
 }
 
-static ext4_fsblk_t ext4_fs_get_descriptor_block(struct ext4_sblock *s,
+EXT_SECTION static ext4_fsblk_t ext4_fs_get_descriptor_block(struct ext4_sblock *s,
                          uint32_t bgid,
                          uint32_t dsc_per_block)
 {
@@ -494,7 +494,7 @@ static ext4_fsblk_t ext4_fs_get_descriptor_block(struct ext4_sblock *s,
  * @param bg   Block group to compute checksum for
  * @return Checksum value
  */
-static uint16_t ext4_fs_bg_checksum(struct ext4_sblock *sb, uint32_t bgid,
+EXT_SECTION static uint16_t ext4_fs_bg_checksum(struct ext4_sblock *sb, uint32_t bgid,
                     struct ext4_bgroup *bg)
 {
     /* If checksum not supported, 0 will be returned */
@@ -558,7 +558,7 @@ static uint16_t ext4_fs_bg_checksum(struct ext4_sblock *sb, uint32_t bgid,
 }
 
 #if CONFIG_META_CSUM_ENABLE
-static bool ext4_fs_verify_bg_csum(struct ext4_sblock *sb,
+EXT_SECTION static bool ext4_fs_verify_bg_csum(struct ext4_sblock *sb,
                    uint32_t bgid,
                    struct ext4_bgroup *bg)
 {
@@ -655,7 +655,7 @@ int ext4_fs_put_block_group_ref(struct ext4_block_group_ref *ref)
 }
 
 #if CONFIG_META_CSUM_ENABLE
-static uint32_t ext4_fs_inode_checksum(struct ext4_inode_ref *inode_ref)
+EXT_SECTION static uint32_t ext4_fs_inode_checksum(struct ext4_inode_ref *inode_ref)
 {
     uint32_t checksum = 0;
     struct ext4_sblock *sb = &inode_ref->fs->sb;
@@ -696,7 +696,7 @@ static uint32_t ext4_fs_inode_checksum(struct ext4_inode_ref *inode_ref)
 #define ext4_fs_inode_checksum(...) 0
 #endif
 
-static void ext4_fs_set_inode_checksum(struct ext4_inode_ref *inode_ref)
+EXT_SECTION static void ext4_fs_set_inode_checksum(struct ext4_inode_ref *inode_ref)
 {
     struct ext4_sblock *sb = &inode_ref->fs->sb;
     if (!ext4_sb_feature_ro_com(sb, EXT4_FRO_COM_METADATA_CSUM))
@@ -707,7 +707,7 @@ static void ext4_fs_set_inode_checksum(struct ext4_inode_ref *inode_ref)
 }
 
 #if CONFIG_META_CSUM_ENABLE
-static bool ext4_fs_verify_inode_csum(struct ext4_inode_ref *inode_ref)
+EXT_SECTION static bool ext4_fs_verify_inode_csum(struct ext4_inode_ref *inode_ref)
 {
     struct ext4_sblock *sb = &inode_ref->fs->sb;
     if (!ext4_sb_feature_ro_com(sb, EXT4_FRO_COM_METADATA_CSUM))
@@ -720,7 +720,7 @@ static bool ext4_fs_verify_inode_csum(struct ext4_inode_ref *inode_ref)
 #define ext4_fs_verify_inode_csum(...) true
 #endif
 
-static int
+EXT_SECTION static int
 __ext4_fs_get_inode_ref(struct ext4_fs *fs, uint32_t index,
             struct ext4_inode_ref *ref,
             bool initialized)
@@ -1079,7 +1079,7 @@ finish:
  * @param iblock    Logical block to be released
  * @return Error code
  */
-static int ext4_fs_release_inode_block(struct ext4_inode_ref *inode_ref,
+EXT_SECTION static int ext4_fs_release_inode_block(struct ext4_inode_ref *inode_ref,
                 ext4_lblk_t iblock)
 {
     ext4_fsblk_t fblock;
@@ -1347,7 +1347,7 @@ int ext4_fs_indirect_find_goal(struct ext4_inode_ref *inode_ref,
     return ext4_fs_put_block_group_ref(&bg_ref);
 }
 
-static int ext4_fs_get_inode_dblk_idx_internal(struct ext4_inode_ref *inode_ref,
+EXT_SECTION static int ext4_fs_get_inode_dblk_idx_internal(struct ext4_inode_ref *inode_ref,
                        ext4_lblk_t iblock, ext4_fsblk_t *fblock,
                        bool extent_create,
                        bool support_unwritten __ext4_unused)
@@ -1477,7 +1477,7 @@ int ext4_fs_init_inode_dblk_idx(struct ext4_inode_ref *inode_ref,
                            true, true);
 }
 
-static int ext4_fs_set_inode_data_block_index(struct ext4_inode_ref *inode_ref,
+EXT_SECTION static int ext4_fs_set_inode_data_block_index(struct ext4_inode_ref *inode_ref,
                        ext4_lblk_t iblock, ext4_fsblk_t fblock)
 {
     struct ext4_fs *fs = inode_ref->fs;

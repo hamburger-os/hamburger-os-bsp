@@ -45,6 +45,15 @@ extern "C" {
 #include "generated/ext4_config.h"
 #endif
 
+#include "board.h"
+
+#ifdef SOC_SERIES_STM32F4
+#define EXT_SECTION __attribute__((section(".lowcode")))
+#endif
+#ifdef SOC_SERIES_STM32H7
+#define EXT_SECTION
+#endif
+
 /*****************************************************************************/
 
 #define F_SET_EXT2 2

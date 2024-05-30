@@ -20,10 +20,10 @@ struct dfs_ext4_blockdev
     uint8_t ph_bbuf[4096];
 };
 
-struct ext4_blockdev *ext4_blockdev_from_devid(struct rt_device *devid);
+struct ext4_blockdev *ext4_blockdev_from_devid(struct rt_device *devid) EXT_SECTION;
 
-struct dfs_ext4_blockdev *dfs_ext4_blockdev_create(rt_device_t devid);
-int dfs_ext4_blockdev_destroy(struct dfs_ext4_blockdev *dbd);
-struct dfs_ext4_blockdev *dfs_ext4_blockdev_from_bd(struct ext4_blockdev *bd);
+struct dfs_ext4_blockdev *dfs_ext4_blockdev_create(rt_device_t devid) EXT_SECTION;
+int dfs_ext4_blockdev_destroy(struct dfs_ext4_blockdev *dbd) EXT_SECTION;
+struct dfs_ext4_blockdev *dfs_ext4_blockdev_from_bd(struct ext4_blockdev *bd) EXT_SECTION;
 
 #endif

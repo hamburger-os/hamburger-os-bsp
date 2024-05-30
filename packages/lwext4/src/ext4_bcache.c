@@ -44,7 +44,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-static int ext4_bcache_lba_compare(struct ext4_buf *a, struct ext4_buf *b)
+EXT_SECTION static int ext4_bcache_lba_compare(struct ext4_buf *a, struct ext4_buf *b)
 {
      if (a->lba > b->lba)
          return 1;
@@ -53,7 +53,7 @@ static int ext4_bcache_lba_compare(struct ext4_buf *a, struct ext4_buf *b)
      return 0;
 }
 
-static int ext4_bcache_lru_compare(struct ext4_buf *a, struct ext4_buf *b)
+EXT_SECTION static int ext4_bcache_lru_compare(struct ext4_buf *a, struct ext4_buf *b)
 {
     if (a->lru_id > b->lru_id)
         return 1;
@@ -116,7 +116,7 @@ int ext4_bcache_fini_dynamic(struct ext4_bcache *bc)
  *  referenced.
  */
 
-static struct ext4_buf *
+EXT_SECTION static struct ext4_buf *
 ext4_buf_alloc(struct ext4_bcache *bc, uint64_t lba)
 {
     void *data;
@@ -137,13 +137,13 @@ ext4_buf_alloc(struct ext4_bcache *bc, uint64_t lba)
     return buf;
 }
 
-static void ext4_buf_free(struct ext4_buf *buf)
+EXT_SECTION static void ext4_buf_free(struct ext4_buf *buf)
 {
     ext4_free(buf->data);
     ext4_free(buf);
 }
 
-static struct ext4_buf *
+EXT_SECTION static struct ext4_buf *
 ext4_buf_lookup(struct ext4_bcache *bc, uint64_t lba)
 {
     struct ext4_buf tmp = {

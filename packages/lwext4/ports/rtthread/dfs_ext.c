@@ -33,8 +33,8 @@
 
 static rt_mutex_t ext4_mutex = RT_NULL;
 
-static void ext4_lock(void);
-static void ext4_unlock(void);
+static void ext4_lock(void) EXT_SECTION;
+static void ext4_unlock(void) EXT_SECTION;
 
 static struct ext4_lock ext4_lock_ops =
 {
@@ -65,9 +65,9 @@ static void ext4_unlock(void)
 }
 
 #if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
-rt_inline const char *get_fd_file(struct dfs_file *fd)
+EXT_SECTION rt_inline const char *get_fd_file(struct dfs_file *fd)
 #else
-rt_inline const char *get_fd_file(struct dfs_fd *fd)
+EXT_SECTION rt_inline const char *get_fd_file(struct dfs_fd *fd)
 #endif
 {
     const char *fn = NULL;
@@ -88,7 +88,7 @@ rt_inline const char *get_fd_file(struct dfs_fd *fd)
     return fn;
 }
 
-static int dfs_ext_mount(struct dfs_filesystem *fs, unsigned long rwflag, const void *data)
+EXT_SECTION static int dfs_ext_mount(struct dfs_filesystem *fs, unsigned long rwflag, const void *data)
 {
     int rc = 0;
     struct ext4_blockdev *bd = NULL;
@@ -118,7 +118,7 @@ static int dfs_ext_mount(struct dfs_filesystem *fs, unsigned long rwflag, const 
     return rc;
 }
 
-static int dfs_ext_unmount(struct dfs_filesystem *fs)
+EXT_SECTION static int dfs_ext_unmount(struct dfs_filesystem *fs)
 {
     int rc = -RT_ERROR;
     struct dfs_ext4_blockdev *dbd = NULL;
@@ -146,9 +146,9 @@ static int dfs_ext_unmount(struct dfs_filesystem *fs)
 }
 
 #if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
-static int dfs_ext_mkfs(rt_device_t devid, const char *fs_name)
+EXT_SECTION static int dfs_ext_mkfs(rt_device_t devid, const char *fs_name)
 #else
-static int dfs_ext_mkfs(rt_device_t devid)
+EXT_SECTION static int dfs_ext_mkfs(rt_device_t devid)
 #endif
 {
     int rc;
@@ -191,7 +191,7 @@ static int dfs_ext_mkfs(rt_device_t devid)
     return rc;
 }
 
-static int dfs_ext_statfs(struct dfs_filesystem *fs, struct statfs *buf)
+EXT_SECTION static int dfs_ext_statfs(struct dfs_filesystem *fs, struct statfs *buf)
 {
     struct ext4_sblock *sb = NULL;
     int error = RT_EOK;
@@ -212,9 +212,9 @@ static int dfs_ext_statfs(struct dfs_filesystem *fs, struct statfs *buf)
 }
 
 #if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
-static int dfs_ext_ioctl(struct dfs_file *fd, int cmd, void *args)
+EXT_SECTION static int dfs_ext_ioctl(struct dfs_file *fd, int cmd, void *args)
 #else
-static int dfs_ext_ioctl(struct dfs_fd *fd, int cmd, void *args)
+EXT_SECTION static int dfs_ext_ioctl(struct dfs_fd *fd, int cmd, void *args)
 #endif
 {
     int r = RT_EOK;
@@ -249,9 +249,9 @@ static int dfs_ext_ioctl(struct dfs_fd *fd, int cmd, void *args)
 }
 
 #if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
-static int dfs_ext_read(struct dfs_file *fd, void *buf, size_t count)
+EXT_SECTION static int dfs_ext_read(struct dfs_file *fd, void *buf, size_t count)
 #else
-static int dfs_ext_read(struct dfs_fd *fd, void *buf, size_t count)
+EXT_SECTION static int dfs_ext_read(struct dfs_fd *fd, void *buf, size_t count)
 #endif
 {
     size_t bytesread = 0;
@@ -272,9 +272,9 @@ static int dfs_ext_read(struct dfs_fd *fd, void *buf, size_t count)
 }
 
 #if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
-static int dfs_ext_write(struct dfs_file *fd, const void *buf, size_t count)
+EXT_SECTION static int dfs_ext_write(struct dfs_file *fd, const void *buf, size_t count)
 #else
-static int dfs_ext_write(struct dfs_fd *fd, const void *buf, size_t count)
+EXT_SECTION static int dfs_ext_write(struct dfs_fd *fd, const void *buf, size_t count)
 #endif
 {
     size_t byteswritten = 0;
@@ -297,9 +297,9 @@ static int dfs_ext_write(struct dfs_fd *fd, const void *buf, size_t count)
 }
 
 #if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
-static int dfs_ext_flush(struct dfs_file *fd)
+EXT_SECTION static int dfs_ext_flush(struct dfs_file *fd)
 #else
-static int dfs_ext_flush(struct dfs_fd *fd)
+EXT_SECTION static int dfs_ext_flush(struct dfs_fd *fd)
 #endif
 {
     int error = RT_EOK;
@@ -314,9 +314,9 @@ static int dfs_ext_flush(struct dfs_fd *fd)
 }
 
 #if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
-static off_t dfs_ext_lseek(struct dfs_file *fd, off_t offset)
+EXT_SECTION static off_t dfs_ext_lseek(struct dfs_file *fd, off_t offset)
 #else
-static int dfs_ext_lseek(struct dfs_fd *fd, off_t offset)
+EXT_SECTION static int dfs_ext_lseek(struct dfs_fd *fd, off_t offset)
 #endif
 {
     int r;
@@ -332,9 +332,9 @@ static int dfs_ext_lseek(struct dfs_fd *fd, off_t offset)
 }
 
 #if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
-static int dfs_ext_close(struct dfs_file *file)
+EXT_SECTION static int dfs_ext_close(struct dfs_file *file)
 #else
-static int dfs_ext_close(struct dfs_fd *file)
+EXT_SECTION static int dfs_ext_close(struct dfs_fd *file)
 #endif
 {
     int r;
@@ -350,9 +350,9 @@ static int dfs_ext_close(struct dfs_fd *file)
 }
 
 #if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
-static int dfs_ext_open(struct dfs_file *file)
+EXT_SECTION static int dfs_ext_open(struct dfs_file *file)
 #else
-static int dfs_ext_open(struct dfs_fd *file)
+EXT_SECTION static int dfs_ext_open(struct dfs_fd *file)
 #endif
 {
     int r = EOK;
@@ -407,7 +407,7 @@ static int dfs_ext_open(struct dfs_fd *file)
     return -r;
 }
 
-static int dfs_ext_unlink(struct dfs_filesystem *fs, const char *pathname)
+EXT_SECTION static int dfs_ext_unlink(struct dfs_filesystem *fs, const char *pathname)
 {
     int r;
     char *stat_path;
@@ -450,7 +450,7 @@ static int dfs_ext_unlink(struct dfs_filesystem *fs, const char *pathname)
     return -r;
 }
 
-static int dfs_ext_stat(struct dfs_filesystem *fs, const char *path, struct stat *st)
+EXT_SECTION static int dfs_ext_stat(struct dfs_filesystem *fs, const char *path, struct stat *st)
 {
     int r;
     uint32_t mode = 0;
@@ -554,9 +554,9 @@ static int dfs_ext_stat(struct dfs_filesystem *fs, const char *path, struct stat
 }
 
 #if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
-static int dfs_ext_getdents(struct dfs_file *file, struct dirent *dirp, rt_uint32_t count)
+EXT_SECTION static int dfs_ext_getdents(struct dfs_file *file, struct dirent *dirp, rt_uint32_t count)
 #else
-static int dfs_ext_getdents(struct dfs_fd *file, struct dirent *dirp, rt_uint32_t count)
+EXT_SECTION static int dfs_ext_getdents(struct dfs_fd *file, struct dirent *dirp, rt_uint32_t count)
 #endif
 {
     int index;
@@ -605,7 +605,7 @@ static int dfs_ext_getdents(struct dfs_fd *file, struct dirent *dirp, rt_uint32_
     return index * sizeof(struct dirent);
 }
 
-static int dfs_ext_rename(struct dfs_filesystem *fs, const char *oldpath, const char *newpath)
+EXT_SECTION static int dfs_ext_rename(struct dfs_filesystem *fs, const char *oldpath, const char *newpath)
 {
     int r;
 

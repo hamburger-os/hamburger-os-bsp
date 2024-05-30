@@ -49,7 +49,7 @@ struct ext4_mbr_bdevs {
     struct ext4_blockdev partitions[4];
 };
 
-int ext4_mbr_scan(struct ext4_blockdev *parent, struct ext4_mbr_bdevs *bdevs);
+int ext4_mbr_scan(struct ext4_blockdev *parent, struct ext4_mbr_bdevs *bdevs) EXT_SECTION;
 
 /**@brief Master boot record partitions*/
 struct ext4_mbr_parts {
@@ -60,7 +60,7 @@ struct ext4_mbr_parts {
     uint8_t division[4];
 };
 
-int ext4_mbr_write(struct ext4_blockdev *parent, struct ext4_mbr_parts *parts, uint32_t disk_id);
+int ext4_mbr_write(struct ext4_blockdev *parent, struct ext4_mbr_parts *parts, uint32_t disk_id) EXT_SECTION;
 
 #ifdef __cplusplus
 }

@@ -84,7 +84,7 @@ uint64_t ext4_balloc_get_block_of_bgid(struct ext4_sblock *s,
 }
 
 #if CONFIG_META_CSUM_ENABLE
-static uint32_t ext4_balloc_bitmap_csum(struct ext4_sblock *sb,
+EXT_SECTION static uint32_t ext4_balloc_bitmap_csum(struct ext4_sblock *sb,
                     void *bitmap)
 {
     uint32_t checksum = 0;
@@ -123,7 +123,7 @@ void ext4_balloc_set_bitmap_csum(struct ext4_sblock *sb,
 }
 
 #if CONFIG_META_CSUM_ENABLE
-static bool
+EXT_SECTION static bool
 ext4_balloc_verify_bitmap_csum(struct ext4_sblock *sb,
                    struct ext4_bgroup *bg,
                    void *bitmap __ext4_unused)

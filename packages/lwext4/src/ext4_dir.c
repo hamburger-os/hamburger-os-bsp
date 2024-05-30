@@ -57,7 +57,7 @@
 /****************************************************************************/
 
 /* Walk through a dirent block to find a checksum "dirent" at the tail */
-static struct ext4_dir_entry_tail *
+EXT_SECTION static struct ext4_dir_entry_tail *
 ext4_dir_get_tail(struct ext4_inode_ref *inode_ref,
         struct ext4_dir_en *de)
 {
@@ -77,7 +77,7 @@ ext4_dir_get_tail(struct ext4_inode_ref *inode_ref,
 }
 
 #if CONFIG_META_CSUM_ENABLE
-static uint32_t ext4_dir_csum(struct ext4_inode_ref *inode_ref,
+EXT_SECTION static uint32_t ext4_dir_csum(struct ext4_inode_ref *inode_ref,
                   struct ext4_dir_en *dirent, int size)
 {
     uint32_t csum;
@@ -156,7 +156,7 @@ void ext4_dir_set_csum(struct ext4_inode_ref *inode_ref,
  * @param block_size Size of data block
  * @return Error code
  */
-static int ext4_dir_iterator_set(struct ext4_dir_iter *it,
+EXT_SECTION static int ext4_dir_iterator_set(struct ext4_dir_iter *it,
                  uint32_t block_size)
 {
     uint32_t off_in_block = it->curr_off % block_size;
@@ -195,7 +195,7 @@ static int ext4_dir_iterator_set(struct ext4_dir_iter *it,
  * @param pos Position of the next entry
  * @return Error code
  */
-static int ext4_dir_iterator_seek(struct ext4_dir_iter *it, uint64_t pos)
+EXT_SECTION static int ext4_dir_iterator_seek(struct ext4_dir_iter *it, uint64_t pos)
 {
     struct ext4_sblock *sb = &it->inode_ref->fs->sb;
     struct ext4_inode *inode = it->inode_ref->inode;

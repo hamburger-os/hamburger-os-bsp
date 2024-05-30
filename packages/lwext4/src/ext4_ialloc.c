@@ -59,7 +59,7 @@
  * @param inode I-node number to be converted
  * @return Index of the i-node in the block group
  */
-static uint32_t ext4_ialloc_inode_to_bgidx(struct ext4_sblock *sb,
+EXT_SECTION static uint32_t ext4_ialloc_inode_to_bgidx(struct ext4_sblock *sb,
                        uint32_t inode)
 {
     uint32_t inodes_per_group = ext4_get32(sb, inodes_per_group);
@@ -72,7 +72,7 @@ static uint32_t ext4_ialloc_inode_to_bgidx(struct ext4_sblock *sb,
  * @return Absolute number of the i-node
  *
  */
-static uint32_t ext4_ialloc_bgidx_to_inode(struct ext4_sblock *sb,
+EXT_SECTION static uint32_t ext4_ialloc_bgidx_to_inode(struct ext4_sblock *sb,
                        uint32_t index, uint32_t bgid)
 {
     uint32_t inodes_per_group = ext4_get32(sb, inodes_per_group);
@@ -84,7 +84,7 @@ static uint32_t ext4_ialloc_bgidx_to_inode(struct ext4_sblock *sb,
  * @param inode I-node number to be found the block group for
  * @return Block group number computed from i-node number
  */
-static uint32_t ext4_ialloc_get_bgid_of_inode(struct ext4_sblock *sb,
+EXT_SECTION static uint32_t ext4_ialloc_get_bgid_of_inode(struct ext4_sblock *sb,
                           uint32_t inode)
 {
     uint32_t inodes_per_group = ext4_get32(sb, inodes_per_group);
@@ -92,7 +92,7 @@ static uint32_t ext4_ialloc_get_bgid_of_inode(struct ext4_sblock *sb,
 }
 
 #if CONFIG_META_CSUM_ENABLE
-static uint32_t ext4_ialloc_bitmap_csum(struct ext4_sblock *sb, void *bitmap)
+EXT_SECTION static uint32_t ext4_ialloc_bitmap_csum(struct ext4_sblock *sb, void *bitmap)
 {
     uint32_t csum = 0;
     if (ext4_sb_feature_ro_com(sb, EXT4_FRO_COM_METADATA_CSUM)) {
@@ -129,7 +129,7 @@ void ext4_ialloc_set_bitmap_csum(struct ext4_sblock *sb, struct ext4_bgroup *bg,
 }
 
 #if CONFIG_META_CSUM_ENABLE
-static bool
+EXT_SECTION static bool
 ext4_ialloc_verify_bitmap_csum(struct ext4_sblock *sb, struct ext4_bgroup *bg,
                    void *bitmap __ext4_unused)
 {

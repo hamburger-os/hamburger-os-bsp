@@ -110,32 +110,32 @@ struct jbd_journal {
 };
 
 int jbd_get_fs(struct ext4_fs *fs,
-           struct jbd_fs *jbd_fs);
-int jbd_put_fs(struct jbd_fs *jbd_fs);
+           struct jbd_fs *jbd_fs) EXT_SECTION;
+int jbd_put_fs(struct jbd_fs *jbd_fs) EXT_SECTION;
 int jbd_inode_bmap(struct jbd_fs *jbd_fs,
            ext4_lblk_t iblock,
-           ext4_fsblk_t *fblock);
-int jbd_recover(struct jbd_fs *jbd_fs);
+           ext4_fsblk_t *fblock) EXT_SECTION;
+int jbd_recover(struct jbd_fs *jbd_fs) EXT_SECTION;
 int jbd_journal_start(struct jbd_fs *jbd_fs,
-              struct jbd_journal *journal);
-int jbd_journal_stop(struct jbd_journal *journal);
+              struct jbd_journal *journal) EXT_SECTION;
+int jbd_journal_stop(struct jbd_journal *journal) EXT_SECTION;
 struct jbd_trans *
-jbd_journal_new_trans(struct jbd_journal *journal);
+jbd_journal_new_trans(struct jbd_journal *journal) EXT_SECTION;
 int jbd_trans_set_block_dirty(struct jbd_trans *trans,
-                  struct ext4_block *block);
+                  struct ext4_block *block) EXT_SECTION;
 int jbd_trans_revoke_block(struct jbd_trans *trans,
-               ext4_fsblk_t lba);
+               ext4_fsblk_t lba) EXT_SECTION;
 int jbd_trans_try_revoke_block(struct jbd_trans *trans,
-                   ext4_fsblk_t lba);
+                   ext4_fsblk_t lba) EXT_SECTION;
 void jbd_journal_free_trans(struct jbd_journal *journal,
                 struct jbd_trans *trans,
-                bool abort);
+                bool abort) EXT_SECTION;
 int jbd_journal_commit_trans(struct jbd_journal *journal,
-                 struct jbd_trans *trans);
+                 struct jbd_trans *trans) EXT_SECTION;
 void
 jbd_journal_purge_cp_trans(struct jbd_journal *journal,
                bool flush,
-               bool once);
+               bool once) EXT_SECTION;
 
 #ifdef __cplusplus
 }

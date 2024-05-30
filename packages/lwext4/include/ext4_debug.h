@@ -140,15 +140,15 @@ static inline const char *ext4_dmask_id2str(uint32_t m)
 
 /**@brief   Global mask debug set.
  * @brief   m new debug mask.*/
-void ext4_dmask_set(uint32_t m);
+void ext4_dmask_set(uint32_t m) EXT_SECTION;
 
 /**@brief   Global mask debug clear.
  * @brief   m new debug mask.*/
-void ext4_dmask_clr(uint32_t m);
+void ext4_dmask_clr(uint32_t m) EXT_SECTION;
 
 /**@brief   Global debug mask get.
  * @return  debug mask*/
-uint32_t ext4_dmask_get(void);
+uint32_t ext4_dmask_get(void) EXT_SECTION;
 
 #if CONFIG_DEBUG_PRINTF
 #include <stdio.h>

@@ -86,7 +86,7 @@ uint32_t ext4_inodes_in_group_cnt(struct ext4_sblock *s, uint32_t bgid)
 }
 
 #if CONFIG_META_CSUM_ENABLE
-static uint32_t ext4_sb_csum(struct ext4_sblock *s)
+EXT_SECTION static uint32_t ext4_sb_csum(struct ext4_sblock *s)
 {
 
     return ext4_crc32c(EXT4_CRC32_INIT, s,
@@ -96,7 +96,7 @@ static uint32_t ext4_sb_csum(struct ext4_sblock *s)
 #define ext4_sb_csum(...) 0
 #endif
 
-static bool ext4_sb_verify_csum(struct ext4_sblock *s)
+EXT_SECTION static bool ext4_sb_verify_csum(struct ext4_sblock *s)
 {
     if (!ext4_sb_feature_ro_com(s, EXT4_FRO_COM_METADATA_CSUM))
         return true;
@@ -107,7 +107,7 @@ static bool ext4_sb_verify_csum(struct ext4_sblock *s)
     return s->checksum == to_le32(ext4_sb_csum(s));
 }
 
-static void ext4_sb_set_csum(struct ext4_sblock *s)
+EXT_SECTION static void ext4_sb_set_csum(struct ext4_sblock *s)
 {
     if (!ext4_sb_feature_ro_com(s, EXT4_FRO_COM_METADATA_CSUM))
         return;
@@ -163,7 +163,7 @@ bool ext4_sb_check(struct ext4_sblock *s)
     return true;
 }
 
-static inline int is_power_of(uint32_t a, uint32_t b)
+EXT_SECTION static inline int is_power_of(uint32_t a, uint32_t b)
 {
     while (1) {
         if (a < b)
@@ -196,7 +196,7 @@ bool ext4_sb_is_super_in_bg(struct ext4_sblock *s, uint32_t group)
     return true;
 }
 
-static uint32_t ext4_bg_num_gdb_meta(struct ext4_sblock *s, uint32_t group)
+EXT_SECTION static uint32_t ext4_bg_num_gdb_meta(struct ext4_sblock *s, uint32_t group)
 {
     uint32_t dsc_per_block =
         ext4_sb_get_block_size(s) / ext4_sb_get_desc_size(s);
@@ -210,7 +210,7 @@ static uint32_t ext4_bg_num_gdb_meta(struct ext4_sblock *s, uint32_t group)
     return 0;
 }
 
-static uint32_t ext4_bg_num_gdb_nometa(struct ext4_sblock *s, uint32_t group)
+EXT_SECTION static uint32_t ext4_bg_num_gdb_nometa(struct ext4_sblock *s, uint32_t group)
 {
     if (!ext4_sb_is_super_in_bg(s, group))
         return 0;
