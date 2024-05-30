@@ -47,6 +47,9 @@ if GetDepend('BSP_USING_DS1682_EXAMPLE'):
 if GetDepend('BSP_USING_MAX31826_EXAMPLE'):
     src += Glob('max31826_example.c')
     
+if GetDepend('BSP_USING_TPA626_TEST'):
+    src += Glob('tpa626_test.c')
+    
 if GetDepend('BSP_USING_DS28E01_EXAMPLE'):
     src += Glob('ds28e01_example.c')
     
