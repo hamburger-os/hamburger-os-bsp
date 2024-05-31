@@ -327,7 +327,7 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
             rt_pin_write(*cs, PIN_LOW);
     }
 #endif
-    rt_hw_us_delay(4);//TODO：触摸屏驱动需要用这个延时？加上就好了
+//    rt_hw_us_delay(4);//TODO：触摸屏驱动需要用这个延时？加上就好了
 
     LOG_D("%s transfer prepare and start", spi_drv->config->bus_name);
     LOG_D("%s sendbuf: %X, recvbuf: %X, length: %d",

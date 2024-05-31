@@ -997,18 +997,16 @@ int rt_hw_can_init(void)
 #endif /* BSP_USING_CAN2 */
 
 #ifdef BSP_USING_GD32
-    rt_device_t dev = NULL;
-
-#ifdef BSP_USING_CAN2
-    dev = rt_device_find(drv_can2.name);
-    rt_device_open(dev, RT_DEVICE_FLAG_INT_TX | RT_DEVICE_FLAG_INT_RX);
-    rt_device_close(dev);
-#endif
+    CAN_HandleTypeDef hcan;
 
 #ifdef BSP_USING_CAN1
-    dev = rt_device_find(drv_can1.name);
-    rt_device_open(dev, RT_DEVICE_FLAG_INT_TX | RT_DEVICE_FLAG_INT_RX);
-    rt_device_close(dev);
+    hcan.Instance = CAN1;
+    HAL_CAN_MspInit(&hcan);
+#endif
+
+#ifdef BSP_USING_CAN2
+    hcan.Instance = CAN2;
+    HAL_CAN_MspInit(&hcan);
 #endif
 #endif
 
