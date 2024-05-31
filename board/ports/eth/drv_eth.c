@@ -13,7 +13,19 @@
 
 #include "board.h"
 #include "drv_eth.h"
+
+#ifdef PHY_USING_LAN8720A
 #include "lan8720.h"
+#endif
+
+#ifdef SWITCH_USING_JL5104
+#include "jl5104.h"
+#endif
+
+#ifdef PHY_USING_YT8522
+#include "yt8522.h"
+#endif
+
 #include <netif/ethernetif.h>
 #include <lwipopts.h>
 
@@ -78,11 +90,16 @@ static ETH_DMADescTypeDef DMATxDscrTab[ETH_TX_DESC_CNT] ETH_NOCACHE_RAM_SECTION;
 
 #endif
 
+static uint8_t TxBuff[ETH_TX_DESC_CNT][ETH_MAX_PACKET_SIZE] ETH_NOCACHE_RAM_SECTION;
+
 struct rt_stm32_eth stm32_eth_device = {
     .dev_name = "e",
+#ifdef PHY_USING_LAN8720A
     .phy_addr = LAN8720_ADDR,
+#endif
 };
 
+#ifdef BSP_USING_ETH_RST_PIN
 static void phy_reset(void)
 {
     rt_base_t rst_pin = rt_pin_get(ETH_RST_PIN);
@@ -91,6 +108,7 @@ static void phy_reset(void)
     rt_thread_mdelay(100);
     rt_pin_write(rst_pin, PIN_HIGH);
 }
+#endif
 
 static void phy_linkchange(void *parameter);
 
@@ -98,7 +116,9 @@ static void phy_linkchange(void *parameter);
 static rt_err_t rt_stm32_eth_init(rt_device_t dev)
 {
     struct rt_stm32_eth *eth = dev->user_data;
+#ifdef BSP_USING_ETH_RST_PIN
     phy_reset();
+#endif
 
     eth->heth.Instance = ETH;
     eth->heth.Init.MACAddr = &eth->mac[0];
@@ -125,12 +145,23 @@ static rt_err_t rt_stm32_eth_init(rt_device_t dev)
 
     /* Initialize the RX POOL */
     LWIP_MEMPOOL_INIT(RX_POOL);
-
+#ifdef PHY_USING_LAN8720A
     if (LAN8720_Init() != LAN8720_STATUS_OK)
     {
         LOG_E("LAN8720 init failed!");
     }
+#endif
 
+#ifdef PHY_USING_YT8522
+    YT8522_Init();
+#endif
+
+#ifdef SWITCH_USING_JL5104
+    if(JL5104_Init() != JL5104_STATUS_OK)
+    {
+        LOG_E("JL5104 init failed");
+    }
+#endif
     phy_linkchange(eth);
     return RT_EOK;
 }
@@ -302,7 +333,8 @@ rt_err_t rt_stm32_eth_tx(rt_device_t dev, struct pbuf *p)
         if (i >= ETH_TX_DESC_CNT)
             return ERR_IF;
 
-        Txbuffer[i].buffer = q->payload;
+        rt_memcpy(TxBuff[i], q->payload, q->len);
+        Txbuffer[i].buffer = (uint8_t*)TxBuff[i];
         Txbuffer[i].len = q->len;
 
         if (i > 0)
@@ -596,6 +628,7 @@ void HAL_ETH_RxLinkCallback(void **pStart, void **pEnd, uint8_t *buff, uint16_t 
     }
 }
 
+#ifdef PHY_USING_LAN8720A
 static void phy_linkchange(void *parameter)
 {
     struct rt_stm32_eth *eth = parameter;
@@ -653,6 +686,96 @@ static void phy_linkchange(void *parameter)
         eth_device_linkchange(&eth->parent, RT_TRUE);
     }
 }
+#endif
+
+#ifdef PHY_USING_YT8522
+static void phy_linkchange(void *parameter)
+{
+    struct rt_stm32_eth *eth = parameter;
+    ETH_MACConfigTypeDef MACConf;
+    uint32_t PHYLinkState;
+    uint32_t speed = 0, duplex = 0;
+
+    PHYLinkState = YT8522_GetLinkState();    //获取连接状态
+    //如果检测到连接断开或者不正常就关闭网口
+    if ((eth->parent.link_status == RT_TRUE) && (PHYLinkState == DIS_CONNECT))
+    {
+        HAL_ETH_Stop_IT(&eth->heth);
+        LOG_W("link down");
+        eth_device_linkchange(&eth->parent, RT_FALSE);
+    }
+    //LWIP网卡还未打开，但是LAN8720已经协商成功
+    else if ((eth->parent.link_status == RT_FALSE) && (PHYLinkState < DIS_CONNECT))
+    {
+        switch (PHYLinkState)
+        {
+        case YT8522_10M_HALF:    //10M半双工
+            duplex = ETH_HALFDUPLEX_MODE;
+            speed = ETH_SPEED_10M;
+            LOG_I("link up 10Mb/s HalfDuplex");
+            break;
+        case YT8522_10M_FUL:    //10M全双工
+            duplex = ETH_FULLDUPLEX_MODE;
+            speed = ETH_SPEED_10M;
+            LOG_I("link up 10Mb/s FullDuplex");
+            break;
+        case YT8522_100M_HALF:     //100M半双工
+            duplex = ETH_HALFDUPLEX_MODE;
+            speed = ETH_SPEED_100M;
+            LOG_I("link up 100Mb/s HalfDuplex");
+            break;
+        case YT8522_100M_FUL:     //100M全双工
+            duplex = ETH_FULLDUPLEX_MODE;
+            speed = ETH_SPEED_100M;
+            LOG_I("link up 100Mb/s FullDuplex");
+            break;
+        default:
+            LOG_W("link up unknown");
+            break;
+        }
+
+        HAL_ETH_GetMACConfig(&eth->heth, &MACConf);
+        MACConf.DuplexMode = duplex;
+        MACConf.Speed = speed;
+#ifdef SOC_SERIES_STM32H7
+        MACConf.SourceAddrControl = ETH_SRC_ADDR_REPLACE;
+#endif
+        HAL_ETH_SetMACConfig(&eth->heth, &MACConf);  //设置MAC
+
+        HAL_ETH_Start_IT(&eth->heth);
+        eth_device_linkchange(&eth->parent, RT_TRUE);
+    }
+}
+#endif
+
+#if defined(SWITCH_USING_JL5104) | defined(PHY_SWITCH_NO_NEED_CFG)
+static void phy_linkchange(void *parameter)
+{
+    struct rt_stm32_eth *eth = parameter;
+    ETH_MACConfigTypeDef MACConf;
+    uint32_t speed = 0, duplex = 0;
+
+    if (eth->parent.link_status == RT_FALSE)
+    {
+        duplex = ETH_FULLDUPLEX_MODE;
+        speed = ETH_SPEED_100M;
+
+        LOG_I("link up 100Mb/s FullDuplex");
+
+        HAL_ETH_GetMACConfig(&eth->heth, &MACConf);
+        MACConf.DuplexMode = duplex;
+        MACConf.Speed = speed;
+#ifdef SOC_SERIES_STM32H7
+        MACConf.SourceAddrControl = ETH_SRC_ADDR_REPLACE;
+#endif
+        HAL_ETH_SetMACConfig(&eth->heth, &MACConf);  //设置MAC
+
+        HAL_ETH_Start_IT(&eth->heth);
+        eth_device_linkchange(&eth->parent, RT_TRUE);
+    }
+}
+
+#endif
 
 #ifdef PHY_USING_INTERRUPT_MODE
 static void eth_phy_isr(void *args)

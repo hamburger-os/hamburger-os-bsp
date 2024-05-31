@@ -66,6 +66,10 @@ menu "Test functions and examples"
         bool "Enable max31826 example"
         default n
         
+    config BSP_USING_TPA626_TEST
+    	bool "Enable tpa626 test"
+    	default n
+        
     config BSP_USING_DS28E01_EXAMPLE
         bool "Enable ds28e01 example"
         default n
