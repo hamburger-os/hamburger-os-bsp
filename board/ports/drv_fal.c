@@ -28,7 +28,11 @@ struct fal_mtd_nor_device
     struct fal_flash64_dev         *fal_dev;
 };
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static rt_ssize_t mtd_nor_dev_read(struct rt_mtd_nor_device* device, rt_off_t offset, rt_uint8_t* data, rt_size_t length)
+#else
 static rt_size_t mtd_nor_dev_read(struct rt_mtd_nor_device* device, rt_off_t offset, rt_uint8_t* data, rt_uint32_t length)
+#endif
 {
     int ret = 0;
     struct fal_mtd_nor_device *dev = (struct fal_mtd_nor_device*) device;
@@ -54,7 +58,11 @@ static rt_size_t mtd_nor_dev_read(struct rt_mtd_nor_device* device, rt_off_t off
     return ret;
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static rt_ssize_t mtd_nor_dev_write(struct rt_mtd_nor_device* device, rt_off_t offset, const rt_uint8_t* data, rt_size_t length)
+#else
 static rt_size_t mtd_nor_dev_write(struct rt_mtd_nor_device* device, rt_off_t offset, const rt_uint8_t* data, rt_uint32_t length)
+#endif
 {
     int ret = 0;
     struct fal_mtd_nor_device *dev = (struct fal_mtd_nor_device*) device;
@@ -80,7 +88,11 @@ static rt_size_t mtd_nor_dev_write(struct rt_mtd_nor_device* device, rt_off_t of
     return ret;
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static rt_err_t mtd_nor_dev_erase(struct rt_mtd_nor_device* device, rt_off_t offset, rt_size_t length)
+#else
 static rt_err_t mtd_nor_dev_erase(struct rt_mtd_nor_device* device, rt_off_t offset, rt_uint32_t length)
+#endif
 {
     int ret = 0;
     struct fal_mtd_nor_device *dev = (struct fal_mtd_nor_device*) device;
@@ -178,10 +190,10 @@ static rt_err_t blk_dev_control(rt_device_t dev, rt_uint8_t cmd, void *args)
         }
 
         rt_memcpy(geometry, &fal_dev->geometry, sizeof(struct rt_device_blk_geometry));
-        LOG_I("geometry '%s': len %d MB, block %d"
-                    , fal_dev->fal_dev->name
-                    , geometry->sector_count / 1024 * geometry->block_size / 1024
-                    , geometry->block_size);
+//        LOG_D("geometry '%s': len %u MB, block %u"
+//                    , fal_dev->fal_dev->name
+//                    , (uint32_t)(geometry->sector_count / 1024 * geometry->block_size / 1024)
+//                    , geometry->block_size);
     }
     else if (cmd == RT_DEVICE_CTRL_BLK_ERASE)
     {
@@ -210,7 +222,11 @@ static rt_err_t blk_dev_control(rt_device_t dev, rt_uint8_t cmd, void *args)
     return RT_EOK;
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static rt_ssize_t blk_dev_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t size)
+#else
 static rt_size_t blk_dev_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t size)
+#endif
 {
     int ret = 0;
     struct fal_blk_device *fal_dev = (struct fal_blk_device*) dev;
@@ -236,7 +252,11 @@ static rt_size_t blk_dev_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_si
     return ret;
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static rt_ssize_t blk_dev_write(rt_device_t dev, rt_off_t pos, const void *buffer, rt_size_t size)
+#else
 static rt_size_t blk_dev_write(rt_device_t dev, rt_off_t pos, const void *buffer, rt_size_t size)
+#endif
 {
     int ret = 0;
     struct fal_blk_device *fal_dev = (struct fal_blk_device*) dev;
@@ -307,3 +327,93 @@ struct rt_device *fal_dev_blk_device_create(struct fal_flash64_dev *fal_dev)
 
     return RT_DEVICE(blk_dev);
 }
+
+/** \brief startup drv_fal device R/W test(multi thread).
+ * \return void
+ *
+ */
+static rt_device_t device = NULL;
+static void drv_fal_test(int argc, char *argv[])
+{
+    rt_err_t r;
+    rt_size_t result;
+    uint8_t buf[512];
+
+    if (argc > 1)
+    {
+        if (argc == 3 && rt_strcmp(argv[1], "--open") == 0)
+        {
+            device = rt_device_find(argv[2]);
+            if (device == NULL)
+            {
+                LOG_E("find '%s' failed!", argv[2]);
+                return;
+            }
+
+            r = rt_device_open(device, RT_DEVICE_OFLAG_RDWR);
+            if (r != RT_EOK)
+            {
+                LOG_E("open failed %d!", r);
+                return;
+            }
+        }
+        else if (argc == 4 && rt_strcmp(argv[1], "--write") == 0)
+        {
+            int blk_id = strtoul(argv[2], NULL, 10);
+            rt_memcpy(buf, argv[3], rt_strlen(argv[3]));
+            result = rt_device_write(device, blk_id, buf, 1);
+            if (result == 1)
+            {
+                LOG_HEX("wr", 16, buf, sizeof(buf));
+            }
+            else
+            {
+                LOG_E("write failed %d!", rt_get_errno());
+                return;
+            }
+        }
+        else if (argc == 3 && rt_strcmp(argv[1], "--read") == 0)
+        {
+            int blk_id = strtoul(argv[2], NULL, 10);
+//            int blk_cnt = strtoul(argv[3], NULL, 10);
+            result = rt_device_read(device, blk_id, buf, 1);
+            if (result == 1)
+            {
+                LOG_HEX("rd", 16, buf, sizeof(buf));
+            }
+            else
+            {
+                LOG_E("read failed %d!", rt_get_errno());
+                return;
+            }
+        }
+        else if (rt_strcmp(argv[1], "--close") == 0)
+        {
+            r = rt_device_close(device);
+            device = NULL;
+            if (r != RT_EOK)
+            {
+                LOG_E("close failed %d!", r);
+                return;
+            }
+        }
+        else
+        {
+            goto help;
+        }
+    }
+    else
+    {
+help:
+        rt_kprintf("Usage: drv_fal [cmd]\n");
+        rt_kprintf("       drv_fal --open [dev_name]\n");
+        rt_kprintf("       drv_fal --write [addr] [data]\n");
+        rt_kprintf("       drv_fal --read [addr]\n");
+        rt_kprintf("       drv_fal --close\n");
+    }
+}
+
+#ifdef RT_USING_FINSH
+#include <finsh.h>
+MSH_CMD_EXPORT_ALIAS(drv_fal_test, drv_fal, drv_fal device R/W test.);
+#endif

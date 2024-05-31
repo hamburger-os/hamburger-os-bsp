@@ -26,7 +26,7 @@ static rt_thread_t fsrw_thread = RT_NULL;
 #define fsrw_fn                   "/test.dat"
 struct testDef
 {
-    char path[128];
+    char path[RT_DFS_ELM_MAX_LFN];
     uint32_t len;
     uint32_t count;
 };
@@ -184,7 +184,7 @@ static void fsrw_test(int argc, char *argv[])
             rt_strcpy(test_def.path, argv[1]);
             test_def.len = strtoul(argv[2], NULL, 10);
             test_def.count = strtoul(argv[3], NULL, 10);
-            fsrw_thread = rt_thread_create("fsrw", fsrw_thread_entry, &test_def, 2 * 1024,
+            fsrw_thread = rt_thread_create("fsrw", fsrw_thread_entry, &test_def, 3 * 1024,
                                             RT_THREAD_PRIORITY_MAX - 2, 10);
             if (fsrw_thread != RT_NULL)
             {

@@ -45,18 +45,44 @@ void OTG_FS_IRQHandler(void)
 }
 #endif
 
+#ifdef BSP_USING_USBH_STM32_HS
+/**
+  * @brief This function handles USB On The Go HS End Point 1 Out global interrupt.
+  */
+void OTG_HS_EP1_OUT_IRQHandler(void)
+{
+    /* enter interrupt */
+    rt_interrupt_enter();
+
+    HAL_HCD_IRQHandler(&hhcd_USB_OTG);
+    /* leave interrupt */
+    rt_interrupt_leave();
+}
+
+/**
+  * @brief This function handles USB On The Go HS End Point 1 In global interrupt.
+  */
+void OTG_HS_EP1_IN_IRQHandler(void)
+{
+    /* enter interrupt */
+    rt_interrupt_enter();
+
+    HAL_HCD_IRQHandler(&hhcd_USB_OTG);
+    /* leave interrupt */
+    rt_interrupt_leave();
+}
+
 /**
   * @brief This function handles USB On The Go HS global interrupt.
   */
-#ifdef BSP_USING_USBH_STM32_HS
 void OTG_HS_IRQHandler(void)
 {
-  /* enter interrupt */
-  rt_interrupt_enter();
+    /* enter interrupt */
+    rt_interrupt_enter();
 
-  HAL_HCD_IRQHandler(&hhcd_USB_OTG);
-  /* leave interrupt */
-  rt_interrupt_leave();
+    HAL_HCD_IRQHandler(&hhcd_USB_OTG);
+    /* leave interrupt */
+    rt_interrupt_leave();
 }
 #endif
 
@@ -145,6 +171,14 @@ USBH_StatusTypeDef USBH_LL_Init(USBH_HandleTypeDef *phost)
     rt_pin_write(usb_pwr, PIN_LOW);
 #endif
 
+#ifdef USBH_STM32_USING_RST
+    rt_base_t usb_rst = rt_pin_get(USBH_STM32_RST_PIN);
+    rt_pin_mode(usb_rst, PIN_MODE_OUTPUT);
+    rt_pin_write(usb_rst, PIN_HIGH);
+    rt_thread_delay(100);
+    rt_pin_write(usb_rst, PIN_LOW);
+#endif
+
   /* Init USB_IP */
   if (phost->id == HOST_FS)
   {
@@ -195,6 +229,14 @@ USBH_StatusTypeDef USBH_LL_Init(USBH_HandleTypeDef *phost)
     hhcd_USB_OTG.Init.low_power_enable = DISABLE;
     hhcd_USB_OTG.Init.vbus_sensing_enable = DISABLE;
     hhcd_USB_OTG.Init.use_external_vbus = DISABLE;
+
+    HAL_NVIC_SetPriority(OTG_HS_EP1_OUT_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(OTG_HS_EP1_OUT_IRQn);
+    HAL_NVIC_SetPriority(OTG_HS_EP1_IN_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(OTG_HS_EP1_IN_IRQn);
+    HAL_NVIC_SetPriority(OTG_HS_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
+
     if (HAL_HCD_Init(&hhcd_USB_OTG) != HAL_OK)
     {
         Error_Handler();
@@ -212,18 +254,23 @@ USBH_StatusTypeDef USBH_LL_Init(USBH_HandleTypeDef *phost)
     hhcd_USB_OTG.Init.Host_channels = 16;
     hhcd_USB_OTG.Init.dma_enable = DISABLE;
     hhcd_USB_OTG.Init.low_power_enable = DISABLE;
+    hhcd_USB_OTG.Init.Sof_enable = DISABLE;
+    hhcd_USB_OTG.Init.use_external_vbus = DISABLE;
 
 #ifndef USBH_STM32_USING_EXTERNAL_PHY
     hhcd_USB_OTG.Init.speed = HCD_SPEED_FULL;
     hhcd_USB_OTG.Init.phy_itface = USB_OTG_EMBEDDED_PHY;
-    hhcd_USB_OTG.Init.Sof_enable = ENABLE;
-    hhcd_USB_OTG.Init.use_external_vbus = DISABLE;
 #else
     hhcd_USB_OTG.Init.speed = HCD_SPEED_HIGH;
     hhcd_USB_OTG.Init.phy_itface = USB_OTG_ULPI_PHY;
-    hhcd_USB_OTG.Init.Sof_enable = DISABLE;
-    hhcd_USB_OTG.Init.use_external_vbus = ENABLE;
 #endif /* USBH_STM32_USING_EXTERNAL_PHY */
+
+    HAL_NVIC_SetPriority(OTG_HS_EP1_OUT_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(OTG_HS_EP1_OUT_IRQn);
+    HAL_NVIC_SetPriority(OTG_HS_EP1_IN_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(OTG_HS_EP1_IN_IRQn);
+    HAL_NVIC_SetPriority(OTG_HS_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
 
     if (HAL_HCD_Init(&hhcd_USB_OTG) != HAL_OK)
     {

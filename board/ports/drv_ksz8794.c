@@ -13,6 +13,7 @@
 #ifdef BSP_USING_KSZ8794
 
 #include "drv_spi.h"
+#include "drv_soft_spi.h"
 
 #define DBG_TAG "ksz8794"
 #define DBG_LVL DBG_INFO

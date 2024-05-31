@@ -113,7 +113,7 @@
  * need to check this value, so in our version this function doesn't return any
  * value.
  */
-static void ext2_half_md4(uint32_t hash[4], uint32_t data[8])
+EXT_SECTION static void ext2_half_md4(uint32_t hash[4], uint32_t data[8])
 {
     uint32_t a = hash[0], b = hash[1], c = hash[2], d = hash[3];
 
@@ -156,7 +156,7 @@ static void ext2_half_md4(uint32_t hash[4], uint32_t data[8])
 /*
  * Tiny Encryption Algorithm.
  */
-static void ext2_tea(uint32_t hash[4], uint32_t data[8])
+EXT_SECTION static void ext2_tea(uint32_t hash[4], uint32_t data[8])
 {
     uint32_t tea_delta = 0x9E3779B9;
     uint32_t sum;
@@ -175,7 +175,7 @@ static void ext2_tea(uint32_t hash[4], uint32_t data[8])
     hash[1] += y;
 }
 
-static uint32_t ext2_legacy_hash(const char *name, int len, int unsigned_char)
+EXT_SECTION static uint32_t ext2_legacy_hash(const char *name, int len, int unsigned_char)
 {
     uint32_t h0, h1 = 0x12A3FE2D, h2 = 0x37ABE8F9;
     uint32_t multi = 0x6D22F5;
@@ -199,7 +199,7 @@ static uint32_t ext2_legacy_hash(const char *name, int len, int unsigned_char)
     return (h1 << 1);
 }
 
-static void ext2_prep_hashbuf(const char *src, uint32_t slen, uint32_t *dst,
+EXT_SECTION static void ext2_prep_hashbuf(const char *src, uint32_t slen, uint32_t *dst,
                   int dlen, int unsigned_char)
 {
     uint32_t padding = slen | (slen << 8) | (slen << 16) | (slen << 24);

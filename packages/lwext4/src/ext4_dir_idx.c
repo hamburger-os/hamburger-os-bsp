@@ -201,7 +201,7 @@ struct ext4_dx_sort_entry {
     void *dentry;
 };
 
-static int ext4_dir_dx_hash_string(struct ext4_hash_info *hinfo, int len,
+EXT_SECTION static int ext4_dir_dx_hash_string(struct ext4_hash_info *hinfo, int len,
                    const char *name)
 {
     return ext2_htree_hash(name, len, hinfo->seed, hinfo->hash_version,
@@ -209,7 +209,7 @@ static int ext4_dir_dx_hash_string(struct ext4_hash_info *hinfo, int len,
 }
 
 #if CONFIG_META_CSUM_ENABLE
-static uint32_t ext4_dir_dx_checksum(struct ext4_inode_ref *inode_ref, void *de,
+EXT_SECTION static uint32_t ext4_dir_dx_checksum(struct ext4_inode_ref *inode_ref, void *de,
                      int count_offset, int count,
                      struct ext4_dir_idx_tail *t)
 {
@@ -241,7 +241,7 @@ static uint32_t ext4_dir_dx_checksum(struct ext4_inode_ref *inode_ref, void *de,
     return csum;
 }
 
-static struct ext4_dir_idx_climit *
+EXT_SECTION static struct ext4_dir_idx_climit *
 ext4_dir_dx_get_climit(struct ext4_inode_ref *inode_ref,
                struct ext4_dir_en *dirent, int *offset)
 {
@@ -278,7 +278,7 @@ ext4_dir_dx_get_climit(struct ext4_inode_ref *inode_ref,
  * BIG FAT NOTES:
  *       Currently we do not verify the checksum of HTree node.
  */
-static bool ext4_dir_dx_csum_verify(struct ext4_inode_ref *inode_ref,
+EXT_SECTION static bool ext4_dir_dx_csum_verify(struct ext4_inode_ref *inode_ref,
                     struct ext4_dir_en *de)
 {
     struct ext4_sblock *sb = &inode_ref->fs->sb;
@@ -311,7 +311,7 @@ static bool ext4_dir_dx_csum_verify(struct ext4_inode_ref *inode_ref,
 }
 
 
-static void ext4_dir_set_dx_csum(struct ext4_inode_ref *inode_ref,
+EXT_SECTION static void ext4_dir_set_dx_csum(struct ext4_inode_ref *inode_ref,
                  struct ext4_dir_en *dirent)
 {
     int coff, limit, count;
@@ -471,7 +471,7 @@ int ext4_dir_dx_init(struct ext4_inode_ref *dir, struct ext4_inode_ref *parent)
  * @param name       Name to be computed hash value from
  * @return Standard error code
  */
-static int ext4_dir_hinfo_init(struct ext4_hash_info *hinfo,
+EXT_SECTION static int ext4_dir_hinfo_init(struct ext4_hash_info *hinfo,
                    struct ext4_block *root_block,
                    struct ext4_sblock *sb, size_t name_len,
                    const char *name)
@@ -532,7 +532,7 @@ static int ext4_dir_hinfo_init(struct ext4_hash_info *hinfo,
  * @param dx_blocks  Array with the whole path from root to leaf
  * @return Standard error code
  */
-static int ext4_dir_dx_get_leaf(struct ext4_hash_info *hinfo,
+EXT_SECTION static int ext4_dir_dx_get_leaf(struct ext4_hash_info *hinfo,
                 struct ext4_inode_ref *inode_ref,
                 struct ext4_block *root_block,
                 struct ext4_dir_idx_block **dx_block,
@@ -642,7 +642,7 @@ static int ext4_dir_dx_get_leaf(struct ext4_hash_info *hinfo,
  * @param dx_blocks Array with path from root to leaf node
  * @return Standard Error code
  */
-static int ext4_dir_dx_next_block(struct ext4_inode_ref *inode_ref,
+EXT_SECTION static int ext4_dir_dx_next_block(struct ext4_inode_ref *inode_ref,
                   uint32_t hash,
                   struct ext4_dir_idx_block *dx_block,
                   struct ext4_dir_idx_block *dx_blocks)
@@ -839,7 +839,7 @@ cleanup:
  * @return Classic compare result
  *         (0: equal, -1: arg1 < arg2, 1: arg1 > arg2)
  */
-static int ext4_dir_dx_entry_comparator(const void *arg1, const void *arg2)
+EXT_SECTION static int ext4_dir_dx_entry_comparator(const void *arg1, const void *arg2)
 {
     struct ext4_dx_sort_entry *entry1 = (void *)arg1;
     struct ext4_dx_sort_entry *entry2 = (void *)arg2;
@@ -861,7 +861,7 @@ static int ext4_dir_dx_entry_comparator(const void *arg1, const void *arg2)
  * @param iblock      Logical number of child block
  *
  */
-static void
+EXT_SECTION static void
 ext4_dir_dx_insert_entry(struct ext4_inode_ref *inode_ref __ext4_unused,
              struct ext4_dir_idx_block *index_block,
              uint32_t hash, uint32_t iblock)
@@ -891,7 +891,7 @@ ext4_dir_dx_insert_entry(struct ext4_inode_ref *inode_ref __ext4_unused,
  * @param index_block    Block where index entries are located
  * @param new_data_block Output value for newly allocated data block
  */
-static int ext4_dir_dx_split_data(struct ext4_inode_ref *inode_ref,
+EXT_SECTION static int ext4_dir_dx_split_data(struct ext4_inode_ref *inode_ref,
                   struct ext4_hash_info *hinfo,
                   struct ext4_block *old_data_block,
                   struct ext4_dir_idx_block *index_block,
@@ -1072,7 +1072,7 @@ static int ext4_dir_dx_split_data(struct ext4_inode_ref *inode_ref,
  * @param dx_block  Leaf block to be split if needed
  * @return Error code
  */
-static int
+EXT_SECTION static int
 ext4_dir_dx_split_index(struct ext4_inode_ref *ino_ref,
             struct ext4_dir_idx_block *dx_blks,
             struct ext4_dir_idx_block *dxb,

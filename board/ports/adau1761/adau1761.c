@@ -50,14 +50,14 @@ static void adau1761_read_reg(uint16_t reg, uint8_t *data, uint16_t len_u16)
     rt_i2c_master_recv(i2c_bus, ADAU1761_I2C_ADD, RT_I2C_RD, data, len_u16);
 }
 
-static void adau1761_show()
+void adau1761_show()
 {
     uint8_t data[0xFA + 1];
     uint8_t pll_len = sizeof(R0_0x4000_Clock_control) + sizeof(R1_0x4002_PLL_control) + 1;
 
     adau1761_read_reg(0x4000, data, pll_len);
     adau1761_read_reg(0x4008, data + pll_len, sizeof(data) - pll_len);
-    LOG_HEX("reg hex  ", 16, data, sizeof(data));
+    LOG_HEX(DBG_TAG, 16, data, sizeof(data));
 }
 
 static void adau1761_program(uint16_t addr, uint8_t *data, uint16_t len_u16)
@@ -103,19 +103,35 @@ void adau1761_set_volume(uint8_t volume)
     uint8_t mute = (vol > 0)?(1):(0);
     LOG_D("volume: %d %d -> %d", mute, volume, vol);
 
-    R31_0x4025_Line_output_left_vol r31 = {
-        .LOMODE = 0,
-        .LOUTM = mute,
-        .LOUTVOL = vol,
-    };
+    R29_0x4023_Play_HP_left_vol r29;
+    adau1761_read_reg(ADDR_R29_0x4023_Play_HP_left_vol, (uint8_t *)&r29, sizeof(R29_0x4023_Play_HP_left_vol));
+    r29.HPEN = 1;
+    r29.LHPVOL = vol;
+    adau1761_program(ADDR_R29_0x4023_Play_HP_left_vol, (uint8_t *)&r29, sizeof(R29_0x4023_Play_HP_left_vol));
+
+    R30_0x4024_Play_HP_right_vol r30;
+    adau1761_read_reg(ADDR_R30_0x4024_Play_HP_right_vol, (uint8_t *)&r30, sizeof(R30_0x4024_Play_HP_right_vol));
+    r30.HPMODE = 1;
+    r30.RHPVOL = vol;
+    adau1761_program(ADDR_R30_0x4024_Play_HP_right_vol, (uint8_t *)&r30, sizeof(R30_0x4024_Play_HP_right_vol));
+
+    R31_0x4025_Line_output_left_vol r31;
+    adau1761_read_reg(ADDR_R31_0x4025_Line_output_left_vol, (uint8_t *)&r31, sizeof(R31_0x4025_Line_output_left_vol));
+    r31.LOMODE = 0;
+    r31.LOUTVOL = vol;
     adau1761_program(ADDR_R31_0x4025_Line_output_left_vol, (uint8_t *)&r31, sizeof(R31_0x4025_Line_output_left_vol));
 
-    R32_0x4026_Line_output_right_vol r32 = {
-        .ROMODE = 0,
-        .ROUTM = mute,
-        .ROUTVOL = vol,
-    };
+    R32_0x4026_Line_output_right_vol r32;
+    adau1761_read_reg(ADDR_R32_0x4026_Line_output_right_vol, (uint8_t *)&r32, sizeof(R32_0x4026_Line_output_right_vol));
+    r32.ROMODE = 0;
+    r32.ROUTVOL = vol;
     adau1761_program(ADDR_R32_0x4026_Line_output_right_vol, (uint8_t *)&r32, sizeof(R32_0x4026_Line_output_right_vol));
+
+    R33_0x4027_Play_mono_output r33;
+    adau1761_read_reg(ADDR_R33_0x4027_Play_mono_output, (uint8_t *)&r33, sizeof(R33_0x4027_Play_mono_output));
+    r33.MOMODE = 1;
+    r33.MONOVOL = vol;
+    adau1761_program(ADDR_R33_0x4027_Play_mono_output, (uint8_t *)&r33, sizeof(R33_0x4027_Play_mono_output));
 }
 
 /*
@@ -191,6 +207,31 @@ rt_err_t adau1761_player_start()
     rt_pin_write(amp_pin, PIN_HIGH);
 #endif
 
+    R29_0x4023_Play_HP_left_vol r29;
+    adau1761_read_reg(ADDR_R29_0x4023_Play_HP_left_vol, (uint8_t *)&r29, sizeof(R29_0x4023_Play_HP_left_vol));
+    r29.LHPM = 1;
+    adau1761_program(ADDR_R29_0x4023_Play_HP_left_vol, (uint8_t *)&r29, sizeof(R29_0x4023_Play_HP_left_vol));
+
+    R30_0x4024_Play_HP_right_vol r30;
+    adau1761_read_reg(ADDR_R30_0x4024_Play_HP_right_vol, (uint8_t *)&r30, sizeof(R30_0x4024_Play_HP_right_vol));
+    r30.RHPM = 1;
+    adau1761_program(ADDR_R30_0x4024_Play_HP_right_vol, (uint8_t *)&r30, sizeof(R30_0x4024_Play_HP_right_vol));
+
+    R31_0x4025_Line_output_left_vol r31;
+    adau1761_read_reg(ADDR_R31_0x4025_Line_output_left_vol, (uint8_t *)&r31, sizeof(R31_0x4025_Line_output_left_vol));
+    r31.LOUTM = 1;
+    adau1761_program(ADDR_R31_0x4025_Line_output_left_vol, (uint8_t *)&r31, sizeof(R31_0x4025_Line_output_left_vol));
+
+    R32_0x4026_Line_output_right_vol r32;
+    adau1761_read_reg(ADDR_R32_0x4026_Line_output_right_vol, (uint8_t *)&r32, sizeof(R32_0x4026_Line_output_right_vol));
+    r32.ROUTM = 1;
+    adau1761_program(ADDR_R32_0x4026_Line_output_right_vol, (uint8_t *)&r32, sizeof(R32_0x4026_Line_output_right_vol));
+
+    R33_0x4027_Play_mono_output r33;
+    adau1761_read_reg(ADDR_R33_0x4027_Play_mono_output, (uint8_t *)&r33, sizeof(R33_0x4027_Play_mono_output));
+    r33.MONOM = 1;
+    adau1761_program(ADDR_R33_0x4027_Play_mono_output, (uint8_t *)&r33, sizeof(R33_0x4027_Play_mono_output));
+
     return 0;
 }
 
@@ -200,6 +241,31 @@ rt_err_t adau1761_player_stop()
     rt_base_t amp_pin = rt_pin_get(ADAU1761_AMP_PIN);
     rt_pin_write(amp_pin, PIN_LOW);
 #endif
+
+    R29_0x4023_Play_HP_left_vol r29;
+    adau1761_read_reg(ADDR_R29_0x4023_Play_HP_left_vol, (uint8_t *)&r29, sizeof(R29_0x4023_Play_HP_left_vol));
+    r29.LHPM = 0;
+    adau1761_program(ADDR_R29_0x4023_Play_HP_left_vol, (uint8_t *)&r29, sizeof(R29_0x4023_Play_HP_left_vol));
+
+    R30_0x4024_Play_HP_right_vol r30;
+    adau1761_read_reg(ADDR_R30_0x4024_Play_HP_right_vol, (uint8_t *)&r30, sizeof(R30_0x4024_Play_HP_right_vol));
+    r30.RHPM = 0;
+    adau1761_program(ADDR_R30_0x4024_Play_HP_right_vol, (uint8_t *)&r30, sizeof(R30_0x4024_Play_HP_right_vol));
+
+    R31_0x4025_Line_output_left_vol r31;
+    adau1761_read_reg(ADDR_R31_0x4025_Line_output_left_vol, (uint8_t *)&r31, sizeof(R31_0x4025_Line_output_left_vol));
+    r31.LOUTM = 0;
+    adau1761_program(ADDR_R31_0x4025_Line_output_left_vol, (uint8_t *)&r31, sizeof(R31_0x4025_Line_output_left_vol));
+
+    R32_0x4026_Line_output_right_vol r32;
+    adau1761_read_reg(ADDR_R32_0x4026_Line_output_right_vol, (uint8_t *)&r32, sizeof(R32_0x4026_Line_output_right_vol));
+    r32.ROUTM = 0;
+    adau1761_program(ADDR_R32_0x4026_Line_output_right_vol, (uint8_t *)&r32, sizeof(R32_0x4026_Line_output_right_vol));
+
+    R33_0x4027_Play_mono_output r33;
+    adau1761_read_reg(ADDR_R33_0x4027_Play_mono_output, (uint8_t *)&r33, sizeof(R33_0x4027_Play_mono_output));
+    r33.MONOM = 0;
+    adau1761_program(ADDR_R33_0x4027_Play_mono_output, (uint8_t *)&r33, sizeof(R33_0x4027_Play_mono_output));
 
     return 0;
 }
@@ -484,43 +550,43 @@ rt_err_t adau1761_init(struct rt_i2c_bus_device *dev)
     adau1761_program(ADDR_R27_0x4021_Play_L_R_mixer_right, (uint8_t *)&r27, sizeof(R27_0x4021_Play_L_R_mixer_right));
 
     R28_0x4022_Play_L_R_mixer_mono r28 = {
-        .MX7EN = 0,
-        .MX7 = 0b01,
+        .MX7EN = 1,
+        .MX7 = 0b00,
     };
     adau1761_program(ADDR_R28_0x4022_Play_L_R_mixer_mono, (uint8_t *)&r28, sizeof(R28_0x4022_Play_L_R_mixer_mono));
 
     R29_0x4023_Play_HP_left_vol r29 = {
         .HPEN = 1,
-        .LHPM = 1,
-        .LHPVOL = 0b111111,
+        .LHPM = 0,
+        .LHPVOL = 0b011111,
     };
     adau1761_program(ADDR_R29_0x4023_Play_HP_left_vol, (uint8_t *)&r29, sizeof(R29_0x4023_Play_HP_left_vol));
 
     R30_0x4024_Play_HP_right_vol r30 = {
         .HPMODE = 1,
-        .RHPM = 1,
-        .RHPVOL = 0b111111,
+        .RHPM = 0,
+        .RHPVOL = 0b011111,
     };
     adau1761_program(ADDR_R30_0x4024_Play_HP_right_vol, (uint8_t *)&r30, sizeof(R30_0x4024_Play_HP_right_vol));
 
     R31_0x4025_Line_output_left_vol r31 = {
         .LOMODE = 0,
-        .LOUTM = 1,
+        .LOUTM = 0,
         .LOUTVOL = 0b011111,
     };
     adau1761_program(ADDR_R31_0x4025_Line_output_left_vol, (uint8_t *)&r31, sizeof(R31_0x4025_Line_output_left_vol));
 
     R32_0x4026_Line_output_right_vol r32 = {
         .ROMODE = 0,
-        .ROUTM = 1,
+        .ROUTM = 0,
         .ROUTVOL = 0b011111,
     };
     adau1761_program(ADDR_R32_0x4026_Line_output_right_vol, (uint8_t *)&r32, sizeof(R32_0x4026_Line_output_right_vol));
 
     R33_0x4027_Play_mono_output r33 = {
-        .MOMODE = 0,
+        .MOMODE = 1,
         .MONOM = 0,
-        .MONOVOL = 0b111111,
+        .MONOVOL = 0b011111,
     };
     adau1761_program(ADDR_R33_0x4027_Play_mono_output, (uint8_t *)&r33, sizeof(R33_0x4027_Play_mono_output));
 

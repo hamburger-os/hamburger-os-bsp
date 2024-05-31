@@ -156,16 +156,16 @@ static int ota_fw_info_show(fw_info_t *fw_info)
         break;
     }
 
-    rt_kprintf("| Product code          | %*.s |\n", 20, fw_info->prod_code);
-    rt_kprintf("| Algorithm mode        | %*.s |\n", 20, str);
-    rt_kprintf("| Destition partition   | %*.s |\n", 20, fw_info->part_name);
-    rt_kprintf("| Version               | %*.s |\n", 20, fw_info->fw_ver);
-    rt_kprintf("| Package size          | %20d |\n", fw_info->pkg_size);
-    rt_kprintf("| Raw code size         | %20d |\n", fw_info->raw_size);
-    rt_kprintf("| Package crc           | %20X |\n", fw_info->pkg_crc);
-    rt_kprintf("| Raw code verify       | %20X |\n", fw_info->raw_crc);
-    rt_kprintf("| Header crc            | %20X |\n", fw_info->hdr_crc);
-    rt_kprintf("| Build timestamp       | %20d |\n", fw_info->time_stamp);
+    LOG_D("| Product code          | %*.s |", 20, fw_info->prod_code);
+    LOG_D("| Algorithm mode        | %*.s |", 20, str);
+    LOG_D("| Destition partition   | %*.s |", 20, fw_info->part_name);
+    LOG_D("| Version               | %*.s |", 20, fw_info->fw_ver);
+    LOG_D("| Package size          | %20d |", fw_info->pkg_size);
+    LOG_D("| Raw code size         | %20d |", fw_info->raw_size);
+    LOG_D("| Package crc           | %20X |", fw_info->pkg_crc);
+    LOG_D("| Raw code verify       | %20X |", fw_info->raw_crc);
+    LOG_D("| Header crc            | %20X |", fw_info->hdr_crc);
+    LOG_D("| Build timestamp       | %20d |", fw_info->time_stamp);
 
     return (1);
 }
@@ -216,13 +216,13 @@ static int ota_fd_fw_check(int fd, fw_info_t *fw_info)
         LOG_E("firmware check fail. firmware infomation check fail.");
         return(0);
     }
-    ota_fw_info_show(fw_info);
 
     if ( ! ota_fd_fw_crc_check(fd, sizeof(fw_info_t), fw_info->pkg_size, fw_info->pkg_crc))
     {
         LOG_E("firmware check fail. firmware body check fail.");
         return(0);
     }
+    ota_fw_info_show(fw_info);
 
     LOG_D("firmware check success.");
 
@@ -276,7 +276,7 @@ static int ota_on_begin(struct ota_from_file_ops *ops, uint8_t mode)
 
     /* check firmware */
     fw_info_t fw_info;
-    if ( ! ota_fd_fw_check(ops->fd, &fw_info))
+    if ((ops->update_file_total_size <= sizeof(fw_info_t)) && ! ota_fd_fw_check(ops->fd, &fw_info))
     {
         ops->updatesta = FileNotCheck;
         return -RT_ERROR;
@@ -535,7 +535,11 @@ static int ota_from_file_init(void)
 }
 INIT_SERVICE_EXPORT(ota_from_file_init);
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+rt_weak void ota_from_file_handle(OtaHandleTypeDef type)
+#else
 RT_WEAK void ota_from_file_handle(OtaHandleTypeDef type)
+#endif
 {
     switch(type)
     {

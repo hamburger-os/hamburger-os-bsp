@@ -118,7 +118,7 @@ struct ext4_xattr_entry {
 #define NAME_HASH_SHIFT 5
 #define VALUE_HASH_SHIFT 16
 
-static inline void ext4_xattr_compute_hash(struct ext4_xattr_header *header,
+EXT_SECTION static inline void ext4_xattr_compute_hash(struct ext4_xattr_header *header,
                        struct ext4_xattr_entry *entry)
 {
     uint32_t hash = 0;
@@ -151,7 +151,7 @@ static inline void ext4_xattr_compute_hash(struct ext4_xattr_header *header,
  *
  * Re-compute the extended attribute hash value after an entry has changed.
  */
-static void ext4_xattr_rehash(struct ext4_xattr_header *header,
+EXT_SECTION static void ext4_xattr_rehash(struct ext4_xattr_header *header,
                   struct ext4_xattr_entry *entry)
 {
     struct ext4_xattr_entry *here;
@@ -174,7 +174,7 @@ static void ext4_xattr_rehash(struct ext4_xattr_header *header,
 }
 
 #if CONFIG_META_CSUM_ENABLE
-static uint32_t ext4_xattr_block_checksum(struct ext4_inode_ref *inode_ref,
+EXT_SECTION static uint32_t ext4_xattr_block_checksum(struct ext4_inode_ref *inode_ref,
                       ext4_fsblk_t blocknr,
                       struct ext4_xattr_header *header)
 {
@@ -206,7 +206,7 @@ static uint32_t ext4_xattr_block_checksum(struct ext4_inode_ref *inode_ref,
 #define ext4_xattr_block_checksum(...) 0
 #endif
 
-static void ext4_xattr_set_block_checksum(struct ext4_inode_ref *inode_ref,
+EXT_SECTION static void ext4_xattr_set_block_checksum(struct ext4_inode_ref *inode_ref,
                       ext4_fsblk_t blocknr __ext4_unused,
                       struct ext4_xattr_header *header)
 {
@@ -308,7 +308,7 @@ static const char ext4_xattr_empty_value;
  *
  * @return Return EOK when finished, ENOSPC when there is no enough space
  */
-static int ext4_xattr_set_entry(struct ext4_xattr_info *i,
+EXT_SECTION static int ext4_xattr_set_entry(struct ext4_xattr_info *i,
                 struct ext4_xattr_search *s, bool dry_run)
 {
     struct ext4_xattr_entry *last;
@@ -447,7 +447,7 @@ static int ext4_xattr_set_entry(struct ext4_xattr_info *i,
     return EOK;
 }
 
-static inline bool ext4_xattr_is_empty(struct ext4_xattr_search *s)
+EXT_SECTION static inline bool ext4_xattr_is_empty(struct ext4_xattr_search *s)
 {
     if (!EXT4_XATTR_IS_LAST_ENTRY(s->first))
         return false;
@@ -462,7 +462,7 @@ static inline bool ext4_xattr_is_empty(struct ext4_xattr_search *s)
  *      including name_index, name and the length of name
  * @param s Search context block
  */
-static void ext4_xattr_find_entry(struct ext4_xattr_info *i,
+EXT_SECTION static void ext4_xattr_find_entry(struct ext4_xattr_info *i,
                   struct ext4_xattr_search *s)
 {
     struct ext4_xattr_entry *entry = NULL;
@@ -503,7 +503,7 @@ static void ext4_xattr_find_entry(struct ext4_xattr_info *i,
  *
  * @return true if @block is valid, false otherwise.
  */
-static bool ext4_xattr_is_block_valid(struct ext4_inode_ref *inode_ref,
+EXT_SECTION static bool ext4_xattr_is_block_valid(struct ext4_inode_ref *inode_ref,
                       struct ext4_block *block)
 {
 
@@ -571,7 +571,7 @@ static bool ext4_xattr_is_block_valid(struct ext4_inode_ref *inode_ref,
  *
  * @return true if the inode buffer is valid, false otherwise.
  */
-static bool ext4_xattr_is_ibody_valid(struct ext4_inode_ref *inode_ref)
+EXT_SECTION static bool ext4_xattr_is_ibody_valid(struct ext4_inode_ref *inode_ref)
 {
     size_t min_offs;
     void *base, *end;
@@ -651,7 +651,7 @@ struct ext4_xattr_finder {
     struct ext4_inode_ref *inode_ref;
 };
 
-static void ext4_xattr_ibody_initialize(struct ext4_inode_ref *inode_ref)
+EXT_SECTION static void ext4_xattr_ibody_initialize(struct ext4_inode_ref *inode_ref)
 {
     struct ext4_xattr_ibody_header *header;
     struct ext4_fs *fs = inode_ref->fs;
@@ -673,7 +673,7 @@ static void ext4_xattr_ibody_initialize(struct ext4_inode_ref *inode_ref)
  * @param inode_ref Inode reference
  * @param block xattr block buffer
  */
-static void ext4_xattr_block_initialize(struct ext4_inode_ref *inode_ref,
+EXT_SECTION static void ext4_xattr_block_initialize(struct ext4_inode_ref *inode_ref,
                     struct ext4_block *block)
 {
     struct ext4_xattr_header *header;
@@ -689,7 +689,7 @@ static void ext4_xattr_block_initialize(struct ext4_inode_ref *inode_ref,
     ext4_trans_set_block_dirty(block->buf);
 }
 
-static void ext4_xattr_block_init_search(struct ext4_inode_ref *inode_ref,
+EXT_SECTION static void ext4_xattr_block_init_search(struct ext4_inode_ref *inode_ref,
                      struct ext4_xattr_search *s,
                      struct ext4_block *block)
 {
@@ -712,7 +712,7 @@ static void ext4_xattr_block_init_search(struct ext4_inode_ref *inode_ref,
  *     If the IO operation or the buffer validation failed,
  *     return other value.
  */
-static int ext4_xattr_block_find_entry(struct ext4_inode_ref *inode_ref,
+EXT_SECTION static int ext4_xattr_block_find_entry(struct ext4_inode_ref *inode_ref,
                        struct ext4_xattr_finder *finder,
                        struct ext4_block *block)
 {
@@ -745,7 +745,7 @@ static int ext4_xattr_block_find_entry(struct ext4_inode_ref *inode_ref,
  *     If the IO operation or the buffer validation failed,
  *     return other value.
  */
-static int ext4_xattr_ibody_find_entry(struct ext4_inode_ref *inode_ref,
+EXT_SECTION static int ext4_xattr_ibody_find_entry(struct ext4_inode_ref *inode_ref,
                        struct ext4_xattr_finder *finder)
 {
     struct ext4_fs *fs = inode_ref->fs;
@@ -786,7 +786,7 @@ static int ext4_xattr_ibody_find_entry(struct ext4_inode_ref *inode_ref,
  *
  * @return Error code
  */
-static int ext4_xattr_try_alloc_block(struct ext4_inode_ref *inode_ref)
+EXT_SECTION static int ext4_xattr_try_alloc_block(struct ext4_inode_ref *inode_ref)
 {
     int ret = EOK;
 
@@ -820,7 +820,7 @@ Finish:
  *
  * @return Error code
  */
-static void ext4_xattr_try_free_block(struct ext4_inode_ref *inode_ref)
+EXT_SECTION static void ext4_xattr_try_free_block(struct ext4_inode_ref *inode_ref)
 {
     ext4_fsblk_t xattr_block;
     xattr_block =
@@ -1093,7 +1093,7 @@ out:
  *
  * @return Error code
  */
-static int ext4_xattr_copy_new_block(struct ext4_inode_ref *inode_ref,
+EXT_SECTION static int ext4_xattr_copy_new_block(struct ext4_inode_ref *inode_ref,
                      struct ext4_block *block,
                      struct ext4_block *new_block,
                      ext4_fsblk_t *orig_block, bool *allocated)
@@ -1279,7 +1279,7 @@ out:
  *
  * @return Error code
  */
-static int ext4_xattr_block_set(struct ext4_inode_ref *inode_ref,
+EXT_SECTION static int ext4_xattr_block_set(struct ext4_inode_ref *inode_ref,
                 struct ext4_xattr_info *i,
                 bool no_insert)
 {
@@ -1414,7 +1414,7 @@ out:
  *
  * @return Error code
  */
-static int ext4_xattr_block_remove(struct ext4_inode_ref *inode_ref,
+EXT_SECTION static int ext4_xattr_block_remove(struct ext4_inode_ref *inode_ref,
                    struct ext4_xattr_info *i)
 {
     int ret = EOK;

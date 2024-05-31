@@ -47,6 +47,9 @@ static struct rootfs_ops rootfs_config = {
 
 static const char *rootfs_dir[] = {
     "/bin", "/etc", "/lib", "/usr",
+#ifdef ROOTFS_UPDATE_PATH_USE_MNT
+    "/mnt",
+#endif
 };
 
 extern void copydir(const char *src, const char *dst);

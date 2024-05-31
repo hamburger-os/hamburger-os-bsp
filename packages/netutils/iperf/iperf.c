@@ -17,8 +17,8 @@
 #include <sys/select.h>
 #include <netdb.h>
 
-#define DBG_SECTION_NAME               "iperf"
-#define DBG_LEVEL                      DBG_INFO
+#define DBG_TAG              "iperf"
+#define DBG_LVL              DBG_INFO
 #include <rtdbg.h>
 
 #define IPERF_PORT          5001

@@ -176,21 +176,21 @@ static inline uint32_t ext4_sb_first_meta_bg(struct ext4_sblock *s)
 /**@brief   Returns a block group count.
  * @param   s superblock descriptor
  * @return  count of block groups*/
-uint32_t ext4_block_group_cnt(struct ext4_sblock *s);
+uint32_t ext4_block_group_cnt(struct ext4_sblock *s) EXT_SECTION;
 
 /**@brief   Returns block count in block group
  *          (last block group may have less blocks)
  * @param   s superblock descriptor
  * @param   bgid block group id
  * @return  blocks count*/
-uint32_t ext4_blocks_in_group_cnt(struct ext4_sblock *s, uint32_t bgid);
+uint32_t ext4_blocks_in_group_cnt(struct ext4_sblock *s, uint32_t bgid) EXT_SECTION;
 
 /**@brief   Returns inodes count in block group
  *          (last block group may have less inodes)
  * @param   s superblock descriptor
  * @param   bgid block group id
  * @return  inodes count*/
-uint32_t ext4_inodes_in_group_cnt(struct ext4_sblock *s, uint32_t bgid);
+uint32_t ext4_inodes_in_group_cnt(struct ext4_sblock *s, uint32_t bgid) EXT_SECTION;
 
 /***************************Read/write/check superblock**********************/
 
@@ -198,34 +198,34 @@ uint32_t ext4_inodes_in_group_cnt(struct ext4_sblock *s, uint32_t bgid);
  * @param   bdev block device descriptor.
  * @param   s superblock descriptor
  * @return  Standard error code */
-int ext4_sb_write(struct ext4_blockdev *bdev, struct ext4_sblock *s);
+int ext4_sb_write(struct ext4_blockdev *bdev, struct ext4_sblock *s) EXT_SECTION;
 
 /**@brief   Superblock read.
  * @param   bdev block device descriptor.
  * @param   s superblock descriptor
  * @return  Standard error code */
-int ext4_sb_read(struct ext4_blockdev *bdev, struct ext4_sblock *s);
+int ext4_sb_read(struct ext4_blockdev *bdev, struct ext4_sblock *s) EXT_SECTION;
 
 /**@brief   Superblock simple validation.
  * @param   s superblock descriptor
  * @return  true if OK*/
-bool ext4_sb_check(struct ext4_sblock *s);
+bool ext4_sb_check(struct ext4_sblock *s) EXT_SECTION;
 
 /**@brief   Superblock presence in block group.
  * @param   s superblock descriptor
  * @param   block_group block group id
  * @return  true if block group has superblock*/
-bool ext4_sb_is_super_in_bg(struct ext4_sblock *s, uint32_t block_group);
+bool ext4_sb_is_super_in_bg(struct ext4_sblock *s, uint32_t block_group) EXT_SECTION;
 
 /**@brief   TODO:*/
-bool ext4_sb_sparse(uint32_t group);
+bool ext4_sb_sparse(uint32_t group) EXT_SECTION;
 
 /**@brief   TODO:*/
-uint32_t ext4_bg_num_gdb(struct ext4_sblock *s, uint32_t group);
+uint32_t ext4_bg_num_gdb(struct ext4_sblock *s, uint32_t group) EXT_SECTION;
 
 /**@brief   TODO:*/
 uint32_t ext4_num_base_meta_clusters(struct ext4_sblock *s,
-                     uint32_t block_group);
+                     uint32_t block_group) EXT_SECTION;
 
 #ifdef __cplusplus
 }

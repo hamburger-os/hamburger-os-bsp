@@ -103,6 +103,57 @@ static MPU_Region_InitTypeDef mpu_cfg[] =
     },
 #endif
 
+#ifdef BSP_USING_FMC
+#ifdef BSP_USING_FMC1
+    {
+        .BaseAddress = FMC_NORSRAM_BANK1,
+        .Size = MPU_REGION_SIZE_64MB,
+        .SubRegionDisable = 0x0,
+        .TypeExtField = MPU_TEX_LEVEL1,
+        .AccessPermission = MPU_REGION_FULL_ACCESS,
+        .DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE,
+        .IsCacheable = MPU_ACCESS_NOT_CACHEABLE,
+        .IsBufferable = MPU_ACCESS_NOT_BUFFERABLE,
+    },
+#endif
+#ifdef BSP_USING_FMC2
+    {
+        .BaseAddress = FMC_NORSRAM_BANK2,
+        .Size = MPU_REGION_SIZE_64MB,
+        .SubRegionDisable = 0x0,
+        .TypeExtField = MPU_TEX_LEVEL1,
+        .AccessPermission = MPU_REGION_FULL_ACCESS,
+        .DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE,
+        .IsCacheable = MPU_ACCESS_NOT_CACHEABLE,
+        .IsBufferable = MPU_ACCESS_NOT_BUFFERABLE,
+    },
+#endif
+#ifdef BSP_USING_FMC3
+    {
+        .BaseAddress = FMC_NORSRAM_BANK3,
+        .Size = MPU_REGION_SIZE_64MB,
+        .SubRegionDisable = 0x0,
+        .TypeExtField = MPU_TEX_LEVEL1,
+        .AccessPermission = MPU_REGION_FULL_ACCESS,
+        .DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE,
+        .IsCacheable = MPU_ACCESS_NOT_CACHEABLE,
+        .IsBufferable = MPU_ACCESS_NOT_BUFFERABLE,
+    },
+#endif
+#ifdef BSP_USING_FMC4
+    {
+        .BaseAddress = FMC_NORSRAM_BANK4,
+        .Size = MPU_REGION_SIZE_64MB,
+        .SubRegionDisable = 0x0,
+        .TypeExtField = MPU_TEX_LEVEL1,
+        .AccessPermission = MPU_REGION_FULL_ACCESS,
+        .DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE,
+        .IsCacheable = MPU_ACCESS_NOT_CACHEABLE,
+        .IsBufferable = MPU_ACCESS_NOT_BUFFERABLE,
+    },
+#endif
+#endif
+
 #ifdef BSP_USING_NORFLASH
     {
         .BaseAddress = BSP_NORFLASH_ADDR,
@@ -184,26 +235,26 @@ static MPU_Region_InitTypeDef mpu_cfg[] =
 #ifdef BSP_USING_MVB
     {
         .BaseAddress = 0x60000000 + MVB_NE/2*0x4000000,
-        .Size = MPU_REGION_SIZE_512B,
+        .Size = MPU_REGION_SIZE_64MB,
         .SubRegionDisable = 0x0,
         .TypeExtField = MPU_TEX_LEVEL0,
         .AccessPermission = MPU_REGION_FULL_ACCESS,
         .DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE,
         .IsCacheable = MPU_ACCESS_NOT_CACHEABLE,
-        .IsBufferable = MPU_ACCESS_BUFFERABLE,
+        .IsBufferable = MPU_ACCESS_NOT_BUFFERABLE,
     },
 #endif
 
 #ifdef BSP_USING_Z8523L16
     {
         .BaseAddress = 0x60000000 + Z8523L16_NE/2*0x4000000,
-        .Size = MPU_REGION_SIZE_512B,
+        .Size = MPU_REGION_SIZE_64MB,
         .SubRegionDisable = 0x0,
         .TypeExtField = MPU_TEX_LEVEL0,
         .AccessPermission = MPU_REGION_FULL_ACCESS,
         .DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE,
         .IsCacheable = MPU_ACCESS_NOT_CACHEABLE,
-        .IsBufferable = MPU_ACCESS_BUFFERABLE,
+        .IsBufferable = MPU_ACCESS_NOT_BUFFERABLE,
     },
 #endif
 };

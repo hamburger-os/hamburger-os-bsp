@@ -35,7 +35,11 @@
 static uint8_t PendST __attribute__((section(".bss.os")));
 
 // Setup OS Tick.
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+rt_weak int32_t OS_Tick_Setup (uint32_t freq, IRQHandler_t handler) {
+#else
 RT_WEAK int32_t OS_Tick_Setup (uint32_t freq, IRQHandler_t handler) {
+#endif
   uint32_t load;
   (void)handler;
 
@@ -62,7 +66,11 @@ RT_WEAK int32_t OS_Tick_Setup (uint32_t freq, IRQHandler_t handler) {
 }
 
 /// Enable OS Tick.
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+rt_weak void OS_Tick_Enable (void) {
+#else
 RT_WEAK void OS_Tick_Enable (void) {
+#endif
 
   if (PendST != 0U) {
     PendST = 0U;
@@ -73,7 +81,11 @@ RT_WEAK void OS_Tick_Enable (void) {
 }
 
 /// Disable OS Tick.
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+rt_weak void OS_Tick_Disable (void) {
+#else
 RT_WEAK void OS_Tick_Disable (void) {
+#endif
 
   SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk;
 
@@ -84,33 +96,57 @@ RT_WEAK void OS_Tick_Disable (void) {
 }
 
 // Acknowledge OS Tick IRQ.
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+rt_weak void OS_Tick_AcknowledgeIRQ (void) {
+#else
 RT_WEAK void OS_Tick_AcknowledgeIRQ (void) {
+#endif
   (void)SysTick->CTRL;
 }
 
 // Get OS Tick IRQ number.
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+rt_weak int32_t  OS_Tick_GetIRQn (void) {
+#else
 RT_WEAK int32_t  OS_Tick_GetIRQn (void) {
+#endif
   return ((int32_t)SysTick_IRQn);
 }
 
 // Get OS Tick clock.
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+rt_weak uint32_t OS_Tick_GetClock (void) {
+#else
 RT_WEAK uint32_t OS_Tick_GetClock (void) {
+#endif
   return (SystemCoreClock);
 }
 
 // Get OS Tick interval.
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+rt_weak uint32_t OS_Tick_GetInterval (void) {
+#else
 RT_WEAK uint32_t OS_Tick_GetInterval (void) {
+#endif
   return (SysTick->LOAD + 1U);
 }
 
 // Get OS Tick count value.
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+rt_weak uint32_t OS_Tick_GetCount (void) {
+#else
 RT_WEAK uint32_t OS_Tick_GetCount (void) {
+#endif
   uint32_t load = SysTick->LOAD;
   return  (load - SysTick->VAL);
 }
 
 // Get OS Tick overflow status.
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+rt_weak uint32_t OS_Tick_GetOverflow (void) {
+#else
 RT_WEAK uint32_t OS_Tick_GetOverflow (void) {
+#endif
   return ((SCB->ICSR & SCB_ICSR_PENDSTSET_Msk) >> SCB_ICSR_PENDSTSET_Pos);
 }
 

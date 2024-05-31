@@ -69,10 +69,10 @@ struct ext4_mkfs_info {
 };
 
 
-int ext4_mkfs_read_info(struct ext4_blockdev *bd, struct ext4_mkfs_info *info);
+int ext4_mkfs_read_info(struct ext4_blockdev *bd, struct ext4_mkfs_info *info) EXT_SECTION;
 
 int ext4_mkfs(struct ext4_fs *fs, struct ext4_blockdev *bd,
-          struct ext4_mkfs_info *info, int fs_type);
+          struct ext4_mkfs_info *info, int fs_type) EXT_SECTION;
 
 #ifdef __cplusplus
 }

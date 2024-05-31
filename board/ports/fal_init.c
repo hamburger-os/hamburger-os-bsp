@@ -25,6 +25,9 @@ struct fal_dev_init
 };
 
 #ifdef BSP_USING_EMMC
+#ifdef EMMC_ENABLE_EXT4
+    extern struct fal_flash64_dev emmc_flash_ext4;
+#endif
     extern struct fal_flash64_dev emmc_flash;
 #endif
 
@@ -59,6 +62,9 @@ static const struct fal_dev_init _fal_dev[] =
 #endif
 
 #ifdef BSP_USING_EMMC
+#ifdef EMMC_ENABLE_EXT4
+    {BLK_EXT4, "ext", &emmc_flash_ext4},
+#endif
     {BLK_EMMC, EMMC_FS, &emmc_flash},
 #endif
 
@@ -67,7 +73,31 @@ static const struct fal_dev_init _fal_dev[] =
 #endif
 
 #ifdef BSP_USING_MAX31826
+
+#ifdef MAX31826_USING_IO
     {BLK_MAX31826, "", NULL},
+#endif
+
+#ifdef MAX31826_USING_I2C_DS2484
+
+#if MAX31826_SEN_ALL > 0
+    {BLK_MAX31826_1, "", NULL},
+#endif
+
+#if MAX31826_SEN_ALL > 1
+    {BLK_MAX31826_2, "", NULL},
+#endif
+
+#if MAX31826_SEN_ALL > 2
+    {BLK_MAX31826_3, "", NULL},
+#endif
+
+#if MAX31826_SEN_ALL > 3
+    {BLK_MAX31826_4, "", NULL},
+#endif
+
+#endif
+
 #endif
 
 #ifdef BSP_USING_ROOTFS

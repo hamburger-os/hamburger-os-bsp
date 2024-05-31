@@ -24,6 +24,7 @@
 #define _SP_DEC_H_
 
 #include "sp_enc.h"
+#include "typedef.h"
 /*
  * definition of enumerated types
  */
@@ -64,22 +65,22 @@ enum RXFrameType
 /*
  * initialize one instance of the speech decoder
  */
-void *Speech_Decode_Frame_init(void);
+void *Speech_Decode_Frame_init(void) AMR_SECTION;
 
 /*
  * free status struct
  */
-void Speech_Decode_Frame_exit(void **st);
+void Speech_Decode_Frame_exit(void **st) AMR_SECTION;
 
 /*
  * Decodes one frame from encoded parameters
  */
 void Speech_Decode_Frame(void *st, enum Mode mode, short *serial,
-                         enum RXFrameType frame_type, short *synth);
+                         enum RXFrameType frame_type, short *synth) AMR_SECTION;
 
 /*
  * reset speech decoder
  */
-int Speech_Decode_Frame_reset(void **st);
+int Speech_Decode_Frame_reset(void **st) AMR_SECTION;
 
 #endif

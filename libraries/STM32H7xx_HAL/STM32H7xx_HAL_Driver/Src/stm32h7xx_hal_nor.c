@@ -573,7 +573,8 @@ HAL_StatusTypeDef HAL_NOR_ReturnToReadMode(NOR_HandleTypeDef *hnor)
     else
     {
       /* Primary command set not supported by the driver */
-        rt_kprintf("%d: %s %s %d 0x%x\n", rt_tick_get(), __FILE__, __FUNCTION__, __LINE__, hnor->CommandSet);
+        //TODO:
+//        rt_kprintf("%d: %s %s %d 0x%x\n", rt_tick_get(), __FILE__, __FUNCTION__, __LINE__, hnor->CommandSet);
 //      status = HAL_ERROR;
     }
 

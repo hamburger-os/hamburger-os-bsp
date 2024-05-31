@@ -9,7 +9,11 @@
  */
 #include "board.h"
 
-#include "sensor.h"
+#ifdef RT_USING_SENSOR
+#include <drivers/sensor.h>
+#else
+#include <drivers/sensor_v2.h>
+#endif
 
 #define DBG_TAG "cputemp"
 #define DBG_LVL DBG_INFO

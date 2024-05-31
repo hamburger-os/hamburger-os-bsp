@@ -101,7 +101,7 @@ static struct ext4_mountpoint s_mp[CONFIG_EXT4_MOUNTPOINTS_COUNT];
 
 /****************************************************************************/
 
-static bool ext4_is_dots(const uint8_t *name, size_t name_size)
+EXT_SECTION static bool ext4_is_dots(const uint8_t *name, size_t name_size)
 {
     if ((name_size == 1) && (name[0] == '.'))
         return true;
@@ -112,7 +112,7 @@ static bool ext4_is_dots(const uint8_t *name, size_t name_size)
     return false;
 }
 
-static int ext4_has_children(bool *has_children, struct ext4_inode_ref *enode)
+EXT_SECTION static int ext4_has_children(bool *has_children, struct ext4_inode_ref *enode)
 {
     struct ext4_sblock *sb = &enode->fs->sb;
 
@@ -155,7 +155,7 @@ static int ext4_has_children(bool *has_children, struct ext4_inode_ref *enode)
     return EOK;
 }
 
-static int ext4_link(struct ext4_mountpoint *mp, struct ext4_inode_ref *parent,
+EXT_SECTION static int ext4_link(struct ext4_mountpoint *mp, struct ext4_inode_ref *parent,
              struct ext4_inode_ref *ch, const char *n,
              uint32_t len, bool rename)
 {
@@ -248,7 +248,7 @@ static int ext4_link(struct ext4_mountpoint *mp, struct ext4_inode_ref *parent,
     return r;
 }
 
-static int ext4_unlink(struct ext4_mountpoint *mp,
+EXT_SECTION static int ext4_unlink(struct ext4_mountpoint *mp,
                struct ext4_inode_ref *parent,
                struct ext4_inode_ref *child, const char *name,
                uint32_t name_len)
@@ -313,8 +313,9 @@ int ext4_mount(struct ext4_blockdev *bd, const char *mount_point,
 
     size_t mp_len = strlen(mount_point);
 
-    if (mp_len > CONFIG_EXT4_MAX_MP_NAME)
+    if (mp_len > CONFIG_EXT4_MAX_MP_NAME) {
         return EINVAL;
+    }
 
     for (size_t i = 0; i < CONFIG_EXT4_MOUNTPOINTS_COUNT; ++i) {
         if (!s_mp[i].mounted) {
@@ -328,7 +329,7 @@ int ext4_mount(struct ext4_blockdev *bd, const char *mount_point,
     }
 
     if (mp == NULL) {
-        return ENOENT;
+        return ENOMEM;
     }
 
     r = ext4_block_init(bd);
@@ -352,8 +353,9 @@ int ext4_mount(struct ext4_blockdev *bd, const char *mount_point,
         return r;
     }
 
-    if (bsize != bc->itemsize)
+    if (bsize != bc->itemsize) {
         return ENOTSUP;
+    }
 
     /*Bind block cache to block device*/
     r = ext4_block_bind_bcache(bd, bc);
@@ -383,7 +385,7 @@ int ext4_umount(const char *mount_point)
     }
 
     if (mp == NULL) {
-        return ENOENT;
+        return ENODEV;
     }
 
     r = ext4_fs_fini(&mp->fs);
@@ -403,7 +405,7 @@ Finish:
     return r;
 }
 
-static struct ext4_mountpoint *ext4_get_mount(const char *path)
+EXT_SECTION static struct ext4_mountpoint *ext4_get_mount(const char *path)
 {
     struct ext4_mountpoint *mp = NULL;
     uint32_t fspath, prefixlen;
@@ -433,7 +435,7 @@ static struct ext4_mountpoint *ext4_get_mount(const char *path)
 }
 
 __ext4_unused
-static int __ext4_journal_start(const char *mount_point)
+EXT_SECTION static int __ext4_journal_start(const char *mount_point)
 {
     int r = EOK;
     struct ext4_mountpoint *mp = ext4_get_mount(mount_point);
@@ -465,7 +467,7 @@ Finish:
 }
 
 __ext4_unused
-static int __ext4_journal_stop(const char *mount_point)
+EXT_SECTION static int __ext4_journal_stop(const char *mount_point)
 {
     int r = EOK;
     struct ext4_mountpoint *mp = ext4_get_mount(mount_point);
@@ -503,7 +505,7 @@ Finish:
 }
 
 __ext4_unused
-static int __ext4_recover(const char *mount_point)
+EXT_SECTION static int __ext4_recover(const char *mount_point)
 {
     struct ext4_mountpoint *mp = ext4_get_mount(mount_point);
     int r = ENOTSUP;
@@ -562,7 +564,7 @@ Finish:
 }
 
 __ext4_unused
-static int __ext4_trans_start(struct ext4_mountpoint *mp)
+EXT_SECTION static int __ext4_trans_start(struct ext4_mountpoint *mp)
 {
     int r = EOK;
 
@@ -581,7 +583,7 @@ Finish:
 }
 
 __ext4_unused
-static int __ext4_trans_stop(struct ext4_mountpoint *mp)
+EXT_SECTION static int __ext4_trans_stop(struct ext4_mountpoint *mp)
 {
     int r = EOK;
 
@@ -595,7 +597,7 @@ static int __ext4_trans_stop(struct ext4_mountpoint *mp)
 }
 
 __ext4_unused
-static void __ext4_trans_abort(struct ext4_mountpoint *mp)
+EXT_SECTION static void __ext4_trans_abort(struct ext4_mountpoint *mp)
 {
     if (mp->fs.jbd_journal && mp->fs.curr_trans) {
         struct jbd_journal *journal = mp->fs.jbd_journal;
@@ -632,7 +634,7 @@ int ext4_recover(const char *mount_point __ext4_unused)
     return r;
 }
 
-static int ext4_trans_start(struct ext4_mountpoint *mp __ext4_unused)
+EXT_SECTION static int ext4_trans_start(struct ext4_mountpoint *mp __ext4_unused)
 {
     int r = EOK;
 #if CONFIG_JOURNALING_ENABLE
@@ -641,7 +643,7 @@ static int ext4_trans_start(struct ext4_mountpoint *mp __ext4_unused)
     return r;
 }
 
-static int ext4_trans_stop(struct ext4_mountpoint *mp __ext4_unused)
+EXT_SECTION static int ext4_trans_stop(struct ext4_mountpoint *mp __ext4_unused)
 {
     int r = EOK;
 #if CONFIG_JOURNALING_ENABLE
@@ -650,7 +652,7 @@ static int ext4_trans_stop(struct ext4_mountpoint *mp __ext4_unused)
     return r;
 }
 
-static void ext4_trans_abort(struct ext4_mountpoint *mp __ext4_unused)
+EXT_SECTION static void ext4_trans_abort(struct ext4_mountpoint *mp __ext4_unused)
 {
 #if CONFIG_JOURNALING_ENABLE
     __ext4_trans_abort(mp);
@@ -707,7 +709,7 @@ int ext4_mount_setup_locks(const char *mount_point,
 
 /********************************FILE OPERATIONS*****************************/
 
-static int ext4_path_check(const char *path, bool *is_goal)
+EXT_SECTION static int ext4_path_check(const char *path, bool *is_goal)
 {
     int i;
 
@@ -727,7 +729,7 @@ static int ext4_path_check(const char *path, bool *is_goal)
     return 0;
 }
 
-static bool ext4_parse_flags(const char *flags, uint32_t *file_flags)
+EXT_SECTION static bool ext4_parse_flags(const char *flags, uint32_t *file_flags)
 {
     if (!flags)
         return false;
@@ -768,7 +770,7 @@ static bool ext4_parse_flags(const char *flags, uint32_t *file_flags)
     return false;
 }
 
-static int ext4_trunc_inode(struct ext4_mountpoint *mp,
+EXT_SECTION static int ext4_trunc_inode(struct ext4_mountpoint *mp,
                 uint32_t index, uint64_t new_size)
 {
     int r = EOK;
@@ -839,7 +841,7 @@ Finish:
     return r;
 }
 
-static int ext4_trunc_dir(struct ext4_mountpoint *mp,
+EXT_SECTION static int ext4_trunc_dir(struct ext4_mountpoint *mp,
               struct ext4_inode_ref *parent,
               struct ext4_inode_ref *dir)
 {
@@ -876,7 +878,7 @@ static int ext4_trunc_dir(struct ext4_mountpoint *mp,
  * NOTICE: if filetype is equal to EXT4_DIRENTRY_UNKNOWN,
  * any filetype of the target dir entry will be accepted.
  */
-static int ext4_generic_open2(ext4_file *f, const char *path, int flags,
+EXT_SECTION static int ext4_generic_open2(ext4_file *f, const char *path, int flags,
                   int ftype, uint32_t *parent_inode,
                   uint32_t *name_off)
 {
@@ -1060,7 +1062,7 @@ static int ext4_generic_open2(ext4_file *f, const char *path, int flags,
 
 /****************************************************************************/
 
-static int ext4_generic_open(ext4_file *f, const char *path, const char *flags,
+EXT_SECTION static int ext4_generic_open(ext4_file *f, const char *path, const char *flags,
                  bool file_expect, uint32_t *parent_inode,
                  uint32_t *name_off)
 {
@@ -1093,7 +1095,7 @@ static int ext4_generic_open(ext4_file *f, const char *path, const char *flags,
     return r;
 }
 
-static int ext4_create_hardlink(const char *path,
+EXT_SECTION static int ext4_create_hardlink(const char *path,
         struct ext4_inode_ref *child_ref, bool rename)
 {
     bool is_goal = false;
@@ -1200,7 +1202,7 @@ static int ext4_create_hardlink(const char *path,
     return r;
 }
 
-static int ext4_remove_orig_reference(const char *path, uint32_t name_off,
+EXT_SECTION static int ext4_remove_orig_reference(const char *path, uint32_t name_off,
                       struct ext4_inode_ref *parent_ref,
                       struct ext4_inode_ref *child_ref)
 {
@@ -1583,7 +1585,7 @@ int ext4_fclose(ext4_file *file)
     return EOK;
 }
 
-static int ext4_ftruncate_no_lock(ext4_file *file, uint64_t size)
+EXT_SECTION static int ext4_ftruncate_no_lock(ext4_file *file, uint64_t size)
 {
     struct ext4_inode_ref ref;
     int r;
@@ -1668,11 +1670,13 @@ int ext4_fread(ext4_file *file, void *buf, size_t size, size_t *rcnt)
 
     ext4_assert(file && file->mp);
 
-    if (file->flags & O_WRONLY)
+    if (file->flags & O_WRONLY) {
         return EPERM;
+    }
 
-    if (!size)
+    if (!size) {
         return EOK;
+    }
 
     EXT4_MP_LOCK(file->mp);
 
@@ -1725,15 +1729,17 @@ int ext4_fread(ext4_file *file, void *buf, size_t size, size_t *rcnt)
             len = block_size - unalg;
 
         r = ext4_fs_get_inode_dblk_idx(&ref, iblock_idx, &fblock, true);
-        if (r != EOK)
+        if (r != EOK) {
             goto Finish;
+        }
         
         /* Do we get an unwritten range? */
         if (fblock != 0) {
             uint64_t off = fblock * block_size + unalg;
             r = ext4_block_readbytes(file->mp->fs.bdev, off, u8_buf, len);
-            if (r != EOK)
+            if (r != EOK) {
                 goto Finish;
+            }
 
         } else {
             /* Yes, we do. */
@@ -1756,8 +1762,9 @@ int ext4_fread(ext4_file *file, void *buf, size_t size, size_t *rcnt)
         while (iblock_idx < iblock_last) {
             r = ext4_fs_get_inode_dblk_idx(&ref, iblock_idx,
                                &fblock, true);
-            if (r != EOK)
+            if (r != EOK) {
                 goto Finish;
+            }
 
             iblock_idx++;
 
@@ -1772,8 +1779,9 @@ int ext4_fread(ext4_file *file, void *buf, size_t size, size_t *rcnt)
 
         r = ext4_blocks_get_direct(file->mp->fs.bdev, u8_buf, fblock_start,
                        fblock_count);
-        if (r != EOK)
+        if (r != EOK) {
             goto Finish;
+        }
 
         size -= block_size * fblock_count;
         u8_buf += block_size * fblock_count;
@@ -1789,13 +1797,15 @@ int ext4_fread(ext4_file *file, void *buf, size_t size, size_t *rcnt)
     if (size) {
         uint64_t off;
         r = ext4_fs_get_inode_dblk_idx(&ref, iblock_idx, &fblock, true);
-        if (r != EOK)
+        if (r != EOK) {
             goto Finish;
+        }
 
         off = fblock * block_size;
         r = ext4_block_readbytes(file->mp->fs.bdev, off, u8_buf, size);
-        if (r != EOK)
+        if (r != EOK) {
             goto Finish;
+        }
 
         file->fpos += size;
 
@@ -1828,14 +1838,17 @@ int ext4_fwrite(ext4_file *file, const void *buf, size_t size, size_t *wcnt)
 
     ext4_assert(file && file->mp);
 
-    if (file->mp->fs.read_only)
+    if (file->mp->fs.read_only) {
         return EROFS;
+    }
 
-    if (file->flags & O_RDONLY)
+    if (file->flags & O_RDONLY) {
         return EPERM;
+    }
 
-    if (!size)
+    if (!size) {
         return EOK;
+    }
 
     EXT4_MP_LOCK(file->mp);
     ext4_trans_start(file->mp);
@@ -1869,13 +1882,15 @@ int ext4_fwrite(ext4_file *file, const void *buf, size_t size, size_t *wcnt)
             len = block_size - unalg;
 
         r = ext4_fs_init_inode_dblk_idx(&ref, iblk_idx, &fblk);
-        if (r != EOK)
+        if (r != EOK) {
             goto Finish;
+        }
 
         off = fblk * block_size + unalg;
         r = ext4_block_writebytes(file->mp->fs.bdev, off, u8_buf, len);
-        if (r != EOK)
+        if (r != EOK) {
             goto Finish;
+        }
 
         u8_buf += len;
         size -= len;
@@ -1889,8 +1904,9 @@ int ext4_fwrite(ext4_file *file, const void *buf, size_t size, size_t *wcnt)
 
     /*Start write back cache mode.*/
     r = ext4_block_cache_write_back(file->mp->fs.bdev, 1);
-    if (r != EOK)
+    if (r != EOK) {
         goto Finish;
+    }
 
     fblock_start = 0;
     fblock_count = 0;
@@ -1900,8 +1916,9 @@ int ext4_fwrite(ext4_file *file, const void *buf, size_t size, size_t *wcnt)
             if (iblk_idx < ifile_blocks) {
                 r = ext4_fs_init_inode_dblk_idx(&ref, iblk_idx,
                                 &fblk);
-                if (r != EOK)
+                if (r != EOK) {
                     goto Finish;
+                }
             } else {
                 rr = ext4_fs_append_inode_dblk(&ref, &fblk,
                                    &iblk_idx);
@@ -1952,26 +1969,30 @@ int ext4_fwrite(ext4_file *file, const void *buf, size_t size, size_t *wcnt)
     /*Stop write back cache mode*/
     ext4_block_cache_write_back(file->mp->fs.bdev, 0);
 
-    if (r != EOK)
+    if (r != EOK) {
         goto Finish;
+    }
 
     if (size) {
         uint64_t off;
         if (iblk_idx < ifile_blocks) {
             r = ext4_fs_init_inode_dblk_idx(&ref, iblk_idx, &fblk);
-            if (r != EOK)
+            if (r != EOK) {
                 goto Finish;
+            }
         } else {
             r = ext4_fs_append_inode_dblk(&ref, &fblk, &iblk_idx);
-            if (r != EOK)
+            if (r != EOK) {
                 /*Node size sholud be updated.*/
                 goto out_fsize;
+            }
         }
 
         off = fblk * block_size;
         r = ext4_block_writebytes(file->mp->fs.bdev, off, u8_buf, size);
-        if (r != EOK)
+        if (r != EOK) {
             goto Finish;
+        }
 
         file->fpos += size;
 
@@ -2036,7 +2057,7 @@ uint64_t ext4_fsize(ext4_file *file)
 }
 
 
-static int ext4_trans_get_inode_ref(const char *path,
+EXT_SECTION static int ext4_trans_get_inode_ref(const char *path,
                     struct ext4_mountpoint *mp,
                     struct ext4_inode_ref *inode_ref)
 {
@@ -2058,7 +2079,7 @@ static int ext4_trans_get_inode_ref(const char *path,
     return r;
 }
 
-static int ext4_trans_put_inode_ref(struct ext4_mountpoint *mp,
+EXT_SECTION static int ext4_trans_put_inode_ref(struct ext4_mountpoint *mp,
                     struct ext4_inode_ref *inode_ref)
 {
     int r;
@@ -2430,7 +2451,7 @@ int ext4_ctime_get(const char *path, uint32_t *ctime)
     return r;
 }
 
-static int ext4_fsymlink_set(ext4_file *f, const void *buf, uint32_t size)
+EXT_SECTION static int ext4_fsymlink_set(ext4_file *f, const void *buf, uint32_t size)
 {
     struct ext4_inode_ref ref;
     uint32_t sblock;
@@ -2569,7 +2590,7 @@ Finish:
     return r;
 }
 
-static int ext4_mknod_set(ext4_file *f, uint32_t dev)
+EXT_SECTION static int ext4_mknod_set(ext4_file *f, uint32_t dev)
 {
     struct ext4_inode_ref ref;
     int r;
@@ -3142,9 +3163,9 @@ int ext4_dir_mv(const char *path, const char *new_path)
 
 int ext4_dir_mk(const char *path)
 {
-    struct ext4_mountpoint *mp = ext4_get_mount(path);
     int r;
     ext4_file f;
+    struct ext4_mountpoint *mp = ext4_get_mount(path);
 
     if (mp == NULL) {
         return ENOENT;
@@ -3171,6 +3192,7 @@ Finish:
 int ext4_dir_open(ext4_dir *dir, const char *path)
 {
     struct ext4_mountpoint *mp = ext4_get_mount(path);
+
     int r;
 
     if (mp == NULL) {

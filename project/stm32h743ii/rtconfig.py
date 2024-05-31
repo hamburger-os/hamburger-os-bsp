@@ -56,7 +56,7 @@ if PLATFORM == 'gcc':
         CFLAGS += ' -O0 -gdwarf-2 -g'
         AFLAGS += ' -gdwarf-2'
     else:
-        CFLAGS += ' -Os'
+        CFLAGS += ' -O3'
 
     CXXFLAGS = CFLAGS 
 

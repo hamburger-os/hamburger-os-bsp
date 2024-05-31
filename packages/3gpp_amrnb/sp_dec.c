@@ -24,13 +24,12 @@
 /*
  * include files
  */
-#include "board.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-
+#include "typedef.h"
 #include "sp_dec.h"
 #include "rom_dec.h"
 
@@ -224,7 +223,7 @@ typedef struct
  * Returns:
  *    void
  */
-static void Decoder_amr_reset(Decoder_amrState *state, enum Mode mode)
+static AMR_SECTION void Decoder_amr_reset(Decoder_amrState *state, enum Mode mode)
 {
    Word32 i;
 
@@ -425,7 +424,7 @@ static void Decoder_amr_reset(Decoder_amrState *state, enum Mode mode)
  * Returns:
  *    DTXStateType            DTX, DTX_MUTE or SPEECH
  */
-static enum DTXStateType rx_dtx_handler(dtx_decState *st, enum RXFrameType frame_type)
+static AMR_SECTION enum DTXStateType rx_dtx_handler(dtx_decState *st, enum RXFrameType frame_type)
 {
    enum DTXStateType newState;
    enum DTXStateType encState;
@@ -556,7 +555,7 @@ static enum DTXStateType rx_dtx_handler(dtx_decState *st, enum RXFrameType frame
  * Returns:
  *    void
  */
-static void Lsf_lsp(Word32 lsf[], Word32 lsp[])
+static AMR_SECTION void Lsf_lsp(Word32 lsf[], Word32 lsp[])
 {
    Word32 i, ind, offset, tmp;
 
@@ -594,7 +593,7 @@ static void Lsf_lsp(Word32 lsf[], Word32 lsp[])
  * Returns:
  *    void
  */
-static void D_plsf_3(D_plsfState *st, enum Mode mode, Word16 bfi, Word16 *indice, Word32 *lsp1_q)
+static AMR_SECTION void D_plsf_3(D_plsfState *st, enum Mode mode, Word16 bfi, Word16 *indice, Word32 *lsp1_q)
 {
    Word32 lsf1_r[M], lsf1_q[M];
    Word32 i, index, temp;
@@ -733,7 +732,7 @@ static void D_plsf_3(D_plsfState *st, enum Mode mode, Word16 bfi, Word16 *indice
  * Returns:
  *    noise_bits
  */
-static Word32 pseudonoise(Word32 *shift_reg, Word32 no_bits)
+static AMR_SECTION Word32 pseudonoise(Word32 *shift_reg, Word32 no_bits)
 {
    Word32 noise_bits, Sn, i;
    Word32 s_reg;
@@ -782,7 +781,7 @@ static Word32 pseudonoise(Word32 *shift_reg, Word32 no_bits)
  * Returns:
  *    void
  */
-static void Lsp_lsf(Word32 lsp[], Word32 lsf[])
+static AMR_SECTION void Lsp_lsf(Word32 lsp[], Word32 lsf[])
 {
    Word32 i, ind = 63; /* begin at end of table -1 */
 
@@ -813,7 +812,7 @@ static void Lsp_lsf(Word32 lsp[], Word32 lsf[])
  * Returns:
  *    void
  */
-static void Reorder_lsf(Word32 *lsf, Word32 min_dist)
+static AMR_SECTION void Reorder_lsf(Word32 *lsf, Word32 min_dist)
 {
    Word32 lsf_min, i;
 
@@ -866,7 +865,7 @@ static void Reorder_lsf(Word32 *lsf, Word32 min_dist)
  * Returns:
  *    void
  */
-static void Get_lsp_pol(Word32 *lsp, Word32 *f)
+static AMR_SECTION void Get_lsp_pol(Word32 *lsp, Word32 *f)
 {
    volatile Word32 f0, f1, f2, f3, f4, f5;
    Word32 l1, l2, l3, l4;
@@ -935,7 +934,7 @@ static void Get_lsp_pol(Word32 *lsp, Word32 *f)
  * Returns:
  *    void
  */
-static void Lsp_Az(Word32 lsp[], Word32 a[])
+static AMR_SECTION void Lsp_Az(Word32 lsp[], Word32 a[])
 {
    Word32 f1[6], f2[6];
    Word32 T0, i, j;
@@ -983,7 +982,7 @@ static void Lsp_Az(Word32 lsp[], Word32 a[])
  * Returns:
  *    void
  */
-static void A_Refl(Word32 a[], Word32 refl[])
+static AMR_SECTION void A_Refl(Word32 a[], Word32 refl[])
 {
    /* local variables */
    int normShift;
@@ -1090,7 +1089,7 @@ ExitRefl:
  * Returns:
  *    void
  */
-static void Log2_norm(Word32 x, Word32 exp, Word32 *exponent, Word32 *fraction)
+static AMR_SECTION void Log2_norm(Word32 x, Word32 exp, Word32 *exponent, Word32 *fraction)
 {
    Word32 y, i, a;
 
@@ -1132,7 +1131,7 @@ static void Log2_norm(Word32 x, Word32 exp, Word32 *exponent, Word32 *fraction)
  * Returns:
  *    void
  */
-static void Log2(Word32 x, Word32 *exponent, Word32 *fraction)
+static AMR_SECTION void Log2(Word32 x, Word32 *exponent, Word32 *fraction)
 {
    int tmp, exp = 0;
 
@@ -1169,7 +1168,7 @@ static void Log2(Word32 x, Word32 *exponent, Word32 *fraction)
  * Returns:
  *    result (range: 0<=val<=0x7fffffff)
  */
-static Word32 Pow2(Word32 exponent, Word32 fraction)
+static AMR_SECTION Word32 Pow2(Word32 exponent, Word32 fraction)
 {
    Word32 i, a, tmp, x, exp;
 
@@ -1219,7 +1218,7 @@ static Word32 Pow2(Word32 exponent, Word32 fraction)
  * Returns:
  *    void
  */
-static void Build_CN_code(Word32 *seed, Word32 cod[])
+static AMR_SECTION void Build_CN_code(Word32 *seed, Word32 cod[])
 {
    Word32 i, j, k;
 
@@ -1260,7 +1259,7 @@ static void Build_CN_code(Word32 *seed, Word32 cod[])
  * Returns:
  *    void
  */
-static void Build_CN_param(Word16 *seed, enum Mode mode, Word16 parm[])
+static AMR_SECTION void Build_CN_param(Word16 *seed, enum Mode mode, Word16 parm[])
 {
    Word32 i;
    const Word32 *p;
@@ -1352,7 +1351,7 @@ static void Build_CN_param(Word16 *seed, enum Mode mode, Word16 parm[])
  * Returns:
  *    void
  */
-static Word32 Syn_filt(Word32 a[], Word32 x[], Word32 y[], Word32 lg, Word32 mem[], Word32 update)
+static AMR_SECTION Word32 Syn_filt(Word32 a[], Word32 x[], Word32 y[], Word32 lg, Word32 mem[], Word32 update)
 {
    Word32 tmp[50]; /* malloc is slow */
    Word32 s, a0, overflow = 0;
@@ -1421,7 +1420,7 @@ static Word32 Syn_filt(Word32 a[], Word32 x[], Word32 y[], Word32 lg, Word32 mem
  * Returns:
  *    void
  */
-static void Syn_filt_overflow(Word32 a[], Word32 x[], Word32 y[], Word32 lg, Word32 mem[], Word32 update)
+static AMR_SECTION void Syn_filt_overflow(Word32 a[], Word32 x[], Word32 y[], Word32 lg, Word32 mem[], Word32 update)
 {
    Word32 tmp[50]; /* malloc is slow */
    Word32 i, j, s, a0;
@@ -1496,7 +1495,7 @@ static void Syn_filt_overflow(Word32 a[], Word32 x[], Word32 y[], Word32 lg, Wor
  * Returns:
  *    void
  */
-static void dtx_dec(dtx_decState *st, Word32 *mem_syn, D_plsfState *lsfState,
+static AMR_SECTION void dtx_dec(dtx_decState *st, Word32 *mem_syn, D_plsfState *lsfState,
                     gc_predState *pred_state, Cb_gain_averageState *averState, enum DTXStateType new_state, enum Mode mode, Word16 parm[], Word32 synth[],
                     Word32 A_t[])
 {
@@ -1957,7 +1956,7 @@ static void dtx_dec(dtx_decState *st, Word32 *mem_syn, D_plsfState *lsfState,
  * Returns:
  *    void
  */
-static void lsp_avg(lsp_avgState *st, Word32 *lsp)
+static AMR_SECTION void lsp_avg(lsp_avgState *st, Word32 *lsp)
 {
    Word32 i, tmp;
 
@@ -2000,7 +1999,7 @@ static void lsp_avg(lsp_avgState *st, Word32 *lsp)
  * Returns:
  *    void
  */
-static void Int_lpc_1and3(Word32 lsp_old[], Word32 lsp_mid[], Word32 lsp_new[],
+static AMR_SECTION void Int_lpc_1and3(Word32 lsp_old[], Word32 lsp_mid[], Word32 lsp_new[],
                           Word32 Az[])
 {
    Word32 lsp[M];
@@ -2056,7 +2055,7 @@ static void Int_lpc_1and3(Word32 lsp_old[], Word32 lsp_mid[], Word32 lsp_new[],
  * Returns:
  *    void
  */
-static void Int_lpc_1to3(Word32 lsp_old[], Word32 lsp_new[], Word32 Az[])
+static AMR_SECTION void Int_lpc_1to3(Word32 lsp_old[], Word32 lsp_new[], Word32 Az[])
 {
    Word32 lsp[M];
    Word32 i;
@@ -2112,7 +2111,7 @@ static void Int_lpc_1to3(Word32 lsp_old[], Word32 lsp_new[], Word32 Az[])
  * Returns:
  *    void
  */
-static void D_plsf_5(D_plsfState *st, Word16 bfi, Word16 *indice, Word32 *lsp1_q, Word32 *lsp2_q)
+static AMR_SECTION void D_plsf_5(D_plsfState *st, Word16 bfi, Word16 *indice, Word32 *lsp1_q, Word32 *lsp2_q)
 {
    Word32 lsf1_r[M], lsf2_r[M], lsf1_q[M], lsf2_q[M];
    Word32 i, temp1, temp2, sign;
@@ -2235,7 +2234,7 @@ static void D_plsf_5(D_plsfState *st, Word16 bfi, Word16 *indice, Word32 *lsp1_q
  * Returns:
  *    void
  */
-static void Dec_lag3(Word32 index, Word32 t0_min, Word32 t0_max, Word32 i_subfr, Word32 T0_prev, Word32 *T0, Word32 *T0_frac, Word32 flag4)
+static AMR_SECTION void Dec_lag3(Word32 index, Word32 t0_min, Word32 t0_max, Word32 i_subfr, Word32 T0_prev, Word32 *T0, Word32 *T0_frac, Word32 flag4)
 {
    Word32 i, tmp_lag;
 
@@ -2336,7 +2335,7 @@ static void Dec_lag3(Word32 index, Word32 t0_min, Word32 t0_max, Word32 i_subfr,
  * Returns:
  *    void
  */
-static void Pred_lt_3or6_40(Word32 exc[], Word32 T0, Word32 frac, Word32 flag3)
+static AMR_SECTION void Pred_lt_3or6_40(Word32 exc[], Word32 T0, Word32 frac, Word32 flag3)
 {
    Word32 s, i;
    Word32 *x0, *x1, *x2;
@@ -2413,7 +2412,7 @@ static void Pred_lt_3or6_40(Word32 exc[], Word32 T0, Word32 frac, Word32 flag3)
  * Returns:
  *    void
  */
-static void Dec_lag6(Word32 index, Word32 pit_min, Word32 pit_max, Word32 i_subfr, Word32 *T0, Word32 *T0_frac)
+static AMR_SECTION void Dec_lag6(Word32 index, Word32 pit_min, Word32 pit_max, Word32 i_subfr, Word32 *T0, Word32 *T0_frac)
 {
    Word32 t0_min, t0_max, i;
 
@@ -2479,7 +2478,7 @@ static void Dec_lag6(Word32 index, Word32 pit_min, Word32 pit_max, Word32 i_subf
  * Returns:
  *    void
  */
-static void decompress10(Word32 MSBs, Word32 LSBs, Word32 index1, Word32 index2, Word32 index3, Word32 pos_indx[])
+static AMR_SECTION void decompress10(Word32 MSBs, Word32 LSBs, Word32 index1, Word32 index2, Word32 index3, Word32 pos_indx[])
 {
    Word32 divMSB;
 
@@ -2521,7 +2520,7 @@ static void decompress10(Word32 MSBs, Word32 LSBs, Word32 index1, Word32 index2,
  * Returns:
  *    void
  */
-static void decompress_codewords(Word16 indx[], Word32 pos_indx[])
+static AMR_SECTION void decompress_codewords(Word16 indx[], Word32 pos_indx[])
 {
    Word32 ia, ib, MSBs, LSBs, MSBs0_24, tmp;
 
@@ -2585,7 +2584,7 @@ static void decompress_codewords(Word16 indx[], Word32 pos_indx[])
  * Returns:
  *    void
  */
-static void decode_2i40_9bits(Word32 subNr, Word32 sign, Word32 index, Word32 cod[])
+static AMR_SECTION void decode_2i40_9bits(Word32 subNr, Word32 sign, Word32 index, Word32 cod[])
 {
    Word32 pos[2];
    Word32 i, j, k;
@@ -2642,7 +2641,7 @@ static void decode_2i40_9bits(Word32 subNr, Word32 sign, Word32 index, Word32 co
  * Returns:
  *    void
  */
-static void decode_2i40_11bits(Word32 sign, Word32 index, Word32 cod[])
+static AMR_SECTION void decode_2i40_11bits(Word32 sign, Word32 index, Word32 cod[])
 {
    Word32 pos[2];
    Word32 i, j;
@@ -2710,7 +2709,7 @@ static void decode_2i40_11bits(Word32 sign, Word32 index, Word32 cod[])
  * Returns:
  *    void
  */
-static void decode_3i40_14bits(Word32 sign, Word32 index, Word32 cod[])
+static AMR_SECTION void decode_3i40_14bits(Word32 sign, Word32 index, Word32 cod[])
 {
    Word32 pos[3];
    Word32 i, j;
@@ -2776,7 +2775,7 @@ static void decode_3i40_14bits(Word32 sign, Word32 index, Word32 cod[])
  * Returns:
  *    void
  */
-static void decode_4i40_17bits(Word32 sign, Word32 index, Word32 cod[])
+static AMR_SECTION void decode_4i40_17bits(Word32 sign, Word32 index, Word32 cod[])
 {
    Word32 pos[4];
    Word32 i, j;
@@ -2846,7 +2845,7 @@ static void decode_4i40_17bits(Word32 sign, Word32 index, Word32 cod[])
  * Returns:
  *    void
  */
-static void decode_8i40_31bits(Word16 index[], Word32 cod[])
+static AMR_SECTION void decode_8i40_31bits(Word16 index[], Word32 cod[])
 {
    Word32 linear_codewords[8];
    Word32 i, j, pos1, pos2, sign;
@@ -2904,7 +2903,7 @@ static void decode_8i40_31bits(Word16 index[], Word32 cod[])
  * Returns:
  *    void
  */
-static void decode_10i40_35bits(Word16 index[], Word32 cod[])
+static AMR_SECTION void decode_10i40_35bits(Word16 index[], Word32 cod[])
 {
    Word32 i, j, pos1, pos2, sign, tmp;
 
@@ -2964,7 +2963,7 @@ static void decode_10i40_35bits(Word16 index[], Word32 cod[])
  * Returns:
  *    index of the median value
  */
-static Word32 gmed_n(Word32 ind[], Word32 n)
+static AMR_SECTION Word32 gmed_n(Word32 ind[], Word32 n)
 {
    Word32 tmp[NMAX], tmp2[NMAX];
    Word32 max, medianIndex, i, j, ix = 0;
@@ -3009,7 +3008,7 @@ static Word32 gmed_n(Word32 ind[], Word32 n)
  * Returns:
  *    void
  */
-static void ec_gain_pitch(ec_gain_pitchState *st, Word16 state, Word32 *gain_pitch)
+static AMR_SECTION void ec_gain_pitch(ec_gain_pitchState *st, Word16 state, Word32 *gain_pitch)
 {
    Word32 tmp;
 
@@ -3038,7 +3037,7 @@ static void ec_gain_pitch(ec_gain_pitchState *st, Word16 state, Word32 *gain_pit
  * Returns:
  *    gain
  */
-static Word32 d_gain_pitch(enum Mode mode, Word32 index)
+static AMR_SECTION Word32 d_gain_pitch(enum Mode mode, Word32 index)
 {
    Word32 gain;
 
@@ -3073,7 +3072,7 @@ static Word32 d_gain_pitch(enum Mode mode, Word32 index)
  * Returns:
  *    gain
  */
-static void ec_gain_pitch_update(ec_gain_pitchState *st, Word32 bfi,
+static AMR_SECTION void ec_gain_pitch_update(ec_gain_pitchState *st, Word32 bfi,
                                  Word32 prev_bf, Word32 *gain_pitch)
 {
    if (bfi == 0)
@@ -3145,7 +3144,7 @@ static void ec_gain_pitch_update(ec_gain_pitchState *st, Word32 bfi,
  * Returns:
  *    void
  */
-static void gc_pred(gc_predState *st, enum Mode mode, Word32 *code, Word32 *exp_gcode0, Word32 *frac_gcode0, Word32 *exp_en, Word32 *frac_en)
+static AMR_SECTION void gc_pred(gc_predState *st, enum Mode mode, Word32 *code, Word32 *exp_gcode0, Word32 *frac_gcode0, Word32 *exp_en, Word32 *frac_en)
 {
    Word32 exp, frac, ener_code = 0, i = 0;
 
@@ -3354,7 +3353,7 @@ static void gc_pred(gc_predState *st, enum Mode mode, Word32 *code, Word32 *exp_
  * Returns:
  *    void
  */
-static void gc_pred_update(gc_predState *st, Word32 qua_ener_MR122,
+static AMR_SECTION void gc_pred_update(gc_predState *st, Word32 qua_ener_MR122,
                            Word32 qua_ener)
 {
    Word32 i;
@@ -3388,7 +3387,7 @@ static void gc_pred_update(gc_predState *st, Word32 qua_ener_MR122,
  * Returns:
  *    void
  */
-static void Dec_gain(gc_predState *pred_state, enum Mode mode, Word32 index,
+static AMR_SECTION void Dec_gain(gc_predState *pred_state, enum Mode mode, Word32 index,
                      Word32 code[], Word32 evenSubfr, Word32 *gain_pit, Word32 *gain_cod)
 {
    Word32 frac, gcode0, exp, qua_ener, qua_ener_MR122, g_code, tmp;
@@ -3502,7 +3501,7 @@ static void Dec_gain(gc_predState *pred_state, enum Mode mode, Word32 index,
  * Returns:
  *    void
  */
-static void gc_pred_average_limited(gc_predState *st, Word32 *ener_avg_MR122,
+static AMR_SECTION void gc_pred_average_limited(gc_predState *st, Word32 *ener_avg_MR122,
                                     Word32 *ener_avg)
 {
    Word32 av_pred_en, i;
@@ -3560,7 +3559,7 @@ static void gc_pred_average_limited(gc_predState *st, Word32 *ener_avg_MR122,
  * Returns:
  *    void
  */
-static void ec_gain_code(ec_gain_codeState *st, gc_predState *pred_state,
+static AMR_SECTION void ec_gain_code(ec_gain_codeState *st, gc_predState *pred_state,
                          Word16 state, Word32 *gain_code)
 {
    Word32 tmp, qua_ener_MR122, qua_ener;
@@ -3602,7 +3601,7 @@ static void ec_gain_code(ec_gain_codeState *st, gc_predState *pred_state,
  * Returns:
  *    void
  */
-static void ec_gain_code_update(ec_gain_codeState *st, Word16 bfi,
+static AMR_SECTION void ec_gain_code_update(ec_gain_codeState *st, Word16 bfi,
                                 Word16 prev_bf, Word32 *gain_code)
 {
    /* limit gain_code by previous good gain if previous frame was bad */
@@ -3645,7 +3644,7 @@ static void ec_gain_code_update(ec_gain_codeState *st, Word16 bfi,
  * Returns:
  *    void
  */
-static void d_gain_code(gc_predState *pred_state, enum Mode mode, Word32 index,
+static AMR_SECTION void d_gain_code(gc_predState *pred_state, enum Mode mode, Word32 index,
                         Word32 code[], Word32 *gain_code)
 {
    Word32 g_code0, exp, frac, qua_ener_MR122, qua_ener;
@@ -3736,7 +3735,7 @@ static void d_gain_code(gc_predState *pred_state, enum Mode mode, Word32 index,
  * Returns:
  *    void
  */
-static void Int_lsf(Word32 lsf_old[], Word32 lsf_new[], int i_subfr, Word32 lsf_out[])
+static AMR_SECTION void Int_lsf(Word32 lsf_old[], Word32 lsf_new[], int i_subfr, Word32 lsf_out[])
 {
    Word32 i;
 
@@ -3795,7 +3794,7 @@ static void Int_lsf(Word32 lsf_old[], Word32 lsf_new[], int i_subfr, Word32 lsf_
  * Returns:
  *    void
  */
-static Word32 Cb_gain_average(Cb_gain_averageState *st, enum Mode mode, Word32 gain_code, Word32 lsp[], Word32 lspAver[], Word16 bfi, Word16 prev_bf,
+static AMR_SECTION Word32 Cb_gain_average(Cb_gain_averageState *st, enum Mode mode, Word32 gain_code, Word32 lsp[], Word32 lspAver[], Word16 bfi, Word16 prev_bf,
                               Word16 pdfi, Word16 prev_pdf, Word32 inBackgroundNoise, Word32 voicedHangover)
 {
    Word32 tmp[M];
@@ -3985,7 +3984,7 @@ static Word32 Cb_gain_average(Cb_gain_averageState *st, enum Mode mode, Word32 g
  * Returns:
  *    void
  */
-static void ph_disp(ph_dispState *state, enum Mode mode, Word32 x[],
+static AMR_SECTION void ph_disp(ph_dispState *state, enum Mode mode, Word32 x[],
                     Word32 cbGain, Word32 ltpGain, Word32 inno[],
                     Word32 pitch_fac, Word32 tmp_shift)
 {
@@ -4198,7 +4197,7 @@ static void ph_disp(ph_dispState *state, enum Mode mode, Word32 x[],
  * Returns:
  *    y                 output value
  */
-static Word32 sqrt_l_exp(Word32 x, Word32 *exp)
+static AMR_SECTION Word32 sqrt_l_exp(Word32 x, Word32 *exp)
 {
    Word32 y, a, i, tmp;
    int e;
@@ -4250,7 +4249,7 @@ static Word32 sqrt_l_exp(Word32 x, Word32 *exp)
  * Returns:
  *    background noise decision; 0 = no bgn, 1 = bgn
  */
-static Word16 Ex_ctrl(Word32 excitation[], Word32 excEnergy, Word32 exEnergyHist[], Word32 voicedHangover, Word16 prevBFI, Word16 carefulFlag)
+static AMR_SECTION Word16 Ex_ctrl(Word32 excitation[], Word32 excEnergy, Word32 exEnergyHist[], Word32 voicedHangover, Word16 prevBFI, Word16 carefulFlag)
 {
    Word32 i, testEnergy, scaleFactor, avgEnergy, prevEnergy, T0;
    int exp;
@@ -4332,7 +4331,7 @@ static Word16 Ex_ctrl(Word32 excitation[], Word32 excEnergy, Word32 exEnergyHist
  * Returns:
  *    y                 1/sqrt(x)
  */
-static Word32 Inv_sqrt(Word32 x)
+static AMR_SECTION Word32 Inv_sqrt(Word32 x)
 {
    int i, a, tmp, exp;
    Word32 y;
@@ -4393,7 +4392,7 @@ static Word32 Inv_sqrt(Word32 x)
  * Returns:
  *    Energy
  */
-static Word32 energy_old(Word32 in[])
+static AMR_SECTION Word32 energy_old(Word32 in[])
 {
    Word32 temp, i, sum = 0;
 
@@ -4437,7 +4436,7 @@ static Word32 energy_old(Word32 in[])
  * Returns:
  *    Energy
  */
-static Word32 energy_new(Word32 in[])
+static AMR_SECTION Word32 energy_new(Word32 in[])
 {
    Word32 i, s = 0, overflow = 0;
 
@@ -4481,7 +4480,7 @@ static Word32 energy_new(Word32 in[])
  * Returns:
  *    Energy
  */
-static void agc2(Word32 *sig_in, Word32 *sig_out)
+static AMR_SECTION void agc2(Word32 *sig_in, Word32 *sig_out)
 {
    Word32 s;
    int i, exp;
@@ -4565,7 +4564,7 @@ static void agc2(Word32 *sig_in, Word32 *sig_out)
  * Returns:
  *    inbgNoise         background noise decision; 0 = no bgn, 1 = bgn
  */
-static Word16 Bgn_scd(Bgn_scdState *st, Word32 ltpGainHist[], Word32 speech[],
+static AMR_SECTION Word16 Bgn_scd(Bgn_scdState *st, Word32 ltpGainHist[], Word32 speech[],
                       Word32 *voicedHangover)
 {
    Word32 temp, ltpLimit, frame_energyMin, currEnergy, noiseFloor, maxEnergy,
@@ -4725,7 +4724,7 @@ static Word16 Bgn_scd(Bgn_scdState *st, Word32 ltpGainHist[], Word32 speech[],
  * Returns:
  *    void
  */
-static void dtx_dec_activity_update(dtx_decState *st, Word32 lsf[], Word32 frame[])
+static AMR_SECTION void dtx_dec_activity_update(dtx_decState *st, Word32 lsf[], Word32 frame[])
 {
    Word32 frame_en;
    Word32 log_en_e, log_en_m, log_en, i;
@@ -4791,7 +4790,7 @@ static void dtx_dec_activity_update(dtx_decState *st, Word32 lsf[], Word32 frame
  * Returns:
  *    void
  */
-static void Decoder_amr(Decoder_amrState *st, enum Mode mode, Word16 parm[],
+static AMR_SECTION void Decoder_amr(Decoder_amrState *st, enum Mode mode, Word16 parm[],
                         enum RXFrameType frame_type, Word32 synth[], Word32 A_t[])
 {
    /* LSPs */
@@ -5524,7 +5523,7 @@ theEnd:
  * Returns:
  *    void
  */
-static void Residu40(Word32 a[], Word32 x[], Word32 y[])
+static AMR_SECTION void Residu40(Word32 a[], Word32 x[], Word32 y[])
 {
    Word32 s, i, j;
 
@@ -5578,7 +5577,7 @@ static void Residu40(Word32 a[], Word32 x[], Word32 y[])
  * Returns:
  *    void
  */
-static void agc(agcState *st, Word32 *sig_in, Word32 *sig_out, Word16 agc_fac)
+static AMR_SECTION void agc(agcState *st, Word32 *sig_in, Word32 *sig_out, Word16 agc_fac)
 {
    Word32 s, gain_in, gain_out, g0, gain;
    int exp, i;
@@ -5705,7 +5704,7 @@ static void agc(agcState *st, Word32 *sig_in, Word32 *sig_out, Word16 agc_fac)
  * Returns:
  *    void
  */
-static void Post_Filter(Post_FilterState *st, enum Mode mode, Word32 *syn,
+static AMR_SECTION void Post_Filter(Post_FilterState *st, enum Mode mode, Word32 *syn,
                         Word32 *Az_4)
 {
    Word32 h[22], Ap3[MP1], Ap4[MP1]; /* bandwidth expanded LP parameters */
@@ -5853,7 +5852,7 @@ static void Post_Filter(Post_FilterState *st, enum Mode mode, Word32 *syn,
  * Returns:
  *    void
  */
-static void Post_Process(Post_ProcessState *st, Word32 signal[])
+static AMR_SECTION void Post_Process(Post_ProcessState *st, Word32 signal[])
 {
    Word32 x2, tmp, i = 0;
    Word32 mask = 0x40000000;
@@ -5967,7 +5966,7 @@ void Speech_Decode_Frame(void *st, enum Mode mode, Word16 *parm, enum RXFrameTyp
  * Returns:
  *    Void
  */
-static void Decoder_amr_exit(Decoder_amrState **state)
+static AMR_SECTION void Decoder_amr_exit(Decoder_amrState **state)
 {
    if (state == NULL || *state == NULL)
       return;
@@ -6000,7 +5999,7 @@ static void Decoder_amr_exit(Decoder_amrState **state)
  * Returns:
  *    Void
  */
-static void Post_Filter_exit(Post_FilterState **state)
+static AMR_SECTION void Post_Filter_exit(Post_FilterState **state)
 {
    if (state == NULL || *state == NULL)
       return;
@@ -6025,7 +6024,7 @@ static void Post_Filter_exit(Post_FilterState **state)
  * Returns:
  *    -1 failure
  */
-static int Post_Process_reset(Post_ProcessState *state)
+static AMR_SECTION int Post_Process_reset(Post_ProcessState *state)
 {
    if ((Post_ProcessState *)state == NULL)
    {
@@ -6054,7 +6053,7 @@ static int Post_Process_reset(Post_ProcessState *state)
  * Returns:
  *    Void
  */
-static void Post_Process_exit(Post_ProcessState **state)
+static AMR_SECTION void Post_Process_exit(Post_ProcessState **state)
 {
    if (state == NULL || *state == NULL)
       return;
@@ -6078,7 +6077,7 @@ static void Post_Process_exit(Post_ProcessState **state)
  * Returns:
  *    success = 0
  */
-static int Decoder_amr_init(Decoder_amrState **state)
+static AMR_SECTION int Decoder_amr_init(Decoder_amrState **state)
 {
    Decoder_amrState *s;
 
@@ -6195,7 +6194,7 @@ static int Decoder_amr_init(Decoder_amrState **state)
  * Returns:
  *    -1 failure
  */
-static int Post_Filter_reset(Post_FilterState *state)
+static AMR_SECTION int Post_Filter_reset(Post_FilterState *state)
 {
    if ((Post_FilterState *)state == NULL)
    {
@@ -6223,7 +6222,7 @@ static int Post_Filter_reset(Post_FilterState *state)
  * Returns:
  *    success = 0
  */
-static int Post_Filter_init(Post_FilterState **state)
+static AMR_SECTION int Post_Filter_init(Post_FilterState **state)
 {
    Post_FilterState *s;
 
@@ -6267,7 +6266,7 @@ static int Post_Filter_init(Post_FilterState **state)
  * Returns:
  *    success = 0
  */
-static int Post_Process_init(Post_ProcessState **state)
+static AMR_SECTION int Post_Process_init(Post_ProcessState **state)
 {
    Post_ProcessState *s;
 

@@ -295,7 +295,7 @@ static int fram_spi_device_init(void)
         }
     } while (rt_device_find(dev_name));
 
-//    rt_hw_soft_spi_device_attach(BSP_FM25xx_SPI_BUS, dev_name, BSP_FM25xx_SPI_CS_PIN);
+//    rt_hw_soft_spi_device_attach(BSP_FM25xx_SPI_BUS, dev_name, rt_pin_get(BSP_FM25xx_SPI_CS_PIN));
     rt_hw_spi_device_attach(BSP_FM25xx_SPI_BUS, dev_name, rt_pin_get(BSP_FM25xx_SPI_CS_PIN));
     fm25xx_spidev = (struct rt_spi_device *)rt_device_find(dev_name);
     if (fm25xx_spidev == NULL)
@@ -335,7 +335,6 @@ static int fal_fram_init(void)
     return ret;
 }
 
-#define READ_SIZE 16
 static int fal_fram_read(long offset, rt_uint8_t *buf, size_t size)
 {
     uint32_t addr = fm25xx_fram.addr + offset;
@@ -350,38 +349,15 @@ static int fal_fram_read(long offset, rt_uint8_t *buf, size_t size)
         return 0;
     }
 
-    uint32_t addr_page = addr;
-    uint8_t *buf_page = (uint8_t *) buf;
-    size_t size_less = size;
-    size_t size_page = READ_SIZE;
-    size_t countmax = (size % READ_SIZE == 0) ? (size / READ_SIZE) : (size / READ_SIZE + 1);
+    /* 发送读命令 */
+    uint8_t cmd[] = { FM25xx_CMD_READ, (uint8_t) ((addr) >> 16U), (uint8_t) ((addr) >> 8U), (uint8_t) ((addr)) };
 
-    for (size_t count = 0; count < countmax; count++)
+    /* 读数据 */
+    rt_err_t ret = rt_spi_send_then_recv(fm25xx_spidev, cmd, sizeof(cmd), buf, size);
+    if (ret != RT_EOK)
     {
-        /* 计算页长度 */
-        if (size_less >= READ_SIZE)
-        {
-            size_page = READ_SIZE;
-        }
-        else
-        {
-            size_page = size_less % READ_SIZE;
-        }
-
-        /* 发送读命令 */
-        uint8_t cmd[] = { FM25xx_CMD_READ, (uint8_t) ((addr_page) >> 16U), (uint8_t) ((addr_page) >> 8U), (uint8_t) ((addr_page)) };
-
-        /* 读数据 */
-        rt_err_t ret = rt_spi_send_then_recv(fm25xx_spidev, cmd, sizeof(cmd), buf_page, size_page);
-        if (ret != RT_EOK)
-        {
-            LOG_E("read data error %d!", ret);
-            return -RT_EIO;
-        }
-
-        addr_page += size_page;
-        buf_page += size_page;
-        size_less -= size_page;
+        LOG_E("read data error %d!", ret);
+        return -RT_EIO;
     }
 
     LOG_HEX("read", 16, buf, (size > 64)?(64):(size));
@@ -389,6 +365,7 @@ static int fal_fram_read(long offset, rt_uint8_t *buf, size_t size)
 
     return size;
 }
+
 static int fal_fram_write(long offset, const rt_uint8_t *buf, size_t size)
 {
     uint32_t addr = fm25xx_fram.addr + offset;

@@ -66,6 +66,10 @@ menu "Test functions and examples"
         bool "Enable max31826 example"
         default n
         
+    config BSP_USING_TPA626_TEST
+    	bool "Enable tpa626 test"
+    	default n
+        
     config BSP_USING_DS28E01_EXAMPLE
         bool "Enable ds28e01 example"
         default n
@@ -129,6 +133,12 @@ menu "Test functions and examples"
     menuconfig BSP_USING_MCP2517FD_TEST
         bool "Enable mcp2517fd test"
         default n
+
+    menuconfig BSP_USING_TRDP_PD_TEST
+        bool "Enable trdp pd test"
+        default n
+        
+    source "applications/conformance_test_of_trdp/Kconfig"
 endmenu
 
 menu "Product Application and Function"

@@ -24,6 +24,8 @@
 #ifndef _interf_dec_h_
 #define _interf_dec_h_
 
+#include "typedef.h"
+
 /*
  * Function prototypes
  */
@@ -40,16 +42,16 @@ void Decoder_Interface_Decode(void *st,
                                short *bits,
 #endif
 
-                              short *synth, int bfi);
+                              short *synth, int bfi) AMR_SECTION;
 
 /*
  * Reserve and init. memory
  */
-void *Decoder_Interface_init(void);
+void *Decoder_Interface_init(void) AMR_SECTION;
 
 /*
  * Exit and free memory
  */
-void Decoder_Interface_exit(void *state);
+void Decoder_Interface_exit(void *state) AMR_SECTION;
 
 #endif

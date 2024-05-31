@@ -13,6 +13,8 @@
 #ifndef _TYPEDEF_H
 #define _TYPEDEF_H
 
+#include "board.h"
+
 #if defined(_MSC_VER) && (_MSC_VER < 1600)
 typedef __int8 int8_t;
 typedef unsigned __int8 uint8_t;
@@ -28,5 +30,12 @@ typedef int16_t Word16;
 typedef int32_t Word32;
 typedef float Float32;
 typedef float Float64;
+
+#ifdef SOC_SERIES_STM32F4
+#define AMR_SECTION __attribute__((section(".lowcode")))
+#endif
+#ifdef SOC_SERIES_STM32H7
+#define AMR_SECTION
+#endif
 
 #endif

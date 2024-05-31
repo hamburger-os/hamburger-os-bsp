@@ -15,15 +15,16 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-#define UART_MAX_LEN 256
+#define UART_MAX_LEN 2048
 
 struct _uart_test
 {
     rt_device_t                 uart_dev;
     rt_thread_t                 uart_thread;
     rt_mq_t                     uart_mq;
-    struct rt_ringbuffer *      rb;
     int                         thread_is_run;
+    rt_uint32_t                 parity_bit;
+    rt_uint32_t                 baud;
 };
 static struct _uart_test uart_test = {
     .thread_is_run = 0,
@@ -63,52 +64,37 @@ static void uart_thread_entry(void *parameter)
     rt_err_t result = RT_EOK;
     uint8_t buffer[UART_MAX_LEN];
 
-    LOG_D("thread startup...");
     while (ptest->thread_is_run)
     {
         rt_memset(&msg, 0, sizeof(msg));
         rt_memset(buffer, 0, sizeof(buffer));
         /* 从消息队列中读取消息 */
-        result = rt_mq_recv(ptest->uart_mq, &msg, sizeof(msg), 100);
+        result = rt_mq_recv(ptest->uart_mq, &msg, sizeof(msg), RT_WAITING_FOREVER);
         //当正确接受消息队列代表驱动送回接收信号
         if (result == RT_EOK)
         {
+            msg.size = (msg.size > UART_MAX_LEN)?(UART_MAX_LEN):(msg.size);
             /* 从串口读取数据 */
-            length_r = rt_device_read(ptest->uart_dev, 0, buffer, msg.size);
+            length_r = rt_device_read(ptest->uart_dev, 0, buffer, UART_MAX_LEN);
+
+            LOG_D("rd : (%d %d)", msg.size, length_r);
+            LOG_HEX("rd", 16, buffer, length_r);
+            /* echo 回显测试 */
             if (length_r > 0)
             {
-                rt_ringbuffer_put(ptest->rb, buffer, length_r);
-            }
-        }
-        //当消息队列超时说明已经持续一段时间未收到消息
-        //这个超时时间取决于波特率和协议的最大长度
-        //例如波特率9600，协议最大长度96，这时设置为100
-        else if (result == -RT_ETIMEOUT)
-        {
-            length_r = rt_ringbuffer_data_len(ptest->rb);
-            if (length_r > 0)
-            {
-                rt_ringbuffer_get(ptest->rb, buffer, length_r);
-                /* echo 回显测试 */
                 length_w = rt_device_write(ptest->uart_dev, 0, buffer, length_r);
-                LOG_D("read : (%d)%s", length_r, (char *)buffer);
-                LOG_HEX("rd", 16, buffer, length_r);
                 if (length_w != length_r)
                 {
-                    LOG_E("write error %d/%d.", length_w, length_r);
+                    LOG_E("wr error %d/%d.", length_w, length_r);
                 }
                 else
                 {
-                    LOG_D("write : (%d)%s", length_w, (char *)buffer);
+                    LOG_D("wr : (%d %d)", length_w, length_r);
                     LOG_HEX("wr", 16, buffer, length_w);
                 }
             }
         }
     }
-
-    rt_mq_delete(ptest->uart_mq);
-    rt_device_close(ptest->uart_dev);
-    LOG_D("thread exited!");
 }
 
 static void uart_echo_test(int argc, char **argv)
@@ -118,6 +104,7 @@ static void uart_echo_test(int argc, char **argv)
         rt_kprintf("Usage: uarttest [cmd]\n");
         rt_kprintf("       uarttest --probe [dev_name]\n");
         rt_kprintf("       uarttest --baud [baud, e.g 115200]\n");
+        rt_kprintf("       uarttest --parity [parity bit, e.g odd, even, none]\n");
         rt_kprintf("       uarttest --start\n");
         rt_kprintf("       uarttest --write [data]\n");
         rt_kprintf("       uarttest --stop\n");
@@ -128,11 +115,13 @@ static void uart_echo_test(int argc, char **argv)
         {
             /* 查找 uart 设备 */
             uart_test.uart_dev = rt_device_find(argv[2]);
+            uart_test.baud = 115200;
+            uart_test.parity_bit = PARITY_NONE;
             if (uart_test.uart_dev != NULL)
             {
                 struct serial_configure config = RT_SERIAL_CONFIG_DEFAULT;
                 /* step2：修改串口配置参数 */
-                config.baud_rate = BAUD_RATE_115200;        // 修改波特率为 115200
+                config.baud_rate = 115200;        // 修改波特率为 115200
                 config.data_bits = DATA_BITS_8;             // 数据位 8
                 config.stop_bits = STOP_BITS_1;             // 停止位 1
                 config.parity    = PARITY_NONE;             // 无奇偶校验位
@@ -156,14 +145,53 @@ static void uart_echo_test(int argc, char **argv)
         {
             if (uart_test.uart_dev != NULL)
             {
-                uint32_t baud = strtoul(argv[2], NULL, 10);
+                uart_test.baud = strtoul(argv[2], NULL, 10);
 
                 struct serial_configure config = RT_SERIAL_CONFIG_DEFAULT;
                 /* step2：修改串口配置参数 */
-                config.baud_rate = baud;
+                config.baud_rate = uart_test.baud;
                 config.data_bits = DATA_BITS_8;             // 数据位 8
                 config.stop_bits = STOP_BITS_1;             // 停止位 1
-                config.parity    = PARITY_NONE;             // 无奇偶校验位
+                config.parity    = uart_test.parity_bit;             // 无奇偶校验位
+#ifdef RT_USING_SERIAL_V2
+                config.rx_bufsz  = UART_MAX_LEN;
+                config.tx_bufsz  = UART_MAX_LEN;
+#endif
+#ifdef RT_USING_SERIAL_V1
+                config.bufsz     = UART_MAX_LEN;
+#endif
+
+                /* step3：控制串口设备。通过控制接口传入命令控制字，与控制参数 */
+                rt_device_control(uart_test.uart_dev, RT_DEVICE_CTRL_CONFIG, &config);
+            }
+            else
+            {
+                LOG_E("device does not exist!");
+            }
+        }
+        else if ((rt_strcmp(argv[1], "--parity") == 0) && ((rt_strcmp(argv[2], "none") == 0) || (rt_strcmp(argv[2], "odd") == 0) || (rt_strcmp(argv[2], "even") == 0)))
+        {
+            if (uart_test.uart_dev != NULL)
+            {
+                if(rt_strcmp(argv[2], "odd") == 0)
+                {
+                    uart_test.parity_bit = PARITY_ODD;
+                }
+                else if(rt_strcmp(argv[2], "even") == 0)
+                {
+                    uart_test.parity_bit = PARITY_EVEN;
+                }
+                else
+                {
+                    uart_test.parity_bit = PARITY_NONE;
+                }
+
+                struct serial_configure config = RT_SERIAL_CONFIG_DEFAULT;
+                /* step2：修改串口配置参数 */
+                config.baud_rate = uart_test.baud;
+                config.data_bits = DATA_BITS_8;             // 数据位 8
+                config.stop_bits = STOP_BITS_1;             // 停止位 1
+                config.parity    = uart_test.parity_bit;    // 无奇偶校验位
 #ifdef RT_USING_SERIAL_V2
                 config.rx_bufsz  = UART_MAX_LEN;
                 config.tx_bufsz  = UART_MAX_LEN;
@@ -189,7 +217,7 @@ static void uart_echo_test(int argc, char **argv)
                 if (rt_device_open(uart_test.uart_dev, RT_DEVICE_FLAG_RX_NON_BLOCKING | RT_DEVICE_FLAG_TX_BLOCKING) != RT_EOK)
 #endif
 #ifdef RT_USING_SERIAL_V1
-                if (rt_device_open(uart_test.uart_dev, RT_DEVICE_FLAG_DMA_RX) != RT_EOK)
+                if (rt_device_open(uart_test.uart_dev, RT_DEVICE_FLAG_INT_RX) != RT_EOK)
 #endif
                 {
                     LOG_E("open '%s' error!", argv[2]);
@@ -197,7 +225,10 @@ static void uart_echo_test(int argc, char **argv)
                 /* 设置接收回调函数 */
                 rt_device_set_rx_indicate(uart_test.uart_dev, uart_rx_call);
                 /* 初始化 uart 接收消息队列 */
-                uart_test.uart_mq = rt_mq_create("uart", sizeof(struct rx_msg), 8, RT_IPC_FLAG_FIFO);
+                if (uart_test.uart_mq == RT_NULL)
+                {
+                    uart_test.uart_mq = rt_mq_create("uart", sizeof(struct rx_msg), 8, RT_IPC_FLAG_FIFO);
+                }
             }
             else
             {
@@ -205,10 +236,8 @@ static void uart_echo_test(int argc, char **argv)
             }
             if (uart_test.uart_thread == RT_NULL)
             {
-                /* 创建环形缓冲区 */
-                uart_test.rb = rt_ringbuffer_create(UART_MAX_LEN);
                 /* 创建 app 线程 */
-                uart_test.uart_thread = rt_thread_create("uart", uart_thread_entry, &uart_test, 3072, 26, 10);
+                uart_test.uart_thread = rt_thread_create("uart", uart_thread_entry, &uart_test, 4096, 26, 10);
                 /* 创建成功则启动线程 */
                 if (uart_test.uart_thread != RT_NULL)
                 {
@@ -219,10 +248,6 @@ static void uart_echo_test(int argc, char **argv)
                 {
                     LOG_E("thread create error!");
                 }
-            }
-            else
-            {
-                LOG_W("thread already exists!");
             }
         }
         else if (rt_strcmp(argv[1], "--write") == 0)
@@ -248,15 +273,14 @@ static void uart_echo_test(int argc, char **argv)
         }
         else if (rt_strcmp(argv[1], "--stop") == 0)
         {
-            rt_ringbuffer_destroy(uart_test.rb);
-            uart_test.uart_thread = RT_NULL;
-            uart_test.thread_is_run = 0;
+            rt_device_close(uart_test.uart_dev);
         }
         else
         {
             rt_kprintf("Usage: uarttest [cmd]\n");
             rt_kprintf("       uarttest --probe [dev_name]\n");
             rt_kprintf("       uarttest --baud [baud, e.g 115200]\n");
+            rt_kprintf("       uarttest --parity [parity bit, e.g odd, even, none]\n");
             rt_kprintf("       uarttest --start\n");
             rt_kprintf("       uarttest --write [data]\n");
             rt_kprintf("       uarttest --stop\n");

@@ -18,12 +18,12 @@
 #include "dfs_ext.h"
 #include "dfs_ext_blockdev.h"
 
-static int blockdev_lock(struct ext4_blockdev *bdev);
-static int blockdev_unlock(struct ext4_blockdev *bdev);
-static int blockdev_open(struct ext4_blockdev *bdev);
-static int blockdev_read(struct ext4_blockdev *bdev, void *buf, uint64_t blk_id, uint32_t blk_cnt);
-static int blockdev_write(struct ext4_blockdev *bdev, const void *buf, uint64_t blk_id, uint32_t blk_cnt);
-static int blockdev_close(struct ext4_blockdev *bdev);
+static int blockdev_lock(struct ext4_blockdev *bdev) EXT_SECTION;
+static int blockdev_unlock(struct ext4_blockdev *bdev) EXT_SECTION;
+static int blockdev_open(struct ext4_blockdev *bdev) EXT_SECTION;
+static int blockdev_read(struct ext4_blockdev *bdev, void *buf, uint64_t blk_id, uint32_t blk_cnt) EXT_SECTION;
+static int blockdev_write(struct ext4_blockdev *bdev, const void *buf, uint64_t blk_id, uint32_t blk_cnt) EXT_SECTION;
+static int blockdev_close(struct ext4_blockdev *bdev) EXT_SECTION;
 
 static rt_mutex_t bdevice_mutex = RT_NULL;
 
@@ -76,29 +76,6 @@ static int blockdev_open(struct ext4_blockdev *bdev)
         return r;
     }
 
-    struct rt_device_blk_geometry geometry;
-    r = rt_device_control(device, RT_DEVICE_CTRL_BLK_GETGEOME, &geometry);
-    if (r == RT_EOK)
-    {
-        if (geometry.block_size != geometry.bytes_per_sector)
-        {
-            rt_kprintf("block device: block size != bytes_per_sector\n");
-            rt_device_close(device);
-            return -RT_EIO;
-        }
-
-        bdev->part_offset = 0;
-        bdev->part_size = geometry.sector_count * geometry.bytes_per_sector;
-        bdev->bdif->ph_bsize = geometry.block_size;
-        bdev->bdif->ph_bcnt = bdev->part_size / bdev->bdif->ph_bsize;
-    }
-    else
-    {
-        rt_kprintf("block device: get geometry failed!\n");
-        rt_device_close(device);
-        return -RT_EIO;
-    }
-
     return r;
 }
 
@@ -123,6 +100,7 @@ static int blockdev_read(struct ext4_blockdev *bdev, void *buf, uint64_t blk_id,
     else
     {
         result = RT_EIO;
+        result = -RT_EIO;
     }
 
     return result;
@@ -149,6 +127,7 @@ static int blockdev_write(struct ext4_blockdev *bdev, const void *buf,
     else
     {
         result = RT_EIO;
+        result = -RT_EIO;
     }
 
     return result;
@@ -170,6 +149,7 @@ static int blockdev_close(struct ext4_blockdev *bdev)
     if (r != RT_EOK)
     {
         return r;
+        return -RT_EIO;
     }
 
     return r;
@@ -220,9 +200,14 @@ int dfs_ext4_blockdev_init(struct dfs_ext4_blockdev* dbd, rt_device_t devid)
                 return -RT_EIO;
             }
 
-            bd->part_size = (uint64_t)geometry.sector_count * geometry.bytes_per_sector;
+            bd->part_offset = 0;
             bd->bdif->ph_bsize = geometry.block_size;
-            bd->bdif->ph_bcnt = bd->part_size / bd->bdif->ph_bsize;
+            bd->bdif->ph_bcnt = (uint64_t)geometry.sector_count;//TODO:没办法解析大于4GB的emmc？u盘16GB可以正确读写
+            bd->part_size = bd->bdif->ph_bcnt * bd->bdif->ph_bsize;
+            rt_kprintf("ext geometry '%s': len %u MB, cnt %u, block %u\n"
+                        , device->parent.name
+                        , (uint32_t)(bd->part_size / 1024 / 1024)
+                        , (uint32_t)bd->bdif->ph_bcnt, bd->bdif->ph_bsize);
         }
         else
         {

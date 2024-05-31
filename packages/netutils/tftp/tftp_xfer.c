@@ -17,6 +17,10 @@
 #include "tftp_xfer.h"
 #include "tftp.h"
 
+#define DBG_TAG "tftp"
+#define DBG_LVL DBG_LOG
+#include <rtdbg.h>
+
 struct tftp_xfer_private
 {
     struct sockaddr_in server;
@@ -46,16 +50,16 @@ void tftp_transfer_err(struct tftp_xfer *xfer, uint16_t err_no, const char *err_
 {
     uint16_t *snd_packet;
     struct tftp_xfer_private *_private;
-    int str_len;
+    size_t str_len;
 
     /* Calculate error message length */
-    str_len = rt_strlen(err_msg);
+    str_len = strlen(err_msg);
     if (str_len > 512)
     {
         str_len = 512;
     }
     /* maloc mem */
-    snd_packet = rt_malloc(str_len + 4);
+    snd_packet = malloc(str_len + 4);
     if (snd_packet == NULL)
     {
         return;
@@ -64,7 +68,7 @@ void tftp_transfer_err(struct tftp_xfer *xfer, uint16_t err_no, const char *err_
     // Send err msg.
     snd_packet[0] = htons(TFTP_CMD_ERROR);
     snd_packet[1] = htons(err_no);
-    rt_strncpy((char *)&snd_packet[2], err_msg, str_len);
+    strcpy((char *)&snd_packet[2], err_msg);
     sendto(xfer->sock, snd_packet, str_len + 4, 0, (struct sockaddr *)&_private->sender, sizeof(struct sockaddr_in));
     free(snd_packet);
 }
@@ -142,17 +146,17 @@ int tftp_read_data(struct tftp_xfer *xfer, struct tftp_packet *pack, int len)
     }
     else if (r_size < 4)
     {
-        tftp_printf("Bad packet: r_size=%d\n", r_size);
+        tftp_printf("Bad packet: r_size=%d", r_size);
         return -TFTP_EDATA;
     }
     else if (ntohs(pack->cmd) == TFTP_CMD_ERROR)
     {
-        tftp_printf("err[%d] msg:%s code:%d\n", ntohs(pack->info.code), pack->data, ntohs(pack->info.code));
+        tftp_printf("err[%d] msg:%s code:%d", ntohs(pack->info.code), pack->data, ntohs(pack->info.code));
         return -TFTP_ECMD;
     }
     else if ((_private->block + 1) != pack->info.block)
     {
-        tftp_printf("Bad block recv:%d != check:%d\n", _private->block + 1, pack->info.block);
+        tftp_printf("Bad block recv:%d != check:%d", _private->block + 1, pack->info.block);
         return -TFTP_EBLK;
     }
 
@@ -195,7 +199,7 @@ int tftp_send_request(struct tftp_xfer *xfer, uint16_t cmd, const char *remote_f
         }
     }
     /* malloc mem */
-    send_packet = rt_malloc(sizeof(struct tftp_packet));
+    send_packet = malloc(sizeof(struct tftp_packet));
     if (send_packet == NULL)
     {
         return -TFTP_EMEM;
@@ -207,7 +211,7 @@ int tftp_send_request(struct tftp_xfer *xfer, uint16_t cmd, const char *remote_f
     /* send data */
     r_size = sendto(xfer->sock, send_packet, size, 0,
         (struct sockaddr *)&_private->server, sizeof(struct sockaddr_in));
-    rt_free(send_packet);
+    free(send_packet);
     if (size != r_size)
     {
         return -TFTP_EXFER;
@@ -298,7 +302,7 @@ int tftp_xfer_type_set(struct tftp_xfer *xfer, int type)
             /* Binding port */
             if (bind(xfer->sock, (struct sockaddr *)&_private->server, sizeof(struct sockaddr_in)) < 0)
             {
-                tftp_printf("tftp server bind failed!! exit\n");
+                tftp_printf("tftp server bind failed!! exit");
                 return -TFTP_ESYS;
             }
             xfer->type = TFTP_XFER_TYPE_SERVER;
@@ -312,7 +316,7 @@ void tftp_xfer_mode_set(struct tftp_xfer *xfer, const char *mode)
 {
     if (xfer->mode)
     {
-        rt_free(xfer->mode);
+        free(xfer->mode);
     }
     xfer->mode = rt_strdup(mode);
 }
@@ -337,10 +341,10 @@ struct tftp_xfer *tftp_xfer_create(const char *ip_addr, int port)
 
     /* malloc connect object */
     mem_len = sizeof(struct tftp_xfer) + sizeof(struct tftp_xfer_private);
-    xfer = rt_malloc(mem_len);
+    xfer = malloc(mem_len);
     if (xfer == NULL)
     {
-        tftp_printf("can't create tftp transfer!! exit\n");
+        tftp_printf("can't create tftp transfer!! exit");
         return NULL;
     }
     rt_memset(xfer, 0, mem_len);
@@ -350,8 +354,8 @@ struct tftp_xfer *tftp_xfer_create(const char *ip_addr, int port)
     sock = socket(PF_INET, SOCK_DGRAM, 0);
     if (sock < 0)
     {
-        tftp_printf("can't create socket!! exit\n");
-        rt_free(xfer);
+        tftp_printf("can't create socket!! exit");
+        free(xfer);
         return NULL;
     }
 
@@ -369,11 +373,17 @@ struct tftp_xfer *tftp_xfer_create(const char *ip_addr, int port)
 void tftp_xfer_destroy(struct tftp_xfer *xfer)
 {
     struct tftp_xfer_private *_private;
-
+    if (xfer == NULL)
+    {
+        return;
+    }
     /* free all mem */
     _private = xfer->_private;
     closesocket(xfer->sock);
-    rt_free(_private->ip_addr);
-    rt_free(xfer->mode);
-    rt_free(xfer);
+    if (_private && _private->ip_addr)
+    {
+        free(_private->ip_addr);
+    }
+    free(xfer->mode);
+    free(xfer);
 }

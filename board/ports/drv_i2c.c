@@ -71,7 +71,11 @@ static struct stm32_i2c i2c_obj[sizeof(i2c_config) / sizeof(i2c_config[0])];
 
 static void stm32_i2c_hal_init(struct stm32_i2c_config *config);
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static rt_ssize_t stm32_master_xfer(struct rt_i2c_bus_device *bus,
+#else
 static rt_size_t stm32_master_xfer(struct rt_i2c_bus_device *bus,
+#endif
                                  struct rt_i2c_msg msgs[],
                                  rt_uint32_t num)
 {

@@ -20,7 +20,15 @@
 #include <string.h>
 #include "tftp.h"
 
+#define DBG_TAG "tftp"
+#define DBG_LVL DBG_LOG
+#include <rtdbg.h>
+
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+rt_weak void *tftp_file_open(const char *fname, const char *mode, int is_write)
+#else
 RT_WEAK void *tftp_file_open(const char *fname, const char *mode, int is_write)
+#endif
 {
     int fd = 0;
 
@@ -43,21 +51,33 @@ RT_WEAK void *tftp_file_open(const char *fname, const char *mode, int is_write)
     return (void *)fd;
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+rt_weak int tftp_file_write(void *handle, int pos, void *buff, int len)
+#else
 RT_WEAK int tftp_file_write(void *handle, int pos, void *buff, int len)
+#endif
 {
     int fd = (int)handle;
 
     return write(fd, buff, len);
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+rt_weak int tftp_file_read(void *handle, int pos, void *buff, int len)
+#else
 RT_WEAK int tftp_file_read(void *handle, int pos, void *buff, int len)
+#endif
 {
     int fd = (int)handle;
 
     return read(fd, buff, len);
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+rt_weak void tftp_file_close(void *handle)
+#else
 RT_WEAK void tftp_file_close(void *handle)
+#endif
 {
     close((int)handle);
 }

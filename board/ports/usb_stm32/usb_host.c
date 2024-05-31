@@ -26,7 +26,7 @@
 #include "usbh_cdc.h"
 #include "usbh_msc.h"
 #include "usbh_hid.h"
-#include "usbh_mtp.h"
+//#include "usbh_mtp.h"
 
 #include "usbh_diskio.h"
 
@@ -80,16 +80,16 @@ void MX_USB_HOST_Init(void)
     {
         Error_Handler();
     }
-    if (USBH_RegisterClass(&hUsbHost, USBH_MTP_CLASS) != USBH_OK)
-    {
-        Error_Handler();
-    }
+//    if (USBH_RegisterClass(&hUsbHost, USBH_MTP_CLASS) != USBH_OK)
+//    {
+//        Error_Handler();
+//    }
     if (USBH_Start(&hUsbHost) != USBH_OK)
     {
         Error_Handler();
     }
 
-    USBH_UsrLog("MX USB HOST Init Pass.");
+    USBH_UsrLog("Init successfully");
 }
 
 /*
@@ -101,21 +101,29 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
     {
     case HOST_USER_SELECT_CONFIGURATION:
     {
-        LOG_D("SELECT_CONFIGURATION");
+        USBH_DbgLog("SELECT_CONFIGURATION");
     }
         break;
 
     case HOST_USER_CLASS_ACTIVE:
     {
         USBH_ClassTypeDef *pActiveClass = phost->pActiveClass;
-        LOG_D("CLASS_ACTIVE '%s'", pActiveClass->Name);
+        USBH_DbgLog("CLASS_ACTIVE '%s'", pActiveClass->Name);
         if (rt_strcmp(pActiveClass->Name, "MSC") == 0)
         {
             MSC_HandleTypeDef *MSC_Handle = (MSC_HandleTypeDef *) pActiveClass->pData;
             if (MSC_Handle->unit[MSC_Handle->current_lun].error == MSC_OK)
             {
-                LOG_D("MSC_OK %d %d", MSC_Handle->state, MSC_Handle->current_lun);
+                USBH_DbgLog("MSC_OK %d %d", MSC_Handle->state, MSC_Handle->current_lun);
                 USBH_diskio_initialize(MSC_Handle);
+            }
+            else if (MSC_Handle->unit[MSC_Handle->current_lun].error == MSC_NOT_READY)
+            {
+                USBH_ErrLog("MSC_NOT_READY %d %d", MSC_Handle->state, MSC_Handle->current_lun);
+            }
+            else if (MSC_Handle->unit[MSC_Handle->current_lun].error == MSC_ERROR)
+            {
+                USBH_ErrLog("MSC_ERROR %d %d", MSC_Handle->state, MSC_Handle->current_lun);
             }
         }
     }
@@ -123,32 +131,32 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 
     case HOST_USER_CLASS_SELECTED:
     {
-        LOG_D("CLASS_SELECTED");
+        USBH_DbgLog("CLASS_SELECTED");
     }
         break;
 
     case HOST_USER_CONNECTION:
     {
-        LOG_D("CONNECTION");
+        USBH_DbgLog("CONNECTION");
     }
         break;
 
     case HOST_USER_DISCONNECTION:
     {
-        LOG_D("DISCONNECTION");
+        USBH_DbgLog("DISCONNECTION");
         USBH_diskio_uninitialize();
     }
         break;
 
     case HOST_USER_UNRECOVERED_ERROR:
     {
-        LOG_E("UNRECOVERED_ERROR");
+        USBH_ErrLog("UNRECOVERED_ERROR");
     }
         break;
 
     default:
     {
-        LOG_W("USBH_UserProcess 0x%x", id);
+        USBH_DbgLog("USBH_UserProcess 0x%x", id);
     }
         break;
     }

@@ -12,7 +12,7 @@
 
 #ifdef BSP_USING_Z8523L16
 
-#define DBG_TAG "drv.z8523l16"
+#define DBG_TAG "z8523l16"
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
@@ -252,80 +252,42 @@
 #define Z85230_CLK_MODE     ( 1UL )
 #define Z85230_BAUD_TC      ( Z85230_CLK_FREQ/(2 * Z85230_BAUD * Z85230_CLK_MODE) - 2)
 
-#define HDLC_FRAME_HEAD_DELAY ( 18*1000UL )
-#define HDLC_FRAME_TAIL_DELAY ( 93*1000UL )
-
 #define BYTE_H(_x)           ( (uint8_t)(((_x) >> 8) & 0x00FF) )
 #define BYTE_L(_x)           ( (uint8_t)((_x) & 0x00FF) )
 
-#define Z85230_HDLC_BUF_SIZE     (0xff)
-#define Z85230_RX_BUF_SIZE       (0x800)
-#define Z85230_RX_LIST_NUM  (16)
-
-typedef enum {
-    E_LIST_CLER_MODE_ONE = 0,
-    E_LIST_CLER_MODE_ALL = 1,
-} E_LIST_CLER_MODE;
-
-typedef struct tagZ85230_RX_BUF /* 接收缓冲区 */
-{
-//    rt_list_t list; /* 链表 */
-//    uint16_t len;   /* 长度 */
-//    uint16_t index;  /* 索引 */
-//    uint8_t buf[Z85230_RX_BUF_SIZE];
-    uint16_t in;
-    uint16_t out;
-    uint8_t buf[Z85230_RX_BUF_SIZE];
-} S_Z85230_RX_BUF;
-
-#ifdef BSP_USING_Z85230_HDLC_MODE
-
-#else
-static S_Z85230_RX_BUF g_s_z85230_rbuf;
-#endif
-typedef struct tagZ85230_HDLC_BUF /* 接收缓冲区 */
-{
-    rt_list_t list; /* 链表 */
-    uint16_t len;   /* 长度 */
-    uint16_t index;  /* 索引 */
-    uint8_t buf[Z85230_HDLC_BUF_SIZE];
-} S_Z85230_HDLC_BUF;
-
-static S_Z85230_HDLC_BUF g_s_z85230_hdlc_frame;
+#define RX_BUFFER_SIZE      2048
 
 typedef struct
 {
-    S_Z85230_HDLC_BUF *rx_head;
-    uint32_t rx_buf_num;
-} S_Z85230_RX_LIST;
-
-typedef struct {
     const char *pin_name;
     rt_base_t pin_index;
 } S_Z8523L16_GPIO;
 
 typedef struct
 {
-    uint32_t ne;                /** NE 片选号 */
-    volatile void *hw_addr;     /** 芯片数据端口地址 */
+    uint32_t ne; /** NE 片选号 */
+    volatile void *hw_addr; /** 芯片数据端口地址 */
     volatile void *hw_addr_cmd; /** 芯片命令端口地址 */
 } S_Z8523L16_FMC_CFG;
 
-typedef struct {
-    struct rt_device dev;         /** 设备 */
-    const char *device_name;
-    S_Z8523L16_GPIO iei_pin;      /** 引脚 */
-    S_Z8523L16_GPIO isr_pin;      /** 中断引脚 */
-    S_Z8523L16_GPIO te_pin;       /** 引脚 */
+typedef struct
+{
+    struct rt_device device; /** 设备 */
+    const char *name;
+    S_Z8523L16_GPIO iei_pin; /** 引脚 */
+    S_Z8523L16_GPIO isr_pin; /** 中断引脚 */
+    S_Z8523L16_GPIO te_pin; /** 引脚 */
     S_Z8523L16_FMC_CFG fmc;
-    S_Z85230_RX_LIST rx_list;
-    uint32_t rx_err_cnt;
-    struct rt_semaphore sem;
+
+    struct rt_mutex mux; /** 接收发送互斥 */
+    struct rt_semaphore sem;/** 接收信号量 */
+
+    struct rt_ringbuffer *rx_ringbuffer;
 } S_Z8523L16_DEV;
 
 static S_Z8523L16_DEV z8523l16_dev =
 {
-    .device_name = "z8523l16",
+    .name = "hdlc",
     .iei_pin.pin_name = Z8523L16_HDLC_IEI_PIN,
     .isr_pin.pin_name = Z8523L16_HDLC_INT_PIN,
     .te_pin.pin_name = Z8523L16_HDLC_TE_PIN,
@@ -334,17 +296,21 @@ static S_Z8523L16_DEV z8523l16_dev =
     .fmc.hw_addr_cmd = (volatile void *)(Z8523L16_CMD),
 };
 
-static uint8_t hdlc_readb(volatile uint8_t *addr)
+#define U16_WRITE(__ADDRESS__, __DATA__)   do{                                                             \
+                                               (*(__IO uint16_t *)((uint32_t)(__ADDRESS__)) = (__DATA__)); \
+                                               __DSB();                                                   \
+                                             } while(0)
+
+inline static uint8_t hdlc_readb(volatile uint8_t *addr)
 {
-    uint8_t val = 0;
+    uint8_t val;           //防止被优化
     val = *addr;
     return val;
 }
 
-void hdlc_writeb(uint8_t value_u8, volatile void *addr)
+inline static void hdlc_writeb(uint8_t value_u8, volatile void *addr)
 {
-    *(volatile uint16_t *)((uint32_t)(addr)) = value_u8;
-    __DSB();
+    U16_WRITE(addr, value_u8);
 }
 
 static uint8_t hdlc_rdreg(S_Z8523L16_FMC_CFG *p_fmc, uint8_t reg_u8)
@@ -357,85 +323,6 @@ static void hdlc_wrreg(S_Z8523L16_FMC_CFG *p_fmc, uint8_t reg_u8, uint8_t value_
 {
     hdlc_writeb(reg_u8, p_fmc->hw_addr_cmd);
     hdlc_writeb(value_u8, p_fmc->hw_addr_cmd);
-}
-
-static rt_err_t z85230_rx_list_init(S_Z85230_RX_LIST *list)
-{
-  if(NULL == list)
-  {
-      return -RT_EEMPTY;
-  }
-
-  rt_memset((void *)list, 0, sizeof(S_Z85230_RX_LIST));
-
-  /* 1.申请接收缓冲区空间 */
-  list->rx_head = rt_malloc(sizeof(S_Z85230_RX_LIST));
-  if(NULL == list->rx_head)
-  {
-      LOG_E("malloc size %d error", sizeof(S_Z85230_RX_LIST));
-      return -RT_EEMPTY;
-  }
-
-  /* 2.接收缓冲区清零 */
-  rt_memset((void *)list->rx_head, 0, sizeof(S_Z85230_RX_LIST));
-
-  /* 3.初始化链表 */
-  rt_list_init(&list->rx_head->list);
-  if(!rt_list_isempty(&list->rx_head->list))
-  {
-      LOG_E("rx_list init error");
-      return -RT_EEMPTY;
-  }
-
-  return RT_EOK;
-}
-
-rt_err_t z85230_rx_list_clear(S_Z85230_RX_LIST *rx_list, E_LIST_CLER_MODE mode)
-{
-    S_Z85230_HDLC_BUF *p_buf = RT_NULL;
-    rt_list_t *list_pos = NULL;
-    rt_list_t *list_next = NULL;
-
-    if(NULL == rx_list)
-    {
-        return -RT_EEMPTY;
-    }
-    if(NULL == rx_list->rx_head)
-    {
-        LOG_E("rx_head is null");
-        return -RT_EEMPTY;
-    }
-
-    if(0 == E_LIST_CLER_MODE_ONE)
-    {
-        rt_list_for_each_safe(list_pos, list_next, &rx_list->rx_head->list)
-        {
-            p_buf = rt_list_entry(list_pos, struct tagZ85230_HDLC_BUF, list);
-            if (p_buf != RT_NULL)
-            {
-                rt_list_remove(list_pos);
-                /* 释放接收接收缓冲区 */
-                rt_free(p_buf);
-                rx_list->rx_buf_num--;
-                return RT_EOK;
-            }
-        }
-    }
-    else
-    {
-        rt_list_for_each_safe(list_pos, list_next, &rx_list->rx_head->list)
-        {
-            p_buf = rt_list_entry(list_pos, struct tagZ85230_HDLC_BUF, list);
-            if (p_buf != RT_NULL)
-            {
-                rt_list_remove(list_pos);
-                /* 释放接收接收缓冲区 */
-                rt_free(p_buf);
-                rx_list->rx_buf_num--;
-            }
-        }
-    }
-    return RT_EOK;
 }
 
 static rt_err_t z8523l16_pin_init(S_Z8523L16_DEV *dev)
@@ -456,8 +343,20 @@ static rt_err_t z8523l16_pin_init(S_Z8523L16_DEV *dev)
     rt_pin_write(dev->te_pin.pin_index, PIN_HIGH);
     return RT_EOK;
 }
-static void hdlc_int_pin_hdr(void *args);
-static rt_err_t z8523l16_isr_pin_init(S_Z8523L16_DEV *dev, void (*pin_callback)(void *args))
+
+static void hdlc_int_pin_hdr(void *args)
+{
+    S_Z8523L16_DEV *dev = (S_Z8523L16_DEV *)args;
+
+    if(RT_NULL == dev)
+    {
+        return;
+    }
+
+    rt_sem_release(&dev->sem);
+}
+
+static rt_err_t z8523l16_isr_pin_init(S_Z8523L16_DEV *dev)
 {
     if(RT_NULL == dev)
     {
@@ -468,12 +367,27 @@ static rt_err_t z8523l16_isr_pin_init(S_Z8523L16_DEV *dev, void (*pin_callback)(
     rt_pin_mode(dev->isr_pin.pin_index, PIN_MODE_INPUT_PULLUP);
     if(rt_pin_attach_irq(dev->isr_pin.pin_index, PIN_IRQ_MODE_FALLING, hdlc_int_pin_hdr, (void *)dev) != RT_EOK)
     {
-        LOG_E("z8523l16_isr_pin_init error");
+        LOG_E("attach irq error!");
         return -RT_ERROR;
     }
     if(rt_pin_irq_enable(dev->isr_pin.pin_index, PIN_IRQ_ENABLE) != RT_EOK)
     {
-        LOG_E("rt_pin_irq_enable error");
+        LOG_E("irq enable error!");
+        return -RT_ERROR;
+    }
+    return RT_EOK;
+}
+
+static rt_err_t z8523l16_isr_pin_deinit(S_Z8523L16_DEV *dev)
+{
+    if(RT_NULL == dev)
+    {
+        return -RT_EEMPTY;
+    }
+
+    if(rt_pin_irq_enable(dev->isr_pin.pin_index, PIN_IRQ_DISABLE) != RT_EOK)
+    {
+        LOG_E("irq disenable error!");
         return -RT_ERROR;
     }
     return RT_EOK;
@@ -514,20 +428,20 @@ static rt_err_t z8523l16_fmc_init(S_Z8523L16_FMC_CFG *fmc)
     hsram.Init.AsynchronousWait = FMC_ASYNCHRONOUS_WAIT_DISABLE;
     hsram.Init.WriteBurst = FMC_WRITE_BURST_DISABLE;
     hsram.Init.ContinuousClock = FMC_CONTINUOUS_CLOCK_SYNC_ONLY;
-    hsram.Init.WriteFifo = FMC_WRITE_FIFO_DISABLE;
+    hsram.Init.WriteFifo = FMC_WRITE_FIFO_ENABLE;
     hsram.Init.PageSize = FMC_PAGE_SIZE_NONE;
 
     /* 地址建立时间6个hclk  hclk = 1/240M=4.166666ns */
     /* Timing */
     Timing.AddressSetupTime = BSP_USING_Z8523L16_ADDRESSSETUPTIME;
-    Timing.AddressHoldTime = 0;
+    Timing.AddressHoldTime = 15;
     Timing.DataSetupTime = BSP_USING_Z8523L16_DATASETUPTIME;
     Timing.BusTurnAroundDuration = BSP_USING_Z8523L16_BUSTURNAROUNDDURATION;
-    Timing.CLKDivision = 0;
-    Timing.DataLatency = 0;
+    Timing.CLKDivision = 16;
+    Timing.DataLatency = 17;
     Timing.AccessMode = FMC_ACCESS_MODE_A;
 
-    if (HAL_SRAM_Init(&hsram, &Timing, &Timing) != HAL_OK)
+    if (HAL_SRAM_Init(&hsram, &Timing, NULL) != HAL_OK)
     {
         Error_Handler();
     }
@@ -542,10 +456,6 @@ static rt_err_t z85230_init(S_Z8523L16_DEV *dev)
         return -RT_EEMPTY;
     }
 
-    dev->rx_err_cnt = 0;
-    dev->rx_list.rx_head = RT_NULL;
-    memset(&g_s_z85230_hdlc_frame, 0, sizeof(S_Z85230_HDLC_BUF));
-
     /** reset the chip */
     hdlc_wrreg(&dev->fmc, R9, FHWRES|NV|DLC);
     rt_thread_mdelay(100);
@@ -553,18 +463,18 @@ static rt_err_t z85230_init(S_Z8523L16_DEV *dev)
     hdlc_wrreg(&dev->fmc, R12, 0xAA);
     if(0xAA != hdlc_rdreg(&dev->fmc, R12))
     {
+        LOG_E("check1 error!");
         return -RT_ERROR;
     }
 
     hdlc_wrreg(&dev->fmc, R12, 0x55);
     if(0x55 != hdlc_rdreg(&dev->fmc, R12))
     {
+        LOG_E("check2 error!");
         return -RT_ERROR;
     }
     return RT_EOK;
 }
-
-#ifdef BSP_USING_Z85230_HDLC_MODE
 
 static rt_err_t z85230_hdlc_mode(S_Z8523L16_DEV *dev)
 {
@@ -639,7 +549,7 @@ static void z85230_tx_byte(S_Z8523L16_DEV *dev, uint8_t chr)
     z85230_time = rt_tick_get();
     while( (hdlc_rdreg(&dev->fmc, R0) & Tx_BUF_EMP) == 0 )
     {
-        if (z85230_outtime(z85230_time, 3)== 1u )
+        if (z85230_outtime(z85230_time, 1)== 1u )
         {
             hdlc_wrreg(&dev->fmc, R0, ERR_RES);
             hdlc_wrreg(&dev->fmc, R0, RES_EOM_L);
@@ -648,8 +558,6 @@ static void z85230_tx_byte(S_Z8523L16_DEV *dev, uint8_t chr)
     }
     hdlc_wrreg(&dev->fmc, R8, chr);
 }
-
-#else
 
 static rt_err_t z85230_serial_mode(S_Z8523L16_DEV *dev)
 {
@@ -681,137 +589,6 @@ static rt_err_t z85230_serial_mode(S_Z8523L16_DEV *dev)
 
     return RT_EOK;
 }
-#endif
-
-static void hdlc_int_pin_hdr(void *args)
-{
-    S_Z8523L16_DEV *dev = (S_Z8523L16_DEV *)args;
-
-    if(RT_NULL == dev)
-    {
-        return;
-    }
-
-#ifdef BSP_USING_Z85230_HDLC_MODE
-    uint8_t rr0 = 0,rr1 = 0,rr3 = 0;
-
-    rr3 = hdlc_rdreg(&dev->fmc, R3);
-
-    /** channel A is interrupted */
-    if( 0 != (rr3 & (CHARxIP|CHATxIP|CHAEXT)) )
-    {
-        rr1 = hdlc_rdreg(&dev->fmc, R1);
-        rr0 = hdlc_rdreg(&dev->fmc, R0);
-        hdlc_wrreg(&dev->fmc, R0, RES_EXT_INT);
-        hdlc_wrreg(&dev->fmc, R0, ERR_RES);
-
-        if(((rr3 & CHAEXT) != 0 )&& ((rr0 & SYNC_HUNT) != 0 )&& (g_s_z85230_hdlc_frame.index > 0))
-        {
-            g_s_z85230_hdlc_frame.index = 0;
-            dev->rx_err_cnt++;
-            LOG_E("1.hdlc rx err num %d", dev->rx_err_cnt);
-        }
-        if( (rr0 & SYNC_HUNT) != 0 )
-        {
-            if( g_s_z85230_hdlc_frame.index > 0 )
-            {
-                g_s_z85230_hdlc_frame.index = 0;
-            }
-        }
-        if(rr3 & CHARxIP)
-        {
-            if(g_s_z85230_hdlc_frame.index < Z85230_HDLC_BUF_SIZE)
-            {
-                g_s_z85230_hdlc_frame.buf[g_s_z85230_hdlc_frame.index++] = hdlc_rdreg(&dev->fmc, R8);
-            }
-            else
-            {
-                LOG_E("g_s_z85230_hdlc_frame.index >= Z85230_HDLC_BUF_SIZE");
-            }
-        }
-
-        if(rr1 & END_FR)
-        {
-            if(0 != (rr1 & CRC_ERR) )
-            {
-                /** hdlc crc error */
-                dev->rx_err_cnt++;
-                LOG_E("2.hdlc rx err num %d", dev->rx_err_cnt);
-            }
-            else
-            {
-                g_s_z85230_hdlc_frame.len = g_s_z85230_hdlc_frame.index;
-                dev->rx_err_cnt = 0;
-
-                if(dev->rx_list.rx_buf_num >= Z85230_RX_LIST_NUM)
-                {
-                    z85230_rx_list_clear(&dev->rx_list, E_LIST_CLER_MODE_ONE);
-                }
-
-                S_Z85230_HDLC_BUF *p_buf= rt_malloc(sizeof(S_Z85230_HDLC_BUF));
-                if(RT_NULL == p_buf)
-                {
-                    LOG_E("malloc p_buf null size %d", sizeof(S_Z85230_HDLC_BUF));
-                    return;
-                }
-                else
-                {
-                    rt_base_t level;
-
-                    level = rt_hw_interrupt_disable();
-
-                    p_buf->index = g_s_z85230_hdlc_frame.index;
-                    p_buf->len = g_s_z85230_hdlc_frame.len;
-                    rt_memcpy(p_buf->buf, g_s_z85230_hdlc_frame.buf, g_s_z85230_hdlc_frame.len);
-                    rt_list_insert_before(&dev->rx_list.rx_head->list, &p_buf->list);
-                    dev->rx_list.rx_buf_num++;
-
-                    rt_hw_interrupt_enable(level);
-
-                    if(dev->dev.rx_indicate != RT_NULL)
-                    {
-                        dev->dev.rx_indicate(&dev->dev, p_buf->len);
-                    }
-                }
-            }
-            g_s_z85230_hdlc_frame.index = 0;
-        }
-        if( rr3 & CHATxIP )
-        {
-            hdlc_wrreg(&dev->fmc, R0, RES_Tx_P);
-        }
-    }
-    /* Reset highest IUS */
-    hdlc_wrreg(&dev->fmc, R0, 0x38);
-#else
-
-    if(CHARxIP == hdlc_rdreg(&dev->fmc, R3))
-    {
-        S_Z85230_RX_BUF *p = &g_s_z85230_rbuf;
-
-        rt_base_t level;
-
-        level = rt_hw_interrupt_disable();
-
-        /* Receive Buffer Not Empty */
-        if ((p->in + 1) != p->out)
-        {
-            p->buf[p->in++] = hdlc_rdreg(&dev->fmc, R8);
-            if (p->in >= Z85230_RX_BUF_SIZE)
-            {
-                p->in = 0;
-            }
-        }
-
-        rt_hw_interrupt_enable(level);
-    }
-    /* Reset highest IUS */
-    hdlc_wrreg(&dev->fmc, R0, 0x38);
-
-    rt_sem_release(&dev->sem);
-
-#endif
-}
 
 static void z8523l16_rx_thread_entry(void *param)
 {
@@ -822,116 +599,184 @@ static void z8523l16_rx_thread_entry(void *param)
         return;
     }
 
-    z8523l16_isr_pin_init(p_dev, hdlc_int_pin_hdr);
+    rt_size_t rx_len = 0;
+    uint8_t rr1 = 0, rr3 = 0, rr0 = 0;
 
     while(1)
     {
         rt_sem_take(&p_dev->sem, RT_WAITING_FOREVER);
 
-        if(p_dev->dev.rx_indicate != RT_NULL)
+        rt_mutex_take(&p_dev->mux, RT_WAITING_FOREVER);
+
+        rr3 = hdlc_rdreg(&p_dev->fmc, R3);
+        rr0 = hdlc_rdreg(&p_dev->fmc, R0);
+        if(rr3 & CHARxIP)
         {
-            p_dev->dev.rx_indicate(&p_dev->dev, 1);
-        }
-        rt_thread_mdelay(5);
-    }
-}
-
-static rt_size_t z8523l16_read (rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t size)
-{
-    S_Z8523L16_DEV *z8523l16_dev = (S_Z8523L16_DEV *)dev;
-
-    if(RT_NULL == z8523l16_dev)
-    {
-        return 0;
-    }
-
-#ifdef BSP_USING_Z85230_HDLC_MODE
-    rt_uint16_t read_size = 0;
-    S_Z85230_HDLC_BUF *p_buf = RT_NULL;
-    rt_list_t *list_pos = NULL;
-    rt_list_t *list_next = NULL;
-
-    rt_base_t level;
-
-    level = rt_hw_interrupt_disable();
-
-    /* step1：遍历链表 */
-    if(z8523l16_dev->rx_list.rx_head != RT_NULL)
-    {
-        rt_list_for_each_safe(list_pos, list_next, &z8523l16_dev->rx_list.rx_head->list)
-        {
-            p_buf = rt_list_entry(list_pos, struct tagZ85230_HDLC_BUF, list);
-            if (p_buf != RT_NULL)
+            /* 当接收数据FIFO中至少有一个字符可用时，该位被设置为1。
+                          *  当接收数据FIFO是完全空的。通道或硬件重置清空接收数据FIFO。
+                          * 通道有数据，则一直读。
+             */
+            while(rr0 & Rx_CH_AV)
             {
-                /* step2：获取接收包数据长度 */
-                if(p_buf->len > Z85230_HDLC_BUF_SIZE)
+                /* put buffer to ringbuffer */
+                rt_ringbuffer_putchar_force(p_dev->rx_ringbuffer, hdlc_rdreg(&p_dev->fmc, R8));
+                rr0 = hdlc_rdreg(&p_dev->fmc, R0);
+            }
+        }
+
+        rr1 = hdlc_rdreg(&p_dev->fmc, R1);
+        if(rr1 & END_FR)
+        {
+            if((rr1 & CRC_ERR) != 0)
+            {
+                LOG_E("rx crc err!");
+            }
+            else
+            {
+                if (rt_ringbuffer_space_len(p_dev->rx_ringbuffer) == 0)
                 {
-                    read_size = Z85230_HDLC_BUF_SIZE;
+                    rt_ringbuffer_reset(p_dev->rx_ringbuffer);
+                    LOG_W("rx buffer fail!");
                 }
                 else
                 {
-                    read_size = p_buf->len;
-                    if (read_size > size)
+                    rx_len = rt_ringbuffer_data_len(p_dev->rx_ringbuffer);
+                    if(p_dev->device.rx_indicate != RT_NULL)
                     {
-                        read_size = size;
+                        p_dev->device.rx_indicate(&p_dev->device, rx_len);
                     }
                 }
-
-                /* step3：提取包数据 */
-                rt_memcpy(buffer, p_buf->buf, read_size);
-                rt_list_remove(list_pos);
-                /* step4：释放接收接收缓冲区 */
-                rt_free(p_buf);
-                z8523l16_dev->rx_list.rx_buf_num--;
-
-                rt_hw_interrupt_enable(level);
-                return read_size;
             }
         }
+
+        if( rr3 & CHATxIP )
+        {
+            hdlc_wrreg(&p_dev->fmc, R0, RES_Tx_P);
+        }
+
+        rt_mutex_release(&p_dev->mux);
     }
-
-    rt_hw_interrupt_enable(level);
-    return 0;
-
-#else
-    S_Z85230_RX_BUF *p = &g_s_z85230_rbuf;
-    rt_base_t level;
-
-    level = rt_hw_interrupt_disable();
-
-    if (p->in == p->out)
-    {
-        rt_hw_interrupt_enable(level);
-        return 0;
-    }
-
-    *((uint8_t *)buffer) = p->buf[p->out++];
-    if(p->out >= Z85230_RX_BUF_SIZE)
-    {
-        p->out = 0;
-    }
-    rt_hw_interrupt_enable(level);
-    return size;
-#endif
 }
 
-static rt_size_t z8523l16_write (rt_device_t dev, rt_off_t pos, const void *buffer, rt_size_t size)
+static rt_err_t hdlc_init(rt_device_t dev)
 {
-    S_Z8523L16_DEV *p_dev = (S_Z8523L16_DEV *)dev;
+    S_Z8523L16_DEV *p_dev;
+    RT_ASSERT(dev != RT_NULL);
+    p_dev = rt_container_of(dev, S_Z8523L16_DEV, device);
+
+    if(rt_sem_init(&p_dev->sem, "hdlc", 0, RT_IPC_FLAG_PRIO) != RT_EOK)
+    {
+        LOG_E("init sem error!");
+        return -RT_ERROR;
+    }
+
+    if(rt_mutex_init(&p_dev->mux, "hdlc", RT_IPC_FLAG_PRIO) != RT_EOK)
+    {
+        LOG_E("init mutex error!");
+        return -RT_ERROR;
+    }
+
+    /* init ringbuffer */
+    p_dev->rx_ringbuffer = rt_ringbuffer_create(RX_BUFFER_SIZE);
+    if (p_dev->rx_ringbuffer == NULL)
+    {
+        LOG_E("no memory");
+        return -RT_ENOMEM;
+    }
+
+    z8523l16_pin_init(p_dev);
+    z8523l16_fmc_init(&p_dev->fmc);
+
+    rt_thread_t tid = rt_thread_create("hdlc", z8523l16_rx_thread_entry, (void *)p_dev, 1024, 14, 10);
+    if (tid == RT_NULL)
+    {
+        LOG_E("rx thread create error!");
+        return -RT_ERROR;
+    }
+    else
+    {
+        rt_thread_startup(tid);
+    }
+
+    return RT_EOK;
+}
+
+static rt_err_t hdlc_open(rt_device_t dev, rt_uint16_t oflag)
+{
+    S_Z8523L16_DEV *p_dev;
+    RT_ASSERT(dev != RT_NULL);
+    p_dev = rt_container_of(dev, S_Z8523L16_DEV, device);
+
+    if(z85230_init(p_dev) != RT_EOK)
+    {
+        LOG_E("init error!");
+        return -RT_ERROR;
+    }
 #ifdef BSP_USING_Z85230_HDLC_MODE
+    z85230_hdlc_mode(p_dev);
+#else
+    z85230_serial_mode(p_dev);
+#endif
+
+    z8523l16_isr_pin_init(p_dev);
+
+    rt_ringbuffer_reset(p_dev->rx_ringbuffer);
+
+    return RT_EOK;
+}
+
+static rt_err_t hdlc_close(rt_device_t dev)
+{
+    S_Z8523L16_DEV *p_dev;
+    RT_ASSERT(dev != RT_NULL);
+    p_dev = rt_container_of(dev, S_Z8523L16_DEV, device);
+
+    z8523l16_isr_pin_deinit(p_dev);
+    return RT_EOK;
+}
+
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static rt_ssize_t hdlc_read(rt_device_t dev, rt_off_t pos, void* buffer, rt_size_t size)
+#else
+static rt_size_t hdlc_read(rt_device_t dev, rt_off_t pos, void* buffer, rt_size_t size)
+#endif
+{
+    S_Z8523L16_DEV *p_dev;
+    RT_ASSERT(dev != RT_NULL);
+    p_dev = rt_container_of(dev, S_Z8523L16_DEV, device);
+
+    rt_mutex_take(&p_dev->mux, RT_WAITING_FOREVER);
+
+    rt_size_t result = rt_ringbuffer_get(p_dev->rx_ringbuffer, buffer, size);
+
+    rt_mutex_release(&p_dev->mux);
+
+    return result;
+}
+
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static rt_ssize_t hdlc_write (rt_device_t dev, rt_off_t pos, const void* buffer, rt_size_t size)
+#else
+static rt_size_t hdlc_write (rt_device_t dev, rt_off_t pos, const void* buffer, rt_size_t size)
+#endif
+{
+    S_Z8523L16_DEV *p_dev;
+    RT_ASSERT(dev != RT_NULL);
+    p_dev = rt_container_of(dev, S_Z8523L16_DEV, device);
+
     uint32_t i = 0;
-    volatile uint32_t head = HDLC_FRAME_HEAD_DELAY;
-    volatile uint32_t tail = HDLC_FRAME_TAIL_DELAY;
 
     if(RT_NULL == p_dev || RT_NULL == buffer)
     {
         return 0;
     }
 
+    rt_mutex_take(&p_dev->mux, RT_WAITING_FOREVER);
+
     hdlc_wrreg(&p_dev->fmc, R5, Tx8|RTS|TxCRC_ENAB|TxENAB);
 
 #ifdef BSP_USING_Z85230_HDLC_MODE
-    while(head--);
+    rt_thread_delay(1);
     hdlc_wrreg(&p_dev->fmc, R0, RES_Tx_CRC);
 #endif
 
@@ -940,95 +785,48 @@ static rt_size_t z8523l16_write (rt_device_t dev, rt_off_t pos, const void *buff
         z85230_tx_byte(p_dev, ((uint8_t *)buffer)[i]);
     }
     hdlc_wrreg(&p_dev->fmc, R5, Tx8|TxCRC_ENAB|TxENAB);  //AUTO
+    rt_mutex_release(&p_dev->mux);
     return size;
-#else
-
-    if(RT_NULL == p_dev || RT_NULL == buffer)
-    {
-        return 0;
-    }
-
-    uint8_t *data_buf = (uint8_t *)buffer;
-
-    hdlc_wrreg(&p_dev->fmc, R5, RTS|Tx8|TxENAB|TxCRC_ENAB);
-    for(int i = 0 ; i < size ; i++)
-    {
-        while( (hdlc_rdreg(&p_dev->fmc, R0) & Tx_BUF_EMP) == 0 );
-        rt_thread_mdelay(2);
-        hdlc_wrreg(&p_dev->fmc, R8, data_buf[i]);
-    }
-    while( (hdlc_rdreg(&p_dev->fmc, R0) & Tx_BUF_EMP) == 0 );
-    rt_thread_mdelay(2);
-
-    hdlc_wrreg(&p_dev->fmc, R5, DTR|Tx8|TxENAB|TxCRC_ENAB);
-    return size;
-#endif
 }
 
-static int rt_hw_z8523l16_init(void)
+static rt_err_t hdlc_control(rt_device_t dev, int cmd, void *args)
+{
+    return RT_EOK;
+}
+
+#ifdef RT_USING_DEVICE_OPS
+    static struct rt_device_ops _ops = {
+        hdlc_init,
+        hdlc_open,
+        hdlc_close,
+        hdlc_read,
+        hdlc_write,
+        hdlc_control
+    };
+#endif /* RT_USING_DEVICE_OPS */
+
+int rt_hw_z8523l16_init(void)
 {
     S_Z8523L16_DEV *p_dev = &z8523l16_dev;
-    rt_thread_t tid;
 
-
-    if(rt_sem_init(&p_dev->sem, "hdlc sem", 0, RT_IPC_FLAG_PRIO) != RT_EOK)
-    {
-        LOG_E("init hdlc rem error");
-        return -RT_ERROR;
-    }
-
-    if(z85230_rx_list_init(&p_dev->rx_list) != RT_EOK)
-    {
-        return -RT_ERROR;
-    }
-
-    z8523l16_pin_init(p_dev);
-
-    z8523l16_fmc_init(&p_dev->fmc);
-
-    if(z85230_init(p_dev) != RT_EOK)
-    {
-        LOG_E("z85230_init error");
-        return -RT_ERROR;
-    }
-
-#ifdef BSP_USING_Z85230_HDLC_MODE
-    z85230_hdlc_mode(p_dev);
+    /* register char device */
+    p_dev->device.type     = RT_Device_Class_Char;
+#ifdef RT_USING_DEVICE_OPS
+    p_dev->device.ops = &_ops;
 #else
-    z85230_serial_mode(p_dev);
-#endif
+    p_dev->device.init     = hdlc_init;
+    p_dev->device.open     = hdlc_open;
+    p_dev->device.close    = hdlc_close;
+    p_dev->device.read     = hdlc_read;
+    p_dev->device.write    = hdlc_write;
+    p_dev->device.control  = hdlc_control;
+#endif /* RT_USING_DEVICE_OPS */
 
-    p_dev->dev.user_data = (void *)p_dev;
-    p_dev->dev.type = RT_Device_Class_Char;
+    /* no private */
+    p_dev->device.user_data = RT_NULL;
 
-    p_dev->dev.init = RT_NULL;
-    p_dev->dev.open = RT_NULL;
-    p_dev->dev.close = RT_NULL;
-    p_dev->dev.read = z8523l16_read;
-    p_dev->dev.write = z8523l16_write;
-    p_dev->dev.control = RT_NULL;
-
-    /* register mvb device */
-    if (rt_device_register(&p_dev->dev, p_dev->device_name, RT_DEVICE_FLAG_RDWR) == RT_EOK)
-    {
-        LOG_I("register '%s' success", p_dev->device_name);
-    }
-    else
-    {
-        LOG_E("register '%s' failed", p_dev->device_name);
-        return -RT_ERROR;
-    }
-
-    tid = rt_thread_create("hdlc", z8523l16_rx_thread_entry, (void *)p_dev, 1024, 13, 5);
-    if (tid == RT_NULL)
-    {
-        LOG_E("hdlc thread create fail!");
-        return -RT_ERROR;
-    }
-    else
-    {
-        rt_thread_startup(tid);
-    }
+    /* register telnet device */
+    rt_device_register(&p_dev->device, p_dev->name, RT_DEVICE_FLAG_RDWR);
 
     return RT_EOK;
 }

@@ -15,8 +15,6 @@
 #include "sp_dec.h"
 #include "typedef.h"
 
-#include "board.h"
-
 #ifndef ETSI
 #ifndef IF2
 #include <string.h>
@@ -26,15 +24,16 @@
 
 #define PATH_STRING_MAX_LEN 128
 
-char file_speech_path[PATH_STRING_MAX_LEN];
-char file_analysis_path[PATH_STRING_MAX_LEN];
+static char file_speech_path[PATH_STRING_MAX_LEN];
+static char file_analysis_path[PATH_STRING_MAX_LEN];
 
 static void DecoderUsage(void)
 {
     rt_kprintf("Usage: decoder [analysis_file] [speech_file]\n");
     rt_kprintf("       example : decoder out.amr out.wav\n");
 }
-void DeocoderCopyright(void)
+
+static void DeocoderCopyright(void)
 {
     rt_kprintf("Copyright:\n");
     rt_kprintf("========================================\n");
@@ -43,6 +42,7 @@ void DeocoderCopyright(void)
     rt_kprintf(" 3GPP AMR Floating-point Speech Encoder \n");
     rt_kprintf("========================================\n");
 }
+
 /*
  * main
  *
@@ -71,7 +71,6 @@ void DeocoderCopyright(void)
  * Returns:
  *    0
  */
-
 static void decoder_thread(void *parameter)
 {
     FILE *file_speech, *file_analysis;
@@ -189,7 +188,4 @@ static void decoder(int argc, char *argv[])
         rt_thread_startup(thread);
     return;
 }
-
-#ifdef AMRNB_USING_CMD
 MSH_CMD_EXPORT_ALIAS(decoder, amr_decoder, AMR - NB decoder cmd);
-#endif

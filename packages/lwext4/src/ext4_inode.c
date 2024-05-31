@@ -52,7 +52,7 @@
  * @param block_size Filesystem block_size
  * @return Number of bits
  */
-static uint32_t ext4_inode_block_bits_count(uint32_t block_size)
+EXT_SECTION static uint32_t ext4_inode_block_bits_count(uint32_t block_size)
 {
     uint32_t bits = 8;
     uint32_t size = block_size;

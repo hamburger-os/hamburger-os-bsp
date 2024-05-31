@@ -149,6 +149,7 @@ static void ks_outblk(struct rt_fmc_eth_port *ps_ks, uint16_t *p_wptr_u16, uint3
     }
 }
 
+#ifdef KS_ENABLE_DISABLE_INT
 /**
  * ks_disable_int - 禁止ksz8851中断。
  * @ps_ks : 芯片信息结构指针。
@@ -157,6 +158,7 @@ static void ks_disable_int(struct rt_fmc_eth_port *ps_ks)
 {
     ks_wrreg16(ps_ks, KSZ8851_IER, 0x0000);
 } /* ks_disable_int */
+#endif
 
 /**
  * ks_enable_int - 使能ksz8851中断。
@@ -616,6 +618,7 @@ static int32_t ks_net_open(struct rt_fmc_eth_port *ps_ks)
     return 0;
 }
 
+#ifdef KS_ENABLE_NET_STOP
 /**
  * ks_net_stop - 关闭网络设备。
  * @ps_ks: 芯片信息结构指针。
@@ -633,6 +636,7 @@ static int32_t ks_net_stop(struct rt_fmc_eth_port *ps_ks)
     ks_set_powermode(ps_ks, PMECR_PM_SOFTDOWN);
     return 0;
 }
+#endif
 
 /**
  * ks_write_qmu - 发送一包数据到QMU.
@@ -762,6 +766,8 @@ int32_t ks_start_xmit_link_layer(struct rt_fmc_eth_port *ps_ks, S_LEP_BUF *ps_le
 }
 #endif /* BSP_USE_LINK_LAYER_COMMUNICATION */
 
+#ifdef KS_ENABLE_SET_GRPADDR
+
 static unsigned long const ethernet_polynomial = 0x04c11db7U;
 static unsigned long ether_gen_crc(int length, uint8_t *data)
 {
@@ -807,7 +813,9 @@ static void ks_set_grpaddr(struct rt_fmc_eth_port *ps_ks)
         }
     }
 }
+#endif
 
+#ifdef KS_ENABLE_MCAST
 /**ks_clear_mcast - 清除组播信息
  * @ps_ks : 芯片信息结构指针。
  * 清除芯片组播寄存器设置值*/
@@ -826,6 +834,7 @@ static void ks_clear_mcast(struct rt_fmc_eth_port *ps_ks)
         ks_wrreg16(ps_ks, KSZ8851_MAHTR0 + (2 * i), 0);
     }
 }
+#endif
 
 /**
  * ks_set_promis - 设置接收模式－进入或退出混杂模式。
@@ -860,6 +869,7 @@ static void ks_set_promis(struct rt_fmc_eth_port *ps_ks, uint16_t promiscuous_mo
     }
 }
 
+#ifdef KS_ENABLE_MCAST
 /**
  * ks_set_mcast- 油墨组播。
  * @ps_ks : 芯片信息结构指针。
@@ -896,6 +906,7 @@ static void ks_set_mcast(struct rt_fmc_eth_port *ps_ks, uint16_t mcast_u16)
         ks_start_rx(ps_ks);
     }
 }
+#endif
 
 /**
  * ks_set_mac - 设置芯片MAC地址
@@ -1087,7 +1098,7 @@ static int32_t ks_probe(struct rt_fmc_eth_port *ps_ks)
 
         data_u16 = ks_rdreg16(ps_ks, KSZ8851_OBCR);
         ks_wrreg16(ps_ks, KSZ8851_OBCR, data_u16 | OBCR_ODS_16MA);
-#if 1
+#ifndef KS_ENABLE_MCAST
         ks_set_promis(ps_ks, 1);
 #else
         ks_set_mcast(ps_ks, 0);

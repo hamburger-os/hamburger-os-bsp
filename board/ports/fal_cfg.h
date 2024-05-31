@@ -19,11 +19,14 @@ extern "C" {
 #ifdef BSP_USING_ON_CHIP_FLASH
 //内部flash定义,无需修改
 #define FLASH_SIZE_TOTAL                    (STM32_FLASH_SIZE)
+#ifdef BSP_USING_NOBOOT
+#define FLASH_SIZE_BOOTLOADER               (0)
+#endif
 #ifdef BSP_USING_JUMP_0x20000
-#define FLASH_SIZE_BOOTLOADER               0x20000
+#define FLASH_SIZE_BOOTLOADER               (0x20000)
 #endif
 #ifdef BSP_USING_JUMP_0x80000
-#define FLASH_SIZE_BOOTLOADER               0x80000
+#define FLASH_SIZE_BOOTLOADER               (0x80000)
 #endif
 #define FLASH_SIZE_APP                      (FLASH_SIZE_TOTAL - FLASH_SIZE_BOOTLOADER - FLASH_SIZE_DOWNLOAD - FLASH_SIZE_FACTORY - FLASH_SIZE_KVDB)
 #define FLASH_OFFSET_BOOTLOADER             (0)
@@ -144,8 +147,12 @@ extern "C" {
 //emmc定义,无需修改
 #define EMMC_DEV_NAME                   "sdmmc"
 #define BLK_EMMC                        "emmc"
+#define BLK_EXT4                        "ext4"
 #define EMMC_START_ADRESS               (0)
 #define EMMC_BLK_SIZE                   (512)
+#ifndef EMMC_ENABLE_EXT4
+#define EMMC_SIZE_EXT4                  (0)
+#endif
 #define EMMC_OFFSET_DOWNLOAD            (0)
 #define EMMC_OFFSET_FACTORY             (EMMC_OFFSET_DOWNLOAD + EMMC_SIZE_DOWNLOAD)
 #define EMMC_OFFSET_BIN                 (EMMC_OFFSET_FACTORY + EMMC_SIZE_FACTORY)
@@ -154,7 +161,8 @@ extern "C" {
 #define EMMC_OFFSET_USR                 (EMMC_OFFSET_LIB + EMMC_SIZE_LIB)
 #define EMMC_OFFSET_KVDB                (EMMC_OFFSET_USR + EMMC_SIZE_USR)
 #define EMMC_OFFSET_TSDB                (EMMC_OFFSET_KVDB + EMMC_SIZE_KVDB)
-#define EMMC_OFFSET_FS                  (EMMC_OFFSET_TSDB + EMMC_SIZE_TSDB)
+#define EMMC_OFFSET_EXT4                (EMMC_OFFSET_TSDB + EMMC_SIZE_TSDB)
+#define EMMC_OFFSET_FS                  (EMMC_OFFSET_EXT4 + EMMC_SIZE_EXT4)
 #ifndef EMMC_ENABLE_FS
 #define EMMC_FS                         ""
 #endif
@@ -169,9 +177,23 @@ extern "C" {
 
 #ifdef BSP_USING_MAX31826
 //max31826定义,无需修改
+#ifdef MAX31826_USING_IO
 #define MAX31826_DEV_NAME               "max31826"
 #define BLK_MAX31826                    "max31826"
 #define MAX31826_START_ADRESS           (0)
+#endif
+
+#ifdef MAX31826_USING_I2C_DS2484
+
+#define MAX31826_DEV_NAME               "max31826"
+
+#define BLK_MAX31826_1                  "max31826_1"
+#define BLK_MAX31826_2                  "max31826_2"
+#define BLK_MAX31826_3                  "max31826_3"
+#define BLK_MAX31826_4                  "max31826_4"
+#define MAX31826_START_ADRESS           (0)
+#endif
+
 #endif
 
 #ifdef BSP_USING_SDCARD

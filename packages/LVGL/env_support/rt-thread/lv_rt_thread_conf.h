@@ -17,7 +17,7 @@
 #include LV_RTTHREAD_INCLUDE
 
 #ifdef SOC_SERIES_STM32F4
-#define LV_SECTION __attribute__((section(".lvgl")))
+#define LV_SECTION __attribute__((section(".lowcode")))
 #endif
 #ifdef SOC_SERIES_STM32H7
 #define LV_SECTION

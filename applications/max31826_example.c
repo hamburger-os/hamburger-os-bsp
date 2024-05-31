@@ -8,6 +8,7 @@
 #ifdef BSP_USING_MAX31826
 #define SAMPLE_SENSOR_MAX31826 "temp_max31826" /* 设备名称 */
 
+
 rt_uint8_t max_ID[8] = {0};
 rt_device_t max31826dev;
 #endif
@@ -15,8 +16,15 @@ rt_device_t max31826dev;
 static void max31826_echo_test(int argc, char *argv[])
 {
 #ifdef BSP_USING_MAX31826
-    /* 查找单总线MAX31826设备 */
-    max31826dev = rt_device_find(SAMPLE_SENSOR_MAX31826);
+
+    if (argc != 2)
+    {
+        rt_kprintf("Usage: max31826_test [cmd]\n");
+        rt_kprintf("       max31826_test [dev_name]\n");
+        return;
+    }
+
+    max31826dev = rt_device_find(argv[1]);
     if (max31826dev == RT_NULL)
     {
         LOG_E("max31826dev find NULL.");
@@ -34,6 +42,8 @@ static void max31826_echo_test(int argc, char *argv[])
     {
         LOG_D("temp : %d.%02d ℃", max31826data.data.temp / 100, abs(max31826data.data.temp % 100));
     }
+    rt_device_close(max31826dev);
+
 #endif
 }
 MSH_CMD_EXPORT_ALIAS(max31826_echo_test, max31826_test, max31826 read test.);

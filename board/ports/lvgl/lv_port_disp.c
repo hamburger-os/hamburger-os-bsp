@@ -49,7 +49,7 @@ void lv_port_disp_init(void)
         LOG_E("find lcd error!");
         return;
     }
-    result = rt_device_open(lcd_device, 0);
+    result = rt_device_open(lcd_device, RT_DEVICE_FLAG_RDWR);
     if (result != RT_EOK)
     {
         LOG_E("open lcd error!");
@@ -67,23 +67,17 @@ void lv_port_disp_init(void)
     RT_ASSERT(info.bits_per_pixel == 8 || info.bits_per_pixel == 16 ||
               info.bits_per_pixel == 24 || info.bits_per_pixel == 32);
 
-    fbuf1 = rt_malloc(info.width * info.height * sizeof(lv_color_t));
+    rt_size_t bufsize = info.width * info.height * sizeof(lv_color_t);
+    fbuf1 = rt_malloc(bufsize);
     if (fbuf1 == RT_NULL)
     {
-        LOG_E("alloc disp buf fail!");
+        LOG_E("alloc disp buf1 fail!");
         return;
     }
-
-    fbuf2 = rt_malloc(info.width * info.height * sizeof(lv_color_t));
-    if (fbuf2 == RT_NULL)
-    {
-        LOG_E("alloc disp buf fail!");
-        rt_free(fbuf1);
-        return;
-    }
+    fbuf2 = rt_malloc(bufsize);
 
     /*Initialize `disp_buf` with the buffer(s). With only one buffer use NULL instead buf_2 */
-    lv_disp_draw_buf_init(&disp_buf, fbuf1, fbuf2, info.width * info.height);
+    lv_disp_draw_buf_init(&disp_buf, fbuf1, fbuf2, bufsize);
 
     lv_disp_drv_init(&disp_drv); /*Basic initialization*/
 

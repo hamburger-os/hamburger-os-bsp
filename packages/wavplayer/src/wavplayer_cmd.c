@@ -192,5 +192,4 @@ int wav_player(int argc, char *argv[])
 
     return result;
 }
-
 MSH_CMD_EXPORT_ALIAS(wav_player, wavplay, play wav music);

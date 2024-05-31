@@ -20,7 +20,9 @@ struct _can_test
 {
     rt_device_t              can_dev;
     rt_thread_t              can_thread;
+    rt_thread_t              can_thread_tx;
     struct rt_semaphore      rx_sem;
+    struct rt_messagequeue   *tx_mq;
     int                      thread_is_run;
 };
 static struct _can_test can_test = {
@@ -36,31 +38,25 @@ static rt_err_t can_rx_call(rt_device_t dev, rt_size_t size)
     return RT_EOK;
 }
 
-static void can_thread_entry(void *parameter)
+static void can_tx_thread_entry(void *parameter)
 {
     struct _can_test *ptest = (struct _can_test *)parameter;
 
     rt_err_t result = RT_EOK;
     struct rt_can_msg rxmsg = {0};
 
-    LOG_D("thread startup...");
+    LOG_D("thread tx startup...");
     while (ptest->thread_is_run)
     {
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+        rxmsg.hdr_index = -1;
+#else
         rxmsg.hdr = -1;
+#endif
         /* 阻塞等待接收信号量 */
-        result = rt_sem_take(&ptest->rx_sem, 1000);
+        result = rt_mq_recv(ptest->tx_mq, &rxmsg, sizeof(rxmsg), 1000);
         if (result == RT_EOK)
         {
-            /* 从 CAN 读取一帧数据 */
-            if (rt_device_read(ptest->can_dev, 0, &rxmsg, sizeof(rxmsg)) == sizeof(rxmsg))
-            {
-                LOG_D("read %x %d %d %d", rxmsg.id, rxmsg.ide, rxmsg.rtr, rxmsg.len);
-                LOG_HEX("read", 16, rxmsg.data, 8);
-            }
-            else
-            {
-                LOG_E("read %x %d %d %d", rxmsg.id, rxmsg.ide, rxmsg.rtr, rxmsg.len);
-            }
             /* echo写回 */
             if (rt_device_write(ptest->can_dev, 0, &rxmsg, sizeof(rxmsg)) == sizeof(rxmsg))
             {
@@ -75,6 +71,51 @@ static void can_thread_entry(void *parameter)
     }
 
     rt_sem_detach(&ptest->rx_sem);
+    rt_mq_delete(ptest->tx_mq);
+    rt_device_close(ptest->can_dev);
+    LOG_D("thread exited!");
+}
+
+static void can_thread_entry(void *parameter)
+{
+    struct _can_test *ptest = (struct _can_test *)parameter;
+
+    rt_err_t result = RT_EOK;
+    struct rt_can_msg rxmsg = {0};
+
+    LOG_D("thread startup...");
+    while (ptest->thread_is_run)
+    {
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+        rxmsg.hdr_index = -1;
+#else
+        rxmsg.hdr = -1;
+#endif
+        /* 阻塞等待接收信号量 */
+        result = rt_sem_take(&ptest->rx_sem, 1000);
+        if (result == RT_EOK)
+        {
+            /* 从 CAN 读取一帧数据 */
+            if (rt_device_read(ptest->can_dev, 0, &rxmsg, sizeof(rxmsg)) == sizeof(rxmsg))
+            {
+                LOG_D("read %x %d %d %d", rxmsg.id, rxmsg.ide, rxmsg.rtr, rxmsg.len);
+                LOG_HEX("read", 16, rxmsg.data, 8);
+            }
+            else
+            {
+                LOG_E("read %x %d %d %d", rxmsg.id, rxmsg.ide, rxmsg.rtr, rxmsg.len);
+            }
+            /* echo发送至消息队列 */
+            result = rt_mq_send(ptest->tx_mq, &rxmsg, sizeof(rxmsg));
+            if (result != RT_EOK)
+            {
+                LOG_E("mq send error!");
+            }
+        }
+    }
+
+    rt_sem_detach(&ptest->rx_sem);
+    rt_mq_delete(ptest->tx_mq);
     rt_device_close(ptest->can_dev);
     LOG_D("thread exited!");
 }
@@ -143,6 +184,8 @@ static void can_echo_test(int argc, char **argv)
                 rt_device_set_rx_indicate(can_test.can_dev, can_rx_call);
                 /* 初始化 CAN 接收信号量 */
                 rt_sem_init(&can_test.rx_sem, "rx_sem", 0, RT_IPC_FLAG_FIFO);
+                /* 初始化消息队列 */
+                can_test.tx_mq = rt_mq_create("tx_mq", sizeof(struct rt_can_msg), sizeof(struct rt_can_msg)*128, RT_IPC_FLAG_FIFO);
             }
             else
             {
@@ -156,6 +199,25 @@ static void can_echo_test(int argc, char **argv)
                 if (can_test.can_thread != RT_NULL)
                 {
                     rt_thread_startup(can_test.can_thread);
+                    can_test.thread_is_run = 1;
+                }
+                else
+                {
+                    LOG_E("thread create error!");
+                }
+            }
+            else
+            {
+                LOG_W("thread already exists!");
+            }
+            if (can_test.can_thread_tx == RT_NULL)
+            {
+                /* 创建 app 线程 */
+                can_test.can_thread_tx = rt_thread_create("can_tx", can_tx_thread_entry, &can_test, 2048, 27, 10);
+                /* 创建成功则启动线程 */
+                if (can_test.can_thread_tx != RT_NULL)
+                {
+                    rt_thread_startup(can_test.can_thread_tx);
                     can_test.thread_is_run = 1;
                 }
                 else
@@ -206,6 +268,7 @@ static void can_echo_test(int argc, char **argv)
         else if (rt_strcmp(argv[1], "--stop") == 0)
         {
             can_test.can_thread = RT_NULL;
+            can_test.can_thread_tx = RT_NULL;
             can_test.thread_is_run = 0;
         }
         else

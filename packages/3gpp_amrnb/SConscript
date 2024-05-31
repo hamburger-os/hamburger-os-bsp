@@ -12,9 +12,10 @@ src     = Split("""
                 sp_dec.c
                 interf_dec.c
                 interf_rom.c
-                encoder.c
-                decoder.c
                 """)
+if GetDepend(['AMRNB_USING_CMD']):
+    src += Glob('decoder.c')
+    src += Glob('encoder.c')
 
 group = DefineGroup('3gpp-amrnb', src, depend = ['PKG_USING_3GPP_AMRNB'], CPPPATH = CPPPATH)
 

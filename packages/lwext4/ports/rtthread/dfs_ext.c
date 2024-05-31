@@ -33,8 +33,8 @@
 
 static rt_mutex_t ext4_mutex = RT_NULL;
 
-static void ext4_lock(void);
-static void ext4_unlock(void);
+static void ext4_lock(void) EXT_SECTION;
+static void ext4_unlock(void) EXT_SECTION;
 
 static struct ext4_lock ext4_lock_ops =
 {
@@ -64,26 +64,31 @@ static void ext4_unlock(void)
     return ;
 }
 
-rt_inline const char *get_fd_file(struct dfs_fd *fd)
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+EXT_SECTION rt_inline const char *get_fd_file(struct dfs_file *fd)
+#else
+EXT_SECTION rt_inline const char *get_fd_file(struct dfs_fd *fd)
+#endif
 {
-//    const char *fn = NULL;
-    static char fn[256] = {0};
-    memset(fn, 0, 256);
+    const char *fn = NULL;
+//    static char fn[RT_DFS_ELM_MAX_LFN] = {0};
+
     if (fd)
     {
-#if (RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 0))
+#if (RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2))
         fn = fd->vnode->fullpath;
 #else
 //        fn = fd->fs->path;
         strcpy(&fn[strlen(fn)], fd->fs->path);
         strcpy(&fn[strlen(fn)], fd->path);
 #endif
+//        rt_kprintf("fn : %s\n", fn);
     }
 
     return fn;
 }
 
-static int dfs_ext_mount(struct dfs_filesystem *fs, unsigned long rwflag, const void *data)
+EXT_SECTION static int dfs_ext_mount(struct dfs_filesystem *fs, unsigned long rwflag, const void *data)
 {
     int rc = 0;
     struct ext4_blockdev *bd = NULL;
@@ -96,6 +101,7 @@ static int dfs_ext_mount(struct dfs_filesystem *fs, unsigned long rwflag, const 
     }
 
     bd = &dbd->bd;
+
     rc = ext4_mount(bd, fs->path, false);
     if (rc != RT_EOK)
     {
@@ -112,7 +118,7 @@ static int dfs_ext_mount(struct dfs_filesystem *fs, unsigned long rwflag, const 
     return rc;
 }
 
-static int dfs_ext_unmount(struct dfs_filesystem *fs)
+EXT_SECTION static int dfs_ext_unmount(struct dfs_filesystem *fs)
 {
     int rc = -RT_ERROR;
     struct dfs_ext4_blockdev *dbd = NULL;
@@ -139,7 +145,11 @@ static int dfs_ext_unmount(struct dfs_filesystem *fs)
     return rc;
 }
 
-static int dfs_ext_mkfs(rt_device_t devid)
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+EXT_SECTION static int dfs_ext_mkfs(rt_device_t devid, const char *fs_name)
+#else
+EXT_SECTION static int dfs_ext_mkfs(rt_device_t devid)
+#endif
 {
     int rc;
     static struct ext4_fs fs;
@@ -165,7 +175,14 @@ static int dfs_ext_mkfs(rt_device_t devid)
     /* get ext4 block device */
     bd = &dbd->bd;
 
+    /* try to open device */
+    bd->bdif->open(bd);
+
     rc = ext4_mkfs(&fs, bd, &info, F_SET_EXT4);
+    if (rc != RT_EOK)
+    {
+        rc = -rc;
+    }
 
     /* no matter what, unregister */
     dfs_ext4_blockdev_destroy(dbd);
@@ -174,7 +191,7 @@ static int dfs_ext_mkfs(rt_device_t devid)
     return rc;
 }
 
-static int dfs_ext_statfs(struct dfs_filesystem *fs, struct statfs *buf)
+EXT_SECTION static int dfs_ext_statfs(struct dfs_filesystem *fs, struct statfs *buf)
 {
     struct ext4_sblock *sb = NULL;
     int error = RT_EOK;
@@ -193,7 +210,12 @@ static int dfs_ext_statfs(struct dfs_filesystem *fs, struct statfs *buf)
     return error;
 
 }
-static int dfs_ext_ioctl(struct dfs_fd *fd, int cmd, void *args)
+
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+EXT_SECTION static int dfs_ext_ioctl(struct dfs_file *fd, int cmd, void *args)
+#else
+EXT_SECTION static int dfs_ext_ioctl(struct dfs_fd *fd, int cmd, void *args)
+#endif
 {
     int r = RT_EOK;
     switch (cmd)
@@ -226,7 +248,11 @@ static int dfs_ext_ioctl(struct dfs_fd *fd, int cmd, void *args)
     return -RT_EIO;
 }
 
-static int dfs_ext_read(struct dfs_fd *fd, void *buf, size_t count)
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+EXT_SECTION static int dfs_ext_read(struct dfs_file *fd, void *buf, size_t count)
+#else
+EXT_SECTION static int dfs_ext_read(struct dfs_fd *fd, void *buf, size_t count)
+#endif
 {
     size_t bytesread = 0;
     ext4_file *file = fd->data;
@@ -245,7 +271,11 @@ static int dfs_ext_read(struct dfs_fd *fd, void *buf, size_t count)
     return bytesread;
 }
 
-static int dfs_ext_write(struct dfs_fd *fd, const void *buf, size_t count)
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+EXT_SECTION static int dfs_ext_write(struct dfs_file *fd, const void *buf, size_t count)
+#else
+EXT_SECTION static int dfs_ext_write(struct dfs_fd *fd, const void *buf, size_t count)
+#endif
 {
     size_t byteswritten = 0;
     ext4_file *file = fd->data;
@@ -266,7 +296,11 @@ static int dfs_ext_write(struct dfs_fd *fd, const void *buf, size_t count)
     return byteswritten;
 }
 
-static int dfs_ext_flush(struct dfs_fd *fd)
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+EXT_SECTION static int dfs_ext_flush(struct dfs_file *fd)
+#else
+EXT_SECTION static int dfs_ext_flush(struct dfs_fd *fd)
+#endif
 {
     int error = RT_EOK;
 
@@ -279,7 +313,11 @@ static int dfs_ext_flush(struct dfs_fd *fd)
     return error;
 }
 
-static int dfs_ext_lseek(struct dfs_fd *fd, off_t offset)
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+EXT_SECTION static off_t dfs_ext_lseek(struct dfs_file *fd, off_t offset)
+#else
+EXT_SECTION static int dfs_ext_lseek(struct dfs_fd *fd, off_t offset)
+#endif
 {
     int r;
     ext4_file *file = fd->data;
@@ -293,7 +331,11 @@ static int dfs_ext_lseek(struct dfs_fd *fd, off_t offset)
     return -r;
 }
 
-static int dfs_ext_close(struct dfs_fd *file)
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+EXT_SECTION static int dfs_ext_close(struct dfs_file *file)
+#else
+EXT_SECTION static int dfs_ext_close(struct dfs_fd *file)
+#endif
 {
     int r;
 
@@ -307,7 +349,11 @@ static int dfs_ext_close(struct dfs_fd *file)
     return -r;
 }
 
-static int dfs_ext_open(struct dfs_fd *file)
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+EXT_SECTION static int dfs_ext_open(struct dfs_file *file)
+#else
+EXT_SECTION static int dfs_ext_open(struct dfs_fd *file)
+#endif
 {
     int r = EOK;
     ext4_dir *dir;
@@ -357,10 +403,11 @@ static int dfs_ext_open(struct dfs_fd *file)
             }
         }
     }
+
     return -r;
 }
 
-static int dfs_ext_unlink(struct dfs_filesystem *fs, const char *pathname)
+EXT_SECTION static int dfs_ext_unlink(struct dfs_filesystem *fs, const char *pathname)
 {
     int r;
     char *stat_path;
@@ -377,10 +424,10 @@ static int dfs_ext_unlink(struct dfs_filesystem *fs, const char *pathname)
     }
     else
     {
-        if (strlen(fs->path) != 1)
+        if (rt_strlen(fs->path) != 1)
         {
-            stat_path = malloc(strlen(fs->path) + strlen(pathname) + 1);
-            snprintf((char *)stat_path, strlen(fs->path) + strlen(pathname) + 1, "%s%s", fs->path, pathname);
+            stat_path = rt_malloc(rt_strlen(fs->path) + rt_strlen(pathname) + 1);
+            rt_snprintf((char *)stat_path, rt_strlen(fs->path) + rt_strlen(pathname) + 1, "%s%s", fs->path, pathname);
         }
         else
         {
@@ -403,7 +450,7 @@ static int dfs_ext_unlink(struct dfs_filesystem *fs, const char *pathname)
     return -r;
 }
 
-static int dfs_ext_stat(struct dfs_filesystem *fs, const char *path, struct stat *st)
+EXT_SECTION static int dfs_ext_stat(struct dfs_filesystem *fs, const char *path, struct stat *st)
 {
     int r;
     uint32_t mode = 0;
@@ -428,10 +475,10 @@ static int dfs_ext_stat(struct dfs_filesystem *fs, const char *path, struct stat
     }
     else
     {
-        if (strlen(fs->path) != 1)
+        if (rt_strlen(fs->path) != 1)
         {
-            stat_path = malloc(strlen(fs->path) + strlen(path) + 1);
-            snprintf((char *)stat_path, strlen(fs->path) + strlen(path) + 1, "%s%s", fs->path, path);
+            stat_path = rt_malloc(rt_strlen(fs->path) + rt_strlen(path) + 1);
+            rt_snprintf((char *)stat_path, rt_strlen(fs->path) + rt_strlen(path) + 1, "%s%s", fs->path, path);
         }
         else
         {
@@ -506,7 +553,11 @@ static int dfs_ext_stat(struct dfs_filesystem *fs, const char *path, struct stat
     return -r;
 }
 
-static int dfs_ext_getdents(struct dfs_fd *file, struct dirent *dirp, rt_uint32_t count)
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+EXT_SECTION static int dfs_ext_getdents(struct dfs_file *file, struct dirent *dirp, rt_uint32_t count)
+#else
+EXT_SECTION static int dfs_ext_getdents(struct dfs_fd *file, struct dirent *dirp, rt_uint32_t count)
+#endif
 {
     int index;
     struct dirent *d;
@@ -554,7 +605,7 @@ static int dfs_ext_getdents(struct dfs_fd *file, struct dirent *dirp, rt_uint32_
     return index * sizeof(struct dirent);
 }
 
-static int dfs_ext_rename(struct dfs_filesystem *fs, const char *oldpath, const char *newpath)
+EXT_SECTION static int dfs_ext_rename(struct dfs_filesystem *fs, const char *oldpath, const char *newpath)
 {
     int r;
 

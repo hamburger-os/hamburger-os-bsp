@@ -48,13 +48,18 @@ __WEAK void lv_user_gui_init(void)
     lv_label_set_long_mode(label_logo, LV_LABEL_LONG_WRAP);
     lv_label_set_recolor(label_logo, true);
     lv_label_set_text_fmt(label_logo,
-            "HamburgerOS %s\n"
+            "SWOS2 %s\n"
             "Thread Operating System\n"
             "%d.%d.%d build %s %s\n"
             "Powered by RT-Thread\n"
             "2006 - 2023 Copyright\n"
+            "by hnthinker team\n"
             , SYS_VERSION
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+            , RT_VERSION_MAJOR, RT_VERSION_MINOR, RT_VERSION_PATCH, __DATE__, __TIME__);
+#else
             , RT_VERSION, RT_SUBVERSION, RT_REVISION, __DATE__, __TIME__);
+#endif
     lv_obj_set_width(label_logo, LV_HOR_RES_MAX*3/4);
     lv_obj_set_style_text_align(label_logo, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_align(label_logo, LV_ALIGN_CENTER, 0, 0);

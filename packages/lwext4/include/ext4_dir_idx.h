@@ -70,7 +70,7 @@ struct ext4_dir_idx_block {
  * @return Error code
  */
 int ext4_dir_dx_init(struct ext4_inode_ref *dir,
-             struct ext4_inode_ref *parent);
+             struct ext4_inode_ref *parent) EXT_SECTION;
 
 /**@brief Try to find directory entry using directory index.
  * @param result    Output value - if entry will be found,
@@ -82,7 +82,7 @@ int ext4_dir_dx_init(struct ext4_inode_ref *dir,
  */
 int ext4_dir_dx_find_entry(struct ext4_dir_search_result *result,
                struct ext4_inode_ref *inode_ref, size_t name_len,
-               const char *name);
+               const char *name) EXT_SECTION;
 
 /**@brief Add new entry to indexed directory
  * @param parent Directory i-node
@@ -91,7 +91,7 @@ int ext4_dir_dx_find_entry(struct ext4_dir_search_result *result,
  * @return Error code
  */
 int ext4_dir_dx_add_entry(struct ext4_inode_ref *parent,
-              struct ext4_inode_ref *child, const char *name, uint32_t name_len);
+              struct ext4_inode_ref *child, const char *name, uint32_t name_len) EXT_SECTION;
 
 /**@brief Add new entry to indexed directory
  * @param dir           Directory i-node
@@ -99,7 +99,7 @@ int ext4_dir_dx_add_entry(struct ext4_inode_ref *parent,
  * @return Error code
  */
 int ext4_dir_dx_reset_parent_inode(struct ext4_inode_ref *dir,
-                                   uint32_t parent_inode);
+                                   uint32_t parent_inode) EXT_SECTION;
 
 #ifdef __cplusplus
 }

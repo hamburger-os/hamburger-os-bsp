@@ -312,6 +312,37 @@ static rt_err_t ds2484_ow_read_byte(uint8_t *buff)
   return RT_EOK;
 }
 
+
+static rt_err_t ds2484_ow_triplet(uint8_t data)
+{
+    uint8_t data_buffer[8];
+
+    while(ds2484_get_status(OWB));
+
+    data_buffer[0] = data;
+    if(RT_EOK != write_data(OW_Triplet_Command, data_buffer, 1))
+    {
+      LOG_E("ds2484_ow_Triplet error");
+      return -RT_ERROR;
+    }
+
+    while(ds2484_get_status(OWB));
+    return RT_EOK;
+}
+
+static rt_err_t ds2484_ow_read(uint8_t *data)
+{
+    if(data == RT_NULL)
+        return -RT_ERROR;
+
+    if(RT_EOK != read_data((rt_uint8_t*)data, 1))
+    {
+      LOG_E("ds2484_ow_read error");
+      return -RT_ERROR;
+    }
+    return RT_EOK;
+}
+
 static rt_err_t rt_ds2484_init(rt_device_t dev)
 {
   rt_uint8_t data_buffer[5];
@@ -387,6 +418,14 @@ static rt_err_t rt_ds2484_control(rt_device_t dev, int cmd, void *args)
       ret = ds2484_ow_read_byte((uint8_t *)args);
       break;
 
+    case DS2484_Control_Triplet:   /* Triplet命令 */
+        ret = ds2484_ow_triplet((*(uint8_t *)args));
+        break;
+
+    case DS2484_Control_Read:   /* Triplet命令 */
+        ret = ds2484_ow_read((uint8_t *)args);
+        break;
+
     default:
       LOG_E("ds2484 control dev is null");
       ret = -RT_ERROR;
@@ -394,6 +433,7 @@ static rt_err_t rt_ds2484_control(rt_device_t dev, int cmd, void *args)
   }
   return ret;
 }
+
 
 int rt_hw_ds2484_init(void)
 {

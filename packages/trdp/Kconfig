@@ -1,0 +1,10 @@
+menuconfig PKG_USING_TRDP
+    bool "Enable trdp"
+    default n
+
+    if PKG_USING_TRDP
+        config MD_SUPPORT
+            int "Disable Message-Data, default: 0"
+            default 0
+    endif
+

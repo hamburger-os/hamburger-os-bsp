@@ -302,23 +302,10 @@ static int rt_mem_init(void)
     }
 #endif
 
-#ifdef RT_USING_MEMHEAP_AS_HEAP
-    extern void list_memheap(void);
-    list_memheap();
-#else /* RT_USING_MEMHEAP_AS_HEAP */
-    rt_size_t total = 0, used = 0, max_used = 0;
-
-    rt_memory_info(&total, &used, &max_used);
-    rt_kprintf("total    : %d\n", total);
-    rt_kprintf("used     : %d\n", used);
-    rt_kprintf("maximum  : %d\n", max_used);
-    rt_kprintf("available: %d\n", total - used);
-#endif
-    LOG_I("init succeed %d KB(%d).", total / 1024, total);
     return ret;
 }
 /* 导出到自动初始化 */
-INIT_PREV_EXPORT(rt_mem_init);
+INIT_BOARD_EXPORT(rt_mem_init);
 
 uint32_t memory_info_size(void)
 {

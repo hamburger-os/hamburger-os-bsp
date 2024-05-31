@@ -1,0 +1,42 @@
+# RT-Thread building script for bridge
+
+import rtconfig
+from building import *
+
+cwd     = GetCurrentDir()
+path =  [cwd]
+path += [cwd + '/src/vos/swos2']
+path += [cwd + '/src/vos/api']
+path += [cwd + '/src/vos/common']
+path += [cwd + '/src/api']
+path += [cwd + '/src/common']
+path += [cwd + '/sw_platform/swos2']
+
+src =  Split('''
+    src/vos/swos2/vos_thread.c
+    src/vos/swos2/vos_sock.c
+    src/vos/common/vos_mem.c
+    src/vos/common/vos_utils.c
+    src/common/tau_cstinfo.c
+    src/common/tau_ctrl.c
+    src/common/tau_dnr.c
+    src/common/tau_marshall.c
+    src/common/tau_so_if.c
+    src/common/tau_tti.c
+    src/common/tau_xml.c
+    src/common/tlc_if.c
+    src/common/tlm_if.c
+    src/common/tlp_if.c
+    src/common/trdp_dllmain.c
+    src/common/trdp_mdcom.c
+    src/common/trdp_pdcom.c
+    src/common/trdp_pdindex.c
+    src/common/trdp_stats.c
+    src/common/trdp_utils.c
+    src/common/trdp_xml.c
+    '''
+    )
+
+group = DefineGroup('trdp', src, depend = ['PKG_USING_TRDP'], CPPPATH = path)
+
+Return('group')

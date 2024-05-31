@@ -1,0 +1,33 @@
+config APP_USING_TRDP_PD_CONFORMANCE_TEST
+    bool "Enable conformance test of trdp"
+    default n
+    
+    if APP_USING_TRDP_PD_CONFORMANCE_TEST
+        config APP_USING_TRDP_PD_CONFORMANCE_PUSH_PATTERN_TELEGRAM_TEST
+            bool "Push pattern telegram test"
+            default n
+        config APP_USING_TRDP_PD_CONFORMANCE_DEST_UDP_PORT_TEST
+            bool "Destination UDP port test"
+            default n
+        config APP_USING_TRDP_PD_DATA_LENGTH_TEST
+            bool "Data length test"
+            default n
+        config APP_USING_TRDP_PD_BYTE_ALIGNMENT_TEST
+            bool "Byte alignment test"
+            default n
+        config APP_USING_TRDP_PD_POINT_TO_POINT_TEST
+            bool "Point to point test"
+            default n
+        config APP_USING_TRDP_PD_TIMEOUT_AND_VALIDITY_TEST
+            bool "Timeout and validity test"
+            default n
+        config APP_USING_TRDP_PD_TOPOLOGY_COUNTER_TEST
+            bool "Topology counter test"
+            default n
+        config APP_USING_TRDP_PD_FCS_CHECK_TEST
+            bool "FCS check test"
+            default n
+        config APP_USING_TRDP_PD_PROTOCOL_VERSION_TEST
+            bool "Protocol version test"
+            default n
+    endif

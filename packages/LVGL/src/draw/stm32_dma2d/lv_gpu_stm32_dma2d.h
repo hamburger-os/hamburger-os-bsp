@@ -24,12 +24,8 @@ extern "C" {
 /*********************
  *      DEFINES
  *********************/
-#if defined(LV_STM32_DMA2D_TEST)
-// removes "static" modifier for some internal methods in order to test them
 #define LV_STM32_DMA2D_STATIC
-#else
-#define LV_STM32_DMA2D_STATIC static
-#endif
+//#define LV_STM32_DMA2D_STATIC static
 
 /**********************
  *      TYPEDEFS

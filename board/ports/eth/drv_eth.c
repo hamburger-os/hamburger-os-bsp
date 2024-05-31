@@ -13,9 +13,25 @@
 
 #include "board.h"
 #include "drv_eth.h"
+
+#ifdef PHY_USING_LAN8720A
 #include "lan8720.h"
+#endif
+
+#ifdef SWITCH_USING_JL5104
+#include "jl5104.h"
+#endif
+
+#ifdef PHY_USING_YT8522
+#include "yt8522.h"
+#endif
+
 #include <netif/ethernetif.h>
 #include <lwipopts.h>
+
+#ifdef ETH_USING_KVDB_NET_IF
+#include "flashdb_port.h"
+#endif
 
 /*
 * Emac driver uses CubeMX tool to generate emac and phy's configuration,
@@ -57,10 +73,10 @@ static uint8_t RxAllocStatus;
 
 #if defined ( __ICCARM__ ) /*!< IAR Compiler */
 
-#pragma location=0x30000000
-ETH_DMADescTypeDef DMARxDscrTab[ETH_RX_DESC_CNT]; /* Ethernet Rx DMA Descriptors */
-#pragma location=0x30000200
-ETH_DMADescTypeDef DMATxDscrTab[ETH_TX_DESC_CNT]; /* Ethernet Tx DMA Descriptors */
+#pragma location=0x30044000
+static ETH_DMADescTypeDef DMARxDscrTab[ETH_RX_DESC_CNT]; /* Ethernet Rx DMA Descriptors */
+#pragma location=0x30044200
+static ETH_DMADescTypeDef DMATxDscrTab[ETH_TX_DESC_CNT]; /* Ethernet Tx DMA Descriptors */
 
 #elif defined ( __CC_ARM )  /* MDK ARM Compiler */
 
@@ -74,10 +90,16 @@ static ETH_DMADescTypeDef DMATxDscrTab[ETH_TX_DESC_CNT] ETH_NOCACHE_RAM_SECTION;
 
 #endif
 
+static uint8_t TxBuff[ETH_TX_DESC_CNT][ETH_MAX_PACKET_SIZE] ETH_NOCACHE_RAM_SECTION;
+
 struct rt_stm32_eth stm32_eth_device = {
+    .dev_name = "e",
+#ifdef PHY_USING_LAN8720A
     .phy_addr = LAN8720_ADDR,
+#endif
 };
 
+#ifdef BSP_USING_ETH_RST_PIN
 static void phy_reset(void)
 {
     rt_base_t rst_pin = rt_pin_get(ETH_RST_PIN);
@@ -86,6 +108,7 @@ static void phy_reset(void)
     rt_thread_mdelay(100);
     rt_pin_write(rst_pin, PIN_HIGH);
 }
+#endif
 
 static void phy_linkchange(void *parameter);
 
@@ -93,7 +116,9 @@ static void phy_linkchange(void *parameter);
 static rt_err_t rt_stm32_eth_init(rt_device_t dev)
 {
     struct rt_stm32_eth *eth = dev->user_data;
+#ifdef BSP_USING_ETH_RST_PIN
     phy_reset();
+#endif
 
     eth->heth.Instance = ETH;
     eth->heth.Init.MACAddr = &eth->mac[0];
@@ -120,15 +145,24 @@ static rt_err_t rt_stm32_eth_init(rt_device_t dev)
 
     /* Initialize the RX POOL */
     LWIP_MEMPOOL_INIT(RX_POOL);
-
+#ifdef PHY_USING_LAN8720A
     if (LAN8720_Init() != LAN8720_STATUS_OK)
     {
         LOG_E("LAN8720 init failed!");
     }
+#endif
 
+#ifdef PHY_USING_YT8522
+    YT8522_Init();
+#endif
+
+#ifdef SWITCH_USING_JL5104
+    if(JL5104_Init() != JL5104_STATUS_OK)
+    {
+        LOG_E("JL5104 init failed");
+    }
+#endif
     phy_linkchange(eth);
-
-    LOG_D("init success 0x%x 0x%x", eth->heth.Init.TxDesc, eth->heth.Init.RxDesc);
     return RT_EOK;
 }
 
@@ -257,7 +291,6 @@ static rt_size_t rt_stm32_eth_write(rt_device_t dev, rt_off_t pos, const void *b
 static rt_err_t rt_stm32_eth_control(rt_device_t dev, int cmd, void *args)
 {
     struct rt_stm32_eth *eth = dev->user_data;
-    LOG_D("control");
 
     switch (cmd)
     {
@@ -300,7 +333,8 @@ rt_err_t rt_stm32_eth_tx(rt_device_t dev, struct pbuf *p)
         if (i >= ETH_TX_DESC_CNT)
             return ERR_IF;
 
-        Txbuffer[i].buffer = q->payload;
+        rt_memcpy(TxBuff[i], q->payload, q->len);
+        Txbuffer[i].buffer = (uint8_t*)TxBuff[i];
         Txbuffer[i].len = q->len;
 
         if (i > 0)
@@ -594,6 +628,7 @@ void HAL_ETH_RxLinkCallback(void **pStart, void **pEnd, uint8_t *buff, uint16_t 
     }
 }
 
+#ifdef PHY_USING_LAN8720A
 static void phy_linkchange(void *parameter)
 {
     struct rt_stm32_eth *eth = parameter;
@@ -651,6 +686,96 @@ static void phy_linkchange(void *parameter)
         eth_device_linkchange(&eth->parent, RT_TRUE);
     }
 }
+#endif
+
+#ifdef PHY_USING_YT8522
+static void phy_linkchange(void *parameter)
+{
+    struct rt_stm32_eth *eth = parameter;
+    ETH_MACConfigTypeDef MACConf;
+    uint32_t PHYLinkState;
+    uint32_t speed = 0, duplex = 0;
+
+    PHYLinkState = YT8522_GetLinkState();    //获取连接状态
+    //如果检测到连接断开或者不正常就关闭网口
+    if ((eth->parent.link_status == RT_TRUE) && (PHYLinkState == DIS_CONNECT))
+    {
+        HAL_ETH_Stop_IT(&eth->heth);
+        LOG_W("link down");
+        eth_device_linkchange(&eth->parent, RT_FALSE);
+    }
+    //LWIP网卡还未打开，但是LAN8720已经协商成功
+    else if ((eth->parent.link_status == RT_FALSE) && (PHYLinkState < DIS_CONNECT))
+    {
+        switch (PHYLinkState)
+        {
+        case YT8522_10M_HALF:    //10M半双工
+            duplex = ETH_HALFDUPLEX_MODE;
+            speed = ETH_SPEED_10M;
+            LOG_I("link up 10Mb/s HalfDuplex");
+            break;
+        case YT8522_10M_FUL:    //10M全双工
+            duplex = ETH_FULLDUPLEX_MODE;
+            speed = ETH_SPEED_10M;
+            LOG_I("link up 10Mb/s FullDuplex");
+            break;
+        case YT8522_100M_HALF:     //100M半双工
+            duplex = ETH_HALFDUPLEX_MODE;
+            speed = ETH_SPEED_100M;
+            LOG_I("link up 100Mb/s HalfDuplex");
+            break;
+        case YT8522_100M_FUL:     //100M全双工
+            duplex = ETH_FULLDUPLEX_MODE;
+            speed = ETH_SPEED_100M;
+            LOG_I("link up 100Mb/s FullDuplex");
+            break;
+        default:
+            LOG_W("link up unknown");
+            break;
+        }
+
+        HAL_ETH_GetMACConfig(&eth->heth, &MACConf);
+        MACConf.DuplexMode = duplex;
+        MACConf.Speed = speed;
+#ifdef SOC_SERIES_STM32H7
+        MACConf.SourceAddrControl = ETH_SRC_ADDR_REPLACE;
+#endif
+        HAL_ETH_SetMACConfig(&eth->heth, &MACConf);  //设置MAC
+
+        HAL_ETH_Start_IT(&eth->heth);
+        eth_device_linkchange(&eth->parent, RT_TRUE);
+    }
+}
+#endif
+
+#if defined(SWITCH_USING_JL5104) | defined(PHY_SWITCH_NO_NEED_CFG)
+static void phy_linkchange(void *parameter)
+{
+    struct rt_stm32_eth *eth = parameter;
+    ETH_MACConfigTypeDef MACConf;
+    uint32_t speed = 0, duplex = 0;
+
+    if (eth->parent.link_status == RT_FALSE)
+    {
+        duplex = ETH_FULLDUPLEX_MODE;
+        speed = ETH_SPEED_100M;
+
+        LOG_I("link up 100Mb/s FullDuplex");
+
+        HAL_ETH_GetMACConfig(&eth->heth, &MACConf);
+        MACConf.DuplexMode = duplex;
+        MACConf.Speed = speed;
+#ifdef SOC_SERIES_STM32H7
+        MACConf.SourceAddrControl = ETH_SRC_ADDR_REPLACE;
+#endif
+        HAL_ETH_SetMACConfig(&eth->heth, &MACConf);  //设置MAC
+
+        HAL_ETH_Start_IT(&eth->heth);
+        eth_device_linkchange(&eth->parent, RT_TRUE);
+    }
+}
+
+#endif
 
 #ifdef PHY_USING_INTERRUPT_MODE
 static void eth_phy_isr(void *args)
@@ -689,6 +814,42 @@ static void phy_monitor_thread_entry(void *parameter)
 #endif /* PHY_USING_INTERRUPT_MODE */
 }
 
+#if defined(ETH_USING_KVDB_NET_IF)
+static int rt_hw_stm32_eth_set_if(void)
+{
+    rt_err_t state = RT_EOK;
+
+    /* Config the lwip device */
+    char ip_key[] = "e_ip";
+    char gw_key[] = "e_gw";
+    char mask_key[] = "e_mask";
+
+    char ip_addr[16] = {0};
+    char gw_addr[16] = {0};
+    char nm_addr[16] = {0};
+
+    extern void netdev_set_if(char* netdev_name, char* ip_addr, char* gw_addr, char* nm_addr);
+#if !LWIP_DHCP
+    if (kvdb_get(ip_key, ip_addr) == 0)
+    {
+        rt_strcpy(ip_addr, "192.168.1.29");
+    }
+    if (kvdb_get(gw_key, gw_addr) == 0)
+    {
+        rt_strcpy(gw_addr, "192.168.1.1");
+    }
+    if (kvdb_get(mask_key, nm_addr) == 0)
+    {
+        rt_strcpy(nm_addr, "255.255.255.0");
+    }
+
+    netdev_set_if(stm32_eth_device.dev_name, ip_addr, gw_addr, nm_addr);
+    LOG_I("netdev %s set if %s %s %s", stm32_eth_device.dev_name, ip_addr, gw_addr, nm_addr);
+#endif
+    return state;
+}
+#endif
+
 /* Register the EMAC device */
 static int rt_hw_stm32_eth_init(void)
 {
@@ -698,31 +859,39 @@ static int rt_hw_stm32_eth_init(void)
     rt_completion_init(&stm32_eth_device.TxPkt_completion);
 
     /* 初始化 eth 互斥 */
-
-    state = rt_mutex_init(&stm32_eth_device.eth_mux, "e", RT_IPC_FLAG_PRIO);
+    state = rt_mutex_init(&stm32_eth_device.eth_mux, "eth", RT_IPC_FLAG_PRIO);
     if (state != RT_EOK)
     {
         LOG_E("mutex init error %d!", state);
         return -RT_ERROR;
     }
 
-#ifdef BSP_USING_ETH_SET_MAC
-    stm32_eth_device.mac[0] = BSP_ETH_MAC_ADDR1;
-    stm32_eth_device.mac[1] = BSP_ETH_MAC_ADDR2;
-    stm32_eth_device.mac[2] = BSP_ETH_MAC_ADDR3;
-    stm32_eth_device.mac[3] = BSP_ETH_MAC_ADDR4;
-    stm32_eth_device.mac[4] = BSP_ETH_MAC_ADDR5;
-    stm32_eth_device.mac[5] = BSP_ETH_MAC_ADDR6;
-#else
-    /* OUI 00-80-E1 STMICROELECTRONICS.前三个字节为厂商ID */
-    stm32_eth_device.mac[0] = 0xF8;
-    stm32_eth_device.mac[1] = 0x09;
-    stm32_eth_device.mac[2] = 0xA4;
-    /* generate MAC addr from 96bit unique ID (only for test). */
-    stm32_eth_device.mac[3] = *(uint8_t *)(UID_BASE + 2 + 3);
-    stm32_eth_device.mac[4] = *(uint8_t *)(UID_BASE + 1 + 3);
-    stm32_eth_device.mac[5] = *(uint8_t *)(UID_BASE + 0 + 3);
+#if defined(ETH_USING_KVDB_MAC)
+    char mac_key[] = "e_mac";
+    char mac_addr[18] = {0};
+    if (kvdb_get(mac_key, mac_addr) != 0)
+    {
+        /* OUI 厂商ID */
+        stm32_eth_device.mac[0] = strtoul(&mac_addr[0], NULL, 16);
+        stm32_eth_device.mac[1] = strtoul(&mac_addr[3], NULL, 16);
+        stm32_eth_device.mac[2] = strtoul(&mac_addr[6], NULL, 16);
+        /* 设备MAC地址 */
+        stm32_eth_device.mac[3] = strtoul(&mac_addr[9], NULL, 16);
+        stm32_eth_device.mac[4] = strtoul(&mac_addr[12], NULL, 16);
+        stm32_eth_device.mac[5] = strtoul(&mac_addr[15], NULL, 16);
+    }
 #endif
+    if (stm32_eth_device.mac[0] == 0 && stm32_eth_device.mac[1] == 0 && stm32_eth_device.mac[2] == 0 )
+    {
+        /* OUI 00-80-E1 STMICROELECTRONICS.前三个字节为厂商ID */
+        stm32_eth_device.mac[0] = 0xF8;
+        stm32_eth_device.mac[1] = 0x09;
+        stm32_eth_device.mac[2] = 0xA4;
+        /* generate MAC addr from 96bit unique ID (only for test). */
+        stm32_eth_device.mac[3] = *(uint8_t *)(UID_BASE + 2 + 3);
+        stm32_eth_device.mac[4] = *(uint8_t *)(UID_BASE + 1 + 3);
+        stm32_eth_device.mac[5] = *(uint8_t *)(UID_BASE + 0 + 3);
+    }
 
     stm32_eth_device.parent.parent.init       = rt_stm32_eth_init;
     stm32_eth_device.parent.parent.open       = rt_stm32_eth_open;
@@ -739,22 +908,23 @@ static int rt_hw_stm32_eth_init(void)
     state = lep_eth_if_init(&stm32_eth_device.link_layer_buf);
     if(state != RT_EOK)
     {
-        LOG_E("e init linklayer faild: %d", state);
-        return state;
+        LOG_E("device %s init linklayer faild: %d", stm32_eth_device.dev_name, state);
+        state = -RT_ERROR;
     }
 #endif
 
     /* register eth device */
-    state = eth_device_init(&(stm32_eth_device.parent), "e");
+    state = eth_device_init(&(stm32_eth_device.parent), stm32_eth_device.dev_name);
     if (RT_EOK == state)
     {
-        LOG_D("device init success");
+        LOG_I("device %s init success MAC %02X %02X %02X %02X %02X %02X", stm32_eth_device.dev_name
+                , stm32_eth_device.mac[0], stm32_eth_device.mac[1], stm32_eth_device.mac[2]
+                , stm32_eth_device.mac[3], stm32_eth_device.mac[4], stm32_eth_device.mac[5]);
     }
     else
     {
-        LOG_E("device init faild: %d", state);
+        LOG_E("device %s init faild: %d", stm32_eth_device.dev_name, state);
         state = -RT_ERROR;
-        goto __exit;
     }
 
     /* start phy monitor */
@@ -764,18 +934,20 @@ static int rt_hw_stm32_eth_init(void)
                            &stm32_eth_device,
                            1024,
                            RT_THREAD_PRIORITY_MAX - 2,
-                           2);
+                           10);
     if (tid != RT_NULL)
     {
         rt_thread_startup(tid);
     }
     else
     {
+        LOG_E("device %s phy thread create error!", stm32_eth_device.dev_name);
         state = -RT_ERROR;
     }
 
-__exit:
-
+#if defined(ETH_USING_KVDB_NET_IF)
+    rt_hw_stm32_eth_set_if();
+#endif
     return state;
 }
-INIT_COMPONENT_EXPORT(rt_hw_stm32_eth_init);
+INIT_ENV_EXPORT(rt_hw_stm32_eth_init);
