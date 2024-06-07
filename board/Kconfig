@@ -137,7 +137,7 @@ menu "On-chip Peripheral Drivers"
                 int "Set UART1 TX buffer size"
                 depends on BSP_USING_UART1 && RT_USING_SERIAL_V2
                 default 128
-	                
+
             config BSP_UART1_RX_BUFSIZE
                 int "Set UART1 RX buffer size"
                 depends on BSP_USING_UART1 && RT_USING_SERIAL_V2
@@ -150,14 +150,19 @@ menu "On-chip Peripheral Drivers"
                 select RT_USING_PIN
                 
             config BSP_UART1_DERE
-		        string "Set the GPIO of the UART1 rs485 DE/RE, default: PF.8"
-		        depends on BSP_USING_UART1 && BSP_UART1_RS485MODE
-		        default "PF.8"
+                string "Set the GPIO of rs485 DE/RE, default: PF.8"
+                depends on BSP_UART1_RS485MODE
+                default "PF.8"
+                
+            config BSP_UART1_DERE_REVERSE
+                bool "Enable the rs485 DE/RE effective level reverse"
+                depends on BSP_UART1_RS485MODE
+                default n
                 
             config BSP_USING_UART2
                 bool "Enable UART2"
                 default n
-   
+
             config BSP_UART2_RX_USING_DMA
                 bool "Enable UART2 RX DMA"
                 depends on BSP_USING_UART2 && RT_SERIAL_USING_DMA
@@ -185,9 +190,14 @@ menu "On-chip Peripheral Drivers"
                 select RT_USING_PIN
                 
             config BSP_UART2_DERE
-		        string "Set the GPIO of the UART2 rs485 DE/RE, default: PF.8"
-		        depends on BSP_USING_UART2 && BSP_UART2_RS485MODE
-		        default "PF.8"
+                string "Set the GPIO of rs485 DE/RE, default: PF.8"
+                depends on BSP_UART2_RS485MODE
+                default "PF.8"
+                
+            config BSP_UART2_DERE_REVERSE
+                bool "Enable the rs485 DE/RE effective level reverse"
+                depends on BSP_UART2_RS485MODE
+                default n
                 
             config BSP_USING_UART3
                 bool "Enable UART3"
@@ -220,9 +230,14 @@ menu "On-chip Peripheral Drivers"
                 select RT_USING_PIN
                 
             config BSP_UART3_DERE
-		        string "Set the GPIO of the UART3 rs485 DE/RE, default: PF.8"
-		        depends on BSP_USING_UART3 && BSP_UART3_RS485MODE
-		        default "PF.8"
+                string "Set the GPIO of rs485 DE/RE, default: PF.8"
+                depends on BSP_UART3_RS485MODE
+                default "PF.8"
+                
+            config BSP_UART3_DERE_REVERSE
+                bool "Enable the rs485 DE/RE effective level reverse"
+                depends on BSP_UART3_RS485MODE
+                default n
                 
             config BSP_USING_UART4
                 bool "Enable UART4"
@@ -255,9 +270,14 @@ menu "On-chip Peripheral Drivers"
                 select RT_USING_PIN
                 
             config BSP_UART4_DERE
-		        string "Set the GPIO of the UART4 rs485 DE/RE, default: PF.8"
-		        depends on BSP_USING_UART4 && BSP_UART4_RS485MODE
-		        default "PF.8"
+                string "Set the GPIO of rs485 DE/RE, default: PF.8"
+                depends on BSP_UART4_RS485MODE
+                default "PF.8"
+                
+            config BSP_UART4_DERE_REVERSE
+                bool "Enable the rs485 DE/RE effective level reverse"
+                depends on BSP_UART4_RS485MODE
+                default n
                 
             config BSP_USING_UART5
                 bool "Enable UART5"
@@ -290,9 +310,14 @@ menu "On-chip Peripheral Drivers"
                 select RT_USING_PIN
                 
             config BSP_UART5_DERE
-		        string "Set the GPIO of the UART5 rs485 DE/RE, default: PF.8"
-		        depends on BSP_USING_UART5 && BSP_UART5_RS485MODE
-		        default "PF.8"
+                string "Set the GPIO of rs485 DE/RE, default: PF.8"
+                depends on BSP_UART5_RS485MODE
+                default "PF.8"
+                
+            config BSP_UART5_DERE_REVERSE
+                bool "Enable the rs485 DE/RE effective level reverse"
+                depends on BSP_UART5_RS485MODE
+                default n
                 
             config BSP_USING_UART6
                 bool "Enable UART6"
@@ -325,9 +350,14 @@ menu "On-chip Peripheral Drivers"
                 select RT_USING_PIN
                 
             config BSP_UART6_DERE
-		        string "Set the GPIO of the UART6 rs485 DE/RE, default: PF.8"
-		        depends on BSP_USING_UART6 && BSP_UART6_RS485MODE
-		        default "PF.8"
+                string "Set the GPIO of rs485 DE/RE, default: PF.8"
+                depends on BSP_UART6_RS485MODE
+                default "PF.8"
+                
+            config BSP_UART6_DERE_REVERSE
+                bool "Enable the rs485 DE/RE effective level reverse"
+                depends on BSP_UART6_RS485MODE
+                default n
                 
             config BSP_USING_UART7
                 bool "Enable UART7"
@@ -360,9 +390,14 @@ menu "On-chip Peripheral Drivers"
                 select RT_USING_PIN
                 
             config BSP_UART7_DERE
-		        string "Set the GPIO of the UART7 rs485 DE/RE, default: PF.8"
-		        depends on BSP_USING_UART7 && BSP_UART7_RS485MODE
-		        default "PF.8"
+                string "Set the GPIO of rs485 DE/RE, default: PF.8"
+                depends on BSP_UART7_RS485MODE
+                default "PF.8"
+                
+            config BSP_UART7_DERE_REVERSE
+                bool "Enable the rs485 DE/RE effective level reverse"
+                depends on BSP_UART7_RS485MODE
+                default n
 		        
 		    config BSP_USING_UART8
                 bool "Enable UART8"
@@ -395,9 +430,14 @@ menu "On-chip Peripheral Drivers"
                 select RT_USING_PIN
                 
             config BSP_UART8_DERE
-		        string "Set the GPIO of the UART8 rs485 DE/RE, default: PF.8"
-		        depends on BSP_USING_UART8 && BSP_UART8_RS485MODE
-		        default "PF.8"
+                string "Set the GPIO of rs485 DE/RE, default: PF.8"
+                depends on BSP_UART8_RS485MODE
+                default "PF.8"
+                
+            config BSP_UART8_DERE_REVERSE
+                bool "Enable the rs485 DE/RE effective level reverse"
+                depends on BSP_UART8_RS485MODE
+                default n
         endif
         
     menuconfig BSP_USING_CCMSRAM
@@ -543,6 +583,101 @@ menu "On-chip Peripheral Drivers"
 	            int "Set the flash size of the data area, default: (1024 * 1024)"
 	            depends on FLASH_USING_BLK256
 	            default (1048576)
+        endif
+        
+    menuconfig BSP_USING_FMC
+        bool "Enable FMC"
+        default n
+        select BSP_USING_SRAM
+        
+        if BSP_USING_FMC
+            config BSP_USING_FMC1
+                bool "Enable FMC1"
+                default n
+                
+            if BSP_USING_FMC1
+                config FMC1_BUS_WIDTH
+                    int "Set bus width, default: 16"
+                    default (16)
+                    
+                config FMC1_AddressSetupTime
+                    int "Set AddressSetupTime, default: 15"
+                    default (15)
+                    
+                config FMC1_DataSetupTime
+                    int "Set DataSetupTime, default: 255"
+                    default (255)
+                    
+                config FMC1_BusTurnAroundDuration
+                    int "Set BusTurnAroundDuration, default: 15"
+                    default (15)
+            endif
+            
+            config BSP_USING_FMC2
+                bool "Enable FMC2"
+                default n
+                
+            if BSP_USING_FMC2
+                config FMC2_BUS_WIDTH
+                    int "Set bus width, default: 16"
+                    default (16)
+                    
+                config FMC2_AddressSetupTime
+                    int "Set AddressSetupTime, default: 15"
+                    default (15)
+                    
+                config FMC2_DataSetupTime
+                    int "Set DataSetupTime, default: 255"
+                    default (255)
+                    
+                config FMC2_BusTurnAroundDuration
+                    int "Set BusTurnAroundDuration, default: 15"
+                    default (15)
+            endif
+            
+            config BSP_USING_FMC3
+                bool "Enable FMC3"
+                default n
+                
+            if BSP_USING_FMC3
+                config FMC3_BUS_WIDTH
+                    int "Set bus width, default: 16"
+                    default (16)
+                    
+                config FMC3_AddressSetupTime
+                    int "Set AddressSetupTime, default: 15"
+                    default (15)
+                    
+                config FMC3_DataSetupTime
+                    int "Set DataSetupTime, default: 255"
+                    default (255)
+                    
+                config FMC3_BusTurnAroundDuration
+                    int "Set BusTurnAroundDuration, default: 15"
+                    default (15)
+            endif
+            
+            config BSP_USING_FMC4
+                bool "Enable FMC4"
+                default n
+                
+            if BSP_USING_FMC4
+                config FMC4_BUS_WIDTH
+                    int "Set bus width, default: 16"
+                    default (16)
+                    
+                config FMC4_AddressSetupTime
+                    int "Set AddressSetupTime, default: 15"
+                    default (15)
+                    
+                config FMC4_DataSetupTime
+                    int "Set DataSetupTime, default: 255"
+                    default (255)
+                    
+                config FMC4_BusTurnAroundDuration
+                    int "Set BusTurnAroundDuration, default: 15"
+                    default (15)
+            endif
         endif
         
     menuconfig BSP_USING_CAN
@@ -906,12 +1041,21 @@ menu "On-chip Peripheral Drivers"
                     default n
                     
                 config USBH_STM32_POWER_PIN
-                    string "Set the usb power pin, default: PA.15"
+                    string "Set the USB power pin, default: PA.15"
                     depends on USBH_STM32_USING_POWER
                     default "PA.15"
+                    
+                config USBH_STM32_USING_RST
+                    bool "Enable USB reset"
+                    default n
+                    
+                config USBH_STM32_RST_PIN
+                    string "Set the USB reset pin, default: PA.2"
+                    depends on USBH_STM32_USING_RST
+                    default "PA.2"
                 
                 config USBH_STM32_USING_EXTERNAL_PHY
-                    bool "Enable EXTERNAL PHY"
+                    bool "Enable USB EXTERNAL PHY"
                     default n
             
                 config USBH_THREAD_STACK_SIZE
@@ -1839,9 +1983,74 @@ menu "On-chip Peripheral Drivers"
         bool "Enable timer"
         default n
         select RT_USING_HWTIMER
+        
         if BSP_USING_TIM
             config BSP_USING_TIM1
                 bool "Enable TIM1"
+                default n
+                
+            config BSP_USING_TIM2
+                bool "Enable TIM2"
+                default n
+                
+            config BSP_USING_TIM3
+                bool "Enable TIM3"
+                default n
+                
+            config BSP_USING_TIM4
+                bool "Enable TIM4"
+                default n
+                
+            config BSP_USING_TIM5
+                bool "Enable TIM5"
+                default n
+                
+            config BSP_USING_TIM6
+                bool "Enable TIM6"
+                default n
+                
+            config BSP_USING_TIM7
+                bool "Enable TIM7"
+                default n
+                
+            config BSP_USING_TIM8
+                bool "Enable TIM8"
+                default n
+                
+            config BSP_USING_TIM9
+                bool "Enable TIM9"
+                default n
+                
+            config BSP_USING_TIM10
+                bool "Enable TIM10"
+                default n
+                
+            config BSP_USING_TIM11
+                bool "Enable TIM11"
+                default n
+                
+            config BSP_USING_TIM12
+                bool "Enable TIM12"
+                default n
+                
+            config BSP_USING_TIM13
+                bool "Enable TIM13"
+                default n
+                
+            config BSP_USING_TIM14
+                bool "Enable TIM14"
+                default n
+                
+            config BSP_USING_TIM15
+                bool "Enable TIM15"
+                default n
+                
+            config BSP_USING_TIM16
+                bool "Enable TIM16"
+                default n
+                
+            config BSP_USING_TIM17
+                bool "Enable TIM17"
                 default n
         endif
 
@@ -1851,8 +2060,8 @@ menu "On-chip Peripheral Drivers"
         select RT_USING_PWM
         
         if BSP_USING_PWM
-            menuconfig BSP_USING_PWM1
-                bool "Enable TIM1 output pwm"
+            config BSP_USING_PWM1
+                bool "Enable PWM1"
                 default n
                 
                 if BSP_USING_PWM1
@@ -1870,6 +2079,358 @@ menu "On-chip Peripheral Drivers"
                         
                     config BSP_USING_PWM1_CH4
                         bool "Enable PWM1 channel4"
+                        default n
+                endif
+                
+            config BSP_USING_PWM2
+                bool "Enable PWM2"
+                default n
+                
+                if BSP_USING_PWM2
+                    config BSP_USING_PWM2_CH1
+                        bool "Enable PWM2 channel1"
+                        default n
+                        
+                    config BSP_USING_PWM2_CH2
+                        bool "Enable PWM2 channel2"
+                        default n
+                        
+                    config BSP_USING_PWM2_CH3
+                        bool "Enable PWM2 channel3"
+                        default n
+                        
+                    config BSP_USING_PWM2_CH4
+                        bool "Enable PWM2 channel4"
+                        default n
+                endif
+                
+            config BSP_USING_PWM3
+                bool "Enable PWM3"
+                default n
+                
+                if BSP_USING_PWM3
+                    config BSP_USING_PWM3_CH1
+                        bool "Enable PWM3 channel1"
+                        default n
+                        
+                    config BSP_USING_PWM3_CH2
+                        bool "Enable PWM3 channel2"
+                        default n
+                        
+                    config BSP_USING_PWM3_CH3
+                        bool "Enable PWM3 channel3"
+                        default n
+                        
+                    config BSP_USING_PWM3_CH4
+                        bool "Enable PWM3 channel4"
+                        default n
+                endif
+                
+            config BSP_USING_PWM4
+                bool "Enable PWM4"
+                default n
+                
+                if BSP_USING_PWM4
+                    config BSP_USING_PWM4_CH1
+                        bool "Enable PWM4 channel1"
+                        default n
+                        
+                    config BSP_USING_PWM4_CH2
+                        bool "Enable PWM4 channel2"
+                        default n
+                        
+                    config BSP_USING_PWM4_CH3
+                        bool "Enable PWM4 channel3"
+                        default n
+                        
+                    config BSP_USING_PWM4_CH4
+                        bool "Enable PWM4 channel4"
+                        default n
+                endif
+                
+            config BSP_USING_PWM5
+                bool "Enable PWM5"
+                default n
+                
+                if BSP_USING_PWM5
+                    config BSP_USING_PWM5_CH1
+                        bool "Enable PWM5 channel1"
+                        default n
+                        
+                    config BSP_USING_PWM5_CH2
+                        bool "Enable PWM5 channel2"
+                        default n
+                        
+                    config BSP_USING_PWM5_CH3
+                        bool "Enable PWM5 channel3"
+                        default n
+                        
+                    config BSP_USING_PWM5_CH4
+                        bool "Enable PWM5 channel4"
+                        default n
+                endif
+                
+            config BSP_USING_PWM6
+                bool "Enable PWM6"
+                default n
+                
+                if BSP_USING_PWM6
+                    config BSP_USING_PWM6_CH1
+                        bool "Enable PWM6 channel1"
+                        default n
+                        
+                    config BSP_USING_PWM6_CH2
+                        bool "Enable PWM6 channel2"
+                        default n
+                        
+                    config BSP_USING_PWM6_CH3
+                        bool "Enable PWM6 channel3"
+                        default n
+                        
+                    config BSP_USING_PWM6_CH4
+                        bool "Enable PWM6 channel4"
+                        default n
+                endif
+                
+            config BSP_USING_PWM7
+                bool "Enable PWM7"
+                default n
+                
+                if BSP_USING_PWM7
+                    config BSP_USING_PWM7_CH1
+                        bool "Enable PWM7 channel1"
+                        default n
+                        
+                    config BSP_USING_PWM7_CH2
+                        bool "Enable PWM7 channel2"
+                        default n
+                        
+                    config BSP_USING_PWM7_CH3
+                        bool "Enable PWM7 channel3"
+                        default n
+                        
+                    config BSP_USING_PWM7_CH4
+                        bool "Enable PWM7 channel4"
+                        default n
+                endif
+                
+            config BSP_USING_PWM8
+                bool "Enable PWM8"
+                default n
+                
+                if BSP_USING_PWM8
+                    config BSP_USING_PWM8_CH1
+                        bool "Enable PWM8 channel1"
+                        default n
+                        
+                    config BSP_USING_PWM8_CH2
+                        bool "Enable PWM8 channel2"
+                        default n
+                        
+                    config BSP_USING_PWM8_CH3
+                        bool "Enable PWM8 channel3"
+                        default n
+                        
+                    config BSP_USING_PWM8_CH4
+                        bool "Enable PWM8 channel4"
+                        default n
+                endif
+                
+            config BSP_USING_PWM9
+                bool "Enable PWM9"
+                default n
+                
+                if BSP_USING_PWM9
+                    config BSP_USING_PWM9_CH1
+                        bool "Enable PWM9 channel1"
+                        default n
+                        
+                    config BSP_USING_PWM9_CH2
+                        bool "Enable PWM9 channel2"
+                        default n
+                        
+                    config BSP_USING_PWM9_CH3
+                        bool "Enable PWM9 channel3"
+                        default n
+                        
+                    config BSP_USING_PWM9_CH4
+                        bool "Enable PWM9 channel4"
+                        default n
+                endif
+                
+            config BSP_USING_PWM10
+                bool "Enable PWM10"
+                default n
+                
+                if BSP_USING_PWM10
+                    config BSP_USING_PWM10_CH1
+                        bool "Enable PWM10 channel1"
+                        default n
+                        
+                    config BSP_USING_PWM10_CH2
+                        bool "Enable PWM10 channel2"
+                        default n
+                        
+                    config BSP_USING_PWM10_CH3
+                        bool "Enable PWM10 channel3"
+                        default n
+                        
+                    config BSP_USING_PWM10_CH4
+                        bool "Enable PWM10 channel4"
+                        default n
+                endif
+                
+            config BSP_USING_PWM11
+                bool "Enable PWM11"
+                default n
+                
+                if BSP_USING_PWM11
+                    config BSP_USING_PWM11_CH1
+                        bool "Enable PWM11 channel1"
+                        default n
+                        
+                    config BSP_USING_PWM11_CH2
+                        bool "Enable PWM11 channel2"
+                        default n
+                        
+                    config BSP_USING_PWM11_CH3
+                        bool "Enable PWM11 channel3"
+                        default n
+                        
+                    config BSP_USING_PWM11_CH4
+                        bool "Enable PWM11 channel4"
+                        default n
+                endif
+                
+            config BSP_USING_PWM12
+                bool "Enable PWM12"
+                default n
+                
+                if BSP_USING_PWM12
+                    config BSP_USING_PWM12_CH1
+                        bool "Enable PWM12 channel1"
+                        default n
+                        
+                    config BSP_USING_PWM12_CH2
+                        bool "Enable PWM12 channel2"
+                        default n
+                        
+                    config BSP_USING_PWM12_CH3
+                        bool "Enable PWM12 channel3"
+                        default n
+                        
+                    config BSP_USING_PWM12_CH4
+                        bool "Enable PWM12 channel4"
+                        default n
+                endif
+                
+            config BSP_USING_PWM13
+                bool "Enable PWM13"
+                default n
+                
+                if BSP_USING_PWM13
+                    config BSP_USING_PWM13_CH1
+                        bool "Enable PWM13 channel1"
+                        default n
+                        
+                    config BSP_USING_PWM13_CH2
+                        bool "Enable PWM13 channel2"
+                        default n
+                        
+                    config BSP_USING_PWM13_CH3
+                        bool "Enable PWM13 channel3"
+                        default n
+                        
+                    config BSP_USING_PWM13_CH4
+                        bool "Enable PWM13 channel4"
+                        default n
+                endif
+                
+            config BSP_USING_PWM14
+                bool "Enable PWM14"
+                default n
+                
+                if BSP_USING_PWM14
+                    config BSP_USING_PWM14_CH1
+                        bool "Enable PWM14 channel1"
+                        default n
+                        
+                    config BSP_USING_PWM14_CH2
+                        bool "Enable PWM14 channel2"
+                        default n
+                        
+                    config BSP_USING_PWM14_CH3
+                        bool "Enable PWM14 channel3"
+                        default n
+                        
+                    config BSP_USING_PWM14_CH4
+                        bool "Enable PWM14 channel4"
+                        default n
+                endif
+                
+            config BSP_USING_PWM15
+                bool "Enable PWM15"
+                default n
+                
+                if BSP_USING_PWM15
+                    config BSP_USING_PWM15_CH1
+                        bool "Enable PWM15 channel1"
+                        default n
+                        
+                    config BSP_USING_PWM15_CH2
+                        bool "Enable PWM15 channel2"
+                        default n
+                        
+                    config BSP_USING_PWM15_CH3
+                        bool "Enable PWM15 channel3"
+                        default n
+                        
+                    config BSP_USING_PWM15_CH4
+                        bool "Enable PWM15 channel4"
+                        default n
+                endif
+                
+            config BSP_USING_PWM16
+                bool "Enable PWM16"
+                default n
+                
+                if BSP_USING_PWM16
+                    config BSP_USING_PWM16_CH1
+                        bool "Enable PWM16 channel1"
+                        default n
+                        
+                    config BSP_USING_PWM16_CH2
+                        bool "Enable PWM16 channel2"
+                        default n
+                        
+                    config BSP_USING_PWM16_CH3
+                        bool "Enable PWM16 channel3"
+                        default n
+                        
+                    config BSP_USING_PWM16_CH4
+                        bool "Enable PWM16 channel4"
+                        default n
+                endif
+                
+            config BSP_USING_PWM17
+                bool "Enable PWM17"
+                default n
+                
+                if BSP_USING_PWM17
+                    config BSP_USING_PWM17_CH1
+                        bool "Enable PWM17 channel1"
+                        default n
+                        
+                    config BSP_USING_PWM17_CH2
+                        bool "Enable PWM17 channel2"
+                        default n
+                        
+                    config BSP_USING_PWM17_CH3
+                        bool "Enable PWM17 channel3"
+                        default n
+                        
+                    config BSP_USING_PWM17_CH4
+                        bool "Enable PWM17 channel4"
                         default n
                 endif
         endif
@@ -1935,10 +2496,6 @@ menu "On-chip Peripheral Drivers"
         bool
         select RT_USING_PIN
         default y
-
-    config BSP_USING_FMC
-        bool
-        default n
         
     config BSP_USING_SRAM
         bool
@@ -2026,9 +2583,14 @@ menu "Onboard Peripheral Drivers"
                 default "ud0p0"
                 
             config ROOTFS_UPDATE_PATH
-                string "Set firmware path, default: /mnt/udisk/ud0p0/rootfs/"
+                string "Set update path, default: /mnt/udisk/ud0p0/rootfs/"
                 depends on ROOTFS_USING_UPDATE
                 default "/mnt/udisk/ud0p0/rootfs"
+                
+            config ROOTFS_UPDATE_PATH_USE_MNT
+                bool "Enable update path use mnt"
+                depends on ROOTFS_USING_UPDATE
+                default n
 
         endif
 
@@ -2040,18 +2602,18 @@ menu "Onboard Peripheral Drivers"
         
         if BSP_USING_FMCSRAM
             config BSP_FMCSRAM_NE
-	            hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
-	            default (0x2)
-
+                hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x6"
+                default (0x2)
+        
             config BSP_FMCSRAM_ADDR
-	            hex "Set the memory start address, default: ((void *)(0x60000000 + 0x4000000*1))"
-	            default (0x64000000)
+                hex "Set the memory start address, default: ((void *)(0x60000000 + 0x4000000*1))"
+                default (0x64000000)
             
             config BSP_FMCSRAM_SIZE
-	            int "Set memory size, default: (1 * 1024 * 1024)"
-	            default (1048576)
-	            
-	        config BSP_FMCSRAM_BUS_WIDTH
+                int "Set memory size, default: (1 * 1024 * 1024)"
+                default (1048576)
+                
+            config BSP_FMCSRAM_BUS_WIDTH
                 int "Set bus width, default: 16"
                 default (16)
                 
@@ -2313,6 +2875,7 @@ menu "Onboard Peripheral Drivers"
     
                     config LCD_BACKLIGHT_USING_PWM
                         bool "Enable BACKLIGHT PWM"
+                        select BSP_USING_PWM
                         
                     config LCD_BACKLIGHT_USING_GPIO
                         bool "Enable BACKLIGHT GPIO"
@@ -2322,6 +2885,16 @@ menu "Onboard Peripheral Drivers"
                     config LCD_BKLT_CTL_GPIO
                         string "Set the GPIO of the BKLT CTL, default: PC.6"
                         default "PC.6"
+                endif
+                
+                if LCD_BACKLIGHT_USING_PWM
+                    config LCD_BKLT_CTL_PWM
+                        string "Set the PWM of the BKLT CTL, default: pwm8"
+                        default "pwm8"
+                        
+                    config LCD_BKLT_CTL_PWM_CHANNEL
+                        int "Set the PWM CHANNEL of the BKLT CTL, default: 1"
+                        default 1
                 endif
 
                 config BSP_USING_LCD_TEST
@@ -2888,7 +3461,7 @@ menu "Onboard Peripheral Drivers"
         bool "Enable EMMC"
         default n
         
-        if BSP_USING_EMMC            
+        if BSP_USING_EMMC
             choice
                 prompt "Select the bus wide"
                 default BSP_SDIO_BUS_WIDE_4B
@@ -3030,15 +3603,22 @@ menu "Onboard Peripheral Drivers"
                 int "Set the BusTurnAroundDuration, default: 8"
                 default (8)
                 
-            config BSP_USE_KVDB_NET_IF
+            config BSP_USING_KSZ8851_KVDB_NET_IF
                 bool "Enable kvdb set netdev if"
                 select PKG_USING_FLASHDB_PORT
-                default n
+                default y
+
+            choice
+                prompt "Select the set mac method"
+                default BSP_USING_KSZ8851_UID_MAC
                 
-            config BSP_USE_SYSINFO_MAC
-                bool "Enable sysinfo set mac"
-                select PKG_USING_SYSINFO
-                default n
+                config BSP_USING_KSZ8851_KVDB_MAC
+                    bool "Enable kvdb set mac"
+                    select PKG_USING_FLASHDB_PORT
+                    
+                config BSP_USING_KSZ8851_UID_MAC
+                    bool "Enable UID set mac"
+            endchoice
             
             menuconfig BSP_USE_ETH1
                 bool "Enable ETH port 1"
@@ -3172,37 +3752,22 @@ menu "Onboard Peripheral Drivers"
                     bool "Select phy LAN8720A"
             endchoice
             
-            config BSP_USING_ETH_SET_MAC
-                bool "Enable set mac addr"
-                default n
-                
-        		if BSP_USING_ETH_SET_MAC
-        		
-		            config BSP_ETH_MAC_ADDR1
-		                hex "Set ETH addr1, default: 0xF8"
-		                default (0xF8)
-        		
-		            config BSP_ETH_MAC_ADDR2
-		                hex "Set ETH addr2, default: 0x09"
-		                default (0x09)
-        		
-		            config BSP_ETH_MAC_ADDR3
-		                hex "Set ETH addr3, default: 0xA4"
-		                default (0xA4)
-        		
-		            config BSP_ETH_MAC_ADDR4
-		                hex "Set ETH addr4, default: 0x51"
-		                default (0x51)
-        		
-		            config BSP_ETH_MAC_ADDR5
-		                hex "Set ETH addr5, default: 0x0E"
-		                default (0x0E)
-        		
-		            config BSP_ETH_MAC_ADDR6
-		                hex "Set ETH addr6, default: 0x00"
-		                default (0x00)
-        		
-        		endif
+            config ETH_USING_KVDB_NET_IF
+                bool "Enable kvdb set netdev if"
+                select PKG_USING_FLASHDB_PORT
+                default y
+
+            choice
+                prompt "Select the set mac method"
+                default ETH_USING_KVDB_MAC
+    
+                config ETH_USING_KVDB_MAC
+                    bool "Enable kvdb set mac"
+                    select PKG_USING_FLASHDB_PORT
+                    
+                config ETH_USING_UID_MAC
+                    bool "Enable UID set mac"
+            endchoice
         endif
         
     menuconfig BSP_USING_MAX31826
@@ -3245,6 +3810,10 @@ menu "Onboard Peripheral Drivers"
 			config DS2484_I2C_ADD
 				hex "Set the i2c device address, default: 0x18"
 				default (0x18)
+            
+            config MAX31826_SEN_ALL
+                int "Set the number of max31826 devices, default: 3, max: 4 "
+                default (3)
 		endif
 	endif
         
@@ -3697,11 +4266,11 @@ menu "Onboard Peripheral Drivers"
         
         if BSP_USING_Z8523L16
             config BSP_USING_Z85230_HDLC_MODE
-                bool "Enable Z85230 HDLC MODE, default serial com mode"
-                default n
+                bool "Enable Z85230 serial MODE, default HDLC MODE"
+                default y
                 
             config Z8523L16_NE
-                  hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x2"
+                  hex "Set the bank to use, example: FMC_NORSRAM_BANK2: 0x2, FMC_NORSRAM_BANK4: 0x4"
                   default (0x2)
                   
             config Z8523L16_CMD

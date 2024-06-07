@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2022, RT-Thread Development Team
+ * Copyright (c) 2006-2023, RT-Thread Development Team
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,7 +18,7 @@
 #include "fal.h"
 #endif
 
-#define DRV_DEBUG
+//#define DRV_DEBUG
 #define LOG_TAG                "drv.flash"
 #include <drv_log.h>
 
@@ -221,8 +221,7 @@ int stm32_flash_read(rt_uint32_t addr, rt_uint8_t *buf, size_t size)
 
     if (size < 1)
     {
-        LOG_W("read size %d! addr is (0x%p)", size, (void*)(addr + size));
-        return -RT_EINVAL;
+        return 0;
     }
 
     for (i = 0; i < size; i++, buf++, addr++)
@@ -248,8 +247,8 @@ int stm32_flash_write(rt_uint32_t addr, const rt_uint8_t *buf, size_t size)
 {
     rt_err_t result      = RT_EOK;
     rt_uint32_t end_addr = addr + size;
-    size_t written_size = 0;
-    size_t write_size = 0;
+    rt_uint32_t written_size = 0;
+    rt_uint32_t write_size = 0;
 
     if ((end_addr) > STM32_FLASH_END_ADDRESS)
     {
@@ -259,8 +258,7 @@ int stm32_flash_write(rt_uint32_t addr, const rt_uint8_t *buf, size_t size)
 
     if (size < 1)
     {
-        LOG_W("write size %d! addr is (0x%p)", size, (void*)(addr + size));
-        return -RT_EINVAL;
+        return 0;
     }
 
     HAL_FLASH_Unlock();
@@ -361,8 +359,7 @@ int stm32_flash_erase(rt_uint32_t addr, size_t size)
 
     if (size < 1)
     {
-        LOG_W("erase size %d! addr is (0x%p)", size, (void*)(addr + size));
-        return -RT_EINVAL;
+        return 0;
     }
 
     /*Variable used for Erase procedure*/

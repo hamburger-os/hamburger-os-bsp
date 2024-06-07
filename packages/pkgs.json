@@ -1,20 +1,5 @@
 [
  {
-  "path": "/packages/iot/netutils", 
-  "ver": "latest", 
-  "name": "NETUTILS"
- }, 
- {
-  "path": "/packages/multimedia/LVGL/LVGL", 
-  "ver": "v8.3.9", 
-  "name": "LVGL"
- }, 
- {
-  "path": "/packages/multimedia/wavplayer", 
-  "ver": "latest", 
-  "name": "WAVPLAYER"
- }, 
- {
   "path": "/packages/system/enhanced-kservice/rt_memcpy_cm", 
   "ver": "latest", 
   "name": "RT_MEMCPY_CM"
@@ -25,48 +10,13 @@
   "name": "RT_KPRINTF_THREADSAFE"
  }, 
  {
-  "path": "/packages/system/CMSIS/CMSIS_5", 
-  "ver": "v5.9.0", 
-  "name": "CMSIS_5"
- }, 
- {
-  "path": "/packages/system/CMSIS/CMSIS_5_AUX", 
-  "ver": "latest", 
-  "name": "CMSIS_5_AUX"
- }, 
- {
-  "path": "/packages/system/CMSIS/CMSIS_RTOS2", 
-  "ver": "latest", 
-  "name": "CMSIS_RTOS2"
- }, 
- {
-  "path": "/packages/system/FlashDB", 
-  "ver": "v1.1.2", 
-  "name": "FLASHDB"
- }, 
- {
-  "path": "/packages/system/littlefs", 
-  "ver": "latest", 
-  "name": "LITTLEFS"
- }, 
- {
-  "path": "/packages/system/lwext4", 
-  "ver": "latest", 
-  "name": "LWEXT4"
- }, 
- {
   "path": "/packages/system/syswatch", 
   "ver": "latest", 
   "name": "SYSWATCH"
  }, 
  {
-  "path": "/packages/misc/optparse", 
+  "path": "/packages/system/CherryUSB", 
   "ver": "latest", 
-  "name": "OPTPARSE"
- }, 
- {
-  "path": "/packages/misc/crclib", 
-  "ver": "v1.02", 
-  "name": "CRCLIB"
+  "name": "CHERRYUSB"
  }
 ]

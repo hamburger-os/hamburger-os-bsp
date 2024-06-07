@@ -79,6 +79,7 @@ struct stm32_uart
     rt_uint16_t uart_dma_flag;
     rt_uint16_t rs485_flag;
     rt_base_t rs485_DERE;
+    rt_base_t rs485_DERE_reverse;
     struct rt_serial_device serial;
 };
 

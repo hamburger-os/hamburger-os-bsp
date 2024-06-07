@@ -57,6 +57,9 @@ static void JumpToBootloader(void)
     uint32_t i=0;
     void (*SysMemBootJump)(void); /* 声明一个函数指针 */
 
+#ifdef SOC_SERIES_STM32F1
+    __IO uint32_t BootAddr = 0x1FFF0000; /* STM32F1 的系统 BootLoader 地址 */
+#endif
 #ifdef SOC_SERIES_STM32F4
     __IO uint32_t BootAddr = 0x1FFF0000; /* STM32F4 的系统 BootLoader 地址 */
 #endif

@@ -193,7 +193,11 @@ static rt_err_t rt_stm32_eth_close(rt_device_t dev)
 #endif
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static rt_ssize_t rt_stm32_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t size)
+#else
 static rt_size_t rt_stm32_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t size)
+#endif
 {
 #ifdef BSP_USE_LINK_LAYER_COMMUNICATION
     struct rt_stm32_eth *eth = dev->user_data;
@@ -248,7 +252,11 @@ static rt_size_t rt_stm32_eth_read(rt_device_t dev, rt_off_t pos, void *buffer, 
     return 0;
 }
 
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+static rt_ssize_t rt_stm32_eth_write(rt_device_t dev, rt_off_t pos, const void *buffer, rt_size_t size)
+#else
 static rt_size_t rt_stm32_eth_write(rt_device_t dev, rt_off_t pos, const void *buffer, rt_size_t size)
+#endif
 {
 #ifdef BSP_USE_LINK_LAYER_COMMUNICATION
     struct rt_stm32_eth *eth = dev->user_data;

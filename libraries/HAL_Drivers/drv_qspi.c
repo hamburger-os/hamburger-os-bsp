@@ -210,9 +210,17 @@ static rt_ssize_t qspixfer(struct rt_spi_device *device, struct rt_spi_message *
     rt_int32_t length = message->length;
 
 #ifdef BSP_QSPI_USING_SOFTCS
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+    if (message->cs_take && (device->cs_pin != PIN_NONE))
+#else
     if (message->cs_take && (device->parent.cs_pin != PIN_NONE))
+#endif
     {
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+        rt_pin_write(device->cs_pin, PIN_LOW);
+#else
         rt_pin_write(device->parent.cs_pin, PIN_LOW);
+#endif
     }
 #endif
 
@@ -264,9 +272,17 @@ static rt_ssize_t qspixfer(struct rt_spi_device *device, struct rt_spi_message *
 
 __exit:
 #ifdef BSP_QSPI_USING_SOFTCS
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+    if (message->cs_release && (device->cs_pin != PIN_NONE))
+#else
     if (message->cs_release && (device->parent.cs_pin != PIN_NONE))
+#endif
     {
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+        rt_pin_write(device->cs_pin, PIN_HIGH);
+#else
         rt_pin_write(device->parent.cs_pin, PIN_HIGH);
+#endif
     }
 #endif
     return result;

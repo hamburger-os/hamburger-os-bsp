@@ -157,7 +157,6 @@ static int erase(long offset, size_t size)
         return 0;
     }
 
-    rt_tick_t tick = rt_tick_get();
     result = sfud_erase(sfud_dev, addr, size);
     if (result != SFUD_SUCCESS)
     {
@@ -165,7 +164,7 @@ static int erase(long offset, size_t size)
         return -RT_EIO;
     }
 
-    LOG_D("erase (0x%p) %d used %d ms", (void*)(addr), size, rt_tick_get() - tick);
+    LOG_D("erase (0x%p) %d used %d ms", (void*)(addr), size);
     return size;
 }
 

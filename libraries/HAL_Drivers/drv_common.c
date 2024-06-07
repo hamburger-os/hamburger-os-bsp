@@ -110,10 +110,8 @@ void _Error_Handler(char *s, int num)
 {
     /* USER CODE BEGIN Error_Handler */
     /* User can add his own implementation to report the HAL error return state */
-    LOG_E("Error_Handler at file:%s num:%d", s, num);
-    while (1)
-    {
-    }
+    LOG_E("Error_Handler %s : %d", s, num);
+    while (1);
     /* USER CODE END Error_Handler */
 }
 
@@ -156,7 +154,11 @@ RTM_EXPORT(rt_hw_us_delay);
 /**
  * This function will initial STM32 board.
  */
+#if RTTHREAD_VERSION >= RT_VERSION_CHECK(5, 0, 2)
+rt_weak void rt_hw_board_init(void)
+#else
 RT_WEAK void rt_hw_board_init(void)
+#endif
 {
 #ifdef BSP_ENABLE_MPU
     rt_hw_mpu_init();
