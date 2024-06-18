@@ -46,12 +46,16 @@ This information includes:
 
 #include "board.h"
 
-#ifndef __STATIC_INLINE
-#define __STATIC_INLINE static inline
+#ifndef   __STATIC_INLINE
+#define __STATIC_INLINE                        static inline
 #endif
-#ifndef __STATIC_FORCEINLINE
-#define __STATIC_FORCEINLINE                   __STATIC_INLINE
+#ifndef   __STATIC_FORCEINLINE                 
+#define __STATIC_FORCEINLINE                   __attribute__((always_inline)) static inline
 #endif
+#ifndef __WEAK
+#define __WEAK __attribute__((weak))
+#endif
+
 /// Processor Clock of the Cortex-M MCU used in the Debug Unit.
 /// This value is used to calculate the SWD/JTAG clock speed.
 #define CPU_CLOCK               SystemCoreClock      ///< Specifies the CPU Clock in Hz.
@@ -95,7 +99,7 @@ This information includes:
 /// This configuration settings is used to optimize the communication performance with the
 /// debugger and depends on the USB peripheral. For devices with limited RAM or USB buffer the
 /// setting can be reduced (valid range is 1 .. 255).
-#define DAP_PACKET_COUNT        4U              ///< Specifies number of packets buffered.
+#define DAP_PACKET_COUNT        8U              ///< Specifies number of packets buffered.
 
 /// Indicate that UART Serial Wire Output (SWO) trace is available.
 /// This information is returned by the command \ref DAP_Info as part of <b>Capabilities</b>.
@@ -125,7 +129,7 @@ This information includes:
 #define DAP_UART                0               ///< DAP UART:  1 = available, 0 = not available.
 
 /// USART Driver instance number for the UART Communication Port.
-#define DAP_UART_DRIVER         0               ///< USART Driver instance number (Driver_USART#).
+#define DAP_UART_DRIVER         3               ///< USART Driver instance number (Driver_USART#).
 
 /// UART Receive Buffer Size.
 #define DAP_UART_RX_BUFFER_SIZE 1024U           ///< Uart Receive Buffer Size in bytes (must be 2^n).
@@ -135,7 +139,7 @@ This information includes:
 
 /// Indicate that UART Communication via USB COM Port is available.
 /// This information is returned by the command \ref DAP_Info as part of <b>Capabilities</b>.
-#define DAP_UART_USB_COM_PORT   0               ///< USB COM Port:  1 = available, 0 = not available.
+#define DAP_UART_USB_COM_PORT   1               ///< USB COM Port:  1 = available, 0 = not available.
 
 /// Debug Unit is connected to fixed Target Device.
 /// The Debug Unit may be part of an evaluation board and always connected to a fixed

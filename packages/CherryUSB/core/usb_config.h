@@ -6,16 +6,14 @@
 #ifndef CHERRYUSB_CONFIG_H
 #define CHERRYUSB_CONFIG_H
 
-#include <rtthread.h>
-
-#define CHERRYUSB_VERSION 0x000700
+#define CHERRYUSB_VERSION 0x000900
 
 /* ================ USB common Configuration ================ */
 
-#define CONFIG_USB_PRINTF(...) rt_kprintf(__VA_ARGS__)
+#define CONFIG_USB_PRINTF(...) printf(__VA_ARGS__)
 
-#define usb_malloc(size) rt_malloc(size)
-#define usb_free(ptr)    rt_free(ptr)
+#define usb_malloc(size) malloc(size)
+#define usb_free(ptr)    free(ptr)
 
 #ifndef CONFIG_USB_DBG_LEVEL
 #define CONFIG_USB_DBG_LEVEL USB_DBG_INFO
@@ -50,13 +48,24 @@
 /* Enable test mode */
 // #define CONFIG_USBDEV_TEST_MODE
 
-//#define CONFIG_USBDEV_TX_RX_THREAD
-#ifdef CONFIG_USBDEV_TX_RX_THREAD
-#ifndef CONFIG_USBDEV_TX_RX_PRIO
-#define CONFIG_USBDEV_TX_RX_PRIO 12
+//#define CONFIG_USBDEV_TX_THREAD
+//#define CONFIG_USBDEV_RX_THREAD
+
+#ifdef CONFIG_USBDEV_TX_THREAD
+#ifndef CONFIG_USBDEV_TX_PRIO
+#define CONFIG_USBDEV_TX_PRIO 4
 #endif
-#ifndef CONFIG_USBDEV_TX_RX_STACKSIZE
-#define CONFIG_USBDEV_TX_RX_STACKSIZE 2048
+#ifndef CONFIG_USBDEV_TX_STACKSIZE
+#define CONFIG_USBDEV_TX_STACKSIZE 2048
+#endif
+#endif
+
+#ifdef CONFIG_USBDEV_RX_THREAD
+#ifndef CONFIG_USBDEV_RX_PRIO
+#define CONFIG_USBDEV_RX_PRIO 4
+#endif
+#ifndef CONFIG_USBDEV_RX_STACKSIZE
+#define CONFIG_USBDEV_RX_STACKSIZE 2048
 #endif
 #endif
 
@@ -74,14 +83,6 @@
 
 #ifndef CONFIG_USBDEV_MSC_VERSION_STRING
 #define CONFIG_USBDEV_MSC_VERSION_STRING "0.01"
-#endif
-
-#ifndef CONFIG_USBDEV_AUDIO_VERSION
-#define CONFIG_USBDEV_AUDIO_VERSION 0x0100
-#endif
-
-#ifndef CONFIG_USBDEV_AUDIO_MAX_CHANNEL
-#define CONFIG_USBDEV_AUDIO_MAX_CHANNEL 8
 #endif
 
 #ifndef CONFIG_USBDEV_RNDIS_RESP_BUFFER_SIZE
@@ -114,7 +115,7 @@
 #define CONFIG_USBHOST_DEV_NAMELEN 16
 
 #ifndef CONFIG_USBHOST_PSC_PRIO
-#define CONFIG_USBHOST_PSC_PRIO 13
+#define CONFIG_USBHOST_PSC_PRIO 4
 #endif
 #ifndef CONFIG_USBHOST_PSC_STACKSIZE
 #define CONFIG_USBHOST_PSC_STACKSIZE 2048
@@ -171,9 +172,9 @@
 
 /* ================ EHCI Configuration ================ */
 
-#define CONFIG_USB_EHCI_HCCR_BASE   (0x20072000)
-#define CONFIG_USB_EHCI_HCOR_BASE   (0x20072000 + 0x10)
-#define CONFIG_EHCI_FRAME_LIST_SIZE 1024
+#define CONFIG_USB_EHCI_HCCR_BASE       (0x20072000)
+#define CONFIG_USB_EHCI_HCOR_BASE       (0x20072000 + 0x10)
+#define CONFIG_USB_EHCI_FRAME_LIST_SIZE 1024
 // #define CONFIG_USB_EHCI_INFO_ENABLE
 // #define CONFIG_USB_ECHI_HCOR_RESERVED_DISABLE
 // #define CONFIG_USB_EHCI_CONFIGFLAG

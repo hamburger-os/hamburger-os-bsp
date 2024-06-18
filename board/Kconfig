@@ -1009,14 +1009,14 @@ menu "On-chip Peripheral Drivers"
                     default "PB.2"
                     
                 config CMSIS_DAP_COM_LED_PIN
-                    string "Set the com led pin, default: PB.5"
+                    string "Set the com led pin, default: PB.13"
                     depends on USBD_USING_CMSIS_DAP
-                    default "PB.5"
+                    default "PB.13"
                     
                 config CMSIS_DAP_DAP_LED_PIN
-                    string "Set the dap led pin, default: PB.6"
+                    string "Set the dap led pin, default: PB.12"
                     depends on USBD_USING_CMSIS_DAP
-                    default "PB.6"
+                    default "PB.12"
 
                 config CDC_UART_DEV
                     string "Set cdc uart, default: uart3"

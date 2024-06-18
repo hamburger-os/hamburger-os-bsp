@@ -29,9 +29,6 @@
 #include "DAP_config.h"
 #include "DAP.h"
 
-#define DBG_TAG "dap"
-#define DBG_LVL DBG_LOG
-#include <rtdbg.h>
 
 #if (DAP_PACKET_SIZE < 64U)
 #error "Minimum Packet Size is 64!"
